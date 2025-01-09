@@ -1,5 +1,4 @@
 import React from 'react';
-import therapistsList from  '../therapistsList';
 
 interface Advisor {
   id: number;
