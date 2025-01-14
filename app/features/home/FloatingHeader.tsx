@@ -33,12 +33,13 @@ const FloatingHeader: React.FC<FloatingHeaderProps> = ({
         fixed top-0 left-0 right-0 
         z-50
         transition-all duration-300 ease-in-out
+        shadow-lg
         ${isScrolled 
-          ? 'bg-white shadow-md py-2' 
-          : 'bg-violet-500 py-2'}
+          ? 'bg-white shadow-md py-6' 
+          : 'bg-white-500 py-6'}
       `}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px- sm:px-6 lg:px-8">
         <div className="flex">
           <Image
             className='mr-4'
@@ -52,7 +53,7 @@ const FloatingHeader: React.FC<FloatingHeaderProps> = ({
             className={`
               text-2xl font-semibold
               transition-all duration-300
-              ${isScrolled ? 'text-gray-800' : 'text-white'}
+              ${isScrolled ? 'text-gray-800' : 'text-gray-800'}
             `}
           >
             {title}
