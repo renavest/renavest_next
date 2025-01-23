@@ -1,21 +1,44 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: light) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+
+    /* Black for primary actions */
+    --primary: 0 0% 0%; /* Pure black */
+    --primary-foreground: 0 0% 100%; /* White text */
+
+    /* Purple for secondary elements */
+    --secondary: 246 100% 66%; /* Your brand purple */
+    --secondary-foreground: 0 0% 100%;
+
+    /* Subtle purple tints */
+    --muted: 246 20% 96%;
+    --muted-foreground: 246 10% 45%;
+
+    /* Light purple for accents */
+    --accent: 246 40% 96%;
+    --accent-foreground: 246 40% 40%;
+
+    /* Card/Input with very subtle purple tint */
+    --card: 246 20% 100%;
+    --card-foreground: 0 0% 3.9%;
+
+    --border: 246 20% 92%;
+    --input: 246 20% 92%;
+    --ring: 246 100% 66%;
+
+    --radius: 0.75rem;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
