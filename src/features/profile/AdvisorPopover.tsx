@@ -43,6 +43,7 @@ const AdvisorPopover: React.FC<AdvisorPopoverProps> = ({
                 href={advisor.bookingURL}
                 target="_blank"
                 rel="noopener noreferrer"
+                data-umami-event="Book a Session Click" // Umami event tracking
                 className="inline-block rounded-lg bg-violet-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700 w-full text-center"
               >
                 Book a Session
