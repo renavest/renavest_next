@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import AdvisorPopover from "../../profile/AdvisorPopover";
 import { Advisor } from "@/shared/types";
+import { Award } from "lucide-react";
 
 interface AdvisorCardProps {
   advisor: Advisor;
@@ -10,28 +11,53 @@ interface AdvisorCardProps {
 
 const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
   return (
-    <div className="relative flex flex-col mb-4" onClick={onClick}>
-      <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-gray-200 min-h-60 mb-6">
+    <div
+      onClick={onClick}
+      className="group relative flex flex-col rounded-2xl bg-white shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
+    >
+      {/* Image Container */}
+      <div className="relative aspect-[4/3] w-full overflow-hidden">
         <img
           src={advisor.profileUrl || advisor.bookingURL}
           alt={advisor.name}
-          className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
-      </div>
-      <div className="mt-2">
-        <h3 className="text-lg font-semibold text-gray-900">{advisor.name}</h3>
-        <p className="text-sm text-gray-600">{advisor.title}</p>
-        <div className="mt-2">
-          <p className="text-xs text-gray-500">
-            {advisor.yoe} years of experience
-          </p>
-          <div className="mt-1 flex flex-wrap gap-1">
-            <p>{advisor.expertise}</p>
-          </div>
-          <p className="mt-2 text-sm text-gray-700 line-clamp-2">
-            {advisor.previewBlurb || advisor.introduction}
-          </p>
+        {/* Experience Badge */}
+        <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium tracking-wide text-gray-700 shadow-sm">
+          {advisor.yoe} years of experience
         </div>
+      </div>
+
+      {/* Content Container */}
+      <div className="p-4 flex-1 flex flex-col">
+        <div className="flex items-start justify-between">
+          <div>
+            <h3 className="font-semibold text-gray-900 tracking-wide">
+              {advisor.name}
+            </h3>
+            <p className="text-sm text-gray-600 mt-0.5 flex items-center tracking-wide">
+              <Award className="w-4 h-4 mr-1" />
+              {advisor.title}
+            </p>
+          </div>
+        </div>
+
+        {/* Expertise Tags (Clamped) */}
+        <div className="mt-2 flex flex-wrap gap-1.5 max-h-16 overflow-hidden">
+          {advisor.expertise?.split(",")?.map((exp, index) => (
+            <span
+              key={index}
+              className="px-2 py-1 bg-gray-50 text-gray-600 text-xs rounded-full tracking-wide"
+            >
+              {exp.trim()}
+            </span>
+          ))}
+        </div>
+
+        {/* Preview Text (Clamped) */}
+        <p className="mt-3 text-sm text-gray-600 tracking-wide line-clamp-3">
+          {advisor.previewBlurb || advisor.introduction}
+        </p>
       </div>
     </div>
   );
@@ -39,9 +65,10 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
 
 const AdvisorGrid: React.FC<{ advisors: Advisor[] }> = ({ advisors }) => {
   const [selectedAdvisor, setSelectedAdvisor] = useState<Advisor | null>(null);
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
         {advisors.map((advisor) => (
           <AdvisorCard
             key={advisor.id}
@@ -50,6 +77,7 @@ const AdvisorGrid: React.FC<{ advisors: Advisor[] }> = ({ advisors }) => {
           />
         ))}
       </div>
+
       {selectedAdvisor && (
         <AdvisorPopover
           advisor={selectedAdvisor}
