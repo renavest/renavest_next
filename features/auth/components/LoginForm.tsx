@@ -38,7 +38,7 @@ export default function LoginForm() {
         return;
       }
       console.log("Proceeding with login");
-      window.location.href = "/dashboard";
+      window.location.href = "/";
     } catch (err) {
       console.error("Validation error:", err);
       if (err instanceof z.ZodError) {
@@ -69,7 +69,7 @@ export default function LoginForm() {
               className="w-full px-4 py-3 rounded-lg border bg-background"
               value={auth.email}
               onChange={(e) => handleEmailChange(e.target.value)}
-              placeholder="you@company.com"
+              placeholder="you@companyemail.com"
             />
           </div>
 

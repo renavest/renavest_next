@@ -1,15 +1,13 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 
 interface FloatingHeaderProps {
   title: string;
 }
 
-const FloatingHeader: React.FC<FloatingHeaderProps> = ({
-  title,
-}) => {
+const FloatingHeader: React.FC<FloatingHeaderProps> = ({ title }) => {
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -19,41 +17,41 @@ const FloatingHeader: React.FC<FloatingHeaderProps> = ({
     };
 
     // Add scroll event listener
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
 
     // Cleanup listener on component unmount
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
   return (
-    <header 
+    <header
       className={`
         fixed top-0 left-0 right-0 
         z-50
         transition-all duration-300 ease-in-out
-        shadow-lg
-        ${isScrolled 
-          ? 'bg-white shadow-md py-6' 
-          : 'bg-white-500 py-6'}
+        bg-white py-6
+        ${
+          isScrolled ? "shadow-md" : "shadow-lg"
+        } // Use shadows for scroll effect
       `}
     >
-      <div className="max-w-7xl mx-auto px- sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex">
           <Image
-            className='mr-4'
+            className="mr-4"
             src="/renavestlogo.avif"
             alt="Renavest Logo"
             width={50}
             height={50}
           />
           {/* Title */}
-          <h1 
+          <h1
             className={`
               text-2xl font-semibold
               transition-all duration-300
-              ${isScrolled ? 'text-gray-800' : 'text-gray-800'}
+              text-gray-800 // Keep text dark for readability
             `}
           >
             {title}
@@ -66,15 +64,9 @@ const FloatingHeader: React.FC<FloatingHeaderProps> = ({
 
 // Example usage
 const Example = () => {
-//   const handleCtaClick = () => {
-//     console.log('CTA clicked!');
-//   };
-
   return (
     <div>
-      <FloatingHeader
-        title="Renavest"
-      />
+      <FloatingHeader title="Renavest" />
     </div>
   );
 };
