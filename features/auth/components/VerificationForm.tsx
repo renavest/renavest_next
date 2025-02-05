@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { $auth, updateEmail, updateCode } from "../stores";
 import { AlertCircle } from "lucide-react";
@@ -9,15 +9,28 @@ import {
   validateCompanyEmail,
   validateCode,
 } from "../utils/validation";
+import { setUserVerified, checkUserVerified } from "../utils/auth";
 import { z } from "zod";
 import VerificationCode from "./VerificationCode";
+import { useRouter } from "next/navigation";
 
-export default function LoginForm() {
+export default function VerificationForm() {
   const auth = useStore($auth);
+  const router = useRouter();
+
+  useEffect(() => {
+    // Check if user is already verified
+    if (checkUserVerified()) {
+      router.push("/");
+    }
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted", { email: auth.email, code: auth.code });
+    console.log("Verification submitted", {
+      email: auth.email,
+      code: auth.code,
+    });
 
     try {
       loginSchema.parse(auth);
@@ -37,8 +50,12 @@ export default function LoginForm() {
         });
         return;
       }
-      console.log("Proceeding with login");
-      window.location.href = "/";
+
+      // Store verification status
+      setUserVerified(auth.email);
+
+      console.log("Verification successful");
+      router.push("/");
     } catch (err) {
       console.error("Validation error:", err);
       if (err instanceof z.ZodError) {
@@ -56,14 +73,18 @@ export default function LoginForm() {
       <div className="w-full max-w-md space-y-8 p-8 shadow-lg">
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight">
-            Welcome back to <span className="text-[#875cf3]">Renavest</span>
+            Verify your <span className="text-[#875cf3]">Renavest</span> account
           </h1>
-          <p className="mt-2 text-muted-foreground">Sign in to continue</p>
+          <p className="mt-2 text-muted-foreground">
+            Enter your details to verify your account
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium mb-2">Work email</label>
+            <label className="block text-sm font-medium mb-2">
+              Company email
+            </label>
             <input
               type="email"
               className="w-full px-4 py-3 rounded-lg border bg-background"
@@ -95,10 +116,10 @@ export default function LoginForm() {
             {auth.isLoading ? (
               <span className="flex items-center justify-center gap-2">
                 <span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                Signing in...
+                Verifying...
               </span>
             ) : (
-              "Sign in"
+              "Verify Account"
             )}
           </button>
         </form>

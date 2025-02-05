@@ -1,14 +1,25 @@
+"use client";
+
 import { redirect } from "next/navigation";
 import FloatingHeader from "../features/home/components/FloatingHeader";
 import GridComponent from "../features/home/components/Grid";
 import TherapistList from "../config/therapistsList";
 import { Advisor } from "@/shared/types";
+import { checkUserVerified } from "../features/auth/utils/auth";
+import { useEffect, useState } from "react";
 
 export default function Home() {
-  const isLoggedIn = true; // Replace with your auth check
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (!isLoggedIn) {
-    redirect("/login");
+  useEffect(() => {
+    if (!checkUserVerified()) {
+      redirect("/login");
+    }
+    setIsLoading(false);
+  }, []);
+
+  if (isLoading) {
+    return null;
   }
 
   return (
