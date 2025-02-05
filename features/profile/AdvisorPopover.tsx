@@ -1,6 +1,7 @@
 import React from "react";
 import { Advisor } from "@/shared/types";
 import { X } from "lucide-react";
+import Image from "next/image";
 
 interface AdvisorPopoverProps {
   advisor: Advisor | null;
@@ -29,9 +30,11 @@ const AdvisorPopover: React.FC<AdvisorPopoverProps> = ({
         <div className="flex flex-col md:flex-row md:gap-6">
           <div className="mb-6 md:mb-0 md:w-1/3">
             <div className="overflow-hidden rounded-xl bg-gray-200 min-h-60 mb-6">
-              <img
-                src={advisor.profileUrl}
+              <Image
+                src={advisor.profileUrl || "/experts/placeholderexp.png"}
                 alt={advisor.name}
+                width={500}
+                height={300}
                 className="h-64 w-full object-cover md:h-auto"
               />
             </div>
@@ -54,7 +57,7 @@ const AdvisorPopover: React.FC<AdvisorPopoverProps> = ({
               </div>
               <div>
                 <h3 className="font-semibold">Certifications</h3>
-                <p className="mt-1 text-sm text-gray-600">
+                <p className="mt-1 text-sm text-gray-600 max-h-[50px] overflow-y-auto">
                   {advisor.certifications}
                 </p>
               </div>
@@ -81,13 +84,13 @@ const AdvisorPopover: React.FC<AdvisorPopoverProps> = ({
 
             <div className="mb-6">
               <h3 className="mb-2 text-lg font-semibold">Who I Work With</h3>
-              <p>{advisor.clientele}</p>
+              <p className="max-h-[200px] overflow-y-auto">{advisor.clientele}</p>
             </div>
 
             {advisor.longBio && (
               <div className="mb-6">
                 <h3 className="mb-2 text-lg font-semibold">About Me</h3>
-                <p className="text-gray-700">{advisor.longBio}</p>
+                <p className="text-gray-700 max-h-[250px] overflow-y-auto">{advisor.longBio}</p>
               </div>
             )}
           </div>

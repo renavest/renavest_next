@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import AdvisorPopover from "../../profile/AdvisorPopover";
 import { Advisor } from "@/shared/types";
 import { Award } from "lucide-react";
+import Image from "next/image";
 
 interface AdvisorCardProps {
   advisor: Advisor;
@@ -13,14 +14,16 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
   return (
     <div
       onClick={onClick}
-      className="group relative flex flex-col rounded-2xl bg-white shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
+      className="relative rounded-2xl flex flex-col mb-4 p-4 hover:bg-[#ecc0ff] hover:p-4 transition-all duration-300" 
     >
       {/* Image Container */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden">
-        <img
-          src={advisor.profileUrl || advisor.bookingURL}
-          alt={advisor.name}
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+      <div className="group relative aspect-[3/4] w-full overflow-hidden">
+        <Image
+            width={350}
+            height={350}
+            src={advisor.profileUrl || '/experts/placeholderexp.png'}
+            alt={advisor.name}       
+          className="h-full w-full rounded-2xl object-cover object-top transition-transform duration-500 group-hover:scale-110"
         />
         {/* Experience Badge */}
         <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium tracking-wide text-gray-700 shadow-sm">
