@@ -1,5 +1,5 @@
 export interface Advisor {
-  id: number;
+  id: string;
   name: string;
   title: string;
   bookingURL: string;
