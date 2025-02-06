@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-
+import { LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { handleLogout } from "../../auth/utils/auth";
 interface FloatingHeaderProps {
   title: string;
 }
@@ -32,43 +34,44 @@ const FloatingHeader: React.FC<FloatingHeaderProps> = ({ title }) => {
         z-50
         transition-all duration-300 ease-in-out
         bg-white py-6
-        ${
-          isScrolled ? "shadow-md" : "shadow-lg"
-        } // Use shadows for scroll effect
+        ${isScrolled ? "shadow-md" : "shadow-lg"}
       `}
     >
-      <div className="mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex">
-          <Image
-            className="mr-4"
-            src="/renavestlogo.avif"
-            alt="Renavest Logo"
-            width={50}
-            height={50}
-          />
-          {/* Title */}
-          <h1
-            className={`
-              text-2xl font-semibold
-              transition-all duration-300
-              text-gray-800 // Keep text dark for readability
-            `}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center">
+            <Image
+              className="mr-4"
+              src="/renavestlogo.avif"
+              alt="Renavest Logo"
+              width={50}
+              height={50}
+            />
+            {/* Title */}
+            <h1
+              className={`
+                text-2xl font-semibold
+                transition-all duration-300
+                text-gray-800
+              `}
+            >
+              {title}
+            </h1>
+          </div>
+
+          {/* Logout Button */}
+          <Button
+            variant="ghost"
+            onClick={handleLogout}
+            className="flex items-center gap-2 hover:bg-gray-100"
           >
-            {title}
-          </h1>
+            <LogOut className="h-4 w-4" />
+            <span>Logout</span>
+          </Button>
         </div>
       </div>
     </header>
   );
 };
 
-// Example usage
-const Example = () => {
-  return (
-    <div>
-      <FloatingHeader title="Renavest" />
-    </div>
-  );
-};
-
-export default Example;
+export default FloatingHeader;

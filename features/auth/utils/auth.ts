@@ -25,3 +25,10 @@ export function checkUserVerified(): boolean {
     return false;
   }
 }
+
+export function handleLogout() {
+  // Clear user verification data
+  localStorage.removeItem("userVerification");
+  // You can add more cleanup here if needed
+  window.location.href = "/login";
+}
