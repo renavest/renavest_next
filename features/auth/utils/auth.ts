@@ -26,7 +26,7 @@ export function checkUserVerified(): boolean {
   }
 }
 
-export function logout() {
+export function handleLogout() {
   // Clear user verification data
   localStorage.removeItem("userVerification");
   // You can add more cleanup here if needed

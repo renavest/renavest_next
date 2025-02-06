@@ -4,15 +4,13 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
-
+import { handleLogout } from "../../auth/utils/auth";
 interface FloatingHeaderProps {
   title: string;
 }
 
 const FloatingHeader: React.FC<FloatingHeaderProps> = ({ title }) => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -28,13 +26,6 @@ const FloatingHeader: React.FC<FloatingHeaderProps> = ({ title }) => {
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
-
-  const handleLogout = () => {
-    // Clear user data from localStorage
-    localStorage.removeItem("userVerification");
-    // Redirect to login page
-    router.push("/login");
-  };
 
   return (
     <header
