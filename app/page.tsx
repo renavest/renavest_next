@@ -24,7 +24,7 @@ export default function Home() {
 
   return (
     <div className="font-[family-name:var(--font-geist-sans)]">
-      <FloatingHeader />
+      <FloatingHeader title="Renavest" />
       <section className="p-6 px-0 mt-16">
         <h2 className="text-3xl mt-10 font-bold text-center">
           Financial Therapists
