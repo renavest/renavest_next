@@ -33,42 +33,37 @@ const FloatingHeader: React.FC<FloatingHeaderProps> = ({ title }) => {
         fixed top-0 left-0 right-0 
         z-50
         transition-all duration-300 ease-in-out
-        bg-white py-6
-        ${isScrolled ? "shadow-md" : "shadow-lg"}
-      `}
+        bg-white py-6 px-20
+        ${isScrolled ? "shadow-md" : "shadow-lg"}`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center">
-            <Image
-              className="mr-4"
-              src="/renavestlogo.avif"
-              alt="Renavest Logo"
-              width={50}
-              height={50}
-            />
-            {/* Title */}
-            <h1
-              className={`
-                text-2xl font-semibold
-                transition-all duration-300
-                text-gray-800
-              `}
-            >
-              {title}
-            </h1>
-          </div>
-
-          {/* Logout Button */}
-          <Button
-            variant="ghost"
-            onClick={handleLogout}
-            className="flex items-center gap-2 hover:bg-gray-100"
-          >
-            <LogOut className="h-4 w-4" />
-            <span>Logout</span>
-          </Button>
+      <div 
+        style={{ maxWidth: '1500px' }}
+        className="flex mx-auto">
+        <div 
+          className="flex">
+          <Image
+            className="mr-4"
+            src="/renavestlogo.avif"
+            alt="Renavest Logo"
+            width={50}
+            height={50}/>
+          <h1
+            className={`
+              text-2xl font-semibold
+              transition-all duration-300
+              text-gray-800
+            `}>
+            {title}
+          </h1>
         </div>
+        <div className="flex flex-1"/>
+        <Button
+          variant="ghost"
+          onClick={handleLogout}
+          className="flex items-center gap-2 hover:bg-gray-100">
+          <LogOut className="h-4 w-4" />
+          <span>Logout</span>
+        </Button>
       </div>
     </header>
   );
