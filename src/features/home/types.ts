@@ -1,4 +1,4 @@
-import { Advisor } from "@/shared/types";
+import { Advisor } from "@/src/shared/types";
 export interface AdvisorPopoverProps {
   advisor: Advisor | null;
   isOpen: boolean;
