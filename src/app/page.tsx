@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import FloatingHeader from "../features/home/components/FloatingHeader";
 import GridComponent from "../features/home/components/Grid";
 import TherapistList from "../config/therapistsList";
-import { Advisor } from "@/shared/types";
+import { Advisor } from "@/src/shared/types";
 import { checkUserVerified } from "../features/auth/utils/auth";
 import { useEffect, useState } from "react";
 

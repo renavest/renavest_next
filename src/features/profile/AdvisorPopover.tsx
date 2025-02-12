@@ -1,5 +1,5 @@
 import React from "react";
-import { Advisor } from "@/shared/types";
+import { Advisor } from "@/src/shared/types";
 import { X } from "lucide-react";
 import Image from "next/image";
 
@@ -84,13 +84,17 @@ const AdvisorPopover: React.FC<AdvisorPopoverProps> = ({
 
             <div className="mb-6">
               <h3 className="mb-2 text-lg font-semibold">Who I Work With</h3>
-              <p className="max-h-[200px] overflow-y-auto">{advisor.clientele}</p>
+              <p className="max-h-[200px] overflow-y-auto">
+                {advisor.clientele}
+              </p>
             </div>
 
             {advisor.longBio && (
               <div className="mb-6">
                 <h3 className="mb-2 text-lg font-semibold">About Me</h3>
-                <p className="text-gray-700 max-h-[250px] overflow-y-auto">{advisor.longBio}</p>
+                <p className="text-gray-700 max-h-[250px] overflow-y-auto">
+                  {advisor.longBio}
+                </p>
               </div>
             )}
           </div>
