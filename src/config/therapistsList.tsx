@@ -208,7 +208,7 @@ const TherapistList =
     "clientele": "Mid 20s, 30s, 40s, and 60-70s. Income level varies.",
     "longBio": "Using financial therapy tools we explore how and why one relates to money the way they do. We look at how beliefs, values, and money histories shape financial decisions and work toward aligning one's resources with the life they are creating. We also work on communication skills when it comes to expressing financial concerns and needs. The work often includes creating a financial snapshot, establishing new spending patterns, and learning techniques to improve goal setting and achievement. I can provide investment education and advice as well. My base session rate is $120 an hour. I also provide packages of services. My most common package includes three personalized one-on-one sessions with financial planning/analysis (financial snapshot, cash flow review, debt analysis, goal setting, etc), and that is typically $540. I can create custom packages and can offer a sliding scale when necessary. I also offer payment plans, typically dividing the cost over the number of sessions. I can offer investment management (though I only do that in select cases where it makes sense for the client), that fee is an asset under management fee typically of 1.5%",
     "previewBlurb": "Transforming financial wellness through compassionate guidance and personalized money healing!",
-    "profileUrl": ""
+    "profileUrl": "/experts/Sarah_Carr_Headshot.jpeg"
   },
   {
     "id": "16",
@@ -222,7 +222,7 @@ const TherapistList =
     "clientele": "Female, 35, African American. Might be married with children. Has a degree. Makes good money but not sure where it goes.",
     "longBio": "LaQueshia Clemons is a LCSW, Trauma of Money Certified, and Financial Counselor, who guides individuals and couples towards financial well-being and emotional resilience. As the founder of Freedom Life Therapy and Wellness, she helps clients explore money-related emotional and behavioral patterns. Through engaging workshops and speeches, LaQueshia empowers others to understand their unique money stories, emphasizing the profound influences shaping financial decisions. Featured in media outlets like Word in Black, Nerd Wallet, and Yahoo Finance, her dynamic and warm approach transforms lives and fosters healthy money relationships. Outside work, LaQueshia enjoys cooking, adding zest to life through culinary adventures.",
     "previewBlurb": "Heal your money mindset, empower your future, and savor life's journey!",
-    "profileUrl": ""
+    "profileUrl": "/experts/LaQueshiaClemons.jpeg"
   },
   {
     "id": "17",
@@ -236,7 +236,7 @@ const TherapistList =
     "clientele": "Trend toward early career to pre-retirement and encountering some type of life transition. There is an appreciation for an empathetic and energetic professional to provide financial guidance during a time of increased stress.",
     "longBio": "Kelly is a CERTIFIED FINANCIAL PLANNER(TM) professional, Certified Student Loan professional (R), a Certified Divorce Financial Analyst (R) practitioner, and Certified Financial Therapist-1(TM). She maintains those credentials with annual continuing education programs to stay up to date and would consider herself a lifelong learner. Life credentials include growing up in a home with a single mom who worked miracles with financial resources available, business ownership, college funding and student loan survival, buying and selling property and cars, military service member household with multiple PCS moves, divorced family members and friends, life’s twists and turns.",
     "previewBlurb": "Empowering financial journeys through expertise, empathy, and life experience!",
-    "profileUrl": ""
+    "profileUrl": "/experts/Kelly_Reddy_Heffner.jpeg"
   },
   {
     "id": "18",
@@ -250,7 +250,7 @@ const TherapistList =
     "clientele": "Generation X, male or female. Earning between $75,000 and $150,000. ",
     "longBio": "Dr. George M. Blount is a financial therapist, the Founder of nBalance Financial, and a researcher of finance's emotional, psychological, behavioral, and relational elements. Dr. Blount is also an accomplished educator, serving as an Adjunct Professor and Lecturer in Personal Finance, Finance, Managerial Accounting, and Behavioral Finance at several universities. He holds a Doctor of Business Administration (DBA) and an MBA from Walden University, as well as a Bachelor of Science (BS) and an Associate of Science (AS) from Johnson and Wales University. Dr. George Blount has spent over 20 years in the financial services industry, obtaining a wealth of knowledge in retirement planning, business development, and strategy. He served on the MA Financial Literacy Task Force in 2015, appointed by MA Treasurer Deb Goldberg, and was named one of the top 100 people of Finance 2020, an award by Top 100 magazine. TEDx Talk: https://youtu.be/KSCAuHC1-P4",
     "previewBlurb": "Transforming financial wellness through emotional intelligence and strategic money mindset!",
-    "profileUrl": ""
+    "profileUrl": "/experts/GeorgeBlount.jpg"
   },
   {
     "id": "19",
@@ -264,7 +264,7 @@ const TherapistList =
     "clientele": "Typically between 30 to 55 years old, focused on individuals navigating significant life transitions such as marriage, divorce, or career changes, which impact their financial stability. I predominantly serve female clients, although my services are inclusive and beneficial to all genders, with a focus on empowering women to take charge of their financial health, especially post-divorce or during major life adjustments. The clients I work with range from middle to upper-middle class, with annual incomes between $40,000 to $120,000, often in stages of rebuilding or enhancing their financial independence and security. Primarily based in suburban areas across the United States, with a significant number located in the Southeast, my clients are diverse in their careers, including sectors like healthcare, education, and small business ownership. They seek to balance professional growth with financial stability and are particularly interested in financial therapy to address and heal from financial trauma, develop healthier money management habits, and secure their financial future.",
     "longBio": "Tamoa Danielle leads Clarity Kollective LLC, specializing in transformative financial therapy. As CEO, she empowers clients to overcome financial challenges and achieve sustainable wellness. Tamoa’s journey includes personal recoveries from two bankruptcies and overcoming significant financial trauma, which fuels her passion for helping others transform their financial lives. As a licensed clinical mental health therapist and financial therapist, Tamoa integrates the emotional and psychological aspects into money management. Her holistic approach addresses the root causes of financial trauma, fostering a healthier relationship with money and combining practical advice with emotional support at the critical intersection of finances and mental well-being. Additionally, Tamoa serves as a personal to business development coach on the LUHV Plus platform, assisting entrepreneurs in clearing mental clutter and transforming into effective leaders with renewed mindsets for achieving their personal and business goals. Tamoa also heads Renew You Consulting LLC as a Credit Restoration Specialist. In this role, she expertly guides clients through the complexities of credit restoration, helping them rebuild their credit profiles to regain financial stability. A dedicated speaker, consultant, and advocate for financial empowerment, Tamoa is committed to renewing financial outlooks and transforming lives. Catch Tamoa Danielle on her YouTube channel, Financial Therapy to Prosperity, where she explores the intricate relationship between emotions and finances, delving into financial therapy, trauma, and the journey towards financial prosperity.",
     "previewBlurb": "Transforming financial trauma into empowerment through holistic healing and hope!",
-    "profileUrl": ""
+    "profileUrl": "/experts/TamoaDanielleSmith.jpeg"
   },
   {
     "id": "20",
@@ -278,7 +278,7 @@ const TherapistList =
     "clientele": "New couples, early career professionals, individuals receiving inheritance, and couples from diverse financial backgrounds seeking to navigate complex family wealth dynamics and parenting challenges.",
     "longBio": "I have been highlighted, featured, and interviewed in several news outlets: the Boston Globe, Women's World Daily, Seven Days, Fatherly, Vermont Edition, Healthy Love and Money. Jennifer holds a Masters degree in Sociology and Anthropology and a Masters degree in Social Work from the University of Vermont. In order to help people overcome and work through chronic financial stressors, Jennifer decided to extend her training with a graduate certificate program in Financial Psychology and Behavioral Finance from the Heider School of Business at Creighton University. From 2016-2018, as a student in the program, Jennifer was “the client” going through the process of addressing her own unconscious beliefs about money and connecting them to some of her unhelpful financial behaviors. She knows first-hand how addressing the psychology of money can improve wellbeing, relationships and financial security.",
     "previewBlurb": "Transforming financial struggles into empowerment through personal healing and insight!\n",
-    "profileUrl": ""
+    "profileUrl": "/experts/JenniferCalder.jpeg"
   },
   {
     "id": "21",

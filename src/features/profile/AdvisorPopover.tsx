@@ -18,8 +18,8 @@ const AdvisorPopover: React.FC<AdvisorPopoverProps> = ({
   if (!isOpen || !advisor) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="relative mx-4 w-full max-w-4xl rounded-2xl bg-white p-6 shadow-xl min-h-[650px]">
+    <div className="fixed top-0 left-0 h-full w-full flex-wrap overflow-auto z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="relative overflow-hidden mx-4 w-full max-w-4xl rounded-2xl bg-white p-6 shadow-xl min-h-[650px]">
         <button
           onClick={onClose}
           className="absolute right-4 top-4 rounded-full bg-gray-100 p-2 hover:bg-gray-200"
@@ -35,7 +35,7 @@ const AdvisorPopover: React.FC<AdvisorPopoverProps> = ({
                 alt={advisor.name}
                 width={500}
                 height={300}
-                className="h-64 w-full object-cover md:h-auto"
+                className="h-64 w-full h-full object-cover md:h-auto"
               />
             </div>
             {advisor.bookingURL && (
