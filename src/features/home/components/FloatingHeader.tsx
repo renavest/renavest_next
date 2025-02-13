@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { LogOut } from "lucide-react";
-import { Button } from "@/public/components/ui/button";
+import { Button } from "@/src/features/profile/components/button";
 import { handleLogout } from "../../auth/utils/auth";
 interface FloatingHeaderProps {
   title: string;
