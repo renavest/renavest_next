@@ -1,15 +1,23 @@
-# ESLint + Prettier Setup
+Here's an updated version of your ESLint + Prettier setup markdown file to reflect your current setup accurately:
 
-Quick setup guide for ESLint and Prettier in VS Code.
+---
 
-## Required Extensions
+# **ESLint + Prettier Setup**
 
-1. ESLint (`dbaeumer.vscode-eslint`)
-2. Prettier (`esbenp.prettier-vscode`)
+Quick setup guide for ESLint and Prettier in **VS Code**.
 
-## VS Code Settings
+---
 
-Add to your `settings.json`:
+## 🔌 **Required Extensions**
+
+1. **ESLint** (`dbaeumer.vscode-eslint`)
+2. **Prettier - Code formatter** (`esbenp.prettier-vscode`)
+
+---
+
+## ⚙️ **VS Code Settings**
+
+Add the following to your `settings.json`:
 
 ```json
 {
@@ -28,10 +36,12 @@ Add to your `settings.json`:
 }
 ```
 
-These settings will:
+---
 
-- Auto-fix ESLint errors on save
-- Use Prettier as default formatter
-- Format code on save
-- Enable ESLint for JS/TS files
-- Use the new flat config system
+### 🔍 **Explanation of Settings**
+
+- ✅ **Auto-fix ESLint errors on save**: Automatically runs ESLint fixes when you save a file.
+- 📝 **Use Prettier as the default formatter**: Ensures consistent formatting across your codebase.
+- 💾 **Format code on save**: Runs Prettier to format files automatically.
+- 📜 **Enable ESLint for JS/TS files**: Validates JavaScript, TypeScript, React (JSX/TSX) files.
+- 🔄 **Use Flat Config**: Uses ESLint’s modern configuration system (`eslint.config.mjs`).

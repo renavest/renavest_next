@@ -1,8 +1,10 @@
-import { Advisor } from '@/src/shared/types';
 import { X } from 'lucide-react';
 import Image from 'next/image';
-import { emailSignal } from '../../features/auth/utils/emailState';
 import React from 'react';
+
+import { Advisor } from '@/src/shared/types';
+
+import { emailSignal } from '../../features/auth/utils/emailState';
 
 interface AdvisorPopoverProps {
   advisor: Advisor | null;

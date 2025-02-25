@@ -1,31 +1,106 @@
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: {
-    env: { es2022: true },
-    parserOptions: {
-      ecmaVersion: 2022,
-      sourceType: 'module',
+// eslint.config.js
+import eslint from '@eslint/js';
+import tseslint from 'typescript-eslint';
+import reactHooks from 'eslint-plugin-react-hooks';
+import importPlugin from 'eslint-plugin-import';
+import nextPlugin from '@next/eslint-plugin-next';
+import prettier from 'eslint-config-prettier';
+
+export default [
+  // Base configurations
+  eslint.configs.recommended,
+  ...tseslint.configs.recommended,
+
+  // React Hooks configuration
+  {
+    plugins: {
+      'react-hooks': reactHooks,
+    },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
     },
   },
-});
 
-const eslintConfig = [
+  // Import plugin configuration
   {
-    files: ['**/*.{js,jsx,ts,tsx}'],
-    languageOptions: {
-      parserOptions: {
-        ecmaVersion: 2022,
-        sourceType: 'module',
-        ecmaFeatures: {
-          jsx: true,
-        },
-      },
+    plugins: {
+      import: importPlugin,
     },
     settings: {
       'import/resolver': {
         typescript: {},
         node: {
           extensions: ['.js', '.jsx', '.ts', '.tsx'],
+        },
+      },
+    },
+    rules: {
+      'import/no-unresolved': 'error',
+      'import/named': 'error',
+      'import/default': 'error',
+      'import/namespace': 'error',
+      'import/order': [
+        'error',
+        {
+          groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+          pathGroups: [
+            {
+              pattern: '@/**',
+              group: 'internal',
+            },
+          ],
+          'newlines-between': 'always',
+          alphabetize: {
+            order: 'asc',
+            caseInsensitive: true,
+          },
+        },
+      ],
+      'import/no-restricted-paths': [
+        'error',
+        {
+          zones: [
+            {
+              target: './src/features/**/api',
+              from: './src/features/**/ui',
+              message: 'API layer should not import from UI layer',
+            },
+            {
+              target: './src/features/**/domain',
+              from: './src/features/**/ui',
+              message: 'Domain layer should not import from UI layer',
+            },
+            {
+              target: './src/features/**/domain',
+              from: './src/features/**/api',
+              message: 'Domain layer should not import from API layer',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // Next.js configuration
+  {
+    plugins: {
+      '@next/next': nextPlugin,
+    },
+    rules: {
+      ...nextPlugin.configs.recommended.rules,
+      ...nextPlugin.configs['core-web-vitals'].rules,
+    },
+  },
+
+  // Main configuration for all JavaScript/TypeScript files
+  {
+    files: ['**/*.{js,jsx,ts,tsx}'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
         },
       },
     },
@@ -59,25 +134,6 @@ const eslintConfig = [
         },
       ],
 
-      // Import ordering
-      'import/order': [
-        'error',
-        {
-          groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
-          pathGroups: [
-            {
-              pattern: '@/**',
-              group: 'internal',
-            },
-          ],
-          'newlines-between': 'always',
-          alphabetize: {
-            order: 'asc',
-            caseInsensitive: true,
-          },
-        },
-      ],
-
       // File structure rules
       'max-lines': ['error', { max: 300, skipBlankLines: true, skipComments: true }],
       'max-lines-per-function': ['error', { max: 100, skipBlankLines: true, skipComments: true }],
@@ -87,42 +143,15 @@ const eslintConfig = [
       'react/react-in-jsx-scope': 'off',
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-
-      // Vertical slice specific rules
-      'import/no-restricted-paths': [
-        'error',
-        {
-          zones: [
-            {
-              target: './src/features/**/api',
-              from: './src/features/**/ui',
-              message: 'API layer should not import from UI layer',
-            },
-            {
-              target: './src/features/**/domain',
-              from: './src/features/**/ui',
-              message: 'Domain layer should not import from UI layer',
-            },
-            {
-              target: './src/features/**/domain',
-              from: './src/features/**/api',
-              message: 'Domain layer should not import from API layer',
-            },
-          ],
-        },
-      ],
     },
   },
-  ...compat.extends(
-    'eslint:recommended',
-    'plugin:react-hooks/recommended',
-    'plugin:import/errors',
-    'plugin:import/warnings',
-    'plugin:import/typescript',
-    'prettier',
-    'next/core-web-vitals',
-    'next/typescript',
-  ),
-];
 
-export default eslintConfig;
+  // Apply Prettier as config (if you want to include it)
+  {
+    files: ['**/*.{js,jsx,ts,tsx}'],
+    rules: {
+      // Add any prettier overrides here
+    },
+  },
+  prettier,
+];
