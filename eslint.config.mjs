@@ -1,10 +1,10 @@
 // eslint.config.js
 import eslint from '@eslint/js';
-import tseslint from 'typescript-eslint';
-import reactHooks from 'eslint-plugin-react-hooks';
-import importPlugin from 'eslint-plugin-import';
 import nextPlugin from '@next/eslint-plugin-next';
 import prettier from 'eslint-config-prettier';
+import importPlugin from 'eslint-plugin-import';
+import reactHooks from 'eslint-plugin-react-hooks';
+import tseslint from 'typescript-eslint';
 
 export default [
   // Base configurations
@@ -139,7 +139,7 @@ export default [
       'max-lines-per-function': ['error', { max: 100, skipBlankLines: true, skipComments: true }],
 
       // Code style
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'no-console': ['warn', { allow: ['warn', 'error', 'info', 'debug'] }],
       'react/react-in-jsx-scope': 'off',
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
