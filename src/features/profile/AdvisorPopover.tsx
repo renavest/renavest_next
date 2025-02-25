@@ -2,7 +2,6 @@ import React from 'react';
 import { Advisor } from '@/src/shared/types';
 import { X } from 'lucide-react';
 import Image from 'next/image';
-import { emailSignal } from '../../features/auth/utils/emailState';
 
 interface AdvisorPopoverProps {
   advisor: Advisor | null;
@@ -19,19 +18,14 @@ declare global {
 }
 
 const AdvisorPopover: React.FC<AdvisorPopoverProps> = ({ advisor, isOpen, onClose }) => {
-  const handleBookingClick = () => {
-    if (
-      typeof window !== 'undefined' &&
-      window.umami &&
-      typeof window.umami.trackEvent === 'function'
-    ) {
-      window.umami.trackEvent('Book a Session Click', {
-        email: emailSignal.value,
-      });
-    }
-  };
+  console.log('AdvisorPopover render:', { advisor: advisor?.name, isOpen });
 
-  if (!isOpen || !advisor) return null;
+
+  // Early return with debug
+  if (!isOpen || !advisor) {
+    console.log('AdvisorPopover early return:', { isOpen, hasAdvisor: !!advisor });
+    return null;
+  }
 
   return (
     <div className='fixed top-0 left-0 h-full w-full flex-wrap overflow-auto z-50 flex items-center justify-center bg-black bg-opacity-50'>
@@ -59,7 +53,6 @@ const AdvisorPopover: React.FC<AdvisorPopoverProps> = ({ advisor, isOpen, onClos
                 href={advisor.bookingURL}
                 target='_blank'
                 rel='noopener noreferrer'
-                onClick={handleBookingClick}
                 className='inline-block rounded-lg bg-violet-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700 w-full text-center'
               >
                 Book a Session

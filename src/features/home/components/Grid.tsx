@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from "react";
+import { useSignal, useComputed } from "@preact/signals-react";
+import React, { useCallback, useEffect } from "react";
 import AdvisorPopover from "../../profile/AdvisorPopover";
 import { Advisor } from "@/src/shared/types";
 import { Award } from "lucide-react";
@@ -7,13 +8,86 @@ import Image from "next/image";
 
 interface AdvisorCardProps {
   advisor: Advisor;
-  onClick: () => void;
+  onSelect: (advisor:Advisor) => void;
 }
 
-const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
+const AdvisorGrid: React.FC<{ advisors: Advisor[] }> = ({ advisors }) => {
+
+  // Create signals at component level
+  const selectedAdvisor = useSignal<Advisor | null>(null);
+  const isModalOpen = useSignal(false);
+
+  // Create a computed value that will trigger re-renders
+  const modalState = useComputed(() => ({
+    advisor: selectedAdvisor.value,
+    isOpen: isModalOpen.value
+  }));
+
+  // Add effect to log state changes
+  useEffect(() => {
+    console.log('Modal state changed:', {
+      advisor: modalState.value.advisor?.name,
+      isOpen: modalState.value.isOpen
+    });
+  }, [modalState.value]);
+
+  const handleSelect = useCallback((advisor: Advisor) => {
+    console.log('handleSelect called with:', advisor.name);
+    // Force synchronous updates
+    Promise.resolve().then(() => {
+      selectedAdvisor.value = advisor;
+      isModalOpen.value = true;
+    });
+  }, []);
+
+  const handleClose = useCallback(() => {
+    console.log('handleClose called');
+    // Force synchronous updates
+    Promise.resolve().then(() => {
+      isModalOpen.value = false;
+      selectedAdvisor.value = null;
+    });
+  }, []);
+
+  // Render with modalState value to ensure updates
+  const { advisor, isOpen } = modalState.value;
+  
+  console.log('Rendering Grid with:', { advisorName: advisor?.name, isOpen });
+
+  return (
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-8xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+        {advisors.map((advisor) => (
+          <AdvisorCard
+            key={advisor.id}
+            advisor={advisor}
+            onSelect={handleSelect}
+          />
+        ))}
+      </div>
+
+      <AdvisorPopover
+        advisor={advisor}
+        isOpen={isOpen}
+        position="center"
+        onClose={handleClose}
+      />
+    </div>
+  );
+};
+
+const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onSelect }) => {
+
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Card clicked:', advisor.name);
+    onSelect(advisor);
+  }, [advisor, onSelect]);
+
   return (
     <div
-      onClick={onClick}
+      onClick={handleClick}
       className="relative rounded-2xl flex flex-col mb-4 p-4 hover:bg-[#ecc0ff] hover:p-4 transition-all duration-300"
     >
       {/* Image Container */}
@@ -62,33 +136,6 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
           {advisor.previewBlurb || advisor.introduction}
         </p>
       </div>
-    </div>
-  );
-};
-
-const AdvisorGrid: React.FC<{ advisors: Advisor[] }> = ({ advisors }) => {
-  const [selectedAdvisor, setSelectedAdvisor] = useState<Advisor | null>(null);
-
-  return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-8xl">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-        {advisors.map((advisor) => (
-          <AdvisorCard
-            key={advisor.id}
-            advisor={advisor}
-            onClick={() => setSelectedAdvisor(advisor)}
-          />
-        ))}
-      </div>
-
-      {selectedAdvisor && (
-        <AdvisorPopover
-          advisor={selectedAdvisor}
-          isOpen={!!selectedAdvisor}
-          position="center"
-          onClose={() => setSelectedAdvisor(null)}
-        />
-      )}
     </div>
   );
 };

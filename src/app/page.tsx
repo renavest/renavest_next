@@ -1,24 +1,24 @@
 "use client";
-
+import { signal, effect } from "@preact/signals-react";
 import { redirect } from "next/navigation";
 import FloatingHeader from "../features/home/components/FloatingHeader";
 import GridComponent from "../features/home/components/Grid";
 import TherapistList from "../config/therapistsList";
 import { Advisor } from "@/src/shared/types";
 import { checkUserVerified } from "../features/auth/utils/auth";
-import { useEffect, useState } from "react";
+
+const isLoading = signal(true);
 
 export default function Home() {
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
+  effect(() => {
     if (!checkUserVerified()) {
       redirect("/login");
     }
-    setIsLoading(false);
-  }, []);
+    isLoading.value = false;
+  });
 
-  if (isLoading) {
+  if (isLoading.value) {
     return null;
   }
 
