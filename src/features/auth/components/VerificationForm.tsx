@@ -1,15 +1,17 @@
 'use client';
-import React, { useEffect } from 'react';
 import { useStore } from '@nanostores/react';
-import { $auth, updateEmail, updateCode } from '../stores';
 import { AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
-import { loginSchema, validateCompanyEmail, validateCode } from '../utils/validation';
-import { setUserVerified, checkUserVerified } from '../utils/auth';
-import { z } from 'zod';
-import VerificationCode from './VerificationCode';
 import { useRouter } from 'next/navigation';
+import React, { useEffect } from 'react';
+import { toast } from 'sonner';
+import { z } from 'zod';
+
+import { $auth, updateEmail, updateCode } from '../stores';
+import { setUserVerified, checkUserVerified } from '../utils/auth';
 import { emailSignal } from '../utils/emailState'; // Import the email signal
+import { loginSchema, validateCompanyEmail, validateCode } from '../utils/validation';
+
+import VerificationCode from './VerificationCode';
 
 declare global {
   interface Window {
