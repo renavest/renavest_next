@@ -1,3 +1,7 @@
+# Docs
+
+- [Renavest Linting](/docs/eslint.md)
+
 # Next.js Vertical Slice Project
 
 ## Project Structure
