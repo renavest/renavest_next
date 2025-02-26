@@ -1,6 +1,6 @@
 "use client";
-import { useSignal, useComputed } from "@preact/signals-react";
-import React, { useCallback, useEffect } from "react";
+import { useSignal } from "@preact/signals-react";
+import React, { useCallback } from "react";
 import AdvisorPopover from "../../profile/AdvisorPopover";
 import { Advisor } from "@/src/shared/types";
 import { Award } from "lucide-react";
@@ -13,49 +13,46 @@ interface AdvisorCardProps {
 
 const AdvisorGrid: React.FC<{ advisors: Advisor[] }> = ({ advisors }) => {
 
-  // Create signals at component level
-  const selectedAdvisor = useSignal<Advisor | null>(null);
-  const isModalOpen = useSignal(false);
-
-  // Create a computed value that will trigger re-renders
-  const modalState = useComputed(() => ({
-    advisor: selectedAdvisor.value,
-    isOpen: isModalOpen.value
-  }));
-
-  // Add effect to log state changes
-  useEffect(() => {
-    console.log('Modal state changed:', {
-      advisor: modalState.value.advisor?.name,
-      isOpen: modalState.value.isOpen
-    });
-  }, [modalState.value]);
-
+  // Use a single signal for the modal state instead of separate signals and computed
+  const modalState = useSignal<{ advisor: Advisor | null, isOpen: boolean }>({
+    advisor: null,
+    isOpen: false
+  });
+  
+  // Update handleSelect to directly update the signal without Promise.resolve().then()
   const handleSelect = useCallback((advisor: Advisor) => {
     console.log('handleSelect called with:', advisor.name);
-    // Force synchronous updates
-    Promise.resolve().then(() => {
-      selectedAdvisor.value = advisor;
-      isModalOpen.value = true;
-    });
+    // Update the entire state object at once
+    modalState.value = { advisor, isOpen: true };
   }, []);
 
   const handleClose = useCallback(() => {
     console.log('handleClose called');
-    // Force synchronous updates
-    Promise.resolve().then(() => {
-      isModalOpen.value = false;
-      selectedAdvisor.value = null;
-    });
+    // Update the entire state object at once
+    modalState.value = { advisor: null, isOpen: false };
   }, []);
-
-  // Render with modalState value to ensure updates
-  const { advisor, isOpen } = modalState.value;
   
-  console.log('Rendering Grid with:', { advisorName: advisor?.name, isOpen });
-
+  console.log('Rendering Grid with:', { 
+    advisorName: modalState.value.advisor?.name, 
+    isOpen: modalState.value.isOpen 
+  });
+  const debugEl = (
+    <div style={{ 
+      position: 'fixed', 
+      top: '10px', 
+      left: '10px', 
+      zIndex: 9999, 
+      background: 'red', 
+      color: 'white',
+      padding: '5px' 
+    }}>
+      Modal state: isOpen={String(modalState.value.isOpen)}, 
+      advisor={modalState.value.advisor?.name || 'none'}
+    </div>
+  );
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-8xl">
+      {debugEl}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
         {advisors.map((advisor) => (
           <AdvisorCard
@@ -66,9 +63,10 @@ const AdvisorGrid: React.FC<{ advisors: Advisor[] }> = ({ advisors }) => {
         ))}
       </div>
 
+      {/* Use signal values directly in JSX to ensure component subscribes to changes */}
       <AdvisorPopover
-        advisor={advisor}
-        isOpen={isOpen}
+        advisor={modalState.value.advisor}
+        isOpen={modalState.value.isOpen}
         position="center"
         onClose={handleClose}
       />

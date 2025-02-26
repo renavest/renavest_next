@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Advisor } from '@/src/shared/types';
 import { X } from 'lucide-react';
 import Image from 'next/image';
@@ -16,15 +16,31 @@ declare global {
     };
   }
 }
+const AdvisorPopover: React.FC<AdvisorPopoverProps> = React.memo(({ advisor, isOpen, onClose }) => {
+  console.log('AdvisorPopover render called:', { 
+    advisorName: advisor?.name, 
+    isOpen, 
+    hasAdvisor: !!advisor 
+  });
+  
+  // Add effect to log when props change
+  useEffect(() => {
+    console.log('AdvisorPopover props changed:', { 
+      advisorName: advisor?.name, 
+      isOpen,
+      hasAdvisor: !!advisor 
+    });
+  }, [advisor, isOpen]);
 
-const AdvisorPopover: React.FC<AdvisorPopoverProps> = ({ advisor, isOpen, onClose }) => {
-  console.log('AdvisorPopover render:', { advisor: advisor?.name, isOpen });
-
-
-  // Early return with debug
-  if (!isOpen || !advisor) {
-    console.log('AdvisorPopover early return:', { isOpen, hasAdvisor: !!advisor });
-    return null;
+  // Add a debug element that shows even if conditions aren't met
+  if (!isOpen) {
+    console.log('AdvisorPopover early return - not open');
+    return <div style={{ display: 'none' }}>Popover not open</div>;
+  }
+  
+  if (!advisor) {
+    console.log('AdvisorPopover early return - no advisor');
+    return <div style={{ display: 'none' }}>No advisor selected</div>;
   }
 
   return (
@@ -106,6 +122,6 @@ const AdvisorPopover: React.FC<AdvisorPopoverProps> = ({ advisor, isOpen, onClos
       </div>
     </div>
   );
-};
+});
 
 export default AdvisorPopover;
