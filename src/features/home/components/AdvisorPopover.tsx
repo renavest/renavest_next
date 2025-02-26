@@ -1,45 +1,33 @@
+// AdvisorPopover.tsx
+'use client';
 import { X } from 'lucide-react';
 import Image from 'next/image';
-import React from 'react';
+import { useSignalEffect } from '@preact/signals-react';
+import { advisorSignal, isOpenSignal } from '../state/advisorSignals';
+const AdvisorPopover = () => {
+  useSignalEffect(() => {
+    console.log('Signal effect - advisorSignal:', advisorSignal.value);
+    console.log('Signal effect - isOpenSignal:', isOpenSignal.value);
+  });
+  const advisor = advisorSignal.value;
+  const isOpen = isOpenSignal.value;
 
-import { Advisor } from '@/src/shared/types';
-
-import { emailSignal } from '../../features/auth/utils/emailState';
-
-interface AdvisorPopoverProps {
-  advisor: Advisor | null;
-  isOpen: boolean;
-  position: string;
-  onClose: () => void;
-}
-declare global {
-  interface Window {
-    umami: {
-      trackEvent: (event: string, data: { email: string }) => void;
-    };
+  console.log('AdvisorPopover render:', { advisor: advisor?.name, isOpen });
+  if (!isOpen || !advisor) {
+    console.log('AdvisorPopover early return:', { isOpen, hasAdvisor: !!advisor });
+    return null;
   }
-}
-
-const AdvisorPopover: React.FC<AdvisorPopoverProps> = ({ advisor, isOpen, onClose }) => {
-  const handleBookingClick = () => {
-    if (
-      typeof window !== 'undefined' &&
-      window.umami &&
-      typeof window.umami.trackEvent === 'function'
-    ) {
-      window.umami.trackEvent('Book a Session Click', {
-        email: emailSignal.value,
-      });
-    }
+  const handleClose = () => {
+    isOpenSignal.value = false;
+    // Optionally clear the advisor:
+    advisorSignal.value = null;
   };
-
-  if (!isOpen || !advisor) return null;
 
   return (
     <div className='fixed top-0 left-0 h-full w-full flex-wrap overflow-auto z-50 flex items-center justify-center bg-black bg-opacity-50'>
       <div className='relative overflow-hidden mx-4 w-full max-w-4xl rounded-2xl bg-white p-6 shadow-xl min-h-[650px]'>
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className='absolute right-4 top-4 rounded-full bg-gray-100 p-2 hover:bg-gray-200'
         >
           <X className='h-6 w-6' />
@@ -53,7 +41,7 @@ const AdvisorPopover: React.FC<AdvisorPopoverProps> = ({ advisor, isOpen, onClos
                 alt={advisor.name}
                 width={500}
                 height={300}
-                className='h-64 w-full h-full object-cover md:h-auto'
+                className='h-64 w-full object-cover md:h-auto'
               />
             </div>
             {advisor.bookingURL && (
@@ -61,7 +49,6 @@ const AdvisorPopover: React.FC<AdvisorPopoverProps> = ({ advisor, isOpen, onClos
                 href={advisor.bookingURL}
                 target='_blank'
                 rel='noopener noreferrer'
-                onClick={handleBookingClick}
                 className='inline-block rounded-lg bg-violet-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700 w-full text-center'
               >
                 Book a Session
