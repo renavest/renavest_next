@@ -6,12 +6,12 @@ import React, { useEffect } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { $auth, updateEmail, updateCode } from '../stores';
+import { $auth } from '../stores';
 import { setUserVerified, checkUserVerified } from '../utils/auth';
-import { emailSignal } from '../utils/emailState'; // Import the email signal
+import { emailSignal } from '../utils/emailState';
 import { loginSchema, validateCompanyEmail, validateCode } from '../utils/validation';
 
-import VerificationCode from './VerificationCode';
+import VerificationInput from './VerificationInput';
 
 declare global {
   interface Window {
@@ -20,12 +20,12 @@ declare global {
     };
   }
 }
+
 export default function VerificationForm() {
   const auth = useStore($auth);
   const router = useRouter();
 
   useEffect(() => {
-    // Check if user is already verified
     if (checkUserVerified()) {
       router.push('/');
     }
@@ -33,41 +33,30 @@ export default function VerificationForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Verification submitted', {
-      email: auth.email,
-      code: auth.code,
-    });
+    console.log('Verification submitted', { email: auth.email, code: auth.code });
 
     try {
       loginSchema.parse(auth);
       console.log('Zod validation passed');
 
       if (!validateCompanyEmail(auth.email)) {
-        console.log('Invalid company email');
         toast.error('Please use your company email address', {
           description: 'Need access? Schedule a demo with our team',
         });
         return;
       }
+
       if (!validateCode(auth.code)) {
-        console.log('Invalid code');
         toast.error('Please enter the correct verification code', {
           description: 'Need access? Schedule a demo with our team',
         });
         return;
       }
 
-      // Store verification status
       setUserVerified(auth.email);
 
-      if (
-        typeof window !== 'undefined' &&
-        window.umami &&
-        typeof window.umami.trackEvent === 'function'
-      ) {
-        window.umami.trackEvent('VerificationSubmitted', {
-          email: emailSignal.value,
-        });
+      if (typeof window !== 'undefined' && window.umami?.trackEvent) {
+        window.umami.trackEvent('VerificationSubmitted', { email: emailSignal.value });
       }
 
       console.log('Verification successful');
@@ -78,12 +67,6 @@ export default function VerificationForm() {
         toast.error(err.errors[0].message);
       }
     }
-  };
-
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newEmail = e.target.value;
-    updateEmail(newEmail); // update nanostore if needed
-    emailSignal.value = newEmail; // update the signal
   };
 
   return (
@@ -97,21 +80,7 @@ export default function VerificationForm() {
         </div>
 
         <form onSubmit={handleSubmit} className='space-y-6'>
-          <div>
-            <label className='block text-sm font-medium mb-2'>Company email</label>
-            <input
-              type='email'
-              className='w-full px-4 py-3 rounded-lg border bg-background'
-              value={auth.email}
-              onChange={handleEmailChange}
-              placeholder='you@companyemail.com'
-            />
-          </div>
-
-          <div>
-            <label className='block text-sm font-medium mb-2'>Verification code</label>
-            <VerificationCode value={auth.code} onChange={updateCode} />
-          </div>
+          <VerificationInput />
 
           {auth.error && (
             <div className='p-4 rounded-lg bg-destructive/10 text-destructive flex items-center gap-2'>
