@@ -9,7 +9,7 @@ on:
 jobs:
   prod-deploy:
     # skip Vercel deployment if commit author is seth
-    if: ${{ github.event.head_commit.author.username != 'sethmorton' }}
+    if: ${{ github.actor != 'sethmorton' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
