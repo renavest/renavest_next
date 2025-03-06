@@ -1,9 +1,12 @@
 'use client';
-import React from 'react';
-import { Advisor } from '@/src/shared/types';
 import { Award } from 'lucide-react';
 import Image from 'next/image';
+import React from 'react';
+
+import { Advisor } from '@/src/shared/types';
+
 import { advisorSignal, isOpenSignal } from '../state/advisorSignals';
+
 import AdvisorPopover from './AdvisorPopover';
 interface AdvisorCardProps {
   advisor: Advisor;

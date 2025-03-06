@@ -2,19 +2,13 @@
 'use client';
 import { X } from 'lucide-react';
 import Image from 'next/image';
-import { useSignalEffect } from '@preact/signals-react';
+
 import { advisorSignal, isOpenSignal } from '../state/advisorSignals';
 const AdvisorPopover = () => {
-  useSignalEffect(() => {
-    console.log('Signal effect - advisorSignal:', advisorSignal.value);
-    console.log('Signal effect - isOpenSignal:', isOpenSignal.value);
-  });
   const advisor = advisorSignal.value;
   const isOpen = isOpenSignal.value;
 
-  console.log('AdvisorPopover render:', { advisor: advisor?.name, isOpen });
   if (!isOpen || !advisor) {
-    console.log('AdvisorPopover early return:', { isOpen, hasAdvisor: !!advisor });
     return null;
   }
   const handleClose = () => {

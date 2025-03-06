@@ -1,10 +1,11 @@
-"use client";
+'use client';
+import { LogOut } from 'lucide-react';
+import Image from 'next/image';
+import React, { useState, useEffect } from 'react';
 
-import React, { useState, useEffect } from "react";
-import Image from "next/image";
-import { LogOut } from "lucide-react";
-import { Button } from "@/public/components/ui/button";
-import { handleLogout } from "../../auth/utils/auth";
+import { Button } from '@/public/components/ui/button';
+
+import { handleLogout } from '../../auth/utils/auth';
 interface FloatingHeaderProps {
   title: string;
 }
@@ -19,11 +20,11 @@ const FloatingHeader: React.FC<FloatingHeaderProps> = ({ title }) => {
     };
 
     // Add scroll event listener
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener('scroll', handleScroll);
 
     // Cleanup listener on component unmount
     return () => {
-      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
@@ -34,34 +35,34 @@ const FloatingHeader: React.FC<FloatingHeaderProps> = ({ title }) => {
         z-50
         transition-all duration-300 ease-in-out
         bg-white py-6 px-20
-        ${isScrolled ? "shadow-md" : "shadow-lg"}`}
+        ${isScrolled ? 'shadow-md' : 'shadow-lg'}`}
     >
-      <div 
-        style={{ maxWidth: '1500px' }}
-        className="flex mx-auto">
-        <div 
-          className="flex">
+      <div style={{ maxWidth: '1500px' }} className='flex mx-auto'>
+        <div className='flex'>
           <Image
-            className="mr-4"
-            src="/renavestlogo.avif"
-            alt="Renavest Logo"
+            className='mr-4'
+            src='/renavestlogo.avif'
+            alt='Renavest Logo'
             width={50}
-            height={50}/>
+            height={50}
+          />
           <h1
             className={`
               text-2xl font-semibold
               transition-all duration-300
               text-gray-800
-            `}>
+            `}
+          >
             {title}
           </h1>
         </div>
-        <div className="flex flex-1"/>
+        <div className='flex flex-1' />
         <Button
-          variant="ghost"
+          variant='ghost'
           onClick={handleLogout}
-          className="flex items-center gap-2 hover:bg-gray-100">
-          <LogOut className="h-4 w-4" />
+          className='flex items-center gap-2 hover:bg-gray-100'
+        >
+          <LogOut className='h-4 w-4' />
           <span>Logout</span>
         </Button>
       </div>
