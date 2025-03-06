@@ -43,5 +43,5 @@ Add the following to your `settings.json`:
 - ✅ **Auto-fix ESLint errors on save**: Automatically runs ESLint fixes when you save a file.
 - 📝 **Use Prettier as the default formatter**: Ensures consistent formatting across your codebase.
 - 💾 **Format code on save**: Runs Prettier to format files automatically.
-- 📜 **Enable ESLint for JS/TS files**: Validates JavaScript, TypeScript, React TSX files.
+- 📜 **Enable ESLint for JS/TS files**: Validates JavaScript, TypeScript, and React TSX files.
 - 🔄 **Use Flat Config**: Uses ESLint’s modern configuration system (`eslint.config.mjs`).
