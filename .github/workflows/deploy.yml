@@ -1,0 +1,22 @@
+name: Vercel Production Deployment
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_USER_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+on:
+  push:
+    branches:
+      - main
+jobs:
+  prod-deploy:
+    # skip Vercel deployment if commit author is Winston
+    if: ${{ github.event.head_commit.author.username != 'sethmorton' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          cache: "npm"
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+      - name: Deploy Project Artifacts to Vercel
+        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
