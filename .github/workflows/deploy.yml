@@ -8,8 +8,6 @@ on:
       - main
 jobs:
   prod-deploy:
-    # skip Vercel deployment if commit author is Winston
-    if: ${{ github.event.head_commit.author.username != 'sethmorton' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
