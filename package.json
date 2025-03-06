@@ -11,7 +11,6 @@
   "dependencies": {
     "@nanostores/react": "^0.8.4",
     "@preact-signals/safe-react": "^0.8.1",
-    "@preact/signals-react": "^3.0.1",
     "@radix-ui/react-popover": "^1.1.4",
     "@radix-ui/react-slot": "^1.1.1",
     "class-variance-authority": "^0.7.1",
