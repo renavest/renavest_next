@@ -2,17 +2,17 @@
 import { useStore } from '@nanostores/react';
 import React from 'react';
 
-import { $auth, updateEmail, updateCode } from '../stores';
 import { emailSignal } from '../utils/emailState';
+import { authSignal, updateAuthEmail, updateAuthCode } from '../state/authSignals';
 
 import VerificationCode from './VerificationCode';
 
 export default function VerificationInput() {
-  const auth = useStore($auth);
+  const auth = authSignal.value;
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newEmail = e.target.value;
-    updateEmail(newEmail);
+    updateAuthEmail(newEmail);
     emailSignal.value = newEmail;
   };
 
@@ -31,7 +31,7 @@ export default function VerificationInput() {
 
       <div>
         <label className='block text-sm font-medium mb-2'>Verification code</label>
-        <VerificationCode value={auth.code} onChange={updateCode} />
+        <VerificationCode value={auth.code} onChange={updateAuthCode} />
       </div>
     </>
   );

@@ -20,7 +20,6 @@ export default [
       ...reactHooks.configs.recommended.rules,
     },
   },
-
   // Import plugin configuration
   {
     plugins: {
