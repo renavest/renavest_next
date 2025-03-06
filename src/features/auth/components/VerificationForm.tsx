@@ -1,12 +1,11 @@
-'use client';
-import { useStore } from '@nanostores/react';
+  'use client';
 import { AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useEffect } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { $auth } from '../stores';
+import { authSignal } from '../state/authSignals';
 import { setUserVerified, checkUserVerified } from '../utils/auth';
 import { emailSignal } from '../utils/emailState';
 import { loginSchema, validateCompanyEmail, validateCode } from '../utils/validation';
@@ -22,8 +21,8 @@ declare global {
 }
 
 export default function VerificationForm() {
-  const auth = useStore($auth);
   const router = useRouter();
+  const auth = authSignal.value;
 
   useEffect(() => {
     if (checkUserVerified()) {
@@ -33,11 +32,9 @@ export default function VerificationForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Verification submitted', { email: auth.email, code: auth.code });
 
     try {
       loginSchema.parse(auth);
-      console.log('Zod validation passed');
 
       if (!validateCompanyEmail(auth.email)) {
         toast.error('Please use your company email address', {
@@ -59,10 +56,8 @@ export default function VerificationForm() {
         window.umami.trackEvent('VerificationSubmitted', { email: emailSignal.value });
       }
 
-      console.log('Verification successful');
       router.push('/');
     } catch (err) {
-      console.error('Validation error:', err);
       if (err instanceof z.ZodError) {
         toast.error(err.errors[0].message);
       }
