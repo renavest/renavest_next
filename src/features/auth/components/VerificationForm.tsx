@@ -1,4 +1,4 @@
-  'use client';
+'use client';
 import { AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useEffect } from 'react';
@@ -7,10 +7,9 @@ import { z } from 'zod';
 
 import { authSignal } from '../state/authSignals';
 import { setUserVerified, checkUserVerified } from '../utils/auth';
-import { emailSignal } from '../utils/emailState';
 import { loginSchema, validateCompanyEmail, validateCode } from '../utils/validation';
 
-import VerificationInput from './VerificationInput';
+import EmailVerificationInput from './EmailVerificationInput';
 
 declare global {
   interface Window {
@@ -52,9 +51,9 @@ export default function VerificationForm() {
 
       setUserVerified(auth.email);
 
-      if (typeof window !== 'undefined' && window.umami?.trackEvent) {
-        window.umami.trackEvent('VerificationSubmitted', { email: emailSignal.value });
-      }
+      // if (typeof window !== 'undefined' && window.umami?.trackEvent) {
+      //   window.umami.trackEvent('VerificationSubmitted', { email: emailSignal.value });
+      // }
 
       router.push('/');
     } catch (err) {
@@ -75,7 +74,7 @@ export default function VerificationForm() {
         </div>
 
         <form onSubmit={handleSubmit} className='space-y-6'>
-          <VerificationInput />
+          <EmailVerificationInput />
 
           {auth.error && (
             <div className='p-4 rounded-lg bg-destructive/10 text-destructive flex items-center gap-2'>
