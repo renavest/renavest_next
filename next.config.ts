@@ -14,6 +14,9 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true, // Ignore ESLint during builds
   },
+  images: {
+    domains: ['randomuser.me'],
+  },
 };
 
 export default nextConfig;
