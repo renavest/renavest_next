@@ -1,7 +1,11 @@
 import { signal } from '@preact-signals/safe-react';
 
+// UI State Signals
+export const isHeaderScrolledSignal = signal(false);
+export const selectedGoalSignal = signal<number | null>(null);
+export const isScriptExpandedSignal = signal(false);
 export const currentInsightIndexSignal = signal(0);
-export const mobileMenuOpenSignal = signal(false);
+export const isMobileMenuOpenSignal = signal(false);
 
 // Sample data
 export const insightData = [
@@ -43,6 +47,7 @@ export const therapists = [
     specialty: 'Financial Anxiety',
     nextAvailable: 'Tuesday at 2 PM',
     matchScore: 95,
+    imageUrl: 'https://randomuser.me/api/portraits/women/81.jpg',
   },
   {
     id: 2,
@@ -50,20 +55,22 @@ export const therapists = [
     specialty: 'Debt Management',
     nextAvailable: 'Wednesday at 11 AM',
     matchScore: 87,
+    imageUrl: 'https://randomuser.me/api/portraits/men/82.jpg',
   },
   {
     id: 3,
-    name: 'Dr. Sarah Johnson',
+    name: 'Dr. Sarah Chen',
     specialty: 'Budgeting',
     nextAvailable: 'Thursday at 3 PM',
     matchScore: 82,
+    imageUrl: 'https://randomuser.me/api/portraits/women/83.jpg',
   },
 ];
 
 // Current week's money script from the therapist
 export const weeklyMoneyScript = {
   message:
-    "I notice a pattern where financial decisions are influenced by childhood experiences of scarcity. This week, let's focus on recognizing when past fears are driving present decisions, and practice our grounding techniques before making financial choices.",
+    "I recognize that my financial decisions are influenced by my childhood experiences of scarcity. This week, I will pause and reflect when I feel those past fears driving my decisions. Before making financial choices, I'll practice my grounding techniques to ensure I'm acting from my present reality, not my past.",
   author: 'Dr. Sarah Chen',
   weekOf: 'March 18, 2024',
 };
@@ -72,16 +79,62 @@ export const weeklyMoneyScript = {
 export const actionableInsights = [
   {
     id: 1,
-    message: 'You spent $250 on dining out this week—consider setting a meal budget.',
-    impact:
-      'If you reduced dining out to twice a week, you could save $150 monthly towards your home down payment goal.',
-    category: 'spending',
+    spending: 250,
+    savings: 150,
+    message: {
+      prefix: 'You spent ',
+      amount: '$250',
+      suffix: ' on dining out this week.',
+    },
+    impact: {
+      prefix: 'Cooking at home 3 more times could save you ',
+      amount: '$150',
+      suffix: '.',
+    },
   },
   {
     id: 2,
-    message: 'Your entertainment spending has increased by 40% this month.',
-    impact:
-      'Reducing movie outings from 4 to 2 times monthly would save you $60, putting you $180 closer to your emergency fund goal.',
-    category: 'behavior',
+    spending: 180,
+    savings: 165,
+    message: {
+      prefix: 'You spent ',
+      amount: '$180',
+      suffix: ' at movie theaters this month.',
+    },
+    impact: {
+      prefix: 'Switching to streaming would save you ',
+      amount: '$165',
+      suffix: '.',
+    },
+  },
+];
+
+export const financialGoals = [
+  {
+    id: 1,
+    title: 'Emergency Fund',
+    target: 10000,
+    current: 6500,
+    category: 'savings',
+    timeframe: 'Ongoing',
+    description: 'Build 3 months of living expenses',
+  },
+  {
+    id: 2,
+    title: 'Reduce Dining Out',
+    target: 300,
+    current: 250,
+    category: 'spending',
+    timeframe: 'Monthly',
+    description: 'Keep monthly dining expenses under $300',
+  },
+  {
+    id: 3,
+    title: 'Vacation Fund',
+    target: 2000,
+    current: 800,
+    category: 'savings',
+    timeframe: 'By September',
+    description: 'Save for summer beach trip',
   },
 ];

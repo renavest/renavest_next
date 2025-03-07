@@ -1,16 +1,15 @@
 'use client';
 import { LogOut } from 'lucide-react';
 import Image from 'next/image';
-import React, { useState, useEffect } from 'react';
-
-import { Button } from '@/public/components/ui/button';
+import { useState, useEffect } from 'react';
 
 import { handleLogout } from '../../auth/utils/auth';
+
 interface FloatingHeaderProps {
   title: string;
 }
 
-const FloatingHeader: React.FC<FloatingHeaderProps> = ({ title }) => {
+export default function FloatingHeader({ title }: FloatingHeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -57,17 +56,14 @@ const FloatingHeader: React.FC<FloatingHeaderProps> = ({ title }) => {
           </h1>
         </div>
         <div className='flex flex-1' />
-        <Button
-          variant='ghost'
+        <button
           onClick={handleLogout}
-          className='flex items-center gap-2 hover:bg-gray-100'
+          className='flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors'
         >
           <LogOut className='h-4 w-4' />
           <span>Logout</span>
-        </Button>
+        </button>
       </div>
     </header>
   );
-};
-
-export default FloatingHeader;
+}
