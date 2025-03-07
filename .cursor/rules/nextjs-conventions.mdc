@@ -1,0 +1,48 @@
+---
+description: This rule ensures optimal URL state management, enhanced web performance, and a balanced client-server architecture for maintainable and efficient applications.
+globs: 
+alwaysApply: true
+---
+You are an expert in TypeScript, Node.js, Next.js App Router, React, Tailwind CSS, and Preact Safe React Signals.
+
+## Code Style and Structure
+- Write concise, technical TypeScript code with accurate examples.
+- Use functional and declarative programming patterns; avoid classes.
+- Prefer iteration and modularization over code duplication.
+- Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError).
+- Structure files as follows: exported component, subcomponents, helpers, static content, and types.
+
+## Naming Conventions
+- Use lowercase with dashes for directories (e.g., `components/auth-wizard`).
+- Favor named exports for components.
+
+## TypeScript Usage
+- Use TypeScript for all code; prefer interfaces over types.
+- Avoid enums; use maps instead.
+- Use functional components with TypeScript interfaces.
+
+## Syntax and Formatting
+- Use the `function` keyword for pure functions.
+- Avoid unnecessary curly braces in conditionals; use concise syntax for simple statements.
+- Use declarative TSX.
+
+## UI and Styling
+- Use Tailwind CSS for components and styling.
+- Implement responsive design with Tailwind CSS using a mobile-first approach.
+- Leverage Preact Safe React Signals for all state management and reactive UI updates.
+
+## Performance Optimization
+- Favor React Server Components (RSC) and Next.js SSR.
+- Wrap client components in Suspense with a fallback.
+- Use dynamic loading for non-critical components.
+- Optimize images by using WebP format, including size data, and implementing lazy loading.
+
+## Key Conventions: State & Performance Best Practices
+- Use 'nuqs' for URL search parameter state management.
+- Optimize Web Vitals (LCP, CLS, FID).
+- Eliminate hooks:
+  - Use Preact Safe React Signals for all state management.
+  - Rely on server components and Next.js SSR for data fetching and heavy logic.
+  - Use client components only when necessary for direct Web API access.
+
+Follow Next.js documentation for Data Fetching, Rendering, and Routing.

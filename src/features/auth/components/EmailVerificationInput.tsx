@@ -1,19 +1,16 @@
 'use client';
-import { useStore } from '@nanostores/react';
 import React from 'react';
 
-import { emailSignal } from '../utils/emailState';
 import { authSignal, updateAuthEmail, updateAuthCode } from '../state/authSignals';
 
 import VerificationCode from './VerificationCode';
 
-export default function VerificationInput() {
+export default function EmailVerificationInput() {
   const auth = authSignal.value;
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newEmail = e.target.value;
     updateAuthEmail(newEmail);
-    emailSignal.value = newEmail;
   };
 
   return (
