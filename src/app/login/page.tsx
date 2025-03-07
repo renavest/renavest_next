@@ -15,7 +15,7 @@ export default function Login() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     router.push('/dashboard');
-    setUserVerified(true);
+    setUserVerified(email);
   };
 
   return (
