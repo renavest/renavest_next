@@ -55,7 +55,7 @@ export default function VerificationForm() {
       //   window.umami.trackEvent('VerificationSubmitted', { email: emailSignal.value });
       // }
 
-      router.push('/');
+      router.push('/dashboard');
     } catch (err) {
       if (err instanceof z.ZodError) {
         toast.error(err.errors[0].message);

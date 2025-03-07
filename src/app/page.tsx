@@ -15,7 +15,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!checkUserVerified()) {
-      // redirect('/login');
+      redirect('/login');
     }
     setIsLoading(false);
   }, []);
