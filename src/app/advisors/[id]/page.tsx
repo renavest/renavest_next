@@ -1,16 +1,14 @@
-'use client';
-
 import { notFound } from 'next/navigation';
 
 import { advisors } from '@/src/features/advisors/data/advisors';
 
-interface AdvisorProfileProps {
+interface PageProps {
   params: {
     id: string;
   };
 }
 
-export default function AdvisorProfile({ params }: AdvisorProfileProps) {
+export default function AdvisorProfile({ params }: PageProps) {
   const advisor = advisors.find((a) => a.id === params.id);
 
   if (!advisor) {
