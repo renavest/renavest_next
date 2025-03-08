@@ -2,14 +2,14 @@ import { signal } from '@preact-signals/safe-react';
 
 interface AuthState {
   email: string;
-  code: string;
+  password: string;
   isLoading: boolean;
   error?: string;
 }
 
 const initialState: AuthState = {
   email: '',
-  code: '',
+  password: '',
   isLoading: false,
   error: undefined,
 };
@@ -20,8 +20,8 @@ export const updateAuthEmail = (email: string) => {
   authSignal.value = { ...authSignal.value, email };
 };
 
-export const updateAuthCode = (code: string) => {
-  authSignal.value = { ...authSignal.value, code };
+export const updateAuthPassword = (password: string) => {
+  authSignal.value = { ...authSignal.value, password };
 };
 
 export const setAuthLoading = (isLoading: boolean) => {
