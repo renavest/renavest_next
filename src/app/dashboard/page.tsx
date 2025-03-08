@@ -26,50 +26,59 @@ export default function DashboardPage() {
       <DashboardHeader />
 
       {/* Main Content */}
-      <main className='container mx-auto px-4 pt-32 pb-8'>
+      <main className='container mx-auto px-4 pt-24 md:pt-32 pb-8'>
         {/* Welcome Section */}
-        <div className='mb-12'>
-          <h2 className='text-4xl font-bold text-gray-800'>Welcome back, Alex</h2>
-          <p className='text-gray-500 mt-2 text-lg'>
+        <div className='mb-8 md:mb-12'>
+          <h2 className='text-3xl md:text-4xl font-bold text-gray-800'>Welcome back, Alex</h2>
+          <p className='text-gray-500 mt-2 text-base md:text-lg'>
             Let's continue your financial wellness journey.
           </p>
         </div>
 
         {/* Weekly Focus - Full Width */}
-        <div className='mb-12'>
+        <div className='mb-8 md:mb-12'>
           <WeeklyMoneyScript />
         </div>
 
-        {/* Two Column Layout */}
-        <div className='grid lg:grid-cols-12 gap-8'>
+        {/* Mobile-First Layout */}
+        <div className='space-y-8 md:space-y-0 md:grid md:grid-cols-12 md:gap-8'>
+          {/* Sidebar - Moves to top on mobile */}
+          <div className='md:col-span-4 md:order-2'>
+            <div className='space-y-8 md:sticky md:top-32'>
+              <TherapistConnection />
+              <div className='md:block'>
+                <ExploreTherapists />
+              </div>
+            </div>
+          </div>
+
           {/* Main Content Column */}
-          <div className='lg:col-span-8 space-y-12'>
+          <div className='md:col-span-8 space-y-8 md:space-y-12 md:order-1'>
             <section>
-              <h2 className='text-2xl font-semibold text-gray-800 mb-6'>Action Items</h2>
+              <h2 className='text-xl md:text-2xl font-semibold text-gray-800 mb-4 md:mb-6'>
+                Action Items
+              </h2>
               <ActionableInsights />
             </section>
 
             <section>
-              <h2 className='text-2xl font-semibold text-gray-800 mb-6'>Your Financial Goals</h2>
+              <h2 className='text-xl md:text-2xl font-semibold text-gray-800 mb-4 md:mb-6'>
+                Your Financial Goals
+              </h2>
               <FinancialGoals />
             </section>
 
-            <section>
-              <h2 className='text-2xl font-semibold text-gray-800 mb-6'>Progress Overview</h2>
-              <div className='bg-white rounded-xl p-6 shadow-sm'>
+            {/* Chart - Hidden on mobile */}
+            <section className='hidden md:block'>
+              <h2 className='text-xl md:text-2xl font-semibold text-gray-800 mb-4 md:mb-6'>
+                Progress Overview
+              </h2>
+              <div className='bg-white rounded-xl p-4 md:p-6 shadow-sm'>
                 <div className='max-w-3xl mx-auto'>
                   <ComparisonChart />
                 </div>
               </div>
             </section>
-          </div>
-
-          {/* Sidebar */}
-          <div className='lg:col-span-4'>
-            <div className='space-y-8 sticky top-32'>
-              <TherapistConnection />
-              <ExploreTherapists />
-            </div>
           </div>
         </div>
       </main>

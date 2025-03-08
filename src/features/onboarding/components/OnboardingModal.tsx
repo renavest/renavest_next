@@ -97,7 +97,6 @@ export default function OnboardingModal() {
   const isLastStep = currentStep === onboardingQuestions.length - 1;
 
   console.log('Current step:', currentStep);
-  
   console.log('Selected answers:', selectedAnswers);
   console.log('Signal state:', signalState);
 
