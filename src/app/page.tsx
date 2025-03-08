@@ -25,12 +25,18 @@ export default function Home() {
   }
 
   return (
-    <div className='font-[family-name:var(--font-geist-sans)]'>
+    <div className='min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)]'>
       <FloatingHeader title='Renavest' />
-      <section className='p-6 px-0 mt-16'>
-        <h2 className='text-3xl mt-10 font-bold text-center'>Financial Therapists</h2>
+      <section className='pt-20 pb-6 px-4 sm:px-6'>
+        <h2 className='text-2xl sm:text-3xl font-bold text-center text-gray-900'>
+          Financial Therapists
+        </h2>
+        <p className='mt-2 text-center text-sm sm:text-base text-gray-600 max-w-2xl mx-auto'>
+          Connect with experienced financial therapists who can help you build a healthier
+          relationship with money
+        </p>
       </section>
-      <main className='flex flex-col gap-8 row-start-2 items-center sm:items-start bg-white'>
+      <main className='pb-12'>
         <GridComponent advisors={TherapistList as Advisor[]} />
       </main>
     </div>
