@@ -4,7 +4,76 @@ import { useEffect, useState } from 'react';
 
 import { onboardingQuestions, onboardingSignal } from '../state/onboardingState';
 
-import OnboardingForm from './OnboardingForm';
+interface OnboardingContentProps {
+  currentQuestion: {
+    id: number;
+    question: string;
+    description?: string;
+    options: Array<{ id: string; label: string }>;
+    multiSelect?: boolean;
+  };
+  selectedAnswers: Record<number, string[]>;
+  onOptionSelect: (optionId: string) => void;
+  onNext: () => void;
+  isLastStep: boolean;
+  canProceed: boolean;
+}
+
+function OnboardingContent({
+  currentQuestion,
+  selectedAnswers,
+  onOptionSelect,
+  onNext,
+  isLastStep,
+  canProceed,
+}: OnboardingContentProps) {
+  const isOptionSelected = (optionId: string) => {
+    const answers = selectedAnswers[currentQuestion.id] || [];
+    return answers.includes(optionId);
+  };
+
+  return (
+    <div className='w-full md:w-7/12 bg-[#952e8f]/5 p-6 md:p-12'>
+      {/* Question */}
+      <div className='mb-6 md:mb-8'>
+        <h2 className='text-xl md:text-2xl font-semibold text-gray-800 mb-2'>
+          {currentQuestion.question}
+        </h2>
+        {currentQuestion.description && (
+          <p className='text-gray-500'>{currentQuestion.description}</p>
+        )}
+      </div>
+
+      {/* Options */}
+      <div className='space-y-3 mb-8 md:mb-12'>
+        {currentQuestion.options.map((option) => (
+          <button
+            key={option.id}
+            onClick={() => onOptionSelect(option.id)}
+            className={`w-full p-3 md:p-4 rounded-lg border-2 transition-all text-left ${
+              isOptionSelected(option.id)
+                ? 'border-[#952e8f] bg-white text-[#952e8f]'
+                : 'border-gray-200 bg-white hover:border-[#952e8f]/30'
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Navigation */}
+      <div className='flex justify-end'>
+        <button
+          onClick={onNext}
+          disabled={!canProceed}
+          className='w-full md:w-auto px-6 md:px-8 py-3 bg-gray-900 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 transition-colors'
+        >
+          {isLastStep ? 'Complete' : 'Next'}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function OnboardingModal() {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string[]>>(() => {
@@ -25,10 +94,14 @@ export default function OnboardingModal() {
   const currentStep = signalState.currentStep;
   const currentQuestion = onboardingQuestions[currentStep];
   const progress = ((currentStep + 1) / onboardingQuestions.length) * 100;
+  const isLastStep = currentStep === onboardingQuestions.length - 1;
 
   console.log('Current step:', currentStep);
+  
   console.log('Selected answers:', selectedAnswers);
   console.log('Signal state:', signalState);
+
+  const canProceed = selectedAnswers[currentQuestion.id]?.length > 0;
 
   const handleOptionSelect = (optionId: string) => {
     setSelectedAnswers((prev) => {
@@ -71,12 +144,12 @@ export default function OnboardingModal() {
   };
 
   return (
-    <div className='fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50'>
-      <div className='bg-white rounded-2xl w-full max-w-5xl mx-4 shadow-xl overflow-hidden'>
-        <div className='flex'>
+    <div className='fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4'>
+      <div className='bg-white rounded-2xl w-full max-w-5xl shadow-xl overflow-hidden'>
+        <div className='flex flex-col md:flex-row'>
           {/* Left side - Content */}
-          <div className='w-5/12 p-12 flex flex-col'>
-            <h1 className='text-4xl font-semibold text-gray-900 mb-4'>
+          <div className='w-full md:w-5/12 p-6 md:p-12 flex flex-col'>
+            <h1 className='text-3xl md:text-4xl font-semibold text-gray-900 mb-4'>
               Let's get to know you better
             </h1>
             <p className='text-gray-600 mb-8'>
@@ -84,7 +157,7 @@ export default function OnboardingModal() {
             </p>
 
             {/* Progress dots */}
-            <div className='mt-auto flex gap-2'>
+            <div className='mt-4 md:mt-auto flex gap-2'>
               {onboardingQuestions.map((_, index) => (
                 <div
                   key={index}
@@ -97,12 +170,13 @@ export default function OnboardingModal() {
           </div>
 
           {/* Right side - Form */}
-          <OnboardingForm
+          <OnboardingContent
             currentQuestion={currentQuestion}
             selectedAnswers={selectedAnswers}
             onOptionSelect={handleOptionSelect}
             onNext={handleNext}
-            isLastStep={currentStep === onboardingQuestions.length - 1}
+            isLastStep={isLastStep}
+            canProceed={canProceed}
           />
         </div>
 
