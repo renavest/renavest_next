@@ -4,6 +4,7 @@ interface AuthState {
   isAuthenticated: boolean;
   userId: string | null;
   email: string | null;
+  password?: string | null;
   error?: string | null;
   isLoading?: boolean;
 }
@@ -12,6 +13,7 @@ export const authState = signal<AuthState>({
   isAuthenticated: false,
   userId: null,
   email: null,
+  password: null,
   error: null,
   isLoading: false,
 });
