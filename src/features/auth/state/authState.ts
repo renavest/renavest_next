@@ -18,7 +18,7 @@ export const authState = signal<AuthState>({
   isLoading: false,
 });
 
-export const useAuthStore = (selector: (state: AuthState) => any) => {
+export const useAuthStore = <T>(selector: (state: AuthState) => T): T => {
   return selector(authState.value);
 };
 
