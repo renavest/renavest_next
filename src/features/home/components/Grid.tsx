@@ -8,6 +8,7 @@ import { Advisor } from '@/src/shared/types';
 import { advisorSignal, isOpenSignal } from '../state/advisorSignals';
 
 import AdvisorPopover from './AdvisorPopover';
+
 interface AdvisorCardProps {
   advisor: Advisor;
   onClick: () => void;
@@ -17,41 +18,44 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
   return (
     <div
       onClick={onClick}
-      className='relative rounded-2xl flex flex-col mb-4 p-4 hover:bg-[#ecc0ff] transition-all duration-300 cursor-pointer'
+      className='relative rounded-2xl flex flex-col mb-4 p-2 sm:p-4 hover:bg-[#ecc0ff] transition-all duration-300 cursor-pointer'
     >
-      <div className='group relative aspect-[3/4] w-full overflow-hidden'>
+      <div className='group relative aspect-[4/5] sm:aspect-[3/4] w-full overflow-hidden'>
         <Image
           width={350}
           height={350}
           src={advisor.profileUrl || '/experts/placeholderexp.png'}
           alt={advisor.name}
-          className='h-full w-full rounded-2xl object-cover object-top transition-transform duration-500 group-hover:scale-110'
+          className='h-full w-full rounded-2xl object-cover object-center transition-transform duration-500 group-hover:scale-110'
+          priority
         />
-        <div className='absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium tracking-wide text-gray-700 shadow-sm'>
+        <div className='absolute top-2 sm:top-4 left-2 sm:left-4 bg-white/90 backdrop-blur-sm px-2 sm:px-3 py-1 rounded-full text-xs font-medium tracking-wide text-gray-700 shadow-sm'>
           {advisor.yoe} years of experience
         </div>
       </div>
-      <div className='p-4 flex-1 flex flex-col'>
+      <div className='p-2 sm:p-4 flex-1 flex flex-col'>
         <div className='flex items-start justify-between'>
           <div>
-            <h3 className='font-semibold text-gray-900 tracking-wide'>{advisor.name}</h3>
-            <p className='text-sm text-gray-600 mt-0.5 flex items-center tracking-wide'>
-              <Award className='w-4 h-4 mr-1' />
+            <h3 className='font-semibold text-gray-900 tracking-wide text-base sm:text-lg'>
+              {advisor.name}
+            </h3>
+            <p className='text-xs sm:text-sm text-gray-600 mt-0.5 flex items-center tracking-wide'>
+              <Award className='w-3 h-3 sm:w-4 sm:h-4 mr-1' />
               {advisor.title}
             </p>
           </div>
         </div>
-        <div className='mt-2 flex flex-wrap gap-1.5 max-h-16 overflow-hidden'>
+        <div className='mt-2 flex flex-wrap gap-1 sm:gap-1.5 max-h-12 sm:max-h-16 overflow-hidden'>
           {advisor.expertise?.split(',')?.map((exp, index) => (
             <span
               key={index}
-              className='px-2 py-1 bg-gray-50 text-gray-600 text-xs rounded-full tracking-wide'
+              className='px-1.5 sm:px-2 py-0.5 sm:py-1 bg-gray-50 text-gray-600 text-[10px] sm:text-xs rounded-full tracking-wide'
             >
               {exp.trim()}
             </span>
           ))}
         </div>
-        <p className='mt-3 text-sm text-gray-600 tracking-wide line-clamp-3'>
+        <p className='mt-2 sm:mt-3 text-xs sm:text-sm text-gray-600 tracking-wide line-clamp-2 sm:line-clamp-3'>
           {advisor.previewBlurb || advisor.introduction}
         </p>
       </div>
@@ -68,8 +72,8 @@ const AdvisorGrid: React.FC<{ advisors: Advisor[] }> = ({ advisors }) => {
   };
 
   return (
-    <div className='container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-8xl'>
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6'>
+    <div className='max-w-7xl mx-auto px-3 sm:px-6 lg:px-8'>
+      <div className='grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8'>
         {advisors.map((advisor) => (
           <AdvisorCard
             key={advisor.id}
