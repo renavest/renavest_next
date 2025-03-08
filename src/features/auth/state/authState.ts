@@ -4,12 +4,16 @@ interface AuthState {
   isAuthenticated: boolean;
   userId: string | null;
   email: string | null;
+  error?: string | null;
+  isLoading?: boolean;
 }
 
 export const authState = signal<AuthState>({
   isAuthenticated: false,
   userId: null,
   email: null,
+  error: null,
+  isLoading: false,
 });
 
 export const useAuthStore = (selector: (state: AuthState) => any) => {
@@ -17,14 +21,14 @@ export const useAuthStore = (selector: (state: AuthState) => any) => {
 };
 
 export const updateAuthEmail = (email: string) => {
-  authState.value = { ...authState.value, email, error: null };
+  authState.value = { ...authState.value, email };
 };
 
-export const updateAuthCode = (code: string) => {
-  authState.value = { ...authState.value, code, error: null };
+export const updateAuthPassword = (password: string) => {
+  authState.value = { ...authState.value, password };
 };
 
-export const setAuthError = (error: string) => {
+export const setAuthError = (error: string | null) => {
   authState.value = { ...authState.value, error };
 };
 
