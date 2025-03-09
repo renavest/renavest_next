@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 import { Advisor } from '@/src/shared/types';
 
 import { isOpenSignal, advisorSignal } from '../state/advisorSignals';
@@ -22,9 +24,11 @@ export default function AdvisorGrid({ advisors }: AdvisorGridProps) {
             }}
           >
             <div className='flex items-start gap-4'>
-              <img
+              <Image
                 src={advisor.profileUrl || '/experts/placeholderexp.png'}
                 alt={advisor.name}
+                width={64}
+                height={64}
                 className='h-16 w-16 rounded-lg object-cover'
               />
               <div>
@@ -38,14 +42,17 @@ export default function AdvisorGrid({ advisors }: AdvisorGridProps) {
 
             <div className='mt-4'>
               <div className='flex flex-wrap gap-2'>
-                {advisor.expertise?.split(',').slice(0, 3).map((exp, index) => (
-                  <span
-                    key={index}
-                    className='px-2 py-1 bg-purple-50 text-purple-700 rounded-full text-xs'
-                  >
-                    {exp.trim()}
-                  </span>
-                ))}
+                {advisor.expertise
+                  ?.split(',')
+                  .slice(0, 3)
+                  .map((exp, index) => (
+                    <span
+                      key={index}
+                      className='px-2 py-1 bg-purple-50 text-purple-700 rounded-full text-xs'
+                    >
+                      {exp.trim()}
+                    </span>
+                  ))}
               </div>
             </div>
           </div>
@@ -53,4 +60,4 @@ export default function AdvisorGrid({ advisors }: AdvisorGridProps) {
       </div>
     </div>
   );
-} 
+}
