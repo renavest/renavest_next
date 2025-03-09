@@ -1,8 +1,15 @@
+import { cn } from '@/src/lib/utils';
+import { COLORS } from '@/src/styles/colors';
+
 export default function GoogleSignInButton() {
   return (
     <button
       type='button'
-      className='w-full border-2 border-[#952e8f]/20 text-gray-900 rounded-lg h-11 font-medium hover:bg-[#952e8f]/5 transition-colors flex items-center justify-center'
+      className={cn(
+        'w-full border-2 text-gray-900 rounded-lg h-11 font-medium transition-colors flex items-center justify-center',
+        COLORS.WARM_PURPLE[20],
+        COLORS.WARM_PURPLE[5],
+      )}
       onClick={() => console.error('Google sign in')}
     >
       <svg className='w-5 h-5 mr-2' viewBox='0 0 24 24'>
