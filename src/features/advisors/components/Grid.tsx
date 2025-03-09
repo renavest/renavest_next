@@ -2,7 +2,9 @@
 
 import Image from 'next/image';
 
+import { cn } from '@/src/lib/utils';
 import { Advisor } from '@/src/shared/types';
+import { COLORS } from '@/src/styles/colors';
 
 import { isOpenSignal, advisorSignal } from '../state/advisorSignals';
 
@@ -48,7 +50,10 @@ export default function AdvisorGrid({ advisors }: AdvisorGridProps) {
                   .map((exp, index) => (
                     <span
                       key={index}
-                      className='px-2 py-1 bg-purple-50 text-purple-700 rounded-full text-xs'
+                      className={cn(
+                        'px-2 py-1 rounded-full text-xs text-white',
+                        COLORS.WARM_PURPLE.bg,
+                      )}
                     >
                       {exp.trim()}
                     </span>
