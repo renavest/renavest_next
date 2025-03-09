@@ -9,8 +9,9 @@ const figtreeFont = Figtree({
 });
 
 export const metadata: Metadata = {
-  title: 'Renavest - Financial Wellness Therapy',
-  description: 'Your safe space for financial wellness and therapy',
+  title: 'Renavest',
+  description:
+    'Connecting financial therapists to businesses that want to help their employees heal their relationship with money',
 };
 
 export default function RootLayout({
