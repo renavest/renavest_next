@@ -7,7 +7,7 @@ import { Advisor } from '@/src/shared/types';
 
 import { advisorSignal, isOpenSignal } from '../state/advisorSignals';
 
-import AdvisorPopover from './AdvisorPopover';
+import AdvisorModal from './AdvisorModal';
 
 interface AdvisorCardProps {
   advisor: Advisor;
@@ -66,14 +66,13 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
 const AdvisorGrid: React.FC<{ advisors: Advisor[] }> = ({ advisors }) => {
   // Update the signals when an advisor is clicked.
   const handleAdvisorClick = (advisor: Advisor) => {
-    console.log('clicked advisor:', advisor);
     advisorSignal.value = advisor;
     isOpenSignal.value = true;
   };
 
   return (
     <div className='max-w-7xl mx-auto px-3 sm:px-6 lg:px-8'>
-      <div className='grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8'>
         {advisors.map((advisor) => (
           <AdvisorCard
             key={advisor.id}
@@ -84,7 +83,7 @@ const AdvisorGrid: React.FC<{ advisors: Advisor[] }> = ({ advisors }) => {
       </div>
 
       {/* The AdvisorPopover now reads its state from signals */}
-      <AdvisorPopover />
+      <AdvisorModal />
     </div>
   );
 };
