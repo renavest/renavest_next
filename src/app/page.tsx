@@ -6,9 +6,9 @@ import { useEffect, useState } from 'react';
 import { Advisor } from '@/src/shared/types';
 
 import TherapistList from '../config/therapistsList';
+import AdvisorGrid from '../features/advisors/components/AdivsorGrid';
 import { checkUserVerified } from '../features/auth/utils/auth';
-import FloatingHeader from '../features/home/components/FloatingHeader';
-import GridComponent from '../features/home/components/Grid';
+import FloatingHeader from '../features/home/components/Navbar';
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
@@ -37,7 +37,7 @@ export default function Home() {
         </p>
       </section>
       <main className='pb-12'>
-        <GridComponent advisors={TherapistList as Advisor[]} />
+        <AdvisorGrid advisors={TherapistList as Advisor[]} />
       </main>
     </div>
   );

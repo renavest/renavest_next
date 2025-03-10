@@ -5,7 +5,7 @@ import { Lock, Mail } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
-import { authSignal, updateAuthEmail, updateAuthPassword } from '../state/authSignals';
+import { authState, updateAuthEmail, updateAuthPassword } from '../state/authState';
 
 import GoogleSignInButton from './GoogleSignInButton';
 
@@ -62,7 +62,7 @@ const InputField = ({
 );
 
 export default function LoginForm({ onSubmit }: LoginFormProps) {
-  const auth = authSignal.value;
+  const auth = authState.value;
 
   return (
     <div className='w-full md:w-1/2 flex items-center justify-center p-8'>

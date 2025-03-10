@@ -3,20 +3,24 @@ import { signal } from '@preact-signals/safe-react';
 interface AuthState {
   isAuthenticated: boolean;
   userId: string | null;
-  email: string | null;
-  password?: string | null;
+  email: string;
+  password: string;
   error?: string | null;
-  isLoading?: boolean;
+  isLoading: boolean;
 }
 
-export const authState = signal<AuthState>({
+const initialState: AuthState = {
   isAuthenticated: false,
   userId: null,
-  email: null,
-  password: null,
+  email: '',
+  password: '',
   error: null,
   isLoading: false,
-});
+};
+
+export const emailSignal = signal('');
+
+export const authState = signal<AuthState>(initialState);
 
 export const useAuthStore = <T>(selector: (state: AuthState) => T): T => {
   return selector(authState.value);
@@ -36,4 +40,12 @@ export const setAuthError = (error: string | null) => {
 
 export const setAuthLoading = (isLoading: boolean) => {
   authState.value = { ...authState.value, isLoading };
+};
+
+export const resetAuth = () => {
+  authState.value = initialState;
+};
+
+export const setAuthStatus = (status: Partial<AuthState>) => {
+  authState.value = { ...authState.value, ...status };
 };
