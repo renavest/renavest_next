@@ -1,5 +1,5 @@
-import { COLORS } from '@/src/styles/colors';
 import { cn } from '@/src/lib/utils';
+import { COLORS } from '@/src/styles/colors';
 
 export default function WelcomeSection() {
   return (

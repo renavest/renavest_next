@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 
 import LoginForm from '@/src/features/auth/components/LoginForm';
 import WelcomeSection from '@/src/features/auth/components/WelcomeSection';
-import { authSignal } from '@/src/features/auth/state/authSignals';
+import { authState } from '@/src/features/auth/state/authState';
 import { setUserVerified } from '@/src/features/auth/utils/auth';
 
 export default function Login() {
@@ -13,7 +13,7 @@ export default function Login() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     router.push('/dashboard');
-    setUserVerified(authSignal.value.email);
+    setUserVerified(authState.value.email);
   };
 
   return (
