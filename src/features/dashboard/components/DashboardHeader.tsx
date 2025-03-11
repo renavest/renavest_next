@@ -5,6 +5,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect } from 'react';
 
+import { cn } from '@/src/lib/utils';
+import { COLORS } from '@/src/styles/colors';
+
 import { handleLogout } from '../../auth/utils/auth';
 import { isHeaderScrolledSignal, isMobileMenuOpenSignal } from '../state/dashboardState';
 
@@ -27,14 +30,14 @@ export default function DashboardHeader() {
 
   return (
     <header
-      className={`
-        fixed top-0 left-0 right-0 
-        z-50
-        transition-all duration-300 ease-in-out
-        bg-[#faf9f6] py-4 px-4 md:py-6 md:px-20
-        ${isHeaderScrolledSignal.value ? 'shadow-md' : 'shadow-lg'}`}
+      className={cn(
+        'fixed top-0 left-0 right-0 z-40 backdrop-blur-sm',
+        COLORS.WARM_WHITE.bg,
+        'py-4 px-4 md:py-6 md:px-20',
+      )}
     >
-      <div style={{ maxWidth: '1500px' }} className='flex mx-auto items-center justify-between'>
+      <div className='flex items-center justify-between max-w-7xl mx-auto'>
+        {/* Logo */}
         <div className='flex items-center'>
           <Image
             className='mr-2 md:mr-4 w-10 h-10 md:w-[50px] md:h-[50px]'

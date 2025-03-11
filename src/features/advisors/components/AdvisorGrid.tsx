@@ -3,11 +3,13 @@ import { Award } from 'lucide-react';
 import Image from 'next/image';
 import React from 'react';
 
+import { cn } from '@/src/lib/utils';
 import { Advisor } from '@/src/shared/types';
+import { COLORS } from '@/src/styles/colors';
 
 import { advisorSignal, isOpenSignal } from '../state/advisorSignals';
 
-import AdvisorPopover from './AdvisorPopover';
+import AdvisorModal from './AdvisorModal';
 
 interface AdvisorCardProps {
   advisor: Advisor;
@@ -18,7 +20,10 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
   return (
     <div
       onClick={onClick}
-      className='relative rounded-2xl flex flex-col mb-4 p-2 sm:p-4 hover:bg-[#ecc0ff] transition-all duration-300 cursor-pointer'
+      className={cn(
+        'relative rounded-2xl flex flex-col mb-4 p-2 sm:p-4 transition-all duration-300 cursor-pointer',
+        'hover:bg-purple-50',
+      )}
     >
       <div className='group relative aspect-[4/5] sm:aspect-[3/4] w-full overflow-hidden'>
         <Image
@@ -49,7 +54,11 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
           {advisor.expertise?.split(',')?.map((exp, index) => (
             <span
               key={index}
-              className='px-1.5 sm:px-2 py-0.5 sm:py-1 bg-gray-50 text-gray-600 text-[10px] sm:text-xs rounded-full tracking-wide'
+              className={cn(
+                'px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs tracking-wide',
+                COLORS.WARM_PURPLE['10'],
+                'text-purple-700',
+              )}
             >
               {exp.trim()}
             </span>
@@ -66,14 +75,13 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
 const AdvisorGrid: React.FC<{ advisors: Advisor[] }> = ({ advisors }) => {
   // Update the signals when an advisor is clicked.
   const handleAdvisorClick = (advisor: Advisor) => {
-    console.log('clicked advisor:', advisor);
     advisorSignal.value = advisor;
     isOpenSignal.value = true;
   };
 
   return (
     <div className='max-w-7xl mx-auto px-3 sm:px-6 lg:px-8'>
-      <div className='grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8'>
         {advisors.map((advisor) => (
           <AdvisorCard
             key={advisor.id}
@@ -84,7 +92,7 @@ const AdvisorGrid: React.FC<{ advisors: Advisor[] }> = ({ advisors }) => {
       </div>
 
       {/* The AdvisorPopover now reads its state from signals */}
-      <AdvisorPopover />
+      <AdvisorModal />
     </div>
   );
 };

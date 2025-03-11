@@ -11,6 +11,8 @@ import {
   TooltipProps,
 } from 'recharts';
 
+import { COLORS } from '@/src/styles/colors';
+
 import { comparisonData } from '../../state/dashboardState';
 
 const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
@@ -20,7 +22,11 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>)
         <p className='text-sm font-medium text-gray-800 mb-2'>{label}</p>
         {payload.map((entry, index) => (
           <p key={index} className='text-sm'>
-            <span className={entry.name === 'Past Behavior' ? 'text-gray-600' : 'text-[#952e8f]'}>
+            <span
+              className={
+                entry.name === 'Past Behavior' ? 'text-gray-600' : COLORS.WARM_PURPLE.DEFAULT
+              }
+            >
               {entry.name}:
             </span>{' '}
             <span className='font-medium'>{entry.value}%</span>
@@ -79,7 +85,7 @@ export default function ComparisonChart() {
             <Bar
               dataKey='current'
               name='Current Behavior'
-              fill='#952e8f'
+              fill={COLORS.WARM_PURPLE.bg.replace('bg-', '')}
               radius={[4, 4, 0, 0]}
               maxBarSize={40}
             />

@@ -10,6 +10,7 @@ import TherapistRecommendations from '@/src/features/dashboard/components/insigh
 import WeeklyFinancialReport from '@/src/features/dashboard/components/insights/WeeklyFinancialReport';
 import OnboardingModal from '@/src/features/onboarding/components/OnboardingModal';
 import { onboardingSignal } from '@/src/features/onboarding/state/onboardingState';
+import { COLORS } from '@/src/styles/colors';
 
 export default function DashboardPage() {
   const [showOnboarding, setShowOnboarding] = useState(!onboardingSignal.value.isComplete);
@@ -22,7 +23,7 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className='min-h-screen bg-[#faf9f6] font-sans'>
+    <div className={`min-h-screen ${COLORS.WARM_WHITE.bg} font-sans`}>
       <DashboardHeader />
 
       {/* Main Content */}

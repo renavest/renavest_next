@@ -1,11 +1,14 @@
-// AdvisorPopover.tsx
+// AdivsorModal.tsx
 'use client';
 import { X } from 'lucide-react';
 import Image from 'next/image';
 
+import { cn } from '@/src/lib/utils';
+import { COLORS } from '@/src/styles/colors';
+
 import { advisorSignal, isOpenSignal } from '../state/advisorSignals';
 
-const AdvisorPopover = () => {
+const AdvisorModal = () => {
   const advisor = advisorSignal.value;
   const isOpen = isOpenSignal.value;
 
@@ -46,7 +49,11 @@ const AdvisorPopover = () => {
                     href={advisor.bookingURL}
                     target='_blank'
                     rel='noopener noreferrer'
-                    className='block w-full py-3 px-4 text-center bg-[#952e8f] text-white rounded-lg hover:bg-[#952e8f]/90 transition-colors font-medium'
+                    className={cn(
+                      'block w-full py-3 px-4 text-center text-white rounded-lg transition-colors font-medium',
+                      COLORS.WARM_PURPLE.bg,
+                      COLORS.WARM_PURPLE.hover,
+                    )}
                   >
                     Book a Session
                   </a>
@@ -73,7 +80,11 @@ const AdvisorPopover = () => {
                       {advisor.expertise?.split(',').map((exp, index) => (
                         <span
                           key={index}
-                          className='px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm'
+                          className={cn(
+                            'px-3 py-1 rounded-full text-sm',
+                            COLORS.WARM_PURPLE['10'],
+                            'text-purple-700',
+                          )}
                         >
                           {exp.trim()}
                         </span>
@@ -102,4 +113,4 @@ const AdvisorPopover = () => {
   );
 };
 
-export default AdvisorPopover;
+export default AdvisorModal;

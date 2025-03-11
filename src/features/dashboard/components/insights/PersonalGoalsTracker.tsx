@@ -1,5 +1,7 @@
 'use client';
 
+import { COLORS } from '@/src/styles/colors';
+
 import { financialGoals, selectedGoalSignal } from '../../state/dashboardState';
 
 function GoalProgressBar({
@@ -12,7 +14,7 @@ function GoalProgressBar({
   category: string;
 }) {
   const progress = Math.min((current / target) * 100, 100);
-  const barColor = category === 'savings' ? 'bg-[#952e8f]' : 'bg-[#6366f1]';
+  const barColor = category === 'savings' ? COLORS.WARM_PURPLE.bg : 'bg-[#6366f1]';
 
   return (
     <div className='w-full h-1.5 md:h-2 bg-gray-100 rounded-full overflow-hidden'>
@@ -55,7 +57,7 @@ export default function Goals() {
               </span>
               <span
                 className={`font-medium ${
-                  goal.category === 'savings' ? 'text-[#952e8f]' : 'text-[#6366f1]'
+                  goal.category === 'savings' ? COLORS.WARM_PURPLE.DEFAULT : 'text-[#6366f1]'
                 }`}
               >
                 {Math.round((goal.current / goal.target) * 100)}% Complete

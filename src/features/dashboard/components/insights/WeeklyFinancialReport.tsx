@@ -1,5 +1,6 @@
 'use client';
 
+import { COLORS } from '@/src/styles/colors';
 import { isScriptExpandedSignal, weeklyMoneyScript } from '../../state/dashboardState';
 
 export default function WeeklyMoneyScript() {
@@ -13,7 +14,9 @@ export default function WeeklyMoneyScript() {
       className='bg-white rounded-xl p-4 md:p-8 border border-gray-100 shadow-sm cursor-pointer transition-all hover:bg-gray-50'
     >
       <div className='flex items-center justify-between mb-4 md:mb-6'>
-        <h3 className='text-lg md:text-2xl font-semibold text-[#952e8f]'>Your Money Script</h3>
+        <h3 className={`text-lg md:text-2xl font-semibold ${COLORS.WARM_PURPLE.DEFAULT}`}>
+          Your Money Script
+        </h3>
         <span className='text-xs md:text-sm text-gray-500'>Week of {weeklyMoneyScript.weekOf}</span>
       </div>
       <p

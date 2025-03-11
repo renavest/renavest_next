@@ -1,4 +1,6 @@
 'use client';
+import { COLORS } from '@/src/styles/colors';
+
 import { actionableInsights } from '../../state/dashboardState';
 
 export default function ActionableInsights() {
@@ -16,7 +18,9 @@ export default function ActionableInsights() {
           </p>
           <p className='text-sm md:text-base text-gray-700'>
             <span>{insight.impact.prefix}</span>
-            <span className='font-semibold text-[#952e8f]'>{insight.impact.amount}</span>
+            <span className={`font-semibold ${COLORS.WARM_PURPLE.DEFAULT}`}>
+              {insight.impact.amount}
+            </span>
             <span>{insight.impact.suffix}</span>
           </p>
         </div>

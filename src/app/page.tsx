@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { Advisor } from '@/src/shared/types';
 
 import TherapistList from '../config/therapistsList';
-import AdvisorGrid from '../features/advisors/components/AdivsorGrid';
+import AdvisorGrid from '../features/advisors/components/AdvisorGrid';
 import { checkUserVerified } from '../features/auth/utils/auth';
 import FloatingHeader from '../features/home/components/Navbar';
 
