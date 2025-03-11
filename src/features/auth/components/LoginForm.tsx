@@ -65,11 +65,11 @@ export default function LoginForm({ onSubmit }: LoginFormProps) {
   const auth = authState.value;
 
   return (
-    <div className='w-full md:w-1/2 flex items-center justify-center p-8'>
+    <div className='w-full min-h-screen flex items-center justify-center px-4 py-8'>
       <div className='w-full max-w-md space-y-8'>
-        <div className='text-center md:text-left'>
+        <div className='text-center'>
           <div className={cn('font-medium text-xl mb-1', COLORS.WARM_PURPLE.DEFAULT)}>renavest</div>
-          <h2 className='text-3xl font-bold text-gray-900'>Sign in as a client</h2>
+          <h2 className='text-3xl font-bold text-gray-900 mb-6'>Sign in as a client</h2>
         </div>
 
         <form onSubmit={onSubmit} className='space-y-6'>
@@ -96,7 +96,7 @@ export default function LoginForm({ onSubmit }: LoginFormProps) {
             }
           />
 
-          {auth.error && <div className='text-red-500 text-sm'>{auth.error}</div>}
+          {auth.error && <div className='text-red-500 text-sm text-center'>{auth.error}</div>}
 
           <button
             type='submit'
@@ -109,7 +109,7 @@ export default function LoginForm({ onSubmit }: LoginFormProps) {
             {auth.isLoading ? 'Signing in...' : 'Sign in'}
           </button>
 
-          <div className='flex items-center justify-center'>
+          <div className='flex items-center justify-center my-4'>
             <div className='border-t border-gray-300 w-1/3'></div>
             <div className='mx-4 text-sm text-gray-500'>Or</div>
             <div className='border-t border-gray-300 w-1/3'></div>

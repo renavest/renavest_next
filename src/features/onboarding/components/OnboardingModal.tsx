@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
+import { COLORS } from '@/src/styles/colors';
+
 import { onboardingQuestions, onboardingSignal } from '../state/onboardingState';
 
 interface OnboardingContentProps {
@@ -33,7 +35,7 @@ function OnboardingContent({
   };
 
   return (
-    <div className='w-full md:w-7/12 bg-[#952e8f]/5 p-6 md:p-12'>
+    <div className={`w-full md:w-7/12 ${COLORS.WARM_PURPLE['5']} p-6 md:p-12`}>
       {/* Question */}
       <div className='mb-6 md:mb-8'>
         <h2 className='text-xl md:text-2xl font-semibold text-gray-800 mb-2'>
@@ -50,11 +52,21 @@ function OnboardingContent({
           <button
             key={option.id}
             onClick={() => onOptionSelect(option.id)}
-            className={`w-full p-3 md:p-4 rounded-lg border-2 transition-all text-left ${
-              isOptionSelected(option.id)
-                ? 'border-[#952e8f] bg-white text-[#952e8f]'
-                : 'border-gray-200 bg-white hover:border-[#952e8f]/30'
-            }`}
+            className={`w-full p-3 md:p-4 rounded-lg border-2 transition-all text-left 
+              ${
+                isOptionSelected(option.id)
+                  ? `${COLORS.WARM_PURPLE.border} 
+                     ${COLORS.WARM_PURPLE['5']} 
+                     
+                     ring-2 
+                     ${COLORS.WARM_PURPLE.ring}
+                     outline-none`
+                  : 'border-gray-200 bg-white hover:border-[#952e8f]/30'
+              } 
+              focus:outline-none 
+              focus:ring-2 
+              focus:ring-${COLORS.WARM_PURPLE.DEFAULT} 
+              focus:border-${COLORS.WARM_PURPLE.DEFAULT}`}
           >
             {option.label}
           </button>
@@ -66,7 +78,7 @@ function OnboardingContent({
         <button
           onClick={onNext}
           disabled={!canProceed}
-          className='w-full md:w-auto px-6 md:px-8 py-3 bg-gray-900 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 transition-colors'
+          className={`w-full md:w-auto px-6 md:px-8 py-3 text-white rounded-lg font-medium disabled:opacity-50 ${COLORS.WARM_PURPLE.bg} disabled:cursor-not-allowed ${COLORS.WARM_PURPLE.hover} transition-colors`}
         >
           {isLastStep ? 'Complete' : 'Next'}
         </button>
@@ -161,7 +173,7 @@ export default function OnboardingModal() {
                 <div
                   key={index}
                   className={`h-2 w-2 rounded-full transition-colors ${
-                    index === currentStep ? 'bg-[#952e8f]' : 'bg-gray-200'
+                    index === currentStep ? `${COLORS.WARM_PURPLE.bg}` : 'bg-gray-200'
                   }`}
                 />
               ))}
@@ -182,7 +194,7 @@ export default function OnboardingModal() {
         {/* Bottom progress bar */}
         <div className='h-1 bg-gray-100'>
           <div
-            className='h-full bg-[#952e8f] transition-all duration-300 ease-out'
+            className={`h-full bg-${COLORS.WARM_PURPLE.DEFAULT} transition-all duration-300 ease-out`}
             style={{ width: `${progress}%` }}
           />
         </div>
