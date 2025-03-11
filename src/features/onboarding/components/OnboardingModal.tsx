@@ -96,10 +96,6 @@ const updateOnboardingSignal = (
     currentStep: isLastStep ? currentStep : currentStep + 1,
     answers: { ...selectedAnswers },
   };
-  console.log(
-    isLastStep ? 'Completing onboarding:' : 'Moving to next step:',
-    onboardingSignal.value,
-  );
 };
 
 export default function OnboardingModal() {
