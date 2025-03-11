@@ -59,7 +59,7 @@ function OnboardingContent({
                        ring-2 
                        ${COLORS.WARM_PURPLE.ring}
                        outline-none`
-                    : `border-gray-200 bg-white ${COLORS.WARM_PURPLE.hoverBorder} `
+                    : `border-gray-200 bg-white ${COLORS.WARM_PURPLE.hoverBorder}`
                 } 
                 focus:outline-none 
                 focus:ring-2 
