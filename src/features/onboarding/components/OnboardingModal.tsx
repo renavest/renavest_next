@@ -59,7 +59,7 @@ function OnboardingContent({
                        ring-2 
                        ${COLORS.WARM_PURPLE.ring}
                        outline-none`
-                    : `border-gray-200 bg-white ${COLORS.WARM_PURPLE.hoverBorder} `
+                    : `border-gray-200 bg-white ${COLORS.WARM_PURPLE.hoverBorder}`
                 } 
                 focus:outline-none 
                 focus:ring-2 
@@ -96,10 +96,6 @@ const updateOnboardingSignal = (
     currentStep: isLastStep ? currentStep : currentStep + 1,
     answers: { ...selectedAnswers },
   };
-  console.log(
-    isLastStep ? 'Completing onboarding:' : 'Moving to next step:',
-    onboardingSignal.value,
-  );
 };
 
 export default function OnboardingModal() {
