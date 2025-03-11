@@ -65,14 +65,14 @@ export default function LoginForm({ onSubmit }: LoginFormProps) {
   const auth = authState.value;
 
   return (
-    <div className='w-full min-h-screen flex items-center justify-center px-4 py-8'>
-      <div className='w-full max-w-md space-y-8'>
-        <div className='text-center'>
+    <div className='w-full flex items-center justify-center px-4 py-4'>
+      <div className='w-full max-w-md space-y-2'>
+        <div className='text-center mb-2'>
           <div className={cn('font-medium text-xl mb-1', COLORS.WARM_PURPLE.DEFAULT)}>renavest</div>
-          <h2 className='text-3xl font-bold text-gray-900 mb-6'>Sign in as a client</h2>
+          <h2 className='text-3xl font-bold text-gray-900 mb-1'>Sign in as a client</h2>
         </div>
 
-        <form onSubmit={onSubmit} className='space-y-6'>
+        <form onSubmit={onSubmit} className='space-y-3'>
           <InputField
             id='email'
             type='email'
@@ -109,7 +109,7 @@ export default function LoginForm({ onSubmit }: LoginFormProps) {
             {auth.isLoading ? 'Signing in...' : 'Sign in'}
           </button>
 
-          <div className='flex items-center justify-center my-4'>
+          <div className='flex items-center justify-center my-1'>
             <div className='border-t border-gray-300 w-1/3'></div>
             <div className='mx-4 text-sm text-gray-500'>Or</div>
             <div className='border-t border-gray-300 w-1/3'></div>
@@ -118,7 +118,7 @@ export default function LoginForm({ onSubmit }: LoginFormProps) {
           <GoogleSignInButton />
         </form>
 
-        <div className='text-center'>
+        <div className='text-center mt-2'>
           <p className='text-sm text-gray-600'>
             Don't have an account?{' '}
             <a href='#' className={cn('font-medium hover:opacity-80', COLORS.WARM_PURPLE.DEFAULT)}>

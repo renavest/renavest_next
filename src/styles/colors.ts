@@ -4,6 +4,8 @@ export const COLORS = {
     bg: 'bg-[#9071FF]',
     border: 'border-[#9071FF]',
     hover: 'hover:bg-[#9071FF]/80',
+    hoverBorder: 'hover:border-[#9071FF]/30',
+    hoverText: 'hover:text-[#9071FF]/80',
     focus: 'focus:border-[#9071FF] focus:ring-[#9071FF]',
     5: 'bg-[#9071FF]/5',
     10: 'bg-[#9071FF]/10',
