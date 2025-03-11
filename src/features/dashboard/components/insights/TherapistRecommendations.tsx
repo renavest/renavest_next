@@ -4,6 +4,8 @@ import { ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
+import { COLORS } from '@/src/styles/colors';
+
 import { therapists } from '../../state/dashboardState';
 
 export default function ExploreTherapists() {
@@ -16,7 +18,7 @@ export default function ExploreTherapists() {
         <h3 className='text-lg md:text-2xl font-semibold text-gray-800'>Explore More Experts</h3>
         <Link
           href='/'
-          className='text-[#952e8f] hover:text-[#952e8f]/80 font-medium flex items-center gap-1 text-sm md:text-base'
+          className={`${COLORS.WARM_PURPLE.DEFAULT} hover:opacity-80 font-medium flex items-center gap-1 text-sm md:text-base`}
         >
           View All
           <ArrowRight className='h-3 w-3 md:h-4 md:w-4' />
@@ -46,13 +48,13 @@ export default function ExploreTherapists() {
                 <p className='text-xs md:text-sm text-gray-500'>{therapist.specialty}</p>
                 <div className='flex items-center gap-2 mt-1'>
                   <span className='text-xs md:text-sm text-gray-600'>Next available:</span>
-                  <span className='text-xs md:text-sm font-medium text-[#952e8f]'>
+                  <span className={`text-xs md:text-sm font-medium ${COLORS.WARM_PURPLE.DEFAULT}`}>
                     {therapist.nextAvailable}
                   </span>
                 </div>
               </div>
               <div className='flex flex-col items-end'>
-                <span className='text-xs md:text-sm font-medium text-[#952e8f]'>
+                <span className={`text-xs md:text-sm font-medium ${COLORS.WARM_PURPLE.DEFAULT}`}>
                   {therapist.matchScore}% match
                 </span>
               </div>
