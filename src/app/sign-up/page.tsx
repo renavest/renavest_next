@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 
 export default function Page() {
   return (
-    <div className='flex min-h-screen items-center justify-center bg-amber-50/30 p-4'>
+    <div className='flex min-h-screen items-center justify-center bg-gray-100 p-4'>
       <Suspense fallback={<div>Loading...</div>}>
         <div className='w-full max-w-md rounded-xl bg-white p-8 shadow-md'>
           <SignUp

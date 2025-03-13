@@ -1,4 +1,4 @@
-import { SignUp } from '@clerk/nextjs';
+import { SignIn } from '@clerk/nextjs';
 import { Suspense } from 'react';
 
 export default function Page() {
@@ -6,7 +6,7 @@ export default function Page() {
     <div className='flex min-h-screen items-center justify-center bg-amber-50/30 p-4'>
       <Suspense fallback={<div>Loading...</div>}>
         <div className='w-full max-w-md rounded-xl bg-white p-8 shadow-md'>
-          <SignUp
+          <SignIn
             appearance={{
               elements: {
                 card: 'shadow-none border-none',
