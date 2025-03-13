@@ -1,16 +1,8 @@
 'use client';
 
 import { SignUp } from '@clerk/nextjs';
-import { currentUser } from '@clerk/nextjs/server';
-import { redirect } from 'next/navigation';
 
-export default async function Page() {
-  const user = await currentUser();
-
-  if (user) {
-    redirect('/dashboard');
-  }
-
+export default function Page() {
   return (
     <div className='min-h-screen flex items-center justify-center bg-gray-50'>
       <SignUp
