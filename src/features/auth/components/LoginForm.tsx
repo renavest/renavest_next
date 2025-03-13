@@ -1,9 +1,9 @@
 'use client';
 
-import { useSignIn } from '@clerk/nextjs';
+import { useSignIn, useUser } from '@clerk/nextjs';
 import { Lock, Mail } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
@@ -12,9 +12,9 @@ import { authState, updateAuthEmail, updateAuthPassword } from '../state/authSta
 
 import GoogleSignInButton from './GoogleSignInButton';
 
-interface LoginFormProps {
-  onSubmit?: (e: React.FormEvent) => void;
-}
+// interface LoginFormProps {
+//   onSubmit?: (e: React.FormEvent) => void;
+// }
 
 const InputField = ({
   id,
@@ -64,11 +64,18 @@ const InputField = ({
   </div>
 );
 
-export default function LoginForm({ onSubmit }: LoginFormProps) {
+export default function LoginForm() {
   const auth = authState.value;
   const { isLoaded, signIn, setActive } = useSignIn();
+  const { isSignedIn } = useUser();
   const [error, setError] = useState('');
   const router = useRouter();
+
+  useEffect(() => {
+    if (isSignedIn) {
+      router.push('/dashboard');
+    }
+  }, [isSignedIn, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,10 +97,15 @@ export default function LoginForm({ onSubmit }: LoginFormProps) {
         // Handle other statuses
         setError('Sign in failed. Please try again.');
       }
-    } catch (err: any) {
-      setError(err.errors?.[0]?.message || 'An unexpected error occurred');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(errorMessage);
     }
   };
+
+  if (isSignedIn) {
+    return null;
+  }
 
   return (
     <div className='w-full flex items-center justify-center px-4 py-4'>
