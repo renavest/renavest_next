@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.12.5",
     "@nanostores/react": "^0.8.4",
     "@preact-signals/safe-react": "^0.8.1",
     "@radix-ui/react-popover": "^1.1.4",

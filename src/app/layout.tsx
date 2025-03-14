@@ -1,3 +1,4 @@
+import { ClerkProvider } from '@clerk/nextjs';
 import type { Metadata } from 'next';
 import { Figtree } from 'next/font/google';
 import { Toaster } from 'sonner';
@@ -20,18 +21,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang='en'>
-      <head>
-        <script
-          defer
-          src='https://cloud.umami.is/script.js'
-          data-website-id='aba27467-1b37-4c88-8c5a-614f67b16936'
-        ></script>
-      </head>
-      <body className={`${figtreeFont.variable} antialiased bg-amber-50/30`}>
-        <Toaster position='bottom-right' />
-        {children}
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang='en'>
+        <head>
+          <script
+            defer
+            src='https://cloud.umami.is/script.js'
+            data-website-id='aba27467-1b37-4c88-8c5a-614f67b16936'
+          ></script>
+        </head>
+        <body className={`${figtreeFont.variable} antialiased bg-amber-50/30`}>
+          <Toaster position='bottom-right' />
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

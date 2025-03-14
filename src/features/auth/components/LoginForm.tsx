@@ -1,6 +1,9 @@
 'use client';
 
+import { useSignIn } from '@clerk/nextjs';
 import { Lock, Mail } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
@@ -8,10 +11,11 @@ import { COLORS } from '@/src/styles/colors';
 import { authState, updateAuthEmail, updateAuthPassword } from '../state/authState';
 
 import GoogleSignInButton from './GoogleSignInButton';
+import MicrosoftSignInButton from './MicrosoftSignInButton';
 
-interface LoginFormProps {
-  onSubmit: (e: React.FormEvent) => void;
-}
+// interface LoginFormProps {
+//   onSubmit?: (e: React.FormEvent) => void;
+// }
 
 const InputField = ({
   id,
@@ -61,8 +65,37 @@ const InputField = ({
   </div>
 );
 
-export default function LoginForm({ onSubmit }: LoginFormProps) {
+export default function LoginForm() {
   const auth = authState.value;
+  const { isLoaded, signIn, setActive } = useSignIn();
+  const [error, setError] = useState('');
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!isLoaded) {
+      return;
+    }
+
+    try {
+      const result = await signIn.create({
+        identifier: auth.email,
+        password: auth.password,
+      });
+
+      if (result.status === 'complete') {
+        await setActive({ session: result.createdSessionId });
+        router.push('/dashboard');
+      } else {
+        // Handle other statuses
+        setError('Sign in failed. Please try again.');
+      }
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(errorMessage);
+    }
+  };
 
   return (
     <div className='w-full flex items-center justify-center px-4 py-4'>
@@ -72,7 +105,7 @@ export default function LoginForm({ onSubmit }: LoginFormProps) {
           <h2 className='text-3xl font-bold text-gray-900 mb-1'>Sign in as a client</h2>
         </div>
 
-        <form onSubmit={onSubmit} className='space-y-3'>
+        <form onSubmit={handleSubmit} className='space-y-3'>
           <InputField
             id='email'
             type='email'
@@ -96,7 +129,9 @@ export default function LoginForm({ onSubmit }: LoginFormProps) {
             }
           />
 
-          {auth.error && <div className='text-red-500 text-sm text-center'>{auth.error}</div>}
+          {(error || auth.error) && (
+            <div className='text-red-500 text-sm text-center'>{error || auth.error}</div>
+          )}
 
           <button
             type='submit'
@@ -116,12 +151,16 @@ export default function LoginForm({ onSubmit }: LoginFormProps) {
           </div>
 
           <GoogleSignInButton />
+          <MicrosoftSignInButton />
         </form>
 
         <div className='text-center mt-2'>
           <p className='text-sm text-gray-600'>
             Don't have an account?{' '}
-            <a href='#' className={cn('font-medium hover:opacity-80', COLORS.WARM_PURPLE.DEFAULT)}>
+            <a
+              href='/sign-up'
+              className={cn('font-medium hover:opacity-80', COLORS.WARM_PURPLE.DEFAULT)}
+            >
               Sign up
             </a>
           </p>

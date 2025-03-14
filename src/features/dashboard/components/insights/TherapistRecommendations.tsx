@@ -17,7 +17,7 @@ export default function ExploreTherapists() {
       <div className='flex items-center justify-between mb-4 md:mb-6'>
         <h3 className='text-lg md:text-2xl font-semibold text-gray-800'>Explore More Experts</h3>
         <Link
-          href='/'
+          href='/explore'
           className={`${COLORS.WARM_PURPLE.DEFAULT} hover:opacity-80 font-medium flex items-center gap-1 text-sm md:text-base`}
         >
           View All

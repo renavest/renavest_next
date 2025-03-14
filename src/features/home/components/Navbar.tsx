@@ -1,16 +1,18 @@
 'use client';
+import { useClerk } from '@clerk/nextjs';
 import { LogOut } from 'lucide-react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
-import { handleLogout } from '../../auth/utils/auth';
-
-interface FloatingHeaderProps {
+interface NavbarProps {
   title: string;
 }
 
-export default function FloatingHeader({ title }: FloatingHeaderProps) {
+export default function Navbar({ title }: NavbarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
+  const { signOut } = useClerk();
+  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,6 +29,14 @@ export default function FloatingHeader({ title }: FloatingHeaderProps) {
     };
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      router.push('/login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
   return (
     <header
       className={`

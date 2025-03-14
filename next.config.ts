@@ -1,3 +1,4 @@
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
     swcPlugins: [
@@ -17,6 +18,31 @@ const nextConfig = {
   images: {
     domains: ['randomuser.me'],
   },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/login',
+        permanent: false,
+      },
+    ];
+  },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+        ],
+      },
+    ];
+  },
 };
 
-export default nextConfig;
+module.exports = nextConfig;

@@ -1,17 +1,21 @@
 'use client';
 
+import { useClerk } from '@clerk/nextjs';
 import { LogOut, Menu, Users, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
-import { handleLogout } from '../../auth/utils/auth';
 import { isHeaderScrolledSignal, isMobileMenuOpenSignal } from '../state/dashboardState';
 
 export default function DashboardHeader() {
+  const { signOut } = useClerk();
+  const router = useRouter();
+
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
@@ -26,6 +30,15 @@ export default function DashboardHeader() {
 
   const toggleMobileMenu = () => {
     isMobileMenuOpenSignal.value = !isMobileMenuOpenSignal.value;
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      router.push('/login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   return (
@@ -87,7 +100,7 @@ export default function DashboardHeader() {
         >
           <div className='p-4 space-y-2'>
             <Link
-              href='/home'
+              href='/explore'
               className='flex items-center gap-2 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors w-full'
             >
               <Users className='h-5 w-5' />
