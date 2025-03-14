@@ -100,7 +100,7 @@ export default function DashboardHeader() {
         >
           <div className='p-4 space-y-2'>
             <Link
-              href='/home'
+              href='/explore'
               className='flex items-center gap-2 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors w-full'
             >
               <Users className='h-5 w-5' />

@@ -1,9 +1,9 @@
 'use client';
 
-import { useSignIn, useUser } from '@clerk/nextjs';
+import { useSignIn } from '@clerk/nextjs';
 import { Lock, Mail } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
@@ -11,6 +11,7 @@ import { COLORS } from '@/src/styles/colors';
 import { authState, updateAuthEmail, updateAuthPassword } from '../state/authState';
 
 import GoogleSignInButton from './GoogleSignInButton';
+import MicrosoftSignInButton from './MicrosoftSignInButton';
 
 // interface LoginFormProps {
 //   onSubmit?: (e: React.FormEvent) => void;
@@ -67,15 +68,8 @@ const InputField = ({
 export default function LoginForm() {
   const auth = authState.value;
   const { isLoaded, signIn, setActive } = useSignIn();
-  const { isSignedIn } = useUser();
   const [error, setError] = useState('');
   const router = useRouter();
-
-  useEffect(() => {
-    if (isSignedIn) {
-      router.push('/dashboard');
-    }
-  }, [isSignedIn, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,10 +96,6 @@ export default function LoginForm() {
       setError(errorMessage);
     }
   };
-
-  if (isSignedIn) {
-    return null;
-  }
 
   return (
     <div className='w-full flex items-center justify-center px-4 py-4'>
@@ -161,6 +151,7 @@ export default function LoginForm() {
           </div>
 
           <GoogleSignInButton />
+          <MicrosoftSignInButton />
         </form>
 
         <div className='text-center mt-2'>

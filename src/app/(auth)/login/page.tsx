@@ -1,15 +1,16 @@
-'use client';
+'use server';
 
-import { useUser } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 
 import LoginForm from '@/src/features/auth/components/LoginForm';
 import WelcomeSection from '@/src/features/auth/components/WelcomeSection';
 import { COLORS } from '@/src/styles/colors';
 
-export default function LoginPage() {
-  const user = useUser();
-  if (user) {
+export default async function LoginPage() {
+  const { userId } = await auth();
+
+  if (userId) {
     redirect('/dashboard');
   }
 

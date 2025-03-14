@@ -1,9 +1,9 @@
 'use client';
+import { useClerk } from '@clerk/nextjs';
 import { LogOut } from 'lucide-react';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
-import { useClerk } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 
 interface NavbarProps {
   title: string;
@@ -37,7 +37,6 @@ export default function Navbar({ title }: NavbarProps) {
       console.error('Error signing out:', error);
     }
   };
-
   return (
     <header
       className={`
