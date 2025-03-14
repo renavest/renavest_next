@@ -18,10 +18,10 @@ export default function GoogleSignInButton() {
     try {
       const result = await signIn.create({
         strategy: 'oauth_google',
+        redirectUrl: '/dashboard',
       });
-
       if (result.status === 'complete') {
-        router.push('/dashboard');
+        // router.push('/dashboard');
       } else {
         setError('Google sign-in failed. Please try again.');
       }

@@ -1,10 +1,18 @@
 'use client';
 
+import { useUser } from '@clerk/nextjs';
+import { redirect } from 'next/navigation';
+
 import LoginForm from '@/src/features/auth/components/LoginForm';
 import WelcomeSection from '@/src/features/auth/components/WelcomeSection';
 import { COLORS } from '@/src/styles/colors';
 
 export default function LoginPage() {
+  const user = useUser();
+  if (user) {
+    redirect('/dashboard');
+  }
+
   return (
     <div className={`min-h-screen flex flex-col md:flex-row ${COLORS.WARM_WHITE.bg}`}>
       <WelcomeSection />

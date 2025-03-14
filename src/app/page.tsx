@@ -1,28 +1,17 @@
 'use client';
 
-import { redirect } from 'next/navigation';
-import { useEffect, useState } from 'react';
+// import { redirect } from 'next/navigation';
+// import { useEffect, useState } from 'react';
 
 import { Advisor } from '@/src/shared/types';
 
 import TherapistList from '../config/therapistsList';
 import AdvisorGrid from '../features/advisors/components/AdvisorGrid';
-import { checkUserVerified } from '../features/auth/utils/auth';
+// import { checkUserVerified } from '../features/auth/utils/auth';
 import FloatingHeader from '../features/home/components/Navbar';
 
 export default function Home() {
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (!checkUserVerified()) {
-      redirect('/login');
-    }
-    setIsLoading(false);
-  }, []);
-
-  if (isLoading) {
-    return null;
-  }
+  // const [isLoading, setIsLoading] = useState(true);
 
   return (
     <div className='min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)]'>
