@@ -1,6 +1,5 @@
 'use client';
 
-import { useSignIn } from '@clerk/nextjs';
 import { Lock, Mail } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -10,13 +9,6 @@ import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
 import { authState, updateAuthEmail, updateAuthPassword } from '../state/authState';
-
-import GoogleSignInButton from './GoogleSignInButton';
-// import MicrosoftSignInButton from './MicrosoftSignInButton';
-
-// interface LoginFormProps {
-//   onSubmit?: (e: React.FormEvent) => void;
-// }
 
 const InputField = ({
   id,
@@ -68,33 +60,17 @@ const InputField = ({
 
 export default function LoginForm() {
   const auth = authState.value;
-  const { isLoaded, signIn, setActive } = useSignIn();
   const [error, setError] = useState('');
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!isLoaded) {
-      return;
-    }
-
-    try {
-      const result = await signIn.create({
-        identifier: auth.email,
-        password: auth.password,
-      });
-
-      if (result.status === 'complete') {
-        await setActive({ session: result.createdSessionId });
-        router.push('/dashboard');
-      } else {
-        // Handle other statuses
-        setError('Sign in failed. Please try again.');
-      }
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
-      setError(errorMessage);
+    // For demo purposes, accept any email/password combination
+    if (auth.email && auth.password) {
+      router.push('/dashboard');
+    } else {
+      setError('Please enter both email and password');
     }
   };
 
@@ -145,27 +121,18 @@ export default function LoginForm() {
             {auth.isLoading ? 'Signing in...' : 'Sign in'}
           </button>
 
-          <div className='flex items-center justify-center my-1'>
-            <div className='border-t border-gray-300 w-1/3'></div>
-            <div className='mx-4 text-sm text-gray-500'>Or</div>
-            <div className='border-t border-gray-300 w-1/3'></div>
+          <div className='text-center mt-2'>
+            <p className='text-sm text-gray-600'>
+              Don't have an account?{' '}
+              <Link
+                href='/sign-up'
+                className={cn('font-medium hover:opacity-80', COLORS.WARM_PURPLE.DEFAULT)}
+              >
+                Sign up
+              </Link>
+            </p>
           </div>
-
-          <GoogleSignInButton />
-          {/* <MicrosoftSignInButton /> */}
         </form>
-
-        <div className='text-center mt-2'>
-          <p className='text-sm text-gray-600'>
-            Don't have an account?{' '}
-            <a
-              href='/sign-up'
-              className={cn('font-medium hover:opacity-80', COLORS.WARM_PURPLE.DEFAULT)}
-            >
-              Sign up
-            </a>
-          </p>
-        </div>
       </div>
     </div>
   );
