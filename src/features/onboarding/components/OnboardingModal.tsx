@@ -4,21 +4,82 @@ import { useEffect, useState } from 'react';
 
 import { COLORS } from '@/src/styles/colors';
 
-import { onboardingQuestions, onboardingSignal } from '../state/onboardingState';
+import {
+  OnboardingQuestion,
+  onboardingQuestions,
+  onboardingSignal,
+} from '../state/onboardingState';
 
 interface OnboardingContentProps {
-  currentQuestion: {
-    id: number;
-    question: string;
-    description?: string;
-    options: Array<{ id: string; label: string }>;
-    multiSelect?: boolean;
-  };
+  currentQuestion: OnboardingQuestion;
   selectedAnswers: Record<number, string[]>;
   onOptionSelect: (optionId: string) => void;
   onNext: () => void;
   isLastStep: boolean;
   canProceed: boolean;
+}
+
+interface LeftSideContentProps {
+  isFirstQuestion: boolean;
+  currentQuestion: OnboardingQuestion;
+  currentStep: number;
+}
+
+function LeftSideContent({ isFirstQuestion, currentQuestion, currentStep }: LeftSideContentProps) {
+  return (
+    <div className='w-full md:w-5/12 p-6 md:p-12 flex flex-col'>
+      {isFirstQuestion ? (
+        <>
+          <h1 className='text-3xl md:text-4xl font-semibold text-gray-900 mb-4'>
+            Let's get to know you better
+          </h1>
+          <div className='space-y-4'>
+            <p className='text-gray-600'>
+              Your financial journey is unique, and we're here to support you every step of the way.
+            </p>
+            <p className='text-gray-600'>
+              By understanding you better, we can match you with a financial therapist who truly
+              gets you and your needs.
+            </p>
+            <p className='text-gray-600 text-sm italic'>
+              All your responses are confidential and help us provide personalized support.
+            </p>
+          </div>
+        </>
+      ) : (
+        <div className='space-y-4'>
+          {currentQuestion.title && (
+            <h2 className='text-sm uppercase tracking-wider text-gray-500'>
+              {currentQuestion.title}
+            </h2>
+          )}
+          <h3 className='text-2xl md:text-3xl font-semibold text-gray-900'>
+            {currentQuestion.question}
+          </h3>
+          {currentQuestion.supportiveText && (
+            <p className='text-gray-600'>{currentQuestion.supportiveText}</p>
+          )}
+        </div>
+      )}
+
+      {/* Progress dots */}
+      <div className='mt-8 md:mt-auto space-y-2'>
+        <p className='text-sm text-gray-500'>
+          Question {currentStep + 1} of {onboardingQuestions.length}
+        </p>
+        <div className='flex gap-2'>
+          {onboardingQuestions.map((_, index) => (
+            <div
+              key={index}
+              className={`h-2 w-2 rounded-full transition-colors ${
+                index === currentStep ? `${COLORS.WARM_PURPLE.bg}` : 'bg-gray-200'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function OnboardingContent({
@@ -32,43 +93,60 @@ function OnboardingContent({
   const isOptionSelected = (optionId: string) =>
     (selectedAnswers[currentQuestion.id] || []).includes(optionId);
 
+  const selectedValue = selectedAnswers[currentQuestion.id]?.[0] || '';
+
   return (
     <div className={`w-full ${COLORS.WARM_PURPLE['5']} p-6 md:p-12 flex flex-col min-h-full`}>
       <div>
-        {/* Question */}
-        <div className='mb-6 md:mb-8'>
-          <h2 className='text-xl md:text-2xl font-semibold text-gray-800 mb-2'>
-            {currentQuestion.question}
-          </h2>
-          {currentQuestion.description && (
-            <p className='text-gray-500'>{currentQuestion.description}</p>
-          )}
-        </div>
+        {/* Description for multi-select */}
+        {currentQuestion.description && (
+          <p className='text-gray-500 text-sm mb-6'>{currentQuestion.description}</p>
+        )}
 
         {/* Options */}
         <div className='space-y-3 mb-6 md:mb-8'>
-          {currentQuestion.options.map((option) => (
-            <button
-              key={option.id}
-              onClick={() => onOptionSelect(option.id)}
-              className={`w-full p-3 md:p-4 rounded-lg border-2 transition-all text-left 
-                ${
-                  isOptionSelected(option.id)
-                    ? `${COLORS.WARM_PURPLE.border} 
-                       ${COLORS.WARM_PURPLE['5']} 
-                       ring-2 
-                       ${COLORS.WARM_PURPLE.ring}
-                       outline-none`
-                    : `border-gray-200 bg-white ${COLORS.WARM_PURPLE.hoverBorder}`
-                } 
+          {currentQuestion.type === 'dropdown' ? (
+            <select
+              value={selectedValue}
+              onChange={(e) => onOptionSelect(e.target.value)}
+              className={`w-full p-3 md:p-4 rounded-lg border-2 transition-all
+                ${selectedValue ? `${COLORS.WARM_PURPLE.border}` : 'border-gray-200'}
                 focus:outline-none 
                 focus:ring-2 
-                focus:ring-${COLORS.WARM_PURPLE.DEFAULT} 
+                ${COLORS.WARM_PURPLE.ring}
                 focus:border-${COLORS.WARM_PURPLE.DEFAULT}`}
             >
-              {option.label}
-            </button>
-          ))}
+              <option value=''>Select a state...</option>
+              {currentQuestion.options.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            currentQuestion.options.map((option) => (
+              <button
+                key={option.id}
+                onClick={() => onOptionSelect(option.id)}
+                className={`w-full p-3 md:p-4 rounded-lg border-2 transition-all text-left 
+                  ${
+                    isOptionSelected(option.id)
+                      ? `${COLORS.WARM_PURPLE.border} 
+                         ${COLORS.WARM_PURPLE['5']} 
+                         ring-2 
+                         ${COLORS.WARM_PURPLE.ring}
+                         outline-none`
+                      : `border-gray-200 bg-white ${COLORS.WARM_PURPLE.hoverBorder}`
+                  } 
+                  focus:outline-none 
+                  focus:ring-2 
+                  focus:ring-${COLORS.WARM_PURPLE.DEFAULT} 
+                  focus:border-${COLORS.WARM_PURPLE.DEFAULT}`}
+              >
+                {option.label}
+              </button>
+            ))
+          )}
         </div>
       </div>
 
@@ -116,6 +194,7 @@ export default function OnboardingModal() {
   const currentQuestion = onboardingQuestions[currentStep];
   const progress = ((currentStep + 1) / onboardingQuestions.length) * 100;
   const isLastStep = currentStep === onboardingQuestions.length - 1;
+  const isFirstQuestion = currentStep === 0;
 
   const handleOptionSelect = (optionId: string) => {
     setSelectedAnswers((prev) => {
@@ -143,27 +222,11 @@ export default function OnboardingModal() {
     <div className='fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto'>
       <div className='bg-white rounded-2xl w-full max-w-5xl shadow-xl overflow-hidden max-h-[95vh] flex flex-col'>
         <div className='flex flex-col md:flex-row overflow-auto'>
-          {/* Left side - Content */}
-          <div className='w-full md:w-5/12 p-6 md:p-12 flex flex-col'>
-            <h1 className='text-3xl md:text-4xl font-semibold text-gray-900 mb-4'>
-              Let's get to know you better
-            </h1>
-            <p className='text-gray-600 mb-8'>
-              We'll help match you with the right financial therapist based on your needs.
-            </p>
-
-            {/* Progress dots */}
-            <div className='mt-4 md:mt-auto flex gap-2'>
-              {onboardingQuestions.map((_, index) => (
-                <div
-                  key={index}
-                  className={`h-2 w-2 rounded-full transition-colors ${
-                    index === currentStep ? `${COLORS.WARM_PURPLE.bg}` : 'bg-gray-200'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
+          <LeftSideContent
+            isFirstQuestion={isFirstQuestion}
+            currentQuestion={currentQuestion}
+            currentStep={currentStep}
+          />
 
           {/* Right side - Form */}
           <div className='w-full md:w-7/12 flex'>
@@ -181,7 +244,7 @@ export default function OnboardingModal() {
         {/* Bottom progress bar */}
         <div className='h-1 bg-gray-100'>
           <div
-            className={`h-full bg-${COLORS.WARM_PURPLE.DEFAULT} transition-all duration-300 ease-out`}
+            className={`h-full ${COLORS.WARM_PURPLE.bg} transition-all duration-300 ease-out`}
             style={{ width: `${progress}%` }}
           />
         </div>

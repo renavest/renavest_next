@@ -1,6 +1,7 @@
 'use client';
 
 import { COLORS } from '@/src/styles/colors';
+
 import { isScriptExpandedSignal, weeklyMoneyScript } from '../../state/dashboardState';
 
 export default function WeeklyMoneyScript() {
