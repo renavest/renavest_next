@@ -1,4 +1,5 @@
 'use client';
+import { useUser } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
 
 import DashboardHeader from '@/src/features/dashboard/components/DashboardHeader';
@@ -14,7 +15,8 @@ import { COLORS } from '@/src/styles/colors';
 
 export default function DashboardPage() {
   const [showOnboarding, setShowOnboarding] = useState(!onboardingSignal.value.isComplete);
-
+  const { user } = useUser();
+  console.log(user);
   useEffect(() => {
     const unsubscribe = onboardingSignal.subscribe((newValue) => {
       setShowOnboarding(!newValue.isComplete);
@@ -30,7 +32,9 @@ export default function DashboardPage() {
       <main className='container mx-auto px-4 pt-24 md:pt-32 pb-8'>
         {/* Welcome Section */}
         <div className='mb-8 md:mb-12'>
-          <h2 className='text-3xl md:text-4xl font-bold text-gray-800'>Welcome back, Alex</h2>
+          <h2 className='text-3xl md:text-4xl font-bold text-gray-800'>
+            Welcome back, {user?.firstName}
+          </h2>
           <p className='text-gray-500 mt-2 text-base md:text-lg'>
             Let's continue your financial wellness journey.
           </p>

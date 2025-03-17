@@ -2,6 +2,7 @@
 
 import { useSignIn } from '@clerk/nextjs';
 import { Lock, Mail } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -11,7 +12,7 @@ import { COLORS } from '@/src/styles/colors';
 import { authState, updateAuthEmail, updateAuthPassword } from '../state/authState';
 
 import GoogleSignInButton from './GoogleSignInButton';
-import MicrosoftSignInButton from './MicrosoftSignInButton';
+// import MicrosoftSignInButton from './MicrosoftSignInButton';
 
 // interface LoginFormProps {
 //   onSubmit?: (e: React.FormEvent) => void;
@@ -123,9 +124,9 @@ export default function LoginForm() {
             placeholder='Enter your password'
             icon={Lock}
             rightElement={
-              <a href='#' className={cn('text-sm hover:opacity-80', COLORS.WARM_PURPLE.DEFAULT)}>
+              <Link href='#' className={cn('text-sm hover:opacity-80', COLORS.WARM_PURPLE.DEFAULT)}>
                 Forgot password?
-              </a>
+              </Link>
             }
           />
 
@@ -151,7 +152,7 @@ export default function LoginForm() {
           </div>
 
           <GoogleSignInButton />
-          <MicrosoftSignInButton />
+          {/* <MicrosoftSignInButton /> */}
         </form>
 
         <div className='text-center mt-2'>
