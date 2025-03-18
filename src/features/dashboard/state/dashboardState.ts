@@ -33,11 +33,11 @@ export const insightData = [
 ];
 
 export const comparisonData = [
-  { name: 'Impulse Buys', past: 12, current: 5 },
-  { name: 'Savings Rate', past: 5, current: 15 },
-  { name: 'Weekend Spending', past: 30, current: 18 },
-  { name: 'Bill Payments', past: 85, current: 98 },
-  { name: 'Budget Adherence', past: 60, current: 85 },
+  { name: 'Monthly Dining Out', past: 850, current: 650 },
+  { name: 'Automated Savings', past: 200, current: 500 },
+  { name: 'Entertainment Spending', past: 300, current: 180 },
+  { name: 'Utility Bills', past: 250, current: 220 },
+  { name: 'Subscription Services', past: 120, current: 75 },
 ];
 
 export const therapists = [
@@ -67,8 +67,8 @@ export const therapists = [
   },
 ];
 
-// Current week's money script from the therapist
-export const weeklyMoneyScript = {
+// Current week's money belief from the therapist
+export const weeklyMoneyBelief = {
   message:
     "I recognize that my financial decisions are influenced by my childhood experiences of scarcity. This week, I will pause and reflect when I feel those past fears driving my decisions. Before making financial choices, I'll practice my grounding techniques to ensure I'm acting from my present reality, not my past.",
   author: 'Dr. Sarah Chen',
@@ -82,14 +82,14 @@ export const actionableInsights = [
     spending: 250,
     savings: 150,
     message: {
-      prefix: 'You spent ',
+      prefix: 'We noticed you spent ',
       amount: '$250',
-      suffix: ' on dining out this week.',
+      suffix: ' on dining out this week. It seems like a busy week!',
     },
     impact: {
-      prefix: 'Cooking at home 3 more times could save you ',
+      prefix: "If you'd like, trying home cooking for just 3 meals could save ",
       amount: '$150',
-      suffix: '.',
+      suffix: ' while learning some new recipes. No pressure - just a friendly suggestion!',
     },
   },
   {
@@ -97,14 +97,14 @@ export const actionableInsights = [
     spending: 180,
     savings: 165,
     message: {
-      prefix: 'You spent ',
+      prefix: 'Your entertainment spending included ',
       amount: '$180',
-      suffix: ' at movie theaters this month.',
+      suffix: " at movie theaters this month. We love that you're making time for entertainment!",
     },
     impact: {
-      prefix: 'Switching to streaming would save you ',
+      prefix: 'A streaming subscription could help you save ',
       amount: '$165',
-      suffix: '.',
+      suffix: ' while still enjoying great content. Maybe invite friends over for movie nights?',
     },
   },
 ];
