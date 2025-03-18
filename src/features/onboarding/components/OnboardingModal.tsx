@@ -222,7 +222,7 @@ export default function OnboardingModal() {
 
   return (
     <div className='fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 md:p-4'>
-      <div className='bg-white rounded-xl md:rounded-2xl w-full max-w-5xl shadow-xl overflow-hidden h-[98vh] md:h-[95vh] flex flex-col'>
+      <div className='bg-white rounded-xl md:rounded-2xl w-full max-w-5xl shadow-xl overflow-hidden h-[98vh] md:max-h-[95vh] flex flex-col'>
         <div className='flex flex-col md:flex-row flex-1 overflow-hidden'>
           <LeftSideContent
             isFirstQuestion={isFirstQuestion}
