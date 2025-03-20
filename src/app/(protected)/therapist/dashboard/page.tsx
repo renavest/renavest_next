@@ -3,35 +3,14 @@
 import { useUser } from '@clerk/nextjs';
 import { Calendar } from 'lucide-react';
 
-import { cn } from '@/src/lib/utils';
-import { COLORS } from '@/src/styles/colors';
 import {
   clientMetricsSignal,
   sessionStatsSignal,
   earningsMetricsSignal,
 } from '@/src/features/therapist-dashboard/state/therapistDashboardState';
-
-function MetricCard({
-  title,
-  value,
-  subtitle,
-  className,
-}: {
-  title: string;
-  value: string | number;
-  subtitle?: string;
-  className?: string;
-}) {
-  return (
-    <div
-      className={cn('bg-white rounded-xl p-4 md:p-6 border border-gray-100 shadow-sm', className)}
-    >
-      <h3 className='text-sm text-gray-600 mb-1'>{title}</h3>
-      <p className='text-2xl md:text-3xl font-semibold text-gray-900'>{value}</p>
-      {subtitle && <p className='text-sm text-gray-500 mt-1'>{subtitle}</p>}
-    </div>
-  );
-}
+import { cn } from '@/src/lib/utils';
+import MetricCard from '@/src/shared/components/MetricCard';
+import { COLORS } from '@/src/styles/colors';
 
 function AppointmentCard() {
   return (

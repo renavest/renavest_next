@@ -25,7 +25,7 @@ export interface EarningsMetrics {
 export const clientMetricsSignal = signal<ClientMetrics>({
   totalClients: 45,
   activeClients: 32,
-  averageSessionsPerClient: 4.5,
+  averageSessionsPerClient: 6,
   clientSatisfactionRate: 92,
 });
 

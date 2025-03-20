@@ -16,7 +16,6 @@ import { COLORS } from '@/src/styles/colors';
 export default function DashboardPage() {
   const [showOnboarding, setShowOnboarding] = useState(!onboardingSignal.value.isComplete);
   const { user } = useUser();
-  console.log(user);
   useEffect(() => {
     const unsubscribe = onboardingSignal.subscribe((newValue) => {
       setShowOnboarding(!newValue.isComplete);
