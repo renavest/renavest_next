@@ -1,5 +1,7 @@
 import { signal } from '@preact-signals/safe-react';
 
+import { UserType } from '../types/auth';
+
 interface AuthState {
   isAuthenticated: boolean;
   userId: string | null;
@@ -18,7 +20,10 @@ const initialState: AuthState = {
   isLoading: false,
 };
 
-export const emailSignal = signal('');
+export const selectedRoleSignal = signal<UserType | null>(null);
+export const authErrorSignal = signal<string | null>(null);
+export const emailSignal = signal<string>('');
+export const passwordSignal = signal<string>('');
 
 export const authState = signal<AuthState>(initialState);
 

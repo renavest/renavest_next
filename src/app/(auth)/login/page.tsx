@@ -1,10 +1,16 @@
 'use client';
 
-import { useState } from 'react';
-
+import GoogleSignInButton from '@/src/features/auth/components/GoogleSignInButton';
+import MicrosoftSignInButton from '@/src/features/auth/components/MicrosoftSignInButton';
 import WelcomeSection from '@/src/features/auth/components/WelcomeSection';
+import {
+  authErrorSignal,
+  emailSignal,
+  passwordSignal,
+  selectedRoleSignal,
+} from '@/src/features/auth/state/authState';
 import { UserType } from '@/src/features/auth/types/auth';
-import { mockAuth, setMockUserRole } from '@/src/features/auth/utils/mockAuth';
+import { setMockUserRole } from '@/src/features/auth/utils/mockAuth';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
@@ -61,52 +67,27 @@ function RoleSelector({
 }
 
 export default function LoginPage() {
-  const [selectedRole, setSelectedRole] = useState<UserType | null>(null);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedRole) {
-      setError('Please select a role before continuing');
+    if (!selectedRoleSignal.value) {
+      authErrorSignal.value = 'Please select a role before continuing';
       return;
     }
 
-    if (!email || !password) {
-      setError('Please enter both email and password');
+    if (!emailSignal.value || !passwordSignal.value) {
+      authErrorSignal.value = 'Please enter both email and password';
       return;
     }
 
     try {
       // Set the mock user's role and email
-      setMockUserRole(selectedRole);
+      setMockUserRole(selectedRoleSignal.value);
 
       // Redirect to the appropriate dashboard
-      window.location.href = `/${selectedRole === 'employer' ? 'employer' : selectedRole === 'therapist' ? 'therapist' : ''}/dashboard`;
+      window.location.href = `/${selectedRoleSignal.value === 'employer' ? 'employer' : selectedRoleSignal.value === 'therapist' ? 'therapist' : ''}/dashboard`;
     } catch (err) {
       console.error('Sign in error:', err);
-      setError('Failed to sign in. Please try again.');
-    }
-  };
-
-  const handleOAuthSignIn = async (provider: 'oauth_google' | 'oauth_microsoft') => {
-    if (!selectedRole) {
-      setError('Please select a role before continuing');
-      return;
-    }
-
-    try {
-      // Set the mock user's role
-      setMockUserRole(selectedRole);
-
-      // Use mock auth to redirect
-      await mockAuth.signIn.authenticateWithRedirect({
-        redirectUrlComplete: `/${selectedRole === 'employer' ? 'employer' : selectedRole === 'therapist' ? 'therapist' : ''}/dashboard`,
-      });
-    } catch (err) {
-      console.error('OAuth error:', err);
-      setError('Failed to sign in. Please try again.');
+      authErrorSignal.value = 'Failed to sign in. Please try again.';
     }
   };
 
@@ -123,11 +104,16 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <RoleSelector selectedRole={selectedRole} onRoleSelect={setSelectedRole} />
+          <RoleSelector
+            selectedRole={selectedRoleSignal.value}
+            onRoleSelect={(role) => (selectedRoleSignal.value = role)}
+          />
 
-          {error && <div className='text-red-500 text-sm'>{error}</div>}
+          {authErrorSignal.value && (
+            <div className='text-red-500 text-sm'>{authErrorSignal.value}</div>
+          )}
 
-          {selectedRole && (
+          {selectedRoleSignal.value && (
             <div className='space-y-6'>
               <form onSubmit={handleEmailSignIn} className='space-y-4'>
                 <div>
@@ -137,8 +123,8 @@ export default function LoginPage() {
                   <input
                     id='email'
                     type='email'
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={emailSignal.value}
+                    onChange={(e) => (emailSignal.value = e.target.value)}
                     className='mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500'
                     placeholder='you@example.com'
                   />
@@ -150,8 +136,8 @@ export default function LoginPage() {
                   <input
                     id='password'
                     type='password'
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    value={passwordSignal.value}
+                    onChange={(e) => (passwordSignal.value = e.target.value)}
                     className='mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500'
                     placeholder='••••••••'
                   />
@@ -178,20 +164,8 @@ export default function LoginPage() {
               </div>
 
               <div className='flex flex-col gap-4'>
-                <button
-                  onClick={() => handleOAuthSignIn('oauth_google')}
-                  className='flex items-center justify-center gap-3 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors'
-                >
-                  <img src='/google.svg' alt='Google' className='w-6 h-6' />
-                  <span>Continue with Google</span>
-                </button>
-                <button
-                  onClick={() => handleOAuthSignIn('oauth_microsoft')}
-                  className='flex items-center justify-center gap-3 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors'
-                >
-                  <img src='/microsoft.svg' alt='Microsoft' className='w-6 h-6' />
-                  <span>Continue with Microsoft</span>
-                </button>
+                <GoogleSignInButton />
+                <MicrosoftSignInButton />
               </div>
             </div>
           )}
