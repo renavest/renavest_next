@@ -29,6 +29,7 @@ function MetricsSection({ title, children }: { title: string; children: React.Re
 function ProgramOverviewSection() {
   const stats = programStatsSignal.value;
   const metrics = engagementMetricsSignal.value;
+  const sessionMetrics = sessionMetricsSignal.value;
   const platformAdoption =
     stats.totalEmployees > 0
       ? ((metrics.monthlyActiveUsers / stats.totalEmployees) * 100).toFixed(0)
@@ -59,9 +60,9 @@ function ProgramOverviewSection() {
         trend={+15}
       />
       <MetricCard
-        title='Active This Week'
-        value={metrics.weeklyActiveUsers}
-        subtitle='Logged in past 7 days'
+        title='Need More Credits'
+        value={sessionMetrics.employeesRequestingTopUp}
+        subtitle='Requested additional'
         trend={+12}
       />
     </MetricsSection>
@@ -104,11 +105,6 @@ function SessionsSection() {
 
 function EngagementSection() {
   const metrics = engagementMetricsSignal.value;
-  const stats = programStatsSignal.value;
-  const creditUsageRate =
-    stats.employeesWithSessions > 0
-      ? ((stats.employeesCompletedAllSessions / stats.employeesWithSessions) * 100).toFixed(0)
-      : '0';
 
   return (
     <MetricsSection title='Platform Engagement'>
@@ -121,9 +117,9 @@ function EngagementSection() {
       <MetricCard title='Session Duration' value='45 min' subtitle='Average length' trend={+5} />
       <MetricCard title='Return Rate' value='85%' subtitle='Book multiple sessions' trend={+15} />
       <MetricCard
-        title='Credit Usage Rate'
-        value={`${creditUsageRate}%`}
-        subtitle='Of active employees'
+        title='Weekly Active'
+        value={metrics.weeklyActiveUsers}
+        subtitle='Past 7 days'
         trend={+10}
       />
     </MetricsSection>
