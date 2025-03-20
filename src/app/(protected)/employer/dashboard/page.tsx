@@ -28,11 +28,12 @@ function MetricsSection({ title, children }: { title: string; children: React.Re
 
 function ProgramOverviewSection() {
   const stats = programStatsSignal.value;
-  const activePercentage =
+  const metrics = engagementMetricsSignal.value;
+  const platformAdoption =
     stats.totalEmployees > 0
-      ? ((stats.activeEmployees / stats.totalEmployees) * 100).toFixed(0)
+      ? ((metrics.monthlyActiveUsers / stats.totalEmployees) * 100).toFixed(0)
       : '0';
-  const sessionUtilization =
+  const sessionAdoption =
     stats.totalEmployees > 0
       ? ((stats.employeesWithSessions / stats.totalEmployees) * 100).toFixed(0)
       : '0';
@@ -42,25 +43,25 @@ function ProgramOverviewSection() {
       <MetricCard
         title='Total Employees'
         value={stats.totalEmployees}
-        subtitle='Registered in platform'
+        subtitle='In your organization'
         trend={+3}
       />
       <MetricCard
-        title='Platform Usage'
-        value={`${activePercentage}%`}
-        subtitle='Employees logged in'
+        title='Platform Adoption'
+        value={`${platformAdoption}%`}
+        subtitle='Logged into platform'
         trend={+7}
       />
       <MetricCard
-        title='Session Usage'
-        value={`${sessionUtilization}%`}
-        subtitle='Started sessions'
+        title='Session Adoption'
+        value={`${sessionAdoption}%`}
+        subtitle='Booked sessions'
         trend={+15}
       />
       <MetricCard
-        title='Active Users'
-        value={stats.activeEmployees}
-        subtitle='This month'
+        title='Weekly Active'
+        value={metrics.weeklyActiveUsers}
+        subtitle='Last 7 days'
         trend={+12}
       />
     </MetricsSection>
@@ -74,25 +75,25 @@ function SessionsSection() {
   return (
     <MetricsSection title='Sessions Overview'>
       <MetricCard
-        title='Started Sessions'
+        title='Total Sessions'
         value={stats.employeesWithSessions}
-        subtitle={`${((stats.employeesWithSessions / stats.totalEmployees) * 100).toFixed(0)}% of employees`}
+        subtitle={`${((stats.employeesWithSessions / stats.totalEmployees) * 100).toFixed(0)}% participation`}
         trend={+10}
       />
       <MetricCard
-        title='Completed All'
+        title='Completed Sessions'
         value={stats.employeesCompletedAllSessions}
-        subtitle={`${((stats.employeesCompletedAllSessions / stats.totalEmployees) * 100).toFixed(0)}% completion rate`}
+        subtitle={`${((stats.employeesCompletedAllSessions / stats.totalEmployees) * 100).toFixed(0)}% completion`}
         trend={+8}
       />
       <MetricCard
-        title='This Month'
+        title='Active Sessions'
         value={metrics.sessionsThisMonth}
-        subtitle='Active sessions'
+        subtitle='This month'
         trend={+12}
       />
       <MetricCard
-        title='Upcoming'
+        title='Upcoming Sessions'
         value={metrics.upcomingSessions}
         subtitle='Next 30 days'
         trend={+5}
@@ -103,37 +104,18 @@ function SessionsSection() {
 
 function EngagementSection() {
   const metrics = engagementMetricsSignal.value;
-  const stats = programStatsSignal.value;
-  const weeklyPercentage =
-    stats.totalEmployees > 0
-      ? ((metrics.weeklyActiveUsers / stats.totalEmployees) * 100).toFixed(0)
-      : '0';
-  const monthlyPercentage =
-    stats.totalEmployees > 0
-      ? ((metrics.monthlyActiveUsers / stats.totalEmployees) * 100).toFixed(0)
-      : '0';
 
   return (
     <MetricsSection title='Platform Engagement'>
       <MetricCard
-        title='Weekly Active'
-        value={metrics.weeklyActiveUsers}
-        subtitle={`${weeklyPercentage}% of employees`}
-        trend={+15}
-      />
-      <MetricCard
-        title='Monthly Active'
-        value={metrics.monthlyActiveUsers}
-        subtitle={`${monthlyPercentage}% of employees`}
-        trend={+25}
-      />
-      <MetricCard
         title='Daily Logins'
         value={metrics.dailyActiveUsers}
-        subtitle='Users today'
+        subtitle='Today'
         trend={+20}
       />
-      <MetricCard title='Peak Activity' value='Tuesday' subtitle='Highest engagement' trend={+8} />
+      <MetricCard title='Average Session Length' value='45 min' subtitle='Per session' trend={+5} />
+      <MetricCard title='Return Rate' value='85%' subtitle='Book again' trend={+15} />
+      <MetricCard title='Peak Activity' value='Tuesday' subtitle='Most active day' trend={+8} />
     </MetricsSection>
   );
 }
