@@ -81,9 +81,9 @@ function SessionsSection() {
         trend={+10}
       />
       <MetricCard
-        title='Completed Program'
+        title='Used All Credits'
         value={stats.employeesCompletedAllSessions}
-        subtitle={`${((stats.employeesCompletedAllSessions / stats.totalEmployees) * 100).toFixed(0)}% finished all sessions`}
+        subtitle={`${((stats.employeesCompletedAllSessions / stats.totalEmployees) * 100).toFixed(0)}% utilized fully`}
         trend={+8}
       />
       <MetricCard
@@ -114,13 +114,7 @@ function EngagementSection() {
         trend={+20}
       />
       <MetricCard title='Session Duration' value='45 min' subtitle='Average length' trend={+5} />
-      <MetricCard title='Rebooking Rate' value='85%' subtitle='Book second session' trend={+15} />
-      <MetricCard
-        title='Most Active Day'
-        value='Tuesday'
-        subtitle='Highest engagement'
-        trend={+8}
-      />
+      <MetricCard title='Return Rate' value='85%' subtitle='Book multiple sessions' trend={+15} />
     </MetricsSection>
   );
 }
