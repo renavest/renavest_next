@@ -1,3 +1,7 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
 // Pure Tailwind modal component
 interface CreditRequestsModalProps {
   isOpen: boolean;
@@ -10,13 +14,19 @@ export default function CreditRequestsModal({
   onClose,
   requestCount,
 }: CreditRequestsModalProps) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const handleTopUp = () => {
     // TODO: Implement top-up flow
     console.log('Top up clicked');
     onClose();
   };
 
-  if (!isOpen) return null;
+  if (!isMounted || !isOpen) return null;
 
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center'>
