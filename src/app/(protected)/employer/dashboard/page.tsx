@@ -121,26 +121,24 @@ export default function EmployerDashboardPage() {
   const { user } = useUser();
 
   return (
-    <div className={cn('min-h-screen pb-8', COLORS.WARM_WHITE.bg)}>
-      {/* Header Bar */}
-      <div className='fixed top-0 left-0 right-0 z-0'>
-        <div className={cn('h-64 w-full', 'bg-gradient-to-b from-[#9071FF] to-[#7C3AED]')} />
-        <div className='absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white to-transparent' />
-      </div>
-
-      <main className='relative z-10 container mx-auto px-4 pt-20 md:pt-24 pb-8 space-y-12'>
-        {/* Welcome Section */}
-        <div className='mb-8 md:mb-12 bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-sm border border-purple-100'>
-          <div className='max-w-2xl'>
-            <h1 className='text-3xl md:text-4xl font-bold text-gray-900 mb-3'>
-              Welcome back, {user?.firstName}
-            </h1>
-            <p className='text-base md:text-lg text-gray-600'>
-              Here's an overview of your HSA program and employee wellness metrics.
-            </p>
+    <div className={cn('min-h-screen', COLORS.WARM_WHITE.bg)}>
+      {/* Header */}
+      <header className={cn('bg-gradient-to-b from-[#9071FF] to-[#7C3AED] pb-24')}>
+        <div className='container mx-auto px-4 pt-8'>
+          <div className='bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-sm border border-purple-100'>
+            <div className='max-w-2xl'>
+              <h1 className='text-3xl md:text-4xl font-bold text-gray-900 mb-3'>
+                Welcome back, {user?.firstName}
+              </h1>
+              <p className='text-base md:text-lg text-gray-600'>
+                Here's an overview of your HSA program and employee wellness metrics.
+              </p>
+            </div>
           </div>
         </div>
+      </header>
 
+      <main className='container mx-auto px-4 -mt-12 space-y-12'>
         <DashboardContent />
       </main>
     </div>
