@@ -4,12 +4,12 @@ import { useClerk } from '@clerk/nextjs';
 import { LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
+import FinancialGoalsChart from '@/src/features/employer-dashboard/components/FinancialGoalsChart';
+import LoginFrequencyChart from '@/src/features/employer-dashboard/components/LoginFrequencyChart';
 import {
-  employeeMetricsSignal,
-  financialWellnessMetricsSignal,
+  engagementMetricsSignal,
+  financialGoalsMetricsSignal,
   programStatsSignal,
-  sessionMetricsSignal,
-  satisfactionMetricsSignal,
 } from '@/src/features/employer-dashboard/state/employerDashboardState';
 import { cn } from '@/src/lib/utils';
 import MetricCard from '@/src/shared/components/MetricCard';
@@ -26,135 +26,101 @@ function MetricsSection({ title, children }: { title: string; children: React.Re
   );
 }
 
-function SessionEngagementSection() {
-  const sessionMetrics = sessionMetricsSignal.value;
+function KeyMetricsSection() {
+  const programStats = programStatsSignal.value;
+  const financialGoals = financialGoalsMetricsSignal.value;
 
   return (
-    <MetricsSection title='Session Engagement'>
-      <MetricCard
-        title='Active Bookings'
-        value={sessionMetrics.activeBookings}
-        subtitle='Current sessions'
-        trend={+10}
-      />
-      <MetricCard
-        title='Credit Usage'
-        value={`${sessionMetrics.creditUtilization}%`}
-        subtitle='Of allocated credits'
-        trend={+15}
-      />
-      <MetricCard
-        title='Session Progress'
-        value={`${sessionMetrics.completionRate}%`}
-        subtitle='Completing 3+ sessions'
-        trend={+8}
-      />
-      <MetricCard
-        title='Avg Sessions'
-        value={sessionMetrics.avgSessionsPerEmployee.toFixed(1)}
-        subtitle='Per employee'
-        trend={+12}
-      />
-    </MetricsSection>
-  );
-}
-
-function WellnessImpactSection() {
-  const satisfactionMetrics = satisfactionMetricsSignal.value;
-
-  return (
-    <MetricsSection title='Wellness Impact'>
-      <MetricCard
-        title='Satisfaction'
-        value={`${satisfactionMetrics.overallSatisfaction}%`}
-        subtitle='Overall rating'
-        trend={+5}
-      />
-      <MetricCard
-        title='Stress Reduction'
-        value={`${satisfactionMetrics.stressReduction}%`}
-        subtitle='Report improvement'
-        trend={+8}
-      />
-      <MetricCard
-        title='Financial Confidence'
-        value={`${satisfactionMetrics.financialConfidence}%`}
-        subtitle='Feel more prepared'
-        trend={+10}
-      />
-      <MetricCard
-        title='Would Recommend'
-        value={`${satisfactionMetrics.recommendationRate}%`}
-        subtitle='To colleagues'
-        trend={+7}
-      />
-    </MetricsSection>
-  );
-}
-
-function ProgramUsageSection() {
-  const employeeMetrics = employeeMetricsSignal.value;
-  const sessionMetrics = sessionMetricsSignal.value;
-
-  return (
-    <MetricsSection title='Program Usage'>
+    <MetricsSection title='Key Metrics'>
       <MetricCard
         title='Total Employees'
-        value={employeeMetrics.totalEmployees}
-        subtitle='Currently enrolled'
+        value={programStats.totalEmployees}
+        subtitle='Platform access'
         trend={+3}
       />
       <MetricCard
         title='Active Users'
-        value={employeeMetrics.activeInProgram}
+        value={programStats.activeUsers}
         subtitle='This month'
         trend={+7}
       />
       <MetricCard
-        title='Stress Tracking'
-        value={`${sessionMetrics.stressTrackerUsage}%`}
-        subtitle='Using triggers'
+        title='Goals Progress'
+        value={`${financialGoals.avgProgressPercentage}%`}
+        subtitle='Average completion'
         trend={+15}
       />
       <MetricCard
-        title='Coach Sessions'
-        value={`${employeeMetrics.coachUtilization}%`}
-        subtitle='Booked this month'
-        trend={+10}
+        title='Satisfaction'
+        value={programStats.satisfactionScore}
+        subtitle='Out of 100'
+        trend={+5}
       />
     </MetricsSection>
   );
 }
 
-function ProgramImpactSection() {
-  const programStats = programStatsSignal.value;
-  const financialMetrics = financialWellnessMetricsSignal.value;
+function EngagementSection() {
+  const metrics = engagementMetricsSignal.value;
 
   return (
-    <MetricsSection title='Program Impact'>
+    <MetricsSection title='User Engagement'>
       <MetricCard
-        title='Cost Savings'
-        value={`$${programStats.costSavings.toLocaleString()}`}
-        subtitle='From reduced turnover'
+        title='Daily Active'
+        value={metrics.dailyActiveUsers}
+        subtitle='Users today'
+        trend={+10}
+      />
+      <MetricCard
+        title='Weekly Active'
+        value={metrics.weeklyActiveUsers}
+        subtitle='Past 7 days'
+        trend={+8}
+      />
+      <MetricCard
+        title='Monthly Active'
+        value={metrics.monthlyActiveUsers}
+        subtitle='This month'
+        trend={+12}
+      />
+      <MetricCard
+        title='Sessions/Week'
+        value={metrics.averageSessionsPerWeek.toFixed(1)}
+        subtitle='Per user avg'
+        trend={+5}
+      />
+    </MetricsSection>
+  );
+}
+
+function FinancialGoalsSection() {
+  const metrics = financialGoalsMetricsSignal.value;
+
+  return (
+    <MetricsSection title='Financial Goals'>
+      <MetricCard
+        title='Total Goals'
+        value={metrics.totalGoalsSet}
+        subtitle='Goals created'
         trend={+20}
       />
       <MetricCard
-        title='Productivity Gain'
-        value={`${programStats.productivityGain}%`}
-        subtitle='Self-reported'
-        trend={+5}
+        title='In Progress'
+        value={metrics.goalsInProgress}
+        subtitle='Active goals'
+        trend={+15}
       />
       <MetricCard
-        title='Program ROI'
-        value={`${programStats.programROI}x`}
-        subtitle='Return on investment'
+        title='Achieved'
+        value={metrics.goalsAchieved}
+        subtitle='Completed goals'
         trend={+25}
       />
       <MetricCard
-        title='Retention Impact'
-        value={`${financialMetrics.retentionIncrease}%`}
-        subtitle='YoY improvement'
-        trend={+12}
+        title='Success Rate'
+        value={`${((metrics.goalsAchieved / metrics.totalGoalsSet) * 100).toFixed(1)}%`}
+        subtitle='Completion rate'
+        trend={+8}
       />
     </MetricsSection>
   );
@@ -163,10 +129,13 @@ function ProgramImpactSection() {
 function DashboardContent() {
   return (
     <div className='space-y-16'>
-      <SessionEngagementSection />
-      <WellnessImpactSection />
-      <ProgramUsageSection />
-      <ProgramImpactSection />
+      <KeyMetricsSection />
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
+        <LoginFrequencyChart />
+        <FinancialGoalsChart />
+      </div>
+      <EngagementSection />
+      <FinancialGoalsSection />
     </div>
   );
 }
@@ -194,7 +163,7 @@ export default function EmployerDashboardPage() {
                 Welcome back, {user?.firstName || 'Guest'}
               </h1>
               <p className='text-base md:text-lg text-gray-600'>
-                Here's an overview of your employee financial wellness program metrics and impact.
+                Track your employee financial wellness program engagement and impact.
               </p>
             </div>
             <button

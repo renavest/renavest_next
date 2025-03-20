@@ -29,9 +29,36 @@ interface SatisfactionMetrics {
   recommendationRate: number;
 }
 
+interface EngagementMetrics {
+  dailyActiveUsers: number;
+  weeklyActiveUsers: number;
+  monthlyActiveUsers: number;
+  averageSessionsPerWeek: number;
+  loginFrequencyData: LoginFrequencyData[];
+}
+
+interface LoginFrequencyData {
+  day: string;
+  users: number;
+}
+
+interface FinancialGoalsMetrics {
+  totalGoalsSet: number;
+  goalsInProgress: number;
+  goalsAchieved: number;
+  avgProgressPercentage: number;
+  goalProgressData: GoalProgressData[];
+}
+
+interface GoalProgressData {
+  month: string;
+  achieved: number;
+  inProgress: number;
+}
+
 interface ProgramStats {
-  costSavings: number;
-  productivityGain: number;
+  totalEmployees: number;
+  activeUsers: number;
   programROI: number;
   satisfactionScore: number;
 }
@@ -65,9 +92,39 @@ export const satisfactionMetricsSignal = signal<SatisfactionMetrics>({
   recommendationRate: 89,
 });
 
+export const engagementMetricsSignal = signal<EngagementMetrics>({
+  dailyActiveUsers: 85,
+  weeklyActiveUsers: 320,
+  monthlyActiveUsers: 450,
+  averageSessionsPerWeek: 2.3,
+  loginFrequencyData: [
+    { day: 'Mon', users: 85 },
+    { day: 'Tue', users: 92 },
+    { day: 'Wed', users: 88 },
+    { day: 'Thu', users: 78 },
+    { day: 'Fri', users: 65 },
+    { day: 'Sat', users: 25 },
+    { day: 'Sun', users: 30 },
+  ],
+});
+
+export const financialGoalsMetricsSignal = signal<FinancialGoalsMetrics>({
+  totalGoalsSet: 520,
+  goalsInProgress: 380,
+  goalsAchieved: 140,
+  avgProgressPercentage: 45,
+  goalProgressData: [
+    { month: 'Jan', achieved: 15, inProgress: 45 },
+    { month: 'Feb', achieved: 22, inProgress: 48 },
+    { month: 'Mar', achieved: 28, inProgress: 52 },
+    { month: 'Apr', achieved: 35, inProgress: 58 },
+    { month: 'May', achieved: 40, inProgress: 62 },
+  ],
+});
+
 export const programStatsSignal = signal<ProgramStats>({
-  costSavings: 375000,
-  productivityGain: 23,
+  totalEmployees: 500,
+  activeUsers: 450,
   programROI: 2.5,
   satisfactionScore: 82,
 });
