@@ -2,13 +2,13 @@
 import { useUser } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
 
-import DashboardHeader from '@/src/features/dashboard/components/DashboardHeader';
-import PersonalActionableInsights from '@/src/features/dashboard/components/insights/PersonalActionableInsights';
-import PersonalGoalsTracker from '@/src/features/dashboard/components/insights/PersonalGoalsTracker';
-import ProgressComparisonChart from '@/src/features/dashboard/components/insights/ProgressComparisonChart';
-import TherapistConnectionSummary from '@/src/features/dashboard/components/insights/TherapistConnectionSummary';
-import TherapistRecommendations from '@/src/features/dashboard/components/insights/TherapistRecommendations';
-import WeeklyFinancialReport from '@/src/features/dashboard/components/insights/WeeklyFinancialReport';
+import DashboardHeader from '@/src/features/employee-dashboard/components/DashboardHeader';
+import PersonalActionableInsights from '@/src/features/employee-dashboard/components/insights/PersonalActionableInsights';
+import PersonalGoalsTracker from '@/src/features/employee-dashboard/components/insights/PersonalGoalsTracker';
+import ProgressComparisonChart from '@/src/features/employee-dashboard/components/insights/ProgressComparisonChart';
+import TherapistConnectionSummary from '@/src/features/employee-dashboard/components/insights/TherapistConnectionSummary';
+import TherapistRecommendations from '@/src/features/employee-dashboard/components/insights/TherapistRecommendations';
+import WeeklyFinancialReport from '@/src/features/employee-dashboard/components/insights/WeeklyFinancialReport';
 import OnboardingModal from '@/src/features/onboarding/components/OnboardingModal';
 import { onboardingSignal } from '@/src/features/onboarding/state/onboardingState';
 import { COLORS } from '@/src/styles/colors';
