@@ -4,11 +4,10 @@ import { useClerk } from '@clerk/nextjs';
 import { LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-import FinancialGoalsChart from '@/src/features/employer-dashboard/components/FinancialGoalsChart';
 import LoginFrequencyChart from '@/src/features/employer-dashboard/components/LoginFrequencyChart';
+import SessionsChart from '@/src/features/employer-dashboard/components/SessionsChart';
 import {
   engagementMetricsSignal,
-  financialGoalsMetricsSignal,
   programStatsSignal,
   sessionMetricsSignal,
 } from '@/src/features/employer-dashboard/state/employerDashboardState';
@@ -49,15 +48,15 @@ function ProgramOverviewSection() {
         trend={+7}
       />
       <MetricCard
-        title='With Goals'
-        value={stats.employeesWithGoals}
-        subtitle='Setting goals'
+        title='Using Sessions'
+        value={stats.employeesWithSessions}
+        subtitle='Booked at least once'
         trend={+15}
       />
       <MetricCard
-        title='With Sessions'
-        value={stats.employeesWithSessions}
-        subtitle='Booked sessions'
+        title='Avg Sessions'
+        value={stats.averageSessionsPerEmployee.toFixed(1)}
+        subtitle='Per employee'
         trend={+12}
       />
     </MetricsSection>
@@ -101,39 +100,35 @@ function SessionsSection() {
   );
 }
 
-function FinancialGoalsSection() {
-  const metrics = financialGoalsMetricsSignal.value;
-  const completionRate =
-    metrics.totalGoalsSet > 0
-      ? ((metrics.goalsCompleted / metrics.totalGoalsSet) * 100).toFixed(0)
+function EngagementSection() {
+  const metrics = engagementMetricsSignal.value;
+  const stats = programStatsSignal.value;
+  const weeklyPercentage =
+    stats.totalEmployees > 0
+      ? ((metrics.weeklyActiveUsers / stats.totalEmployees) * 100).toFixed(0)
       : '0';
 
   return (
-    <MetricsSection title='Financial Goals'>
+    <MetricsSection title='Platform Engagement'>
       <MetricCard
-        title='Total Goals'
-        value={metrics.totalGoalsSet}
-        subtitle='Goals created'
+        title='Daily Active'
+        value={metrics.dailyActiveUsers}
+        subtitle='Users today'
         trend={+20}
       />
       <MetricCard
-        title='Completed'
-        value={metrics.goalsCompleted}
-        subtitle={`${completionRate}% success rate`}
+        title='Weekly Active'
+        value={metrics.weeklyActiveUsers}
+        subtitle={`${weeklyPercentage}% of total`}
         trend={+15}
       />
       <MetricCard
-        title='Active Users'
-        value={engagementMetricsSignal.value.monthlyActiveUsers}
+        title='Monthly Active'
+        value={metrics.monthlyActiveUsers}
         subtitle='This month'
         trend={+25}
       />
-      <MetricCard
-        title='Daily Users'
-        value={engagementMetricsSignal.value.dailyActiveUsers}
-        subtitle='Today'
-        trend={+8}
-      />
+      <MetricCard title='Peak Day' value='Tuesday' subtitle='Most active' trend={+8} />
     </MetricsSection>
   );
 }
@@ -144,10 +139,10 @@ function DashboardContent() {
       <ProgramOverviewSection />
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
         <LoginFrequencyChart />
-        <FinancialGoalsChart />
+        <SessionsChart />
       </div>
       <SessionsSection />
-      <FinancialGoalsSection />
+      <EngagementSection />
     </div>
   );
 }
@@ -174,7 +169,7 @@ export default function EmployerDashboardPage() {
                 Welcome back, {user?.firstName || 'Guest'}
               </h1>
               <p className='text-base md:text-lg text-gray-600'>
-                Track your employee financial wellness program participation and progress.
+                Track your employee wellness program engagement and session activity.
               </p>
             </div>
             <button

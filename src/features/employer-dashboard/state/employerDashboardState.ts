@@ -12,6 +12,13 @@ interface SessionMetrics {
   completedSessions: number;
   upcomingSessions: number;
   sessionsThisMonth: number;
+  sessionsByMonth: MonthlySessionData[];
+}
+
+interface MonthlySessionData {
+  month: string;
+  completed: number;
+  scheduled: number;
 }
 
 interface EmployeeMetrics {
@@ -55,8 +62,8 @@ interface GoalProgressData {
 interface ProgramStats {
   totalEmployees: number;
   activeEmployees: number;
-  employeesWithGoals: number;
   employeesWithSessions: number;
+  averageSessionsPerEmployee: number;
 }
 
 export const financialWellnessMetricsSignal = signal<FinancialWellnessMetrics>({
@@ -71,6 +78,13 @@ export const sessionMetricsSignal = signal<SessionMetrics>({
   completedSessions: 980,
   upcomingSessions: 145,
   sessionsThisMonth: 230,
+  sessionsByMonth: [
+    { month: 'Jan', completed: 180, scheduled: 200 },
+    { month: 'Feb', completed: 195, scheduled: 210 },
+    { month: 'Mar', completed: 210, scheduled: 225 },
+    { month: 'Apr', completed: 195, scheduled: 205 },
+    { month: 'May', completed: 200, scheduled: 210 },
+  ],
 });
 
 export const employeeMetricsSignal = signal<EmployeeMetrics>({
@@ -117,6 +131,6 @@ export const financialGoalsMetricsSignal = signal<FinancialGoalsMetrics>({
 export const programStatsSignal = signal<ProgramStats>({
   totalEmployees: 500,
   activeEmployees: 450,
-  employeesWithGoals: 380,
   employeesWithSessions: 410,
+  averageSessionsPerEmployee: 2.5,
 });
