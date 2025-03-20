@@ -62,8 +62,8 @@ function ProgramOverviewSection() {
       <MetricCard
         title='Credit Requests'
         value={sessionMetrics.employeesRequestingTopUp}
-        subtitle='Employees want more'
-        trend={+12}
+        subtitle='Want more credits'
+        trend={+25}
         className='bg-purple-600 text-white'
         trendClassName='text-purple-100'
       />
@@ -116,7 +116,7 @@ function EngagementSection() {
         subtitle='Unique users today'
         trend={+20}
       />
-      <MetricCard title='Session Duration' value='45 min' subtitle='Average length' trend={+5} />
+      <MetricCard title='Average Sessions' value='3.2' subtitle='Per employee' trend={+15} />
       <MetricCard title='Return Rate' value='85%' subtitle='Book multiple sessions' trend={+15} />
       <MetricCard
         title='Weekly Active'
