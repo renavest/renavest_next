@@ -60,10 +60,12 @@ function ProgramOverviewSection() {
         trend={+15}
       />
       <MetricCard
-        title='Need More Credits'
+        title='Credit Requests'
         value={sessionMetrics.employeesRequestingTopUp}
-        subtitle='Requested additional'
+        subtitle='Employees want more'
         trend={+12}
+        className='bg-purple-600 text-white'
+        trendClassName='text-purple-100'
       />
     </MetricsSection>
   );
