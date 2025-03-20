@@ -8,11 +8,10 @@ interface FinancialWellnessMetrics {
 }
 
 interface SessionMetrics {
-  activeBookings: number;
-  creditUtilization: number;
-  stressTrackerUsage: number;
-  completionRate: number;
-  avgSessionsPerEmployee: number;
+  totalSessions: number;
+  completedSessions: number;
+  upcomingSessions: number;
+  sessionsThisMonth: number;
 }
 
 interface EmployeeMetrics {
@@ -33,7 +32,6 @@ interface EngagementMetrics {
   dailyActiveUsers: number;
   weeklyActiveUsers: number;
   monthlyActiveUsers: number;
-  averageSessionsPerWeek: number;
   loginFrequencyData: LoginFrequencyData[];
 }
 
@@ -44,23 +42,21 @@ interface LoginFrequencyData {
 
 interface FinancialGoalsMetrics {
   totalGoalsSet: number;
-  goalsInProgress: number;
-  goalsAchieved: number;
-  avgProgressPercentage: number;
+  goalsCompleted: number;
   goalProgressData: GoalProgressData[];
 }
 
 interface GoalProgressData {
   month: string;
-  achieved: number;
-  inProgress: number;
+  completed: number;
+  total: number;
 }
 
 interface ProgramStats {
   totalEmployees: number;
-  activeUsers: number;
-  programROI: number;
-  satisfactionScore: number;
+  activeEmployees: number;
+  employeesWithGoals: number;
+  employeesWithSessions: number;
 }
 
 export const financialWellnessMetricsSignal = signal<FinancialWellnessMetrics>({
@@ -71,11 +67,10 @@ export const financialWellnessMetricsSignal = signal<FinancialWellnessMetrics>({
 });
 
 export const sessionMetricsSignal = signal<SessionMetrics>({
-  activeBookings: 45,
-  creditUtilization: 68,
-  stressTrackerUsage: 72,
-  completionRate: 85,
-  avgSessionsPerEmployee: 2.8,
+  totalSessions: 1250,
+  completedSessions: 980,
+  upcomingSessions: 145,
+  sessionsThisMonth: 230,
 });
 
 export const employeeMetricsSignal = signal<EmployeeMetrics>({
@@ -96,7 +91,6 @@ export const engagementMetricsSignal = signal<EngagementMetrics>({
   dailyActiveUsers: 85,
   weeklyActiveUsers: 320,
   monthlyActiveUsers: 450,
-  averageSessionsPerWeek: 2.3,
   loginFrequencyData: [
     { day: 'Mon', users: 85 },
     { day: 'Tue', users: 92 },
@@ -110,21 +104,19 @@ export const engagementMetricsSignal = signal<EngagementMetrics>({
 
 export const financialGoalsMetricsSignal = signal<FinancialGoalsMetrics>({
   totalGoalsSet: 520,
-  goalsInProgress: 380,
-  goalsAchieved: 140,
-  avgProgressPercentage: 45,
+  goalsCompleted: 140,
   goalProgressData: [
-    { month: 'Jan', achieved: 15, inProgress: 45 },
-    { month: 'Feb', achieved: 22, inProgress: 48 },
-    { month: 'Mar', achieved: 28, inProgress: 52 },
-    { month: 'Apr', achieved: 35, inProgress: 58 },
-    { month: 'May', achieved: 40, inProgress: 62 },
+    { month: 'Jan', completed: 15, total: 60 },
+    { month: 'Feb', completed: 22, total: 70 },
+    { month: 'Mar', completed: 28, total: 80 },
+    { month: 'Apr', completed: 35, total: 93 },
+    { month: 'May', completed: 40, total: 102 },
   ],
 });
 
 export const programStatsSignal = signal<ProgramStats>({
   totalEmployees: 500,
-  activeUsers: 450,
-  programROI: 2.5,
-  satisfactionScore: 82,
+  activeEmployees: 450,
+  employeesWithGoals: 380,
+  employeesWithSessions: 410,
 });

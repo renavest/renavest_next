@@ -1,4 +1,5 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
 import { engagementMetricsSignal } from '../state/employerDashboardState';
 
 export default function LoginFrequencyChart() {

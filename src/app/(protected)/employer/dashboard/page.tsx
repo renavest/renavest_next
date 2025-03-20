@@ -10,6 +10,7 @@ import {
   engagementMetricsSignal,
   financialGoalsMetricsSignal,
   programStatsSignal,
+  sessionMetricsSignal,
 } from '@/src/features/employer-dashboard/state/employerDashboardState';
 import { cn } from '@/src/lib/utils';
 import MetricCard from '@/src/shared/components/MetricCard';
@@ -26,67 +27,74 @@ function MetricsSection({ title, children }: { title: string; children: React.Re
   );
 }
 
-function KeyMetricsSection() {
-  const programStats = programStatsSignal.value;
-  const financialGoals = financialGoalsMetricsSignal.value;
+function ProgramOverviewSection() {
+  const stats = programStatsSignal.value;
+  const percentage =
+    stats.totalEmployees > 0
+      ? ((stats.activeEmployees / stats.totalEmployees) * 100).toFixed(0)
+      : '0';
 
   return (
-    <MetricsSection title='Key Metrics'>
+    <MetricsSection title='Program Overview'>
       <MetricCard
         title='Total Employees'
-        value={programStats.totalEmployees}
-        subtitle='Platform access'
+        value={stats.totalEmployees}
+        subtitle='Total headcount'
         trend={+3}
       />
       <MetricCard
-        title='Active Users'
-        value={programStats.activeUsers}
-        subtitle='This month'
+        title='Active Employees'
+        value={stats.activeEmployees}
+        subtitle={`${percentage}% of total`}
         trend={+7}
       />
       <MetricCard
-        title='Goals Progress'
-        value={`${financialGoals.avgProgressPercentage}%`}
-        subtitle='Average completion'
+        title='With Goals'
+        value={stats.employeesWithGoals}
+        subtitle='Setting goals'
         trend={+15}
       />
       <MetricCard
-        title='Satisfaction'
-        value={programStats.satisfactionScore}
-        subtitle='Out of 100'
-        trend={+5}
+        title='With Sessions'
+        value={stats.employeesWithSessions}
+        subtitle='Booked sessions'
+        trend={+12}
       />
     </MetricsSection>
   );
 }
 
-function EngagementSection() {
-  const metrics = engagementMetricsSignal.value;
+function SessionsSection() {
+  const metrics = sessionMetricsSignal.value;
+  const completionRate =
+    metrics.totalSessions > 0
+      ? ((metrics.completedSessions / metrics.totalSessions) * 100).toFixed(0)
+      : '0';
 
   return (
-    <MetricsSection title='User Engagement'>
+    <MetricsSection title='Sessions Overview'>
       <MetricCard
-        title='Daily Active'
-        value={metrics.dailyActiveUsers}
-        subtitle='Users today'
+        title='Total Sessions'
+        value={metrics.totalSessions}
+        subtitle='All time'
         trend={+10}
       />
       <MetricCard
-        title='Weekly Active'
-        value={metrics.weeklyActiveUsers}
-        subtitle='Past 7 days'
+        title='Completed'
+        value={metrics.completedSessions}
+        subtitle={`${completionRate}% completion`}
         trend={+8}
       />
       <MetricCard
-        title='Monthly Active'
-        value={metrics.monthlyActiveUsers}
-        subtitle='This month'
+        title='This Month'
+        value={metrics.sessionsThisMonth}
+        subtitle='Current period'
         trend={+12}
       />
       <MetricCard
-        title='Sessions/Week'
-        value={metrics.averageSessionsPerWeek.toFixed(1)}
-        subtitle='Per user avg'
+        title='Upcoming'
+        value={metrics.upcomingSessions}
+        subtitle='Scheduled'
         trend={+5}
       />
     </MetricsSection>
@@ -95,6 +103,10 @@ function EngagementSection() {
 
 function FinancialGoalsSection() {
   const metrics = financialGoalsMetricsSignal.value;
+  const completionRate =
+    metrics.totalGoalsSet > 0
+      ? ((metrics.goalsCompleted / metrics.totalGoalsSet) * 100).toFixed(0)
+      : '0';
 
   return (
     <MetricsSection title='Financial Goals'>
@@ -105,21 +117,21 @@ function FinancialGoalsSection() {
         trend={+20}
       />
       <MetricCard
-        title='In Progress'
-        value={metrics.goalsInProgress}
-        subtitle='Active goals'
+        title='Completed'
+        value={metrics.goalsCompleted}
+        subtitle={`${completionRate}% success rate`}
         trend={+15}
       />
       <MetricCard
-        title='Achieved'
-        value={metrics.goalsAchieved}
-        subtitle='Completed goals'
+        title='Active Users'
+        value={engagementMetricsSignal.value.monthlyActiveUsers}
+        subtitle='This month'
         trend={+25}
       />
       <MetricCard
-        title='Success Rate'
-        value={`${((metrics.goalsAchieved / metrics.totalGoalsSet) * 100).toFixed(1)}%`}
-        subtitle='Completion rate'
+        title='Daily Users'
+        value={engagementMetricsSignal.value.dailyActiveUsers}
+        subtitle='Today'
         trend={+8}
       />
     </MetricsSection>
@@ -129,12 +141,12 @@ function FinancialGoalsSection() {
 function DashboardContent() {
   return (
     <div className='space-y-16'>
-      <KeyMetricsSection />
+      <ProgramOverviewSection />
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
         <LoginFrequencyChart />
         <FinancialGoalsChart />
       </div>
-      <EngagementSection />
+      <SessionsSection />
       <FinancialGoalsSection />
     </div>
   );
@@ -154,7 +166,6 @@ export default function EmployerDashboardPage() {
 
   return (
     <div className={cn('min-h-screen bg-gray-50')}>
-      {/* Header */}
       <header className='bg-white border-b border-purple-100'>
         <div className='container mx-auto px-6 py-8'>
           <div className='flex justify-between items-start'>
@@ -163,7 +174,7 @@ export default function EmployerDashboardPage() {
                 Welcome back, {user?.firstName || 'Guest'}
               </h1>
               <p className='text-base md:text-lg text-gray-600'>
-                Track your employee financial wellness program engagement and impact.
+                Track your employee financial wellness program participation and progress.
               </p>
             </div>
             <button
