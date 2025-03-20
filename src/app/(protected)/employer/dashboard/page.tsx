@@ -70,24 +70,20 @@ function ProgramOverviewSection() {
 
 function SessionsSection() {
   const metrics = sessionMetricsSignal.value;
-  const completionRate =
-    metrics.totalSessionsAllocated > 0
-      ? ((metrics.totalSessionsCompleted / metrics.totalSessionsAllocated) * 100).toFixed(0)
-      : '0';
-  const sessionsPerEmployee = Math.floor(metrics.creditsPerEmployee / metrics.sessionsPerCredit);
+  const completionRate = ((metrics.completedSessions / metrics.totalSessions) * 100).toFixed(0);
 
   return (
     <MetricsSection title='Sessions Overview'>
       <MetricCard
-        title='Sessions Allocated'
-        value={metrics.totalSessionsAllocated}
-        subtitle={`${sessionsPerEmployee} per employee`}
+        title='Total Sessions'
+        value={metrics.totalSessions}
+        subtitle='Total allocated'
         trend={+10}
       />
       <MetricCard
-        title='Sessions Completed'
-        value={metrics.totalSessionsCompleted}
-        subtitle={`${completionRate}% of allocated`}
+        title='Completed'
+        value={metrics.completedSessions}
+        subtitle={`${completionRate}% completion`}
         trend={+8}
       />
       <MetricCard
@@ -97,10 +93,10 @@ function SessionsSection() {
         trend={+12}
       />
       <MetricCard
-        title='Upcoming'
-        value={metrics.upcomingSessions}
-        subtitle='Next 30 days'
-        trend={+5}
+        title='Credits Left'
+        value={`$${metrics.creditsRemaining}`}
+        subtitle='Available balance'
+        trend={-5}
       />
     </MetricsSection>
   );
@@ -156,8 +152,6 @@ function DashboardContent() {
 export default function EmployerDashboardPage() {
   const { user, signOut } = useClerk();
   const router = useRouter();
-  const metrics = sessionMetricsSignal.value;
-  const sessionsPerEmployee = Math.floor(metrics.creditsPerEmployee / metrics.sessionsPerCredit);
 
   const handleLogout = () => {
     if (user) {
@@ -165,6 +159,11 @@ export default function EmployerDashboardPage() {
     } else {
       router.push('/login');
     }
+  };
+
+  const handleTopUp = () => {
+    // TODO: Implement top-up flow
+    console.log('Top up clicked');
   };
 
   return (
@@ -177,17 +176,24 @@ export default function EmployerDashboardPage() {
                 Welcome back, {user?.firstName || 'Guest'}
               </h1>
               <p className='text-base md:text-lg text-gray-600'>
-                Track your ${metrics.creditsPerEmployee} employee wellness allocation (
-                {sessionsPerEmployee} sessions per employee)
+                Track your employee wellness program performance
               </p>
             </div>
-            <button
-              onClick={handleLogout}
-              className='flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors'
-            >
-              <LogOut className='h-5 w-5' />
-              <span className='hidden md:inline'>Logout</span>
-            </button>
+            <div className='flex items-center gap-4'>
+              <button
+                onClick={handleTopUp}
+                className='flex items-center gap-2 px-6 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors'
+              >
+                Top Up Credits
+              </button>
+              <button
+                onClick={handleLogout}
+                className='flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors'
+              >
+                <LogOut className='h-5 w-5' />
+                <span className='hidden md:inline'>Logout</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
