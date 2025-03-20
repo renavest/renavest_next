@@ -83,7 +83,7 @@ function SessionsSection() {
       <MetricCard
         title='Used All Credits'
         value={stats.employeesCompletedAllSessions}
-        subtitle={`${((stats.employeesCompletedAllSessions / stats.totalEmployees) * 100).toFixed(0)}% utilized fully`}
+        subtitle={`${((stats.employeesCompletedAllSessions / stats.totalEmployees) * 100).toFixed(0)}% finished all sessions`}
         trend={+8}
       />
       <MetricCard
@@ -104,6 +104,11 @@ function SessionsSection() {
 
 function EngagementSection() {
   const metrics = engagementMetricsSignal.value;
+  const stats = programStatsSignal.value;
+  const creditUsageRate =
+    stats.employeesWithSessions > 0
+      ? ((stats.employeesCompletedAllSessions / stats.employeesWithSessions) * 100).toFixed(0)
+      : '0';
 
   return (
     <MetricsSection title='Platform Engagement'>
@@ -115,6 +120,12 @@ function EngagementSection() {
       />
       <MetricCard title='Session Duration' value='45 min' subtitle='Average length' trend={+5} />
       <MetricCard title='Return Rate' value='85%' subtitle='Book multiple sessions' trend={+15} />
+      <MetricCard
+        title='Credit Usage Rate'
+        value={`${creditUsageRate}%`}
+        subtitle='Of active employees'
+        trend={+10}
+      />
     </MetricsSection>
   );
 }
