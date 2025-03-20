@@ -3,7 +3,9 @@
 import { useClerk } from '@clerk/nextjs';
 import { LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
+import CreditRequestsModal from '@/src/features/employer-dashboard/components/CreditRequestsModal';
 import LoginFrequencyChart from '@/src/features/employer-dashboard/components/LoginFrequencyChart';
 import SessionsChart from '@/src/features/employer-dashboard/components/SessionsChart';
 import {
@@ -30,6 +32,7 @@ function ProgramOverviewSection() {
   const stats = programStatsSignal.value;
   const metrics = engagementMetricsSignal.value;
   const sessionMetrics = sessionMetricsSignal.value;
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const platformAdoption =
     stats.totalEmployees > 0
       ? ((metrics.monthlyActiveUsers / stats.totalEmployees) * 100).toFixed(0)
@@ -40,34 +43,47 @@ function ProgramOverviewSection() {
       : '0';
 
   return (
-    <MetricsSection title='Program Overview'>
-      <MetricCard
-        title='Total Employees'
-        value={stats.totalEmployees}
-        subtitle='In your organization'
-        trend={+3}
+    <>
+      <MetricsSection title='Program Overview'>
+        <MetricCard
+          title='Total Employees'
+          value={stats.totalEmployees}
+          subtitle='In your organization'
+          trend={+3}
+        />
+        <MetricCard
+          title='Platform Login Rate'
+          value={`${platformAdoption}%`}
+          subtitle='Created accounts'
+          trend={+7}
+        />
+        <MetricCard
+          title='First Session Booked'
+          value={`${firstSessionRate}%`}
+          subtitle='Started their journey'
+          trend={+15}
+        />
+        <div
+          onClick={() => setIsModalOpen(true)}
+          className='cursor-pointer transition-transform hover:scale-105'
+        >
+          <MetricCard
+            title='Credit Requests'
+            value={sessionMetrics.employeesRequestingTopUp}
+            subtitle='Want more credits'
+            trend={+25}
+            className='bg-purple-600 text-white'
+            trendClassName='text-purple-100'
+          />
+        </div>
+      </MetricsSection>
+
+      <CreditRequestsModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        requestCount={sessionMetrics.employeesRequestingTopUp}
       />
-      <MetricCard
-        title='Platform Login Rate'
-        value={`${platformAdoption}%`}
-        subtitle='Created accounts'
-        trend={+7}
-      />
-      <MetricCard
-        title='First Session Booked'
-        value={`${firstSessionRate}%`}
-        subtitle='Started their journey'
-        trend={+15}
-      />
-      <MetricCard
-        title='Credit Requests'
-        value={sessionMetrics.employeesRequestingTopUp}
-        subtitle='Want more credits'
-        trend={+25}
-        className='bg-purple-600 text-white'
-        trendClassName='text-purple-100'
-      />
-    </MetricsSection>
+    </>
   );
 }
 
