@@ -1,44 +1,73 @@
 import { signal } from '@preact-signals/safe-react';
 
-export interface HSAMetrics {
-  totalContributions: number;
-  averageContribution: number;
-  participationRate: number;
-  yearOverYearGrowth: number;
+interface FinancialWellnessMetrics {
+  enrollmentRate: number;
+  avgSavingsRate: number;
+  stressReduction: number;
+  retentionIncrease: number;
 }
 
-export interface EmployeeMetrics {
+interface SessionMetrics {
+  activeBookings: number;
+  creditUtilization: number;
+  stressTrackerUsage: number;
+  completionRate: number;
+  avgSessionsPerEmployee: number;
+}
+
+interface EmployeeMetrics {
   totalEmployees: number;
   activeInProgram: number;
-  averageEngagement: number;
-  therapistUtilization: number;
+  youngWorkforce: number;
+  coachUtilization: number;
 }
 
-export interface ProgramStats {
-  totalHSASpend: number;
-  averageEmployeeBalance: number;
+interface SatisfactionMetrics {
+  overallSatisfaction: number;
+  stressReduction: number;
+  financialConfidence: number;
+  recommendationRate: number;
+}
+
+interface ProgramStats {
+  costSavings: number;
+  productivityGain: number;
   programROI: number;
-  wellnessScore: number;
+  satisfactionScore: number;
 }
 
-// Sample data for now
-export const hsaMetricsSignal = signal<HSAMetrics>({
-  totalContributions: 250000,
-  averageContribution: 2500,
-  participationRate: 75,
-  yearOverYearGrowth: 15,
+export const financialWellnessMetricsSignal = signal<FinancialWellnessMetrics>({
+  enrollmentRate: 75,
+  avgSavingsRate: 12,
+  stressReduction: 35,
+  retentionIncrease: 15,
+});
+
+export const sessionMetricsSignal = signal<SessionMetrics>({
+  activeBookings: 45,
+  creditUtilization: 68,
+  stressTrackerUsage: 72,
+  completionRate: 85,
+  avgSessionsPerEmployee: 2.8,
 });
 
 export const employeeMetricsSignal = signal<EmployeeMetrics>({
   totalEmployees: 150,
   activeInProgram: 120,
-  averageEngagement: 85,
-  therapistUtilization: 65,
+  youngWorkforce: 65,
+  coachUtilization: 45,
+});
+
+export const satisfactionMetricsSignal = signal<SatisfactionMetrics>({
+  overallSatisfaction: 92,
+  stressReduction: 78,
+  financialConfidence: 85,
+  recommendationRate: 89,
 });
 
 export const programStatsSignal = signal<ProgramStats>({
-  totalHSASpend: 375000,
-  averageEmployeeBalance: 3200,
+  costSavings: 375000,
+  productivityGain: 23,
   programROI: 2.5,
-  wellnessScore: 82,
+  satisfactionScore: 82,
 });

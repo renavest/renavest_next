@@ -1,0 +1,83 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Renavest Financial Therapy Platform Guidelines
+
+You are developing a financial therapy platform that balances quantitative data with emotional wellness. Follow these guidelines for effective implementation in Cursor.
+
+## Core Design Principles
+- **Balance Dual Domains**: Implement both financial analytics and emotional support features.
+- **Prioritize Privacy**: Create robust security and consent-driven data sharing.
+- **User Experience First**: Design non-judgmental, psychologically safe interfaces.
+
+## Feature Implementation
+### Client Dashboard
+- Implement visual goal trackers with progress indicators
+- Create money beliefs/scripts displays connected to behavior patterns
+- Build emotional check-in system aligned with payroll periods
+- Develop non-judgmental spending pattern insights
+- Include educational resources with simple explanations
+
+### Therapist Dashboard
+- Build structured notes system (pre/during/post meeting)
+- Implement consent-driven client financial overview
+- Create resource library with customizable worksheets
+- Develop alert system for concerning patterns
+- Include business analytics for income tracking
+
+## Data Handling & API Design
+- Implement secure financial connections with manual fallbacks
+- Create granular privacy controls at account level
+- Build resilient data aggregation with health monitoring
+- Use AI to enhance (never replace) human connection
+- Process sensitive data locally when possible
+
+## Mobile-First Implementation
+- Design responsive interfaces with Tailwind breakpoints
+- Start with mobile layouts, then expand to larger screens
+- Test across multiple device sizes and orientations
+- Ensure all critical functions work on mobile devices
+
+## TypeScript Usage
+```typescript
+// Financial data structure
+interface FinancialData {
+  accounts: {
+    id: string;
+    type: 'checking' | 'savings' | 'investment' | 'credit';
+    balance: number;
+    isManualEntry: boolean;
+  }[];
+  transactions: Transaction[];
+}
+
+// Client dashboard props
+interface ClientDashboardProps {
+  financialGoals: Goal[];
+  moneyBeliefs: Belief[];
+  spendingPatterns: SpendingData[];
+  emotionalState: EmotionalCheckIn;
+}
+```
+
+## State Management
+- Use Preact Safe React Signals for reactive UI updates
+- Implement consent-driven data sharing with granular controls
+- Create privacy-preserving state patterns that limit data exposure
+
+## Performance Optimization
+- Favor Server Components for data processing
+- Use client components only for direct user interaction
+- Implement lightweight visualizations for financial data
+- Optimize loading states for psychological safety
+
+## Psychological Safety Considerations
+- Use non-judgmental language throughout the platform
+- Implement positive reinforcement messaging
+- Include "don't know yet" options in all assessments
+- Balance analytics with supportive content
+- Make all data collection transparent and consensual
+
+Follow these guidelines to create a platform that effectively serves both the financial management and emotional well-being needs of users.

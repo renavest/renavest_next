@@ -1,144 +1,214 @@
 'use client';
 
-import { useUser } from '@clerk/nextjs';
+import { useClerk } from '@clerk/nextjs';
+import { LogOut } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 import {
   employeeMetricsSignal,
-  hsaMetricsSignal,
+  financialWellnessMetricsSignal,
   programStatsSignal,
+  sessionMetricsSignal,
+  satisfactionMetricsSignal,
 } from '@/src/features/employer-dashboard/state/employerDashboardState';
 import { cn } from '@/src/lib/utils';
 import MetricCard from '@/src/shared/components/MetricCard';
-import { COLORS } from '@/src/styles/colors';
 
 function MetricsSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className='space-y-6'>
+    <section className='space-y-8'>
       <div className='flex items-center gap-4'>
-        <h2 className='text-xl md:text-2xl font-semibold text-gray-800'>{title}</h2>
-        <div className={cn('h-px flex-grow', COLORS.WARM_PURPLE[20])} />
+        <h2 className='text-xl md:text-2xl font-semibold text-gray-700'>{title}</h2>
+        <div className='h-px flex-grow bg-purple-50' />
       </div>
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>{children}</div>
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8'>{children}</div>
     </section>
   );
 }
 
-function DashboardContent() {
-  const hsaMetrics = hsaMetricsSignal.value;
-  const employeeMetrics = employeeMetricsSignal.value;
-  const programStats = programStatsSignal.value;
+function SessionEngagementSection() {
+  const sessionMetrics = sessionMetricsSignal.value;
 
   return (
-    <>
-      {/* HSA Metrics */}
-      <MetricsSection title='HSA Program Metrics'>
-        <MetricCard
-          title='Total Contributions'
-          value={`$${hsaMetrics.totalContributions.toLocaleString()}`}
-          subtitle='Year to date'
-          trend={+15}
-        />
-        <MetricCard
-          title='Average Contribution'
-          value={`$${hsaMetrics.averageContribution.toLocaleString()}`}
-          subtitle='Per employee'
-          trend={+8}
-        />
-        <MetricCard
-          title='Participation Rate'
-          value={`${hsaMetrics.participationRate}%`}
-          subtitle='Of eligible employees'
-          trend={+5}
-        />
-        <MetricCard
-          title='YoY Growth'
-          value={`${hsaMetrics.yearOverYearGrowth}%`}
-          subtitle='In total contributions'
-          trend={+12}
-        />
-      </MetricsSection>
+    <MetricsSection title='Session Engagement'>
+      <MetricCard
+        title='Active Bookings'
+        value={sessionMetrics.activeBookings}
+        subtitle='Current sessions'
+        trend={+10}
+      />
+      <MetricCard
+        title='Credit Usage'
+        value={`${sessionMetrics.creditUtilization}%`}
+        subtitle='Of allocated credits'
+        trend={+15}
+      />
+      <MetricCard
+        title='Session Progress'
+        value={`${sessionMetrics.completionRate}%`}
+        subtitle='Completing 3+ sessions'
+        trend={+8}
+      />
+      <MetricCard
+        title='Avg Sessions'
+        value={sessionMetrics.avgSessionsPerEmployee.toFixed(1)}
+        subtitle='Per employee'
+        trend={+12}
+      />
+    </MetricsSection>
+  );
+}
 
-      {/* Employee Engagement */}
-      <MetricsSection title='Employee Engagement'>
-        <MetricCard
-          title='Total Employees'
-          value={employeeMetrics.totalEmployees}
-          subtitle='In the program'
-          trend={+3}
-        />
-        <MetricCard
-          title='Active Users'
-          value={employeeMetrics.activeInProgram}
-          subtitle='This month'
-          trend={+7}
-        />
-        <MetricCard
-          title='Average Engagement'
-          value={`${employeeMetrics.averageEngagement}%`}
-          subtitle='Platform usage'
-          trend={+10}
-        />
-        <MetricCard
-          title='Therapist Utilization'
-          value={`${employeeMetrics.therapistUtilization}%`}
-          subtitle='Of active users'
-          trend={+15}
-        />
-      </MetricsSection>
+function WellnessImpactSection() {
+  const satisfactionMetrics = satisfactionMetricsSignal.value;
 
-      {/* Program Stats */}
-      <MetricsSection title='Program Overview'>
-        <MetricCard
-          title='Total HSA Spend'
-          value={`$${programStats.totalHSASpend.toLocaleString()}`}
-          subtitle='All employees'
-          trend={+20}
-        />
-        <MetricCard
-          title='Average Balance'
-          value={`$${programStats.averageEmployeeBalance.toLocaleString()}`}
-          subtitle='Per employee'
-          trend={+5}
-        />
-        <MetricCard
-          title='Program ROI'
-          value={`${programStats.programROI}x`}
-          subtitle='Return on investment'
-          trend={+25}
-        />
-        <MetricCard
-          title='Wellness Score'
-          value={programStats.wellnessScore}
-          subtitle='Out of 100'
-          trend={+8}
-        />
-      </MetricsSection>
-    </>
+  return (
+    <MetricsSection title='Wellness Impact'>
+      <MetricCard
+        title='Satisfaction'
+        value={`${satisfactionMetrics.overallSatisfaction}%`}
+        subtitle='Overall rating'
+        trend={+5}
+      />
+      <MetricCard
+        title='Stress Reduction'
+        value={`${satisfactionMetrics.stressReduction}%`}
+        subtitle='Report improvement'
+        trend={+8}
+      />
+      <MetricCard
+        title='Financial Confidence'
+        value={`${satisfactionMetrics.financialConfidence}%`}
+        subtitle='Feel more prepared'
+        trend={+10}
+      />
+      <MetricCard
+        title='Would Recommend'
+        value={`${satisfactionMetrics.recommendationRate}%`}
+        subtitle='To colleagues'
+        trend={+7}
+      />
+    </MetricsSection>
+  );
+}
+
+function ProgramUsageSection() {
+  const employeeMetrics = employeeMetricsSignal.value;
+  const sessionMetrics = sessionMetricsSignal.value;
+
+  return (
+    <MetricsSection title='Program Usage'>
+      <MetricCard
+        title='Total Employees'
+        value={employeeMetrics.totalEmployees}
+        subtitle='Currently enrolled'
+        trend={+3}
+      />
+      <MetricCard
+        title='Active Users'
+        value={employeeMetrics.activeInProgram}
+        subtitle='This month'
+        trend={+7}
+      />
+      <MetricCard
+        title='Stress Tracking'
+        value={`${sessionMetrics.stressTrackerUsage}%`}
+        subtitle='Using triggers'
+        trend={+15}
+      />
+      <MetricCard
+        title='Coach Sessions'
+        value={`${employeeMetrics.coachUtilization}%`}
+        subtitle='Booked this month'
+        trend={+10}
+      />
+    </MetricsSection>
+  );
+}
+
+function ProgramImpactSection() {
+  const programStats = programStatsSignal.value;
+  const financialMetrics = financialWellnessMetricsSignal.value;
+
+  return (
+    <MetricsSection title='Program Impact'>
+      <MetricCard
+        title='Cost Savings'
+        value={`$${programStats.costSavings.toLocaleString()}`}
+        subtitle='From reduced turnover'
+        trend={+20}
+      />
+      <MetricCard
+        title='Productivity Gain'
+        value={`${programStats.productivityGain}%`}
+        subtitle='Self-reported'
+        trend={+5}
+      />
+      <MetricCard
+        title='Program ROI'
+        value={`${programStats.programROI}x`}
+        subtitle='Return on investment'
+        trend={+25}
+      />
+      <MetricCard
+        title='Retention Impact'
+        value={`${financialMetrics.retentionIncrease}%`}
+        subtitle='YoY improvement'
+        trend={+12}
+      />
+    </MetricsSection>
+  );
+}
+
+function DashboardContent() {
+  return (
+    <div className='space-y-16'>
+      <SessionEngagementSection />
+      <WellnessImpactSection />
+      <ProgramUsageSection />
+      <ProgramImpactSection />
+    </div>
   );
 }
 
 export default function EmployerDashboardPage() {
-  const { user } = useUser();
+  const { user, signOut } = useClerk();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    if (user) {
+      signOut();
+    } else {
+      router.push('/login');
+    }
+  };
 
   return (
-    <div className={cn('min-h-screen', COLORS.WARM_WHITE.bg)}>
+    <div className={cn('min-h-screen bg-gray-50')}>
       {/* Header */}
-      <header className={cn('bg-gradient-to-b from-[#9071FF] to-[#7C3AED] pb-24')}>
-        <div className='container mx-auto px-4 pt-8'>
-          <div className='bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-sm border border-purple-100'>
+      <header className='bg-white border-b border-purple-100'>
+        <div className='container mx-auto px-6 py-8'>
+          <div className='flex justify-between items-start'>
             <div className='max-w-2xl'>
               <h1 className='text-3xl md:text-4xl font-bold text-gray-900 mb-3'>
-                Welcome back, {user?.firstName}
+                Welcome back, {user?.firstName || 'Guest'}
               </h1>
               <p className='text-base md:text-lg text-gray-600'>
-                Here's an overview of your HSA program and employee wellness metrics.
+                Here's an overview of your employee financial wellness program metrics and impact.
               </p>
             </div>
+            <button
+              onClick={handleLogout}
+              className='flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors'
+            >
+              <LogOut className='h-5 w-5' />
+              <span className='hidden md:inline'>Logout</span>
+            </button>
           </div>
         </div>
       </header>
 
-      <main className='container mx-auto px-4 -mt-12 space-y-12'>
+      <main className='container mx-auto px-6 py-12'>
         <DashboardContent />
       </main>
     </div>
