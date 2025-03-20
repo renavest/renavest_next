@@ -29,6 +29,15 @@ export const mockAuth = {
       window.location.href = redirectUrlComplete;
       return {};
     },
+    create: async (params: { emailAddress: string; password: string }) => {
+      // Simulate a delay to make it feel more realistic
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      mockUserSignal.value = {
+        ...mockUserSignal.value,
+        emailAddress: params.emailAddress,
+      };
+      return { status: 'complete' };
+    },
   },
   setActive: async () => {
     return { status: 'complete' };
