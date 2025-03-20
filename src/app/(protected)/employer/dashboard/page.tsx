@@ -28,40 +28,39 @@ function MetricsSection({ title, children }: { title: string; children: React.Re
 
 function ProgramOverviewSection() {
   const stats = programStatsSignal.value;
-  const metrics = sessionMetricsSignal.value;
   const activePercentage =
     stats.totalEmployees > 0
       ? ((stats.activeEmployees / stats.totalEmployees) * 100).toFixed(0)
       : '0';
-  const completionRate =
+  const sessionUtilization =
     stats.totalEmployees > 0
-      ? ((stats.employeesCompletedAllSessions / stats.totalEmployees) * 100).toFixed(0)
+      ? ((stats.employeesWithSessions / stats.totalEmployees) * 100).toFixed(0)
       : '0';
 
   return (
     <MetricsSection title='Program Overview'>
       <MetricCard
-        title='Credit Amount'
-        value={`$${metrics.creditsPerEmployee}`}
-        subtitle='Per employee'
+        title='Total Employees'
+        value={stats.totalEmployees}
+        subtitle='Registered in platform'
         trend={+3}
       />
       <MetricCard
-        title='Active Employees'
-        value={stats.activeEmployees}
-        subtitle={`${activePercentage}% of total`}
+        title='Platform Usage'
+        value={`${activePercentage}%`}
+        subtitle='Employees logged in'
         trend={+7}
       />
       <MetricCard
-        title='Using Sessions'
-        value={stats.employeesWithSessions}
+        title='Session Usage'
+        value={`${sessionUtilization}%`}
         subtitle='Started sessions'
         trend={+15}
       />
       <MetricCard
-        title='Completed All'
-        value={stats.employeesCompletedAllSessions}
-        subtitle={`${completionRate}% of employees`}
+        title='Active Users'
+        value={stats.activeEmployees}
+        subtitle='This month'
         trend={+12}
       />
     </MetricsSection>
@@ -70,35 +69,32 @@ function ProgramOverviewSection() {
 
 function SessionsSection() {
   const metrics = sessionMetricsSignal.value;
-  const completionRate = (
-    (metrics.completedSessions / metrics.totalSessionsAllocated) *
-    100
-  ).toFixed(0);
+  const stats = programStatsSignal.value;
 
   return (
     <MetricsSection title='Sessions Overview'>
       <MetricCard
-        title='Total Sessions'
-        value={metrics.totalSessionsAllocated}
-        subtitle='4 per employee'
+        title='Started Sessions'
+        value={stats.employeesWithSessions}
+        subtitle={`${((stats.employeesWithSessions / stats.totalEmployees) * 100).toFixed(0)}% of employees`}
         trend={+10}
       />
       <MetricCard
-        title='Completed'
-        value={metrics.completedSessions}
-        subtitle={`${completionRate}% used`}
+        title='Completed All'
+        value={stats.employeesCompletedAllSessions}
+        subtitle={`${((stats.employeesCompletedAllSessions / stats.totalEmployees) * 100).toFixed(0)}% completion rate`}
         trend={+8}
       />
       <MetricCard
         title='This Month'
         value={metrics.sessionsThisMonth}
-        subtitle='Current period'
+        subtitle='Active sessions'
         trend={+12}
       />
       <MetricCard
-        title='Need Top-Up'
-        value={metrics.employeesRequestingTopUp}
-        subtitle='Employees requesting'
+        title='Upcoming'
+        value={metrics.upcomingSessions}
+        subtitle='Next 30 days'
         trend={+5}
       />
     </MetricsSection>
@@ -112,28 +108,32 @@ function EngagementSection() {
     stats.totalEmployees > 0
       ? ((metrics.weeklyActiveUsers / stats.totalEmployees) * 100).toFixed(0)
       : '0';
+  const monthlyPercentage =
+    stats.totalEmployees > 0
+      ? ((metrics.monthlyActiveUsers / stats.totalEmployees) * 100).toFixed(0)
+      : '0';
 
   return (
     <MetricsSection title='Platform Engagement'>
       <MetricCard
-        title='Daily Active'
-        value={metrics.dailyActiveUsers}
-        subtitle='Users today'
-        trend={+20}
-      />
-      <MetricCard
         title='Weekly Active'
         value={metrics.weeklyActiveUsers}
-        subtitle={`${weeklyPercentage}% of total`}
+        subtitle={`${weeklyPercentage}% of employees`}
         trend={+15}
       />
       <MetricCard
         title='Monthly Active'
         value={metrics.monthlyActiveUsers}
-        subtitle='This month'
+        subtitle={`${monthlyPercentage}% of employees`}
         trend={+25}
       />
-      <MetricCard title='Peak Day' value='Tuesday' subtitle='Most active' trend={+8} />
+      <MetricCard
+        title='Daily Logins'
+        value={metrics.dailyActiveUsers}
+        subtitle='Users today'
+        trend={+20}
+      />
+      <MetricCard title='Peak Activity' value='Tuesday' subtitle='Highest engagement' trend={+8} />
     </MetricsSection>
   );
 }
@@ -155,7 +155,8 @@ function DashboardContent() {
 export default function EmployerDashboardPage() {
   const { user, signOut } = useClerk();
   const router = useRouter();
-  const metrics = sessionMetricsSignal.value;
+  const stats = programStatsSignal.value;
+  const activePercentage = ((stats.activeEmployees / stats.totalEmployees) * 100).toFixed(0);
 
   const handleLogout = () => {
     if (user) {
@@ -163,11 +164,6 @@ export default function EmployerDashboardPage() {
     } else {
       router.push('/login');
     }
-  };
-
-  const handleTopUp = () => {
-    // TODO: Implement top-up flow
-    console.log('Top up clicked');
   };
 
   return (
@@ -180,21 +176,11 @@ export default function EmployerDashboardPage() {
                 Welcome back, {user?.firstName || 'Guest'}
               </h1>
               <p className='text-base md:text-lg text-gray-600'>
-                Track your ${metrics.creditsPerEmployee} employee wellness allocation (4 sessions
-                per employee)
+                {activePercentage}% of your {stats.totalEmployees} employees are actively using the
+                platform
               </p>
             </div>
             <div className='flex items-center gap-4'>
-              <button
-                onClick={handleTopUp}
-                className='flex items-center gap-2 px-6 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors'
-              >
-                {metrics.employeesRequestingTopUp > 0 ? (
-                  <>Top Up ({metrics.employeesRequestingTopUp})</>
-                ) : (
-                  'Top Up Credits'
-                )}
-              </button>
               <button
                 onClick={handleLogout}
                 className='flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors'
