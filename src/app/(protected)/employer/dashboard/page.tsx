@@ -29,7 +29,7 @@ function MetricsSection({ title, children }: { title: string; children: React.Re
 function ProgramOverviewSection() {
   const stats = programStatsSignal.value;
   const metrics = sessionMetricsSignal.value;
-  const percentage =
+  const activePercentage =
     stats.totalEmployees > 0
       ? ((stats.activeEmployees / stats.totalEmployees) * 100).toFixed(0)
       : '0';
@@ -49,7 +49,7 @@ function ProgramOverviewSection() {
       <MetricCard
         title='Active Employees'
         value={stats.activeEmployees}
-        subtitle={`${percentage}% of total`}
+        subtitle={`${activePercentage}% of total`}
         trend={+7}
       />
       <MetricCard
@@ -70,20 +70,23 @@ function ProgramOverviewSection() {
 
 function SessionsSection() {
   const metrics = sessionMetricsSignal.value;
-  const completionRate = ((metrics.completedSessions / metrics.totalSessions) * 100).toFixed(0);
+  const completionRate = (
+    (metrics.completedSessions / metrics.totalSessionsAllocated) *
+    100
+  ).toFixed(0);
 
   return (
     <MetricsSection title='Sessions Overview'>
       <MetricCard
         title='Total Sessions'
-        value={metrics.totalSessions}
-        subtitle='Total allocated'
+        value={metrics.totalSessionsAllocated}
+        subtitle='4 per employee'
         trend={+10}
       />
       <MetricCard
         title='Completed'
         value={metrics.completedSessions}
-        subtitle={`${completionRate}% completion`}
+        subtitle={`${completionRate}% used`}
         trend={+8}
       />
       <MetricCard
@@ -93,10 +96,10 @@ function SessionsSection() {
         trend={+12}
       />
       <MetricCard
-        title='Credits Left'
-        value={`$${metrics.creditsRemaining}`}
-        subtitle='Available balance'
-        trend={-5}
+        title='Need Top-Up'
+        value={metrics.employeesRequestingTopUp}
+        subtitle='Employees requesting'
+        trend={+5}
       />
     </MetricsSection>
   );
@@ -152,6 +155,7 @@ function DashboardContent() {
 export default function EmployerDashboardPage() {
   const { user, signOut } = useClerk();
   const router = useRouter();
+  const metrics = sessionMetricsSignal.value;
 
   const handleLogout = () => {
     if (user) {
@@ -176,7 +180,8 @@ export default function EmployerDashboardPage() {
                 Welcome back, {user?.firstName || 'Guest'}
               </h1>
               <p className='text-base md:text-lg text-gray-600'>
-                Track your employee wellness program performance
+                Track your ${metrics.creditsPerEmployee} employee wellness allocation (4 sessions
+                per employee)
               </p>
             </div>
             <div className='flex items-center gap-4'>
@@ -184,7 +189,11 @@ export default function EmployerDashboardPage() {
                 onClick={handleTopUp}
                 className='flex items-center gap-2 px-6 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors'
               >
-                Top Up Credits
+                {metrics.employeesRequestingTopUp > 0 ? (
+                  <>Top Up ({metrics.employeesRequestingTopUp})</>
+                ) : (
+                  'Top Up Credits'
+                )}
               </button>
               <button
                 onClick={handleLogout}

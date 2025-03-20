@@ -8,11 +8,12 @@ interface FinancialWellnessMetrics {
 }
 
 interface SessionMetrics {
-  totalSessions: number;
+  creditsPerEmployee: number;
+  totalSessionsAllocated: number;
   completedSessions: number;
   upcomingSessions: number;
   sessionsThisMonth: number;
-  creditsRemaining: number;
+  employeesRequestingTopUp: number;
   sessionsByMonth: MonthlySessionData[];
 }
 
@@ -75,11 +76,12 @@ export const financialWellnessMetricsSignal = signal<FinancialWellnessMetrics>({
 });
 
 export const sessionMetricsSignal = signal<SessionMetrics>({
-  totalSessions: 2000,
+  creditsPerEmployee: 400,
+  totalSessionsAllocated: 2000,
   completedSessions: 1560,
   upcomingSessions: 145,
   sessionsThisMonth: 230,
-  creditsRemaining: 800,
+  employeesRequestingTopUp: 12,
   sessionsByMonth: [
     { month: 'Jan', completed: 180, allocated: 200 },
     { month: 'Feb', completed: 195, allocated: 200 },
