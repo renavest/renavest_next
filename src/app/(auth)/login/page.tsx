@@ -1,14 +1,13 @@
 'use client';
 
-import { useSignIn } from '@clerk/nextjs';
 import { useState } from 'react';
 
-import GoogleSignInButton from '@/src/features/auth/components/GoogleSignInButton';
-import MicrosoftSignInButton from '@/src/features/auth/components/MicrosoftSignInButton';
 import WelcomeSection from '@/src/features/auth/components/WelcomeSection';
 import { UserType } from '@/src/features/auth/types/auth';
+import { mockAuth, setMockUserRole } from '@/src/features/auth/utils/mockAuth';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
+
 function RoleSelector({
   selectedRole,
   onRoleSelect,
@@ -62,12 +61,28 @@ function RoleSelector({
 }
 
 export default function LoginPage() {
-  const { isLoaded } = useSignIn();
   const [selectedRole, setSelectedRole] = useState<UserType | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!isLoaded) {
-    return null;
-  }
+  const handleSignIn = async (provider: 'oauth_google' | 'oauth_microsoft') => {
+    if (!selectedRole) {
+      setError('Please select a role before continuing');
+      return;
+    }
+
+    try {
+      // Set the mock user's role
+      setMockUserRole(selectedRole);
+
+      // Use mock auth to redirect
+      await mockAuth.signIn.authenticateWithRedirect({
+        redirectUrlComplete: `/${selectedRole === 'employer' ? 'employer' : selectedRole === 'therapist' ? 'therapist' : ''}/dashboard`,
+      });
+    } catch (err) {
+      console.error('OAuth error:', err);
+      setError('Failed to sign in. Please try again.');
+    }
+  };
 
   return (
     <div className='flex min-h-screen'>
@@ -83,12 +98,26 @@ export default function LoginPage() {
           </div>
 
           <RoleSelector selectedRole={selectedRole} onRoleSelect={setSelectedRole} />
-    
+
+          {error && <div className='text-red-500 text-sm'>{error}</div>}
+
           {selectedRole && (
             <div className='space-y-6'>
               <div className='flex flex-col gap-4'>
-                <GoogleSignInButton />
-                <MicrosoftSignInButton />
+                <button
+                  onClick={() => handleSignIn('oauth_google')}
+                  className='flex items-center justify-center gap-3 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors'
+                >
+                  <img src='/google.svg' alt='Google' className='w-6 h-6' />
+                  <span>Continue with Google</span>
+                </button>
+                <button
+                  onClick={() => handleSignIn('oauth_microsoft')}
+                  className='flex items-center justify-center gap-3 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors'
+                >
+                  <img src='/microsoft.svg' alt='Microsoft' className='w-6 h-6' />
+                  <span>Continue with Microsoft</span>
+                </button>
               </div>
             </div>
           )}
