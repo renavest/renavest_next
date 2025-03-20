@@ -15,7 +15,10 @@ export default function SessionsChart() {
 
   return (
     <div className='bg-white rounded-xl p-6 shadow-sm'>
-      <h3 className='text-lg font-semibold text-gray-700 mb-6'>Monthly Sessions</h3>
+      <h3 className='text-lg font-semibold text-gray-700 mb-2'>Monthly Session Usage</h3>
+      <p className='text-sm text-gray-600 mb-6'>
+        Track monthly session completion against allocated credits
+      </p>
       <div className='h-[300px]'>
         <ResponsiveContainer width='100%' height='100%'>
           <BarChart data={sessionsByMonth}>
@@ -31,9 +34,9 @@ export default function SessionsChart() {
               radius={[4, 4, 0, 0]}
             />
             <Bar
-              dataKey='scheduled'
+              dataKey='allocated'
               fill='#DDD6FE'
-              name='Scheduled Sessions'
+              name='Allocated Sessions'
               radius={[4, 4, 0, 0]}
             />
           </BarChart>

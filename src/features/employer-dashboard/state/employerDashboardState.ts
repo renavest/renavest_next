@@ -8,8 +8,10 @@ interface FinancialWellnessMetrics {
 }
 
 interface SessionMetrics {
-  totalSessions: number;
-  completedSessions: number;
+  creditsPerEmployee: number;
+  sessionsPerCredit: number;
+  totalSessionsAllocated: number;
+  totalSessionsCompleted: number;
   upcomingSessions: number;
   sessionsThisMonth: number;
   sessionsByMonth: MonthlySessionData[];
@@ -18,7 +20,7 @@ interface SessionMetrics {
 interface MonthlySessionData {
   month: string;
   completed: number;
-  scheduled: number;
+  allocated: number;
 }
 
 interface EmployeeMetrics {
@@ -63,7 +65,7 @@ interface ProgramStats {
   totalEmployees: number;
   activeEmployees: number;
   employeesWithSessions: number;
-  averageSessionsPerEmployee: number;
+  employeesCompletedAllSessions: number;
 }
 
 export const financialWellnessMetricsSignal = signal<FinancialWellnessMetrics>({
@@ -74,16 +76,18 @@ export const financialWellnessMetricsSignal = signal<FinancialWellnessMetrics>({
 });
 
 export const sessionMetricsSignal = signal<SessionMetrics>({
-  totalSessions: 1250,
-  completedSessions: 980,
+  creditsPerEmployee: 400,
+  sessionsPerCredit: 100,
+  totalSessionsAllocated: 2000,
+  totalSessionsCompleted: 1560,
   upcomingSessions: 145,
   sessionsThisMonth: 230,
   sessionsByMonth: [
-    { month: 'Jan', completed: 180, scheduled: 200 },
-    { month: 'Feb', completed: 195, scheduled: 210 },
-    { month: 'Mar', completed: 210, scheduled: 225 },
-    { month: 'Apr', completed: 195, scheduled: 205 },
-    { month: 'May', completed: 200, scheduled: 210 },
+    { month: 'Jan', completed: 180, allocated: 200 },
+    { month: 'Feb', completed: 195, allocated: 200 },
+    { month: 'Mar', completed: 210, allocated: 200 },
+    { month: 'Apr', completed: 195, allocated: 200 },
+    { month: 'May', completed: 200, allocated: 200 },
   ],
 });
 
@@ -132,5 +136,5 @@ export const programStatsSignal = signal<ProgramStats>({
   totalEmployees: 500,
   activeEmployees: 450,
   employeesWithSessions: 410,
-  averageSessionsPerEmployee: 2.5,
+  employeesCompletedAllSessions: 390,
 });

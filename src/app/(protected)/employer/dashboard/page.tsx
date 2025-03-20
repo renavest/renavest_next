@@ -28,17 +28,22 @@ function MetricsSection({ title, children }: { title: string; children: React.Re
 
 function ProgramOverviewSection() {
   const stats = programStatsSignal.value;
+  const metrics = sessionMetricsSignal.value;
   const percentage =
     stats.totalEmployees > 0
       ? ((stats.activeEmployees / stats.totalEmployees) * 100).toFixed(0)
+      : '0';
+  const completionRate =
+    stats.totalEmployees > 0
+      ? ((stats.employeesCompletedAllSessions / stats.totalEmployees) * 100).toFixed(0)
       : '0';
 
   return (
     <MetricsSection title='Program Overview'>
       <MetricCard
-        title='Total Employees'
-        value={stats.totalEmployees}
-        subtitle='Total headcount'
+        title='Credit Amount'
+        value={`$${metrics.creditsPerEmployee}`}
+        subtitle='Per employee'
         trend={+3}
       />
       <MetricCard
@@ -50,13 +55,13 @@ function ProgramOverviewSection() {
       <MetricCard
         title='Using Sessions'
         value={stats.employeesWithSessions}
-        subtitle='Booked at least once'
+        subtitle='Started sessions'
         trend={+15}
       />
       <MetricCard
-        title='Avg Sessions'
-        value={stats.averageSessionsPerEmployee.toFixed(1)}
-        subtitle='Per employee'
+        title='Completed All'
+        value={stats.employeesCompletedAllSessions}
+        subtitle={`${completionRate}% of employees`}
         trend={+12}
       />
     </MetricsSection>
@@ -66,22 +71,23 @@ function ProgramOverviewSection() {
 function SessionsSection() {
   const metrics = sessionMetricsSignal.value;
   const completionRate =
-    metrics.totalSessions > 0
-      ? ((metrics.completedSessions / metrics.totalSessions) * 100).toFixed(0)
+    metrics.totalSessionsAllocated > 0
+      ? ((metrics.totalSessionsCompleted / metrics.totalSessionsAllocated) * 100).toFixed(0)
       : '0';
+  const sessionsPerEmployee = Math.floor(metrics.creditsPerEmployee / metrics.sessionsPerCredit);
 
   return (
     <MetricsSection title='Sessions Overview'>
       <MetricCard
-        title='Total Sessions'
-        value={metrics.totalSessions}
-        subtitle='All time'
+        title='Sessions Allocated'
+        value={metrics.totalSessionsAllocated}
+        subtitle={`${sessionsPerEmployee} per employee`}
         trend={+10}
       />
       <MetricCard
-        title='Completed'
-        value={metrics.completedSessions}
-        subtitle={`${completionRate}% completion`}
+        title='Sessions Completed'
+        value={metrics.totalSessionsCompleted}
+        subtitle={`${completionRate}% of allocated`}
         trend={+8}
       />
       <MetricCard
@@ -93,7 +99,7 @@ function SessionsSection() {
       <MetricCard
         title='Upcoming'
         value={metrics.upcomingSessions}
-        subtitle='Scheduled'
+        subtitle='Next 30 days'
         trend={+5}
       />
     </MetricsSection>
@@ -150,6 +156,8 @@ function DashboardContent() {
 export default function EmployerDashboardPage() {
   const { user, signOut } = useClerk();
   const router = useRouter();
+  const metrics = sessionMetricsSignal.value;
+  const sessionsPerEmployee = Math.floor(metrics.creditsPerEmployee / metrics.sessionsPerCredit);
 
   const handleLogout = () => {
     if (user) {
@@ -169,7 +177,8 @@ export default function EmployerDashboardPage() {
                 Welcome back, {user?.firstName || 'Guest'}
               </h1>
               <p className='text-base md:text-lg text-gray-600'>
-                Track your employee wellness program engagement and session activity.
+                Track your ${metrics.creditsPerEmployee} employee wellness allocation (
+                {sessionsPerEmployee} sessions per employee)
               </p>
             </div>
             <button
