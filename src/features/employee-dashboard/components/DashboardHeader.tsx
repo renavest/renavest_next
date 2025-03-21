@@ -1,6 +1,6 @@
 'use client';
 
-import { useClerk } from '@clerk/nextjs';
+import { UserButton, useClerk } from '@clerk/nextjs';
 import { LogOut, Menu, Users, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -88,6 +88,9 @@ export default function DashboardHeader() {
             <LogOut className='h-4 w-4' />
             <span>Logout</span>
           </button>
+          <div className='ml-2'>
+            <UserButton afterSignOutUrl='/login' />
+          </div>
         </div>
 
         {/* Mobile Navigation */}
@@ -113,6 +116,9 @@ export default function DashboardHeader() {
               <LogOut className='h-5 w-5' />
               <span>Logout</span>
             </button>
+            <div className='px-4 py-3'>
+              <UserButton afterSignOutUrl='/login' />
+            </div>
           </div>
         </div>
       </div>

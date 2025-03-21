@@ -2,13 +2,13 @@
 import { useUser } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
 
-import DashboardHeader from '@/src/features/dashboard/components/DashboardHeader';
-import PersonalActionableInsights from '@/src/features/dashboard/components/insights/PersonalActionableInsights';
-import PersonalGoalsTracker from '@/src/features/dashboard/components/insights/PersonalGoalsTracker';
-import ProgressComparisonChart from '@/src/features/dashboard/components/insights/ProgressComparisonChart';
-import TherapistConnectionSummary from '@/src/features/dashboard/components/insights/TherapistConnectionSummary';
-import TherapistRecommendations from '@/src/features/dashboard/components/insights/TherapistRecommendations';
-import WeeklyFinancialReport from '@/src/features/dashboard/components/insights/WeeklyFinancialReport';
+import DashboardHeader from '@/src/features/employee-dashboard/components/DashboardHeader';
+import PersonalActionableInsights from '@/src/features/employee-dashboard/components/insights/PersonalActionableInsights';
+import PersonalGoalsTracker from '@/src/features/employee-dashboard/components/insights/PersonalGoalsTracker';
+import ProgressComparisonChart from '@/src/features/employee-dashboard/components/insights/ProgressComparisonChart';
+import TherapistConnectionSummary from '@/src/features/employee-dashboard/components/insights/TherapistConnectionSummary';
+import TherapistRecommendations from '@/src/features/employee-dashboard/components/insights/TherapistRecommendations';
+import WeeklyFinancialReport from '@/src/features/employee-dashboard/components/insights/WeeklyFinancialReport';
 import OnboardingModal from '@/src/features/onboarding/components/OnboardingModal';
 import { onboardingSignal } from '@/src/features/onboarding/state/onboardingState';
 import { COLORS } from '@/src/styles/colors';
@@ -16,7 +16,6 @@ import { COLORS } from '@/src/styles/colors';
 export default function DashboardPage() {
   const [showOnboarding, setShowOnboarding] = useState(!onboardingSignal.value.isComplete);
   const { user } = useUser();
-  console.log(user);
   useEffect(() => {
     const unsubscribe = onboardingSignal.subscribe((newValue) => {
       setShowOnboarding(!newValue.isComplete);
@@ -33,10 +32,11 @@ export default function DashboardPage() {
         {/* Welcome Section */}
         <div className='mb-8 md:mb-12'>
           <h2 className='text-3xl md:text-4xl font-bold text-gray-800'>
-            Welcome back, {user?.firstName}
+            Welcome back, {user?.firstName} 👋
           </h2>
           <p className='text-gray-500 mt-2 text-base md:text-lg'>
-            Let's continue your financial wellness journey.
+            Your financial wellness journey is unique to you. Let's see how you're progressing and
+            what we can focus on today.
           </p>
         </div>
 
@@ -61,23 +61,35 @@ export default function DashboardPage() {
           <div className='md:col-span-8 space-y-8 md:space-y-12 md:order-1'>
             <section>
               <h2 className='text-xl md:text-2xl font-semibold text-gray-800 mb-4 md:mb-6'>
-                Action Items
+                Personalized Insights for You
               </h2>
+              <p className='text-gray-600 mb-4'>
+                Based on your recent financial activity, here are some thoughtful suggestions to
+                help you stay on track with your goals.
+              </p>
               <PersonalActionableInsights />
             </section>
 
             <section>
               <h2 className='text-xl md:text-2xl font-semibold text-gray-800 mb-4 md:mb-6'>
-                Your Financial Goals
+                Your Financial Journey
               </h2>
+              <p className='text-gray-600 mb-4'>
+                Every step forward matters. Here's how you're progressing on the goals that matter
+                most to you.
+              </p>
               <PersonalGoalsTracker />
             </section>
 
             {/* Chart - Hidden on mobile */}
             <section className='hidden md:block'>
               <h2 className='text-xl md:text-2xl font-semibold text-gray-800 mb-4 md:mb-6'>
-                Progress Overview
+                Your Monthly Progress
               </h2>
+              <p className='text-gray-600 mb-4'>
+                See how your financial habits have evolved. These changes reflect your commitment to
+                growth.
+              </p>
               <div className='bg-white rounded-xl p-4 md:p-6 shadow-sm'>
                 <div className='max-w-3xl mx-auto'>
                   <ProgressComparisonChart />

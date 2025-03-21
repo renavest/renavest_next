@@ -357,7 +357,7 @@ const TherapistList = [
       'Nate Astle is the CEO and Founder of the Financial Therapy Clinical Institute. He is a Marriage and Family Therapist and Certified Financial Therapist. He specializes in couples, emotions and money, and financial trauma. He has served as a past board member of the Financial Therapy Association, and has been featured in numerous outlets like the New York Times, Wall Street Journal, CNBC, USA Today, and TD Ameritrade.',
     previewBlurb:
       'Transforming financial struggles into healing through compassionate, expert relationship guidance!',
-    profileUrl: '',
+    profileUrl: '/experts/Nathan_Astle.jpg',
   },
 ];
 

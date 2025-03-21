@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-// Temporarily disabled Clerk authentication for demo
-export default function middleware() {
+export function middleware(_request: NextRequest) {
+  // For now, allow all access to protected routes
   return NextResponse.next();
 }
 

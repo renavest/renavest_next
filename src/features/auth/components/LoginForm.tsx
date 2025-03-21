@@ -1,138 +1,132 @@
 'use client';
 
-import { Lock, Mail } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useSignIn } from '@clerk/nextjs';
 
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
-import { authState, updateAuthEmail, updateAuthPassword } from '../state/authState';
+import {
+  authErrorSignal,
+  emailSignal,
+  passwordSignal,
+  selectedRoleSignal,
+} from '../state/authState';
+import { UserType } from '../types/auth';
+import { setMockUserRole } from '../utils/mockAuth';
 
-const InputField = ({
-  id,
-  type,
-  value,
-  onChange,
-  placeholder,
-  icon: Icon,
-  rightElement,
-}: {
-  id: string;
-  type: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-  icon: typeof Mail | typeof Lock;
-  rightElement?: React.ReactNode;
-}) => (
-  <div className='space-y-2'>
-    <div className='flex items-center justify-between'>
-      <label htmlFor={id} className='block text-sm font-medium text-gray-700'>
-        {id.charAt(0).toUpperCase() + id.slice(1)}
-      </label>
-      {rightElement}
-    </div>
-    <div className='relative'>
-      <input
-        id={id}
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className={cn(
-          'pl-10 w-full h-11 rounded-lg border bg-white',
-          COLORS.WARM_PURPLE[20],
-          COLORS.WARM_PURPLE.focus,
-        )}
-        required
-      />
-      <Icon
-        className={cn(
-          'absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4',
-          COLORS.WARM_PURPLE.DEFAULT,
-        )}
-      />
-    </div>
-  </div>
-);
+import GoogleSignInButton from './GoogleSignInButton';
+import MicrosoftSignInButton from './MicrosoftSignInButton';
+
+// Use this to toggle between mock and real auth
+const USE_MOCK_AUTH = true;
+
+function getDashboardPath(role: UserType) {
+  switch (role) {
+    case 'employer':
+      return '/employer/dashboard';
+    case 'therapist':
+      return '/therapist/dashboard';
+    default:
+      return '/employee';
+  }
+}
 
 export default function LoginForm() {
-  const auth = authState.value;
-  const [error, setError] = useState('');
-  const router = useRouter();
+  const { signIn } = useSignIn();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedRoleSignal.value) {
+      authErrorSignal.value = 'Please select a role before continuing';
+      return;
+    }
 
-    // For demo purposes, accept any email/password combination
-    if (auth.email && auth.password) {
-      router.push('/dashboard');
-    } else {
-      setError('Please enter both email and password');
+    if (!emailSignal.value || !passwordSignal.value) {
+      authErrorSignal.value = 'Please enter both email and password';
+      return;
+    }
+
+    const dashboardPath = getDashboardPath(selectedRoleSignal.value);
+
+    try {
+      if (USE_MOCK_AUTH) {
+        // Mock auth flow
+        setMockUserRole(selectedRoleSignal.value);
+        window.location.href = dashboardPath;
+      } else {
+        // Real Clerk auth flow
+        if (!signIn) return;
+
+        const result = await signIn.create({
+          identifier: emailSignal.value,
+          password: passwordSignal.value,
+        });
+
+        if (result.status === 'complete') {
+          window.location.href = dashboardPath;
+        } else {
+          authErrorSignal.value = 'Sign in failed. Please try again.';
+        }
+      }
+    } catch (err) {
+      console.error('Sign in error:', err);
+      authErrorSignal.value = 'Failed to sign in. Please try again.';
     }
   };
 
   return (
-    <div className='w-full flex items-center justify-center px-4 py-4'>
-      <div className='w-full max-w-md space-y-2'>
-        <div className='text-center mb-2'>
-          <div className={cn('font-medium text-xl mb-1', COLORS.WARM_PURPLE.DEFAULT)}>renavest</div>
-          <h2 className='text-3xl font-bold text-gray-900 mb-1'>Sign in as a client</h2>
-        </div>
-
-        <form onSubmit={handleSubmit} className='space-y-3'>
-          <InputField
+    <div className='space-y-6'>
+      <form onSubmit={handleEmailSignIn} className='space-y-4'>
+        <div>
+          <label htmlFor='email' className='block text-sm font-medium text-gray-700'>
+            Email address
+          </label>
+          <input
             id='email'
             type='email'
-            value={auth.email}
-            onChange={updateAuthEmail}
-            placeholder='Enter your email'
-            icon={Mail}
+            value={emailSignal.value}
+            onChange={(e) => (emailSignal.value = e.target.value)}
+            className='mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500'
+            placeholder='you@example.com'
           />
-
-          <InputField
+        </div>
+        <div>
+          <label htmlFor='password' className='block text-sm font-medium text-gray-700'>
+            Password
+          </label>
+          <input
             id='password'
             type='password'
-            value={auth.password}
-            onChange={updateAuthPassword}
-            placeholder='Enter your password'
-            icon={Lock}
-            rightElement={
-              <Link href='#' className={cn('text-sm hover:opacity-80', COLORS.WARM_PURPLE.DEFAULT)}>
-                Forgot password?
-              </Link>
-            }
+            value={passwordSignal.value}
+            onChange={(e) => (passwordSignal.value = e.target.value)}
+            className='mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500'
+            placeholder='••••••••'
           />
-
-          {(error || auth.error) && (
-            <div className='text-red-500 text-sm text-center'>{error || auth.error}</div>
+        </div>
+        <button
+          type='submit'
+          className={cn(
+            'w-full py-2 px-4 rounded-md text-white font-medium',
+            COLORS.WARM_PURPLE.bg,
+            'hover:opacity-90 transition-opacity',
           )}
+        >
+          Sign in with Email
+        </button>
+      </form>
 
-          <button
-            type='submit'
-            disabled={auth.isLoading}
-            className={cn(
-              'w-full text-white rounded-lg h-11 font-medium transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50',
-              COLORS.WARM_PURPLE.bg,
-            )}
-          >
-            {auth.isLoading ? 'Signing in...' : 'Sign in'}
-          </button>
+      <div className='relative'>
+        <div className='absolute inset-0 flex items-center'>
+          <div className='w-full border-t border-gray-300' />
+        </div>
+        <div className='relative flex justify-center text-sm'>
+          <span className='px-2 bg-white text-gray-500'>Or continue with</span>
+        </div>
+      </div>
 
-          <div className='text-center mt-2'>
-            <p className='text-sm text-gray-600'>
-              Don't have an account?{' '}
-              <Link
-                href='/sign-up'
-                className={cn('font-medium hover:opacity-80', COLORS.WARM_PURPLE.DEFAULT)}
-              >
-                Sign up
-              </Link>
-            </p>
-          </div>
-        </form>
+      <div className='flex flex-col gap-4'>
+        <GoogleSignInButton />
+        <MicrosoftSignInButton />
       </div>
     </div>
   );
