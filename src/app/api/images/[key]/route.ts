@@ -14,12 +14,12 @@ const bucketName = process.env.AWS_S3_IMAGES_BUCKET_NAME || '';
 
 export async function GET(
   request: NextRequest,
-  context: { params: { key: string } },
+  context: { params: Promise<{ key: string }> },
 ): Promise<NextResponse> {
   try {
-    // Ensure params is properly awaited by accessing it through context
-    const { key } = context.params;
-    const decodedKey = decodeURIComponent(key);
+    // Await the params Promise before accessing its properties
+    const params = await context.params;
+    const decodedKey = decodeURIComponent(params.key);
 
     // Create the GetObject command
     const command = new GetObjectCommand({
