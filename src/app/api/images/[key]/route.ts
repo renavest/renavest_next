@@ -1,7 +1,7 @@
-import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { S3Client, GetObjectCommand, S3ServiceException } from '@aws-sdk/client-s3';
 import { NextRequest, NextResponse } from 'next/server';
 
+// Configure AWS S3
 const s3Client = new S3Client({
   region: process.env.AWS_REGION || 'us-east-1',
   credentials: {
@@ -17,23 +17,69 @@ export async function GET(
   context: { params: Promise<{ key: string }> },
 ): Promise<NextResponse> {
   try {
-    // Await the params Promise before accessing its properties
     const params = await context.params;
     const decodedKey = decodeURIComponent(params.key);
 
-    // Create the GetObject command
+    console.log('Attempting to fetch from S3:', {
+      bucket: bucketName,
+      key: decodedKey,
+      hasCredentials: !!process.env.AWS_ACCESS_KEY_ID && !!process.env.AWS_SECRET_ACCESS_KEY,
+    });
+
     const command = new GetObjectCommand({
       Bucket: bucketName,
       Key: decodedKey,
     });
 
-    // Generate a signed URL that expires in 1 hour
-    const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+    // Get the object directly from S3
+    const response = await s3Client.send(command);
 
-    // Redirect to the signed URL
-    return NextResponse.redirect(signedUrl);
+    // Convert the S3 response stream to a Response
+    if (!response.Body) {
+      console.error('No body in S3 response for:', decodedKey);
+      return new NextResponse('No image data received', { status: 404 });
+    }
+
+    // Get the content type from S3 or default to jpeg
+    const contentType = response.ContentType || 'image/jpeg';
+
+    // Create headers for caching
+    const headers = new Headers({
+      'Content-Type': contentType,
+      'Cache-Control': 'public, max-age=31536000', // Cache for 1 year
+      'Content-Length': response.ContentLength?.toString() || '',
+    });
+
+    // Stream the response directly
+    // @ts-expect-error response.Body is a Readable stream
+    return new NextResponse(response.Body, { headers });
   } catch (error) {
-    console.error('Error generating signed URL:', error);
-    return NextResponse.json({ error: 'Failed to get image' }, { status: 500 });
+    // Handle S3 specific errors
+    if (error instanceof S3ServiceException) {
+      console.error('S3 Error:', {
+        key: decodeURIComponent((await context.params).key),
+        code: error.name,
+        message: error.message,
+        bucket: bucketName,
+      });
+
+      if (error.name === 'NoSuchKey') {
+        return new NextResponse('Image not found in S3', {
+          status: 404,
+          headers: { 'Content-Type': 'text/plain' },
+        });
+      }
+    }
+
+    console.error('Error in image API route:', {
+      key: decodeURIComponent((await context.params).key),
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    return new NextResponse('Failed to fetch image', {
+      status: 500,
+      headers: { 'Content-Type': 'text/plain' },
+    });
   }
 }

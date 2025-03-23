@@ -6,10 +6,6 @@ import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
 import { authErrorSignal, selectedRoleSignal } from '../state/authState';
-import { setMockUserRole } from '../utils/mockAuth';
-
-// Use this to toggle between mock and real auth
-const USE_MOCK_AUTH = true;
 
 interface OAuthButtonProps {
   strategy: OAuthStrategy;
@@ -18,7 +14,7 @@ interface OAuthButtonProps {
 }
 
 export function OAuthButton({ strategy, icon, label }: OAuthButtonProps) {
-  const { signIn } = useSignIn();
+  const { signIn, isLoaded } = useSignIn();
 
   const getDashboardPath = (role: string) => {
     switch (role) {
@@ -40,20 +36,16 @@ export function OAuthButton({ strategy, icon, label }: OAuthButtonProps) {
     const dashboardPath = getDashboardPath(selectedRoleSignal.value);
 
     try {
-      if (USE_MOCK_AUTH) {
-        // Mock auth flow
-        setMockUserRole(selectedRoleSignal.value);
-        window.location.href = dashboardPath;
-      } else {
-        // Real Clerk auth flow
-        if (!signIn) return;
-
-        await signIn.authenticateWithRedirect({
-          strategy,
-          redirectUrl: '/sign-up/sso-callback',
-          redirectUrlComplete: dashboardPath,
-        });
+      if (!isLoaded || !signIn) {
+        authErrorSignal.value = 'Authentication system is not ready';
+        return;
       }
+
+      await signIn.authenticateWithRedirect({
+        strategy,
+        redirectUrl: '/sign-up/sso-callback',
+        redirectUrlComplete: dashboardPath,
+      });
     } catch (err) {
       console.error('OAuth error:', err);
       authErrorSignal.value = 'Failed to sign in. Please try again.';
@@ -64,6 +56,7 @@ export function OAuthButton({ strategy, icon, label }: OAuthButtonProps) {
     <button
       type='button'
       onClick={handleOAuthSignIn}
+      disabled={!isLoaded}
       className={cn(
         'w-full border-2 text-gray-900 rounded-lg h-11 font-medium transition-colors flex items-center justify-center',
         COLORS.WARM_PURPLE[20],

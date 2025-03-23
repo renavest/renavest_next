@@ -1,42 +1,60 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
 
-// Define protected routes
-const isProtectedRoute = createRouteMatcher([
-  '/employee(.*)',
-  '/employer(.*)',
-  '/therapist(.*)',
-  '/explore(.*)',
-]);
+// Define protected routes that require authentication
+const protectedRoutes = [
+  '/employee/(.*)',
+  '/employer/dashboard/(.*)',
+  '/therapist/dashboard/(.*)',
+  '/explore/(.*)',
+];
 
-// Define public routes
-const isPublicRoute = createRouteMatcher(['/login(.*)', '/sign-up(.*)', '/']);
+// Define public routes that don't require authentication
+const publicRoutes = ['/login', '/sign-up', '/'];
 
-export default clerkMiddleware(async (auth, request) => {
-  const session = await auth();
+// Create route matcher for protected routes
+const isProtectedRoute = createRouteMatcher(protectedRoutes);
 
-  // Handle users who aren't authenticated
-  if (!isPublicRoute(request) && isProtectedRoute(request)) {
-    await auth.protect();
+// Helper function to get dashboard path based on role
+function getDashboardPath(role: string): string {
+  switch (role) {
+    case 'employer':
+      return '/employer/dashboard';
+    case 'therapist':
+      return '/therapist/dashboard';
+    default:
+      return '/employee';
   }
+}
 
-  // If the user is logged in and trying to access login/signup pages,
-  // redirect them to their dashboard based on their role
-  if (session.userId && isPublicRoute(request)) {
-    const metadata = session.actor?.publicMetadata as { role?: string } | undefined;
-    const role = metadata?.role;
-    let dashboardUrl = '/employee'; // default dashboard
+export default clerkMiddleware(async (auth, req) => {
+  if (isProtectedRoute(req)) {
+    // Protect the route
+    const authObject = await auth();
+    const { userId, sessionClaims } = authObject;
 
-    if (role === 'employer') {
-      dashboardUrl = '/employer/dashboard';
-    } else if (role === 'therapist') {
-      dashboardUrl = '/therapist/dashboard';
+    if (!userId) {
+      const loginUrl = new URL('/login', req.url);
+      loginUrl.searchParams.set('redirect_url', req.url);
+      return NextResponse.redirect(loginUrl);
     }
 
-    const redirectUrl = new URL(dashboardUrl, request.url);
-    return Response.redirect(redirectUrl);
+    // If accessing public routes while authenticated, redirect to dashboard
+    if (publicRoutes.includes(req.nextUrl.pathname)) {
+      const metadata = sessionClaims?.metadata as { role?: string } | undefined;
+      const userDashboard = getDashboardPath(metadata?.role || 'employee');
+      return NextResponse.redirect(new URL(userDashboard, req.url));
+    }
   }
+
+  return NextResponse.next();
 });
 
 export const config = {
-  matcher: ['/((?!.+\\.[\\w]+$|_next).*)', '/', '/(api|trpc)(.*)'],
+  matcher: [
+    // Skip Next.js internals and all static files
+    '/((?!_next|[^?]*\\.[\\w]+$).*)',
+    // Always run for API routes
+    '/(api|trpc)(.*)',
+  ],
 };
