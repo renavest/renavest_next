@@ -29,7 +29,7 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
         <Image
           width={350}
           height={350}
-          src={advisor.profileUrl || '/experts/placeholderexp.png'}
+          src={advisor.profileUrl as string}
           alt={advisor.name}
           className='h-full w-full rounded-2xl object-cover object-center transition-transform duration-500 group-hover:scale-110'
           priority

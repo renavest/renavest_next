@@ -68,9 +68,9 @@ function ProgramOverviewSection() {
           className='cursor-pointer transition-transform hover:scale-105'
         >
           <MetricCard
-            title='Credit Requests'
+            title='Employee Credit Requests'
             value={sessionMetrics.employeesRequestingTopUp}
-            subtitle='Want more credits'
+            subtitle='Employees want more credits'
             trend={+25}
             className='bg-purple-600 text-white'
             trendClassName='text-purple-100'
@@ -100,9 +100,9 @@ function SessionsSection() {
         trend={+10}
       />
       <MetricCard
-        title='Used All Credits'
+        title='Exhausted All Credits'
         value={stats.employeesCompletedAllSessions}
-        subtitle={`${((stats.employeesCompletedAllSessions / stats.totalEmployees) * 100).toFixed(0)}% finished all sessions`}
+        subtitle={`${((stats.employeesCompletedAllSessions / stats.totalEmployees) * 100).toFixed(0)}% used all 400 credits`}
         trend={+8}
       />
       <MetricCard
@@ -182,8 +182,7 @@ export default function EmployerDashboardPage() {
                 Welcome back, {user?.firstName || 'Guest'}
               </h1>
               <p className='text-base md:text-lg text-gray-600'>
-                {activePercentage}% of your {stats.totalEmployees} employees are actively using the
-                platform
+                Each employee has <strong>400</strong> credits to book sessions.
               </p>
             </div>
             <div className='flex items-center gap-4'>

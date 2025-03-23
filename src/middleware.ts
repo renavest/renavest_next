@@ -1,11 +1,60 @@
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
 
-export function middleware(_request: NextRequest) {
-  // For now, allow all access to protected routes
-  return NextResponse.next();
+// Define protected routes that require authentication
+const protectedRoutes = [
+  '/employee/(.*)',
+  '/employer/dashboard/(.*)',
+  '/therapist/dashboard/(.*)',
+  '/explore/(.*)',
+];
+
+// Define public routes that don't require authentication
+const publicRoutes = ['/login', '/sign-up', '/'];
+
+// Create route matcher for protected routes
+const isProtectedRoute = createRouteMatcher(protectedRoutes);
+
+// Helper function to get dashboard path based on role
+function getDashboardPath(role: string): string {
+  switch (role) {
+    case 'employer':
+      return '/employer/dashboard';
+    case 'therapist':
+      return '/therapist/dashboard';
+    default:
+      return '/employee';
+  }
 }
 
+export default clerkMiddleware(async (auth, req) => {
+  if (isProtectedRoute(req)) {
+    // Protect the route
+    const authObject = await auth();
+    const { userId, sessionClaims } = authObject;
+
+    if (!userId) {
+      const loginUrl = new URL('/login', req.url);
+      loginUrl.searchParams.set('redirect_url', req.url);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // If accessing public routes while authenticated, redirect to dashboard
+    if (publicRoutes.includes(req.nextUrl.pathname)) {
+      const metadata = sessionClaims?.metadata as { role?: string } | undefined;
+      const userDashboard = getDashboardPath(metadata?.role || 'employee');
+      return NextResponse.redirect(new URL(userDashboard, req.url));
+    }
+  }
+
+  return NextResponse.next();
+});
+
 export const config = {
-  matcher: ['/((?!.+\\.[\\w]+$|_next).*)', '/', '/(api|trpc)(.*)'],
+  matcher: [
+    // Skip Next.js internals and all static files
+    '/((?!_next|[^?]*\\.[\\w]+$).*)',
+    // Always run for API routes
+    '/(api|trpc)(.*)',
+  ],
 };

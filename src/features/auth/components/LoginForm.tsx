@@ -12,13 +12,9 @@ import {
   selectedRoleSignal,
 } from '../state/authState';
 import { UserType } from '../types/auth';
-import { setMockUserRole } from '../utils/mockAuth';
 
 import GoogleSignInButton from './GoogleSignInButton';
 import MicrosoftSignInButton from './MicrosoftSignInButton';
-
-// Use this to toggle between mock and real auth
-const USE_MOCK_AUTH = true;
 
 function getDashboardPath(role: UserType) {
   switch (role) {
@@ -32,7 +28,7 @@ function getDashboardPath(role: UserType) {
 }
 
 export default function LoginForm() {
-  const { signIn } = useSignIn();
+  const { signIn, isLoaded } = useSignIn();
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,24 +45,22 @@ export default function LoginForm() {
     const dashboardPath = getDashboardPath(selectedRoleSignal.value);
 
     try {
-      if (USE_MOCK_AUTH) {
-        // Mock auth flow
-        setMockUserRole(selectedRoleSignal.value);
+      if (!isLoaded || !signIn) {
+        authErrorSignal.value = 'Authentication system is not ready';
+        return;
+      }
+
+      const result = await signIn.create({
+        identifier: emailSignal.value,
+        password: passwordSignal.value,
+      });
+
+      if (result.status === 'complete') {
+        // Set the user's role in Clerk's public metadata
+        await result.createdSessionId;
         window.location.href = dashboardPath;
       } else {
-        // Real Clerk auth flow
-        if (!signIn) return;
-
-        const result = await signIn.create({
-          identifier: emailSignal.value,
-          password: passwordSignal.value,
-        });
-
-        if (result.status === 'complete') {
-          window.location.href = dashboardPath;
-        } else {
-          authErrorSignal.value = 'Sign in failed. Please try again.';
-        }
+        authErrorSignal.value = 'Sign in failed. Please try again.';
       }
     } catch (err) {
       console.error('Sign in error:', err);
@@ -110,6 +104,7 @@ export default function LoginForm() {
             COLORS.WARM_PURPLE.bg,
             'hover:opacity-90 transition-opacity',
           )}
+          disabled={!isLoaded}
         >
           Sign in with Email
         </button>

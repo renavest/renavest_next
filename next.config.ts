@@ -1,22 +1,35 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
+import type { NextConfig } from 'next';
+
+const config: NextConfig = {
+  images: {
+    domains: ['randomuser.me'],
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3000',
+        pathname: '/api/images/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'app.renavestapp.com', // Replace with your production domain
+        pathname: '/api/images/**',
+      },
+    ],
+  },
   experimental: {
     swcPlugins: [
       [
         '@preact-signals/safe-react/swc',
         {
-          // you should use `auto` mode to track only components which uses `.value` access.
-          // Can be useful to avoid tracking of server side components
           mode: 'auto',
-        } /* plugin options here */,
+        },
       ],
     ],
   },
   eslint: {
-    ignoreDuringBuilds: true, // Ignore ESLint during builds
-  },
-  images: {
-    domains: ['randomuser.me'],
+    ignoreDuringBuilds: true,
   },
   typescript: {
     ignoreBuildErrors: true,
@@ -45,4 +58,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+export default config;
