@@ -27,6 +27,17 @@ function getDashboardPath(role: UserType) {
   }
 }
 
+function AuthErrorMessage({ message }: { message: string }) {
+  return (
+    <div
+      className='bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded relative'
+      role='alert'
+    >
+      <span className='block sm:inline'>{message}</span>
+    </div>
+  );
+}
+
 export default function LoginForm() {
   const { signIn, isLoaded } = useSignIn();
 
@@ -69,10 +80,13 @@ export default function LoginForm() {
   };
 
   return (
-    <div className='space-y-6'>
-      <form onSubmit={handleEmailSignIn} className='space-y-4'>
+    <div className='w-full max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6'>
+      {/* Error Message */}
+      {authErrorSignal.value && <AuthErrorMessage message={authErrorSignal.value} />}
+
+      <form onSubmit={handleEmailSignIn} className='space-y-6'>
         <div>
-          <label htmlFor='email' className='block text-sm font-medium text-gray-700'>
+          <label htmlFor='email' className='block text-sm font-medium text-gray-700 mb-2'>
             Email address
           </label>
           <input
@@ -80,12 +94,16 @@ export default function LoginForm() {
             type='email'
             value={emailSignal.value}
             onChange={(e) => (emailSignal.value = e.target.value)}
-            className='mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500'
+            className='block w-full px-4 py-3 rounded-md border border-gray-300 
+            focus:ring-2 focus:ring-purple-500 focus:border-purple-500 
+            text-base transition-all duration-200 
+            placeholder:text-gray-400'
             placeholder='you@example.com'
+            required
           />
         </div>
         <div>
-          <label htmlFor='password' className='block text-sm font-medium text-gray-700'>
+          <label htmlFor='password' className='block text-sm font-medium text-gray-700 mb-2'>
             Password
           </label>
           <input
@@ -93,16 +111,22 @@ export default function LoginForm() {
             type='password'
             value={passwordSignal.value}
             onChange={(e) => (passwordSignal.value = e.target.value)}
-            className='mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500'
+            className='block w-full px-4 py-3 rounded-md border border-gray-300 
+            focus:ring-2 focus:ring-purple-500 focus:border-purple-500 
+            text-base transition-all duration-200 
+            placeholder:text-gray-400'
             placeholder='••••••••'
+            required
           />
         </div>
         <button
           type='submit'
           className={cn(
-            'w-full py-2 px-4 rounded-md text-white font-medium',
+            'w-full py-3 px-4 rounded-md text-white font-semibold text-base',
             COLORS.WARM_PURPLE.bg,
-            'hover:opacity-90 transition-opacity',
+            'hover:opacity-90 active:opacity-80 transition-opacity',
+            'focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2',
+            'disabled:opacity-50 disabled:cursor-not-allowed',
           )}
           disabled={!isLoaded}
         >
@@ -110,16 +134,16 @@ export default function LoginForm() {
         </button>
       </form>
 
-      <div className='relative'>
+      <div className='relative my-6'>
         <div className='absolute inset-0 flex items-center'>
           <div className='w-full border-t border-gray-300' />
         </div>
         <div className='relative flex justify-center text-sm'>
-          <span className='px-2 bg-white text-gray-500'>Or continue with</span>
+          <span className='px-4 bg-white text-gray-500'>Or continue with</span>
         </div>
       </div>
 
-      <div className='flex flex-col gap-4'>
+      <div className='grid gap-4'>
         <GoogleSignInButton />
         <MicrosoftSignInButton />
       </div>
