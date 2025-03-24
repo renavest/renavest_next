@@ -1,8 +1,7 @@
 'use client';
-import { signal } from '@preact/signals-react';
 import { Award } from 'lucide-react';
 import Image from 'next/image';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { cn } from '@/src/lib/utils';
 import { Advisor } from '@/src/shared/types';
@@ -18,23 +17,23 @@ interface AdvisorCardProps {
 }
 
 const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
-  const imageLoadState = signal({
+  const [imageLoadState, setImageLoadState] = useState({
     isLoaded: false,
     hasError: false,
   });
 
   const handleImageLoad = () => {
-    imageLoadState.value = {
+    setImageLoadState({
       isLoaded: true,
       hasError: false,
-    };
+    });
   };
 
   const handleImageError = () => {
-    imageLoadState.value = {
+    setImageLoadState({
       isLoaded: false,
       hasError: true,
-    };
+    });
   };
 
   return (
@@ -46,14 +45,14 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
       )}
     >
       <div className='group relative aspect-[4/5] sm:aspect-[3/4] w-full overflow-hidden'>
-        {!imageLoadState.value.isLoaded && !imageLoadState.value.hasError && (
+        {!imageLoadState.isLoaded && !imageLoadState.hasError && (
           <div
             className='absolute inset-0 bg-gray-200 animate-pulse'
             aria-label='Image loading placeholder'
           />
         )}
 
-        {imageLoadState.value.hasError ? (
+        {imageLoadState.hasError ? (
           <div
             className='absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-500'
             aria-label='Image failed to load'
@@ -69,7 +68,7 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
             className={cn(
               'h-full w-full rounded-2xl object-cover object-center transition-transform duration-500',
               'group-hover:scale-110',
-              !imageLoadState.value.isLoaded ? 'opacity-0' : 'opacity-100',
+              !imageLoadState.isLoaded ? 'opacity-0' : 'opacity-100',
             )}
             placeholder='blur'
             blurDataURL='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='

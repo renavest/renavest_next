@@ -17,7 +17,7 @@ export default async function Home() {
       // Fallback to a default image if no profile URL is provided
       const profileUrl = therapist.profileUrl
         ? getTherapistImageUrl(therapist.profileUrl)
-        : '/images/default-therapist-avatar.png';
+        : '/experts/default-avatar.png';
 
       return {
         id: therapist.id.toString(),
