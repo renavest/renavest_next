@@ -38,8 +38,30 @@ function AuthErrorMessage({ message }: { message: string }) {
   );
 }
 
+const ROLE_OPTIONS: { value: UserType; label: string; description: string }[] = [
+  {
+    value: 'employee',
+    label: 'Employee',
+    description: 'Access your financial wellness benefits',
+  },
+  {
+    value: 'employer',
+    label: 'Employer',
+    description: 'Manage your HSA program',
+  },
+  {
+    value: 'therapist',
+    label: 'Therapist',
+    description: 'Manage your client sessions',
+  },
+];
+
 export default function LoginForm() {
   const { signIn, isLoaded } = useSignIn();
+
+  const handleRoleSelect = (role: UserType) => {
+    selectedRoleSignal.value = role;
+  };
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,73 +102,99 @@ export default function LoginForm() {
   };
 
   return (
-    <div className='w-full max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6'>
+    <div className='space-y-6'>
+      {/* Role Selection */}
+      <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
+        {ROLE_OPTIONS.map((role) => (
+          <button
+            key={role.value}
+            type='button'
+            onClick={() => handleRoleSelect(role.value)}
+            className={cn(
+              'p-4 rounded-lg border-2 text-left transition-all duration-200',
+              selectedRoleSignal.value === role.value
+                ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-200'
+                : 'border-gray-300 hover:border-purple-300 hover:bg-gray-50',
+            )}
+          >
+            <h3 className='font-semibold text-gray-900'>{role.label}</h3>
+            <p className='text-sm text-gray-600'>{role.description}</p>
+          </button>
+        ))}
+      </div>
+
       {/* Error Message */}
       {authErrorSignal.value && <AuthErrorMessage message={authErrorSignal.value} />}
 
-      <form onSubmit={handleEmailSignIn} className='space-y-6'>
-        <div>
-          <label htmlFor='email' className='block text-sm font-medium text-gray-700 mb-2'>
-            Email address
-          </label>
-          <input
-            id='email'
-            type='email'
-            value={emailSignal.value}
-            onChange={(e) => (emailSignal.value = e.target.value)}
-            className='block w-full px-4 py-3 rounded-md border border-gray-300 
-            focus:ring-2 focus:ring-purple-500 focus:border-purple-500 
-            text-base transition-all duration-200 
-            placeholder:text-gray-400'
-            placeholder='you@example.com'
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor='password' className='block text-sm font-medium text-gray-700 mb-2'>
-            Password
-          </label>
-          <input
-            id='password'
-            type='password'
-            value={passwordSignal.value}
-            onChange={(e) => (passwordSignal.value = e.target.value)}
-            className='block w-full px-4 py-3 rounded-md border border-gray-300 
-            focus:ring-2 focus:ring-purple-500 focus:border-purple-500 
-            text-base transition-all duration-200 
-            placeholder:text-gray-400'
-            placeholder='••••••••'
-            required
-          />
-        </div>
-        <button
-          type='submit'
-          className={cn(
-            'w-full py-3 px-4 rounded-md text-white font-semibold text-base',
-            COLORS.WARM_PURPLE.bg,
-            'hover:opacity-90 active:opacity-80 transition-opacity',
-            'focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2',
-            'disabled:opacity-50 disabled:cursor-not-allowed',
-          )}
-          disabled={!isLoaded}
-        >
-          Sign in with Email
-        </button>
-      </form>
+      {selectedRoleSignal.value && (
+        <form onSubmit={handleEmailSignIn} className='space-y-6'>
+          <div>
+            <label htmlFor='email' className='block text-sm font-medium text-gray-700 mb-2'>
+              Email address
+            </label>
+            <input
+              id='email'
+              type='email'
+              value={emailSignal.value}
+              onChange={(e) => (emailSignal.value = e.target.value)}
+              className='block w-full px-4 py-3 rounded-md border border-gray-300 
+              focus:ring-2 focus:ring-purple-500 focus:border-purple-500 
+              text-base transition-all duration-200 
+              placeholder:text-gray-400'
+              placeholder='you@example.com'
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor='password' className='block text-sm font-medium text-gray-700 mb-2'>
+              Password
+            </label>
+            <input
+              id='password'
+              type='password'
+              value={passwordSignal.value}
+              onChange={(e) => (passwordSignal.value = e.target.value)}
+              className='block w-full px-4 py-3 rounded-md border border-gray-300 
+              focus:ring-2 focus:ring-purple-500 focus:border-purple-500 
+              text-base transition-all duration-200 
+              placeholder:text-gray-400'
+              placeholder='••••••••'
+              required
+            />
+          </div>
+          <button
+            type='submit'
+            className={cn(
+              'w-full py-3 px-4 rounded-md text-white font-semibold text-base',
+              COLORS.WARM_PURPLE.bg,
+              'hover:opacity-90 active:opacity-80 transition-opacity',
+              'focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2',
+              'disabled:opacity-50 disabled:cursor-not-allowed',
+            )}
+            disabled={!isLoaded}
+          >
+            Sign in with Email
+          </button>
+        </form>
+      )}
 
-      <div className='relative my-6'>
-        <div className='absolute inset-0 flex items-center'>
-          <div className='w-full border-t border-gray-300' />
-        </div>
-        <div className='relative flex justify-center text-sm'>
-          <span className='px-4 bg-white text-gray-500'>Or continue with</span>
-        </div>
-      </div>
+      {selectedRoleSignal.value && (
+        <>
+          <div className='relative my-6'>
+            <div className='absolute inset-0 flex items-center'>
+              <div className='w-full border-t border-gray-300' />
+            </div>
+            <div className='relative flex justify-center text-sm'>
+              <span className='px-4 bg-white text-gray-500'>Or continue with</span>
+            </div>
+          </div>
 
-      <div className='grid gap-4'>
-        <GoogleSignInButton />
-        <MicrosoftSignInButton />
-      </div>
+          <div className='grid gap-4'>
+            <GoogleSignInButton />
+            <MicrosoftSignInButton />
+          </div>
+        </>
+      )}
     </div>
   );
 }
