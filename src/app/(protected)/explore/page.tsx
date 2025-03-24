@@ -13,20 +13,27 @@ export default async function Home() {
     const dbTherapists = await db.select().from(therapists);
 
     // Transform the database records into the Advisor type
-    const advisors: Advisor[] = dbTherapists.map((therapist) => ({
-      id: therapist.id.toString(),
-      name: therapist.name,
-      title: therapist.title || '',
-      bookingURL: therapist.bookingURL || '',
-      expertise: therapist.expertise || '',
-      certifications: therapist.certifications || '',
-      song: therapist.song || '',
-      yoe: therapist.yoe?.toString() || '',
-      clientele: therapist.clientele || '',
-      longBio: therapist.longBio || '',
-      previewBlurb: therapist.previewBlurb || '',
-      profileUrl: getTherapistImageUrl(therapist.profileUrl || ''),
-    }));
+    const advisors: Advisor[] = dbTherapists.map((therapist) => {
+      // Fallback to a default image if no profile URL is provided
+      const profileUrl = therapist.profileUrl
+        ? getTherapistImageUrl(therapist.profileUrl)
+        : '/experts/placeholderexp.png';
+
+      return {
+        id: therapist.id.toString(),
+        name: therapist.name,
+        title: therapist.title || 'Financial Therapist',
+        bookingURL: therapist.bookingURL || '',
+        expertise: therapist.expertise || '',
+        certifications: therapist.certifications || '',
+        song: therapist.song || '',
+        yoe: therapist.yoe?.toString() || 'N/A',
+        clientele: therapist.clientele || '',
+        longBio: therapist.longBio || '',
+        previewBlurb: therapist.previewBlurb || 'Experienced financial therapist',
+        profileUrl: profileUrl,
+      };
+    });
 
     return (
       <div className='min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)]'>
@@ -41,7 +48,13 @@ export default async function Home() {
           </p>
         </section>
         <main className='pb-12'>
-          <AdvisorGrid advisors={advisors} />
+          {advisors.length > 0 ? (
+            <AdvisorGrid advisors={advisors} />
+          ) : (
+            <div className='text-center text-gray-600'>
+              No therapists available at the moment. Please check back later.
+            </div>
+          )}
         </main>
       </div>
     );

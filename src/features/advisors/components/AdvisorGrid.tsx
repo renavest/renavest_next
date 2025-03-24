@@ -1,7 +1,7 @@
 'use client';
 import { Award } from 'lucide-react';
 import Image from 'next/image';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { cn } from '@/src/lib/utils';
 import { Advisor } from '@/src/shared/types';
@@ -17,6 +17,25 @@ interface AdvisorCardProps {
 }
 
 const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
+  const [imageLoadState, setImageLoadState] = useState({
+    isLoaded: false,
+    hasError: false,
+  });
+
+  const handleImageLoad = () => {
+    setImageLoadState({
+      isLoaded: true,
+      hasError: false,
+    });
+  };
+
+  const handleImageError = () => {
+    setImageLoadState({
+      isLoaded: false,
+      hasError: true,
+    });
+  };
+
   return (
     <div
       onClick={onClick}
@@ -26,14 +45,38 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
       )}
     >
       <div className='group relative aspect-[4/5] sm:aspect-[3/4] w-full overflow-hidden'>
-        <Image
-          width={350}
-          height={350}
-          src={advisor.profileUrl as string}
-          alt={advisor.name}
-          className='h-full w-full rounded-2xl object-cover object-center transition-transform duration-500 group-hover:scale-110'
-          priority
-        />
+        {!imageLoadState.isLoaded && !imageLoadState.hasError && (
+          <div
+            className='absolute inset-0 bg-gray-200 animate-pulse'
+            aria-label='Image loading placeholder'
+          />
+        )}
+
+        {imageLoadState.hasError ? (
+          <div
+            className='absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-500'
+            aria-label='Image failed to load'
+          >
+            No Image
+          </div>
+        ) : (
+          <Image
+            width={350}
+            height={350}
+            src={advisor.profileUrl as string}
+            alt={advisor.name}
+            className={cn(
+              'h-full w-full rounded-2xl object-cover object-center transition-transform duration-500',
+              'group-hover:scale-110',
+              !imageLoadState.isLoaded ? 'opacity-0' : 'opacity-100',
+            )}
+            placeholder='blur'
+            blurDataURL='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+            onLoadingComplete={handleImageLoad}
+            onError={handleImageError}
+          />
+        )}
+
         <div className='absolute top-2 sm:top-4 left-2 sm:left-4 bg-white/90 backdrop-blur-sm px-2 sm:px-3 py-1 rounded-full text-xs font-medium tracking-wide text-gray-700 shadow-sm'>
           {advisor.yoe} years of experience
         </div>
