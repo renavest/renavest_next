@@ -1,4 +1,4 @@
-import { useSignIn } from '@clerk/nextjs';
+import { useSignIn, useClerk } from '@clerk/nextjs';
 import { OAuthStrategy } from '@clerk/types';
 import * as React from 'react';
 
@@ -15,6 +15,7 @@ interface OAuthButtonProps {
 
 export function OAuthButton({ strategy, icon, label }: OAuthButtonProps) {
   const { signIn, isLoaded } = useSignIn();
+  const clerk = useClerk();
 
   const getDashboardPath = (role: string) => {
     switch (role) {
@@ -40,6 +41,9 @@ export function OAuthButton({ strategy, icon, label }: OAuthButtonProps) {
         authErrorSignal.value = 'Authentication system is not ready';
         return;
       }
+
+      // Sign out of any existing session before OAuth sign-in
+      await clerk.signOut();
 
       await signIn.authenticateWithRedirect({
         strategy,
