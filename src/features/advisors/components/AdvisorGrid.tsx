@@ -1,7 +1,8 @@
 'use client';
+import { signal } from '@preact/signals-react';
 import { Award } from 'lucide-react';
 import Image from 'next/image';
-import React, { useState } from 'react';
+import React from 'react';
 
 import { cn } from '@/src/lib/utils';
 import { Advisor } from '@/src/shared/types';
@@ -17,7 +18,24 @@ interface AdvisorCardProps {
 }
 
 const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
-  const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const imageLoadState = signal({
+    isLoaded: false,
+    hasError: false,
+  });
+
+  const handleImageLoad = () => {
+    imageLoadState.value = {
+      isLoaded: true,
+      hasError: false,
+    };
+  };
+
+  const handleImageError = () => {
+    imageLoadState.value = {
+      isLoaded: false,
+      hasError: true,
+    };
+  };
 
   return (
     <div
@@ -28,22 +46,38 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
       )}
     >
       <div className='group relative aspect-[4/5] sm:aspect-[3/4] w-full overflow-hidden'>
-        <div
-          className={cn(
-            'absolute inset-0 bg-gray-200 animate-pulse transition-opacity duration-300',
-            isImageLoaded ? 'opacity-0' : 'opacity-100',
-          )}
-        />
-        <Image
-          width={350}
-          height={350}
-          src={advisor.profileUrl as string}
-          alt={advisor.name}
-          className='h-full w-full rounded-2xl object-cover object-center transition-transform duration-500 group-hover:scale-110'
-          placeholder='blur'
-          blurDataURL='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
-          onLoadingComplete={() => setIsImageLoaded(true)}
-        />
+        {!imageLoadState.value.isLoaded && !imageLoadState.value.hasError && (
+          <div
+            className='absolute inset-0 bg-gray-200 animate-pulse'
+            aria-label='Image loading placeholder'
+          />
+        )}
+
+        {imageLoadState.value.hasError ? (
+          <div
+            className='absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-500'
+            aria-label='Image failed to load'
+          >
+            No Image
+          </div>
+        ) : (
+          <Image
+            width={350}
+            height={350}
+            src={advisor.profileUrl as string}
+            alt={advisor.name}
+            className={cn(
+              'h-full w-full rounded-2xl object-cover object-center transition-transform duration-500',
+              'group-hover:scale-110',
+              !imageLoadState.value.isLoaded ? 'opacity-0' : 'opacity-100',
+            )}
+            placeholder='blur'
+            blurDataURL='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+            onLoadingComplete={handleImageLoad}
+            onError={handleImageError}
+          />
+        )}
+
         <div className='absolute top-2 sm:top-4 left-2 sm:left-4 bg-white/90 backdrop-blur-sm px-2 sm:px-3 py-1 rounded-full text-xs font-medium tracking-wide text-gray-700 shadow-sm'>
           {advisor.yoe} years of experience
         </div>
