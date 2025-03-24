@@ -94,8 +94,6 @@ function LoginFormFields() {
       return;
     }
 
-    const dashboardPath = getDashboardPath(selectedRoleSignal.value);
-
     try {
       if (!isLoaded || !signIn) {
         authErrorSignal.value = 'Authentication system is not ready';
@@ -108,8 +106,11 @@ function LoginFormFields() {
       });
 
       if (result.status === 'complete') {
-        // Redirect to dashboard with the selected role
-        window.location.href = `${dashboardPath}?role=${selectedRoleSignal.value}`;
+        // Use Clerk's setActive method to handle session
+        await result.createdSessionId;
+
+        // Redirect will be handled by middleware
+        window.location.href = getDashboardPath(selectedRoleSignal.value);
       } else {
         authErrorSignal.value = 'Sign in failed. Please try again.';
       }
