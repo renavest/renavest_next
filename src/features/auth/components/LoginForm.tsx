@@ -3,6 +3,7 @@
 import { useSignIn } from '@clerk/nextjs';
 
 import { cn } from '@/src/lib/utils';
+import { COLORS } from '@/src/styles/colors';
 
 import {
   authErrorSignal,
@@ -66,7 +67,7 @@ function RoleSelection() {
           className={cn(
             'p-4 rounded-lg border-2 text-left transition-all duration-200',
             selectedRoleSignal.value === role.value
-              ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-200'
+              ? `border-[#9071FF] ${COLORS.WARM_PURPLE['5']} ring-2 ring-[#9071FF]/20`
               : 'border-gray-300 hover:border-purple-300 hover:bg-gray-50',
           )}
         >
@@ -130,7 +131,7 @@ function LoginFormFields() {
           value={emailSignal.value}
           onChange={(e) => (emailSignal.value = e.target.value)}
           className='block w-full px-4 py-3 rounded-md border border-gray-300 
-          focus:ring-2 focus:ring-purple-500 focus:border-purple-500 
+          focus:ring-2 focus:ring-[#9071FF] focus:border-[#9071FF] 
           text-base transition-all duration-200 
           placeholder:text-gray-400'
           placeholder='you@example.com'
@@ -147,7 +148,7 @@ function LoginFormFields() {
           value={passwordSignal.value}
           onChange={(e) => (passwordSignal.value = e.target.value)}
           className='block w-full px-4 py-3 rounded-md border border-gray-300 
-          focus:ring-2 focus:ring-purple-500 focus:border-purple-500 
+          focus:ring-2 focus:ring-[#9071FF] focus:border-[#9071FF] 
           text-base transition-all duration-200 
           placeholder:text-gray-400'
           placeholder='••••••••'
@@ -158,8 +159,9 @@ function LoginFormFields() {
         type='submit'
         className={cn(
           'w-full py-3 px-4 rounded-md text-white font-semibold text-base',
-          'bg-purple-500 hover:bg-purple-600 active:bg-purple-700 transition-opacity',
-          'focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2',
+          COLORS.WARM_PURPLE.bg,
+          COLORS.WARM_PURPLE.hover,
+          'focus:outline-none focus:ring-2 focus:ring-[#9071FF] focus:ring-offset-2',
           'disabled:opacity-50 disabled:cursor-not-allowed',
         )}
         disabled={!isLoaded}
