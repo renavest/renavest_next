@@ -40,11 +40,9 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
           src={advisor.profileUrl as string}
           alt={advisor.name}
           className='h-full w-full rounded-2xl object-cover object-center transition-transform duration-500 group-hover:scale-110'
-          priority
           placeholder='blur'
           blurDataURL='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
           onLoadingComplete={() => setIsImageLoaded(true)}
-          loading='lazy'
         />
         <div className='absolute top-2 sm:top-4 left-2 sm:left-4 bg-white/90 backdrop-blur-sm px-2 sm:px-3 py-1 rounded-full text-xs font-medium tracking-wide text-gray-700 shadow-sm'>
           {advisor.yoe} years of experience
