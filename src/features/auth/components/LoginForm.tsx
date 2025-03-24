@@ -108,8 +108,8 @@ function LoginFormFields() {
       });
 
       if (result.status === 'complete') {
-        await result.createdSessionId;
-        window.location.href = dashboardPath;
+        // Redirect to dashboard with the selected role
+        window.location.href = `${dashboardPath}?role=${selectedRoleSignal.value}`;
       } else {
         authErrorSignal.value = 'Sign in failed. Please try again.';
       }
