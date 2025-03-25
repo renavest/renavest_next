@@ -111,10 +111,12 @@ export default function PrivacyPage() {
   const { user, isLoaded } = useUser();
 
   // Determine the back navigation path
+  // TODO: Create a more robust way to determine default dashboard based on user role
   const backPath =
     isLoaded && user
       ? (() => {
-          const role = (user.publicMetadata?.role as string) || 'employee';
+          // If no role metadata is set, default to employee dashboard
+          const role = (user.publicMetadata?.role as string | undefined) || 'employee';
           switch (role) {
             case 'employer':
               return '/employer/dashboard';
@@ -124,7 +126,7 @@ export default function PrivacyPage() {
               return '/employee';
           }
         })()
-      : '/login';
+      : '/employee'; // Default to employee dashboard for logged-in users without explicit routing
 
   return (
     <div className={`min-h-screen ${COLORS.WARM_WHITE.bg} font-sans`}>
