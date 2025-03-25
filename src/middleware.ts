@@ -1,4 +1,5 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { clerkMiddleware, createRouteMatcher, currentUser } from '@clerk/nextjs/server';
+import type { User } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
 // Define protected routes that require authentication
@@ -9,38 +10,32 @@ const protectedRoutes = [
   '/explore/(.*)',
 ];
 
-// Define public routes that don't require authentication
-const publicRoutes = ['/login', '/sign-up', '/'];
-
 // Create route matcher for protected routes
 const isProtectedRoute = createRouteMatcher(protectedRoutes);
 
-// Helper function to get dashboard path based on role
-function getDashboardPath(role: string | undefined, userId: string | undefined): string {
-  console.log('Determining dashboard path:', { role, userId });
+// Seth's user IDs
+const SETH_USER_IDS = ['user_2ujgBxILoKp4ICRZ7A3LYlbKceU', 'user_2uGym23xBrjDzFTgsT0BEkgj3Ux'];
 
-  // Special handling for Seth
-  if (userId === 'user_2ujgBxILoKp4ICRZ7A3LYlbKceU') {
-    console.log('Seth user detected');
-    switch (role) {
-      case 'employer':
-        console.log('Routing Seth to employer dashboard');
-        return '/employer/dashboard';
-      case 'therapist':
-        console.log('Routing Seth to therapist dashboard');
-        return '/therapist/dashboard';
-      case 'employee':
-        console.log('Routing Seth to employee page');
-        return '/employee';
-      default:
-        console.log('Seth: No role specified, defaulting to employee');
-        return '/employee'; // Default to employee dashboard for Seth
-    }
+// Helper function to get dashboard path for Seth
+function getSethDashboardPath(user: User): string {
+  console.log('Determining Seth dashboard path');
+
+  // Check user metadata or custom properties
+  const role = user.publicMetadata?.role as string | undefined;
+
+  console.log('Seth Role from Metadata:', role);
+
+  switch (role) {
+    case 'employer':
+      return '/employer/dashboard';
+    case 'therapist':
+      return '/therapist/dashboard';
+    case 'employee':
+      return '/employee';
+    default:
+      console.log('No specific role found for Seth, defaulting to employee');
+      return '/employee';
   }
-
-  // For ALL other users, ALWAYS redirect to explore, regardless of role
-  console.log('Non-Seth user, routing to explore');
-  return '/explore';
 }
 
 export default clerkMiddleware(async (auth, req) => {
@@ -49,38 +44,45 @@ export default clerkMiddleware(async (auth, req) => {
     method: req.method,
   });
 
-  // Always redirect non-Seth users to explore
-  const authObject = await auth();
-  const { userId, sessionClaims } = authObject;
+  // Get current user
+  const user = await currentUser();
 
-  console.log('Authentication details:', {
-    userId,
-    sessionClaimsMetadata: sessionClaims?.metadata,
+  // Log user details
+  console.log('Current User Details:', {
+    userId: user?.id,
+    email: user?.emailAddresses?.[0]?.emailAddress,
+    firstName: user?.firstName,
+    lastName: user?.lastName,
   });
 
-  if (userId && userId !== 'user_2ujgBxILoKp4ICRZ7A3LYlbKceU') {
-    // Force redirect to explore for non-Seth users
-    if (!req.nextUrl.pathname.startsWith('/explore')) {
-      console.log('Redirecting non-Seth user to explore');
-      return NextResponse.redirect(new URL('/explore', req.url));
+  // Determine routing based on user
+  if (user) {
+    // Check if user is Seth
+    const isSethUser = SETH_USER_IDS.includes(user.id);
+
+    if (isSethUser) {
+      // Seth's routing logic
+      const sethDashboard = getSethDashboardPath(user);
+
+      if (req.nextUrl.pathname !== sethDashboard) {
+        console.log(`Redirecting Seth to: ${sethDashboard}`);
+        return NextResponse.redirect(new URL(sethDashboard, req.url));
+      }
+    } else {
+      // Non-Seth users always go to explore
+      if (!req.nextUrl.pathname.startsWith('/explore')) {
+        console.log('Redirecting non-Seth user to explore');
+        return NextResponse.redirect(new URL('/explore', req.url));
+      }
     }
   }
 
-  if (isProtectedRoute(req)) {
-    if (!userId) {
-      console.log('No user ID, redirecting to login');
-      const loginUrl = new URL('/login', req.url);
-      loginUrl.searchParams.set('redirect_url', req.url);
-      return NextResponse.redirect(loginUrl);
-    }
-
-    // If accessing public routes while authenticated, redirect based on user ID
-    if (publicRoutes.includes(req.nextUrl.pathname)) {
-      const metadata = sessionClaims?.metadata as { role?: string } | undefined;
-      const userDashboard = getDashboardPath(metadata?.role, userId);
-      console.log('Redirecting to dashboard:', userDashboard);
-      return NextResponse.redirect(new URL(userDashboard, req.url));
-    }
+  // Handle protected routes
+  if (isProtectedRoute(req) && !user) {
+    console.log('No user, redirecting to login');
+    const loginUrl = new URL('/login', req.url);
+    loginUrl.searchParams.set('redirect_url', req.url);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();
