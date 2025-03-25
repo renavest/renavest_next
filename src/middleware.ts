@@ -16,14 +16,15 @@ const publicRoutes = ['/login', '/sign-up', '/'];
 const isProtectedRoute = createRouteMatcher(protectedRoutes);
 
 // Helper function to get dashboard path based on role
-function getDashboardPath(role: string): string {
+function getDashboardPath(role: string | undefined): string {
+  // TODO: Create a more robust way to determine default dashboard based on user role
   switch (role) {
     case 'employer':
       return '/employer/dashboard';
     case 'therapist':
       return '/therapist/dashboard';
     default:
-      return '/employee';
+      return '/employee'; // Default to employee dashboard
   }
 }
 
@@ -42,7 +43,7 @@ export default clerkMiddleware(async (auth, req) => {
     // If accessing public routes while authenticated, redirect to dashboard
     if (publicRoutes.includes(req.nextUrl.pathname)) {
       const metadata = sessionClaims?.metadata as { role?: string } | undefined;
-      const userDashboard = getDashboardPath(metadata?.role || 'employee');
+      const userDashboard = getDashboardPath(metadata?.role);
       return NextResponse.redirect(new URL(userDashboard, req.url));
     }
   }
