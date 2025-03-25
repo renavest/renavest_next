@@ -8,6 +8,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
+
 import { sessionMetricsSignal } from '../state/employerDashboardState';
 
 export default function SessionsChart() {

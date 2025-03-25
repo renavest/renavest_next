@@ -1,6 +1,7 @@
 'use client';
 
 import { useSignIn } from '@clerk/nextjs';
+import Link from 'next/link';
 
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
@@ -175,7 +176,14 @@ function LoginFormFields() {
 
 export default function LoginForm() {
   return (
-    <div className='space-y-6'>
+    <div className='space-y-8'>
+      <div className='text-center'>
+        <h1 className='text-3xl md:text-4xl font-bold text-gray-900 mb-4'>Welcome to Renavest</h1>
+        <p className='text-lg text-gray-600 max-w-2xl mx-auto'>
+          Transform your relationship with money through Financial Therapy
+        </p>
+      </div>
+
       <RoleSelection />
 
       {authErrorSignal.value && <AuthErrorMessage message={authErrorSignal.value} />}
@@ -199,6 +207,15 @@ export default function LoginForm() {
           </div>
         </>
       )}
+
+      <div className='text-center mt-6'>
+        <Link
+          href='/privacy'
+          className='text-xs text-gray-500 hover:text-gray-700 hover:underline transition-colors'
+        >
+          Privacy Policy
+        </Link>
+      </div>
     </div>
   );
 }

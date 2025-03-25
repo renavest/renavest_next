@@ -161,8 +161,6 @@ function DashboardContent() {
 export default function EmployerDashboardPage() {
   const { user, signOut } = useClerk();
   const router = useRouter();
-  const stats = programStatsSignal.value;
-  const activePercentage = ((stats.activeEmployees / stats.totalEmployees) * 100).toFixed(0);
 
   const handleLogout = () => {
     if (user) {
