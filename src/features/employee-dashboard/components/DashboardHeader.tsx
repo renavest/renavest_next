@@ -12,20 +12,41 @@ import { COLORS } from '@/src/styles/colors';
 
 import { isHeaderScrolledSignal, isMobileMenuOpenSignal } from '../state/dashboardState';
 
+// Extract common navigation items into a separate component
+const NavigationItem = ({
+  href,
+  icon: Icon,
+  label,
+  isMobile = false,
+}: {
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  isMobile?: boolean;
+}) => (
+  <Link
+    href={href}
+    className={cn(
+      'flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors',
+      isMobile && 'w-full py-3 hover:bg-gray-50',
+    )}
+  >
+    <Icon className={isMobile ? 'h-5 w-5' : 'h-4 w-4'} />
+    <span>{label}</span>
+  </Link>
+);
+
 export default function DashboardHeader() {
   const { signOut } = useClerk();
   const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => {
-      const scrollPosition = window.scrollY;
-      isHeaderScrolledSignal.value = scrollPosition > 0;
+      isHeaderScrolledSignal.value = window.scrollY > 0;
     };
 
     window.addEventListener('scroll', handleScroll);
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const toggleMobileMenu = () => {
@@ -74,20 +95,8 @@ export default function DashboardHeader() {
 
         {/* Desktop Navigation */}
         <div className='hidden md:flex items-center gap-4'>
-          <Link
-            href='/home'
-            className='flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors'
-          >
-            <Users className='h-4 w-4' />
-            <span>Find Therapists</span>
-          </Link>
-          <Link
-            href='/privacy'
-            className='flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors'
-          >
-            <Shield className='h-4 w-4' />
-            <span>Privacy & Security</span>
-          </Link>
+          <NavigationItem href='/home' icon={Users} label='Find Therapists' />
+          <NavigationItem href='/privacy' icon={Shield} label='Privacy & Security' />
           <button
             onClick={handleLogout}
             className='flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors'
@@ -109,20 +118,8 @@ export default function DashboardHeader() {
           `}
         >
           <div className='p-4 space-y-2'>
-            <Link
-              href='/explore'
-              className='flex items-center gap-2 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors w-full'
-            >
-              <Users className='h-5 w-5' />
-              <span>Find Therapists</span>
-            </Link>
-            <Link
-              href='/privacy'
-              className='flex items-center gap-2 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors w-full'
-            >
-              <Shield className='h-5 w-5' />
-              <span>Privacy & Security</span>
-            </Link>
+            <NavigationItem href='/explore' icon={Users} label='Find Therapists' isMobile />
+            <NavigationItem href='/privacy' icon={Shield} label='Privacy & Security' isMobile />
             <button
               onClick={handleLogout}
               className='flex items-center gap-2 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors w-full'

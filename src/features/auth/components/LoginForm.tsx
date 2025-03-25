@@ -175,7 +175,18 @@ function LoginFormFields() {
 
 export default function LoginForm() {
   return (
-    <div className='space-y-6'>
+    <div className='space-y-8'>
+      <div className='text-center'>
+        <h1 className='text-3xl md:text-4xl font-bold text-gray-900 mb-4'>
+          Welcome to Your Financial Wellness Journey
+        </h1>
+        <p className='text-lg text-gray-600 max-w-2xl mx-auto'>
+          Choose your role to access personalized financial therapy and support. Whether you're an
+          employee seeking guidance, an employer managing benefits, or a therapist helping clients,
+          we're here to empower your financial well-being.
+        </p>
+      </div>
+
       <RoleSelection />
 
       {authErrorSignal.value && <AuthErrorMessage message={authErrorSignal.value} />}
