@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import FloatingHeader from '@/src/features/home/components/Navbar';
+import PageLayout from '@/src/components/PageLayout';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
@@ -106,22 +106,18 @@ const ContactSection = () => (
 
 export default function PrivacyPage() {
   return (
-    <div className='min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)] pt-24'>
-      <FloatingHeader title='Renavest' />
+    <PageLayout title='Renavest'>
+      <h1 className='text-3xl sm:text-4xl font-bold text-gray-900 mb-8 text-center'>
+        Privacy & Security Policy
+      </h1>
 
-      <div className='max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
-        <h1 className='text-3xl sm:text-4xl font-bold text-gray-900 mb-8 text-center'>
-          Privacy & Security Policy
-        </h1>
-
-        <div className='space-y-8'>
-          <SecurityFrameworkSection />
-          <FinancialDataProtectionSection />
-          <SecurityInfrastructureSection />
-          <EnterpriseReadinessSection />
-          <ContactSection />
-        </div>
+      <div className='space-y-8'>
+        <SecurityFrameworkSection />
+        <FinancialDataProtectionSection />
+        <SecurityInfrastructureSection />
+        <EnterpriseReadinessSection />
+        <ContactSection />
       </div>
-    </div>
+    </PageLayout>
   );
 }
