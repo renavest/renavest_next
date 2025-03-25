@@ -31,7 +31,7 @@ function getDashboardPath(role: string | undefined, userId: string | undefined):
     }
   }
 
-  // For all other users, redirect to explore
+  // For all other users, always redirect to explore
   return '/explore';
 }
 
