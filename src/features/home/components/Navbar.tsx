@@ -37,6 +37,7 @@ export default function Navbar({ title }: NavbarProps) {
       console.error('Error signing out:', error);
     }
   };
+
   return (
     <header
       className={`
