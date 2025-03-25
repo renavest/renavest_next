@@ -1,6 +1,7 @@
 'use client';
 
 import { CheckCircle2 } from 'lucide-react';
+import Image from 'next/image';
 import React from 'react';
 
 import LoginForm from '@/src/features/auth/components/LoginForm';
@@ -50,21 +51,15 @@ export default function LoginPage() {
           <LoginFeature icon={CheckCircle2} text='Comprehensive Wellness Support' />
         </div>
 
-        {/* Replace SVG with geometric pattern */}
+        {/* Cloud Image */}
         <div className='mt-12 relative z-10'>
-          <div className='grid grid-cols-3 gap-4 w-64 h-48'>
-            {[...Array(9)].map((_, index) => (
-              <div
-                key={index}
-                className={`
-                  transform transition-all duration-300 
-                  ${index % 2 === 0 ? 'bg-[#9071FF]/10' : 'bg-[#9071FF]/5'}
-                  rounded-lg
-                  hover:scale-105
-                `}
-              />
-            ))}
-          </div>
+          <Image
+            src='/cloud_adjusted.png'
+            alt='Financial Wellness Cloud'
+            width={400}
+            height={300}
+            className='opacity-70 object-contain'
+          />
         </div>
       </div>
 
