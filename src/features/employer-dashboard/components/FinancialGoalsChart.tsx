@@ -7,6 +7,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+
 import { financialGoalsMetricsSignal } from '../state/employerDashboardState';
 
 export default function FinancialGoalsChart() {
