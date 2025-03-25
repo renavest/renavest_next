@@ -1,9 +1,11 @@
 'use client';
 
-import React, { ReactNode } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
+import React, { ReactNode } from 'react';
+
 import Navbar from '@/src/features/home/components/Navbar';
+import { COLORS } from '@/src/styles/colors';
 
 interface PageLayoutProps {
   title: string;
@@ -19,9 +21,7 @@ export default function PageLayout({
   backButtonHref,
 }: PageLayoutProps) {
   return (
-    <div
-      className={`min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)] pt-20 ${className}`}
-    >
+    <div className={`min-h-screen ${COLORS.WARM_WHITE.bg} font-sans ${className}`}>
       <Navbar title={title} />
       <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
         {backButtonHref && (

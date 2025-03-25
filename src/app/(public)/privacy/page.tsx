@@ -106,7 +106,7 @@ const ContactSection = () => (
 
 export default function PrivacyPage() {
   return (
-    <PageLayout title='Renavest' backButtonHref='/employee' className={COLORS.WARM_WHITE.bg}>
+    <PageLayout title='Renavest' backButtonHref='/employee'>
       <h1 className='text-3xl sm:text-4xl font-bold text-gray-900 mb-8 text-center'>
         Privacy & Security Policy
       </h1>
