@@ -1,6 +1,7 @@
 'use client';
 
 import { useSignIn } from '@clerk/nextjs';
+import Link from 'next/link';
 
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
@@ -206,6 +207,15 @@ export default function LoginForm() {
           </div>
         </>
       )}
+
+      <div className='text-center mt-6'>
+        <Link
+          href='/privacy'
+          className='text-xs text-gray-500 hover:text-gray-700 hover:underline transition-colors'
+        >
+          Privacy Policy
+        </Link>
+      </div>
     </div>
   );
 }

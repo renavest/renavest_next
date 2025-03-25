@@ -52,9 +52,9 @@ export default function Navbar({ title }: NavbarProps) {
           <Image
             src='/renavestlogo.avif'
             alt='Renavest Logo'
-            width={40}
+            width={120}
             height={40}
-            className='w-8 h-8 sm:w-10 sm:h-10'
+            className='object-contain h-8 sm:h-10 w-auto'
           />
           <h1 className='text-lg sm:text-2xl font-semibold text-gray-800 transition-all duration-300'>
             {title}
