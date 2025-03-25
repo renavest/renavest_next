@@ -31,16 +31,23 @@ function getDashboardPath(role: string | undefined, userId: string | undefined):
     }
   }
 
-  // For all other users, always redirect to explore
+  // For ALL other users, ALWAYS redirect to explore, regardless of role
   return '/explore';
 }
 
 export default clerkMiddleware(async (auth, req) => {
-  if (isProtectedRoute(req)) {
-    // Protect the route
-    const authObject = await auth();
-    const { userId, sessionClaims } = authObject;
+  // Always redirect non-Seth users to explore
+  const authObject = await auth();
+  const { userId, sessionClaims } = authObject;
 
+  if (userId && userId !== 'user_2ujgBxILoKp4ICRZ7A3LYlbKceU') {
+    // Force redirect to explore for non-Seth users
+    if (!req.nextUrl.pathname.startsWith('/explore')) {
+      return NextResponse.redirect(new URL('/explore', req.url));
+    }
+  }
+
+  if (isProtectedRoute(req)) {
     if (!userId) {
       const loginUrl = new URL('/login', req.url);
       loginUrl.searchParams.set('redirect_url', req.url);
