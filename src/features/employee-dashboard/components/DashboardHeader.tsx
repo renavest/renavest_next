@@ -1,7 +1,7 @@
 'use client';
 
 import { UserButton, useClerk } from '@clerk/nextjs';
-import { LogOut, Menu, Users, X } from 'lucide-react';
+import { LogOut, Menu, Users, X, Shield } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -81,6 +81,13 @@ export default function DashboardHeader() {
             <Users className='h-4 w-4' />
             <span>Find Therapists</span>
           </Link>
+          <Link
+            href='/privacy'
+            className='flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors'
+          >
+            <Shield className='h-4 w-4' />
+            <span>Privacy & Security</span>
+          </Link>
           <button
             onClick={handleLogout}
             className='flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors'
@@ -108,6 +115,13 @@ export default function DashboardHeader() {
             >
               <Users className='h-5 w-5' />
               <span>Find Therapists</span>
+            </Link>
+            <Link
+              href='/privacy'
+              className='flex items-center gap-2 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors w-full'
+            >
+              <Shield className='h-5 w-5' />
+              <span>Privacy & Security</span>
             </Link>
             <button
               onClick={handleLogout}
