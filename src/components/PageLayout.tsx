@@ -23,12 +23,11 @@ export default function PageLayout({
   return (
     <div className={`min-h-screen ${COLORS.WARM_WHITE.bg} font-sans ${className}`}>
       <Navbar title={title} />
-      <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
+      <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-20'>
         {backButtonHref && (
           <Link
             href={backButtonHref}
             className='inline-flex items-center text-gray-600 hover:text-gray-800 mb-6'
-            onClick={() => console.log('Back button href:', backButtonHref)}
           >
             <ChevronLeft className='h-5 w-5 mr-2' />
             <span>Back</span>
