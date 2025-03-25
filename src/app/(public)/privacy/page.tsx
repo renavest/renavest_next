@@ -1,8 +1,10 @@
 'use client';
 
+import { ChevronLeft } from 'lucide-react';
+import Link from 'next/link';
 import React from 'react';
 
-import PageLayout from '@/src/components/PageLayout';
+import Navbar from '@/src/features/home/components/Navbar';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
@@ -106,18 +108,25 @@ const ContactSection = () => (
 
 export default function PrivacyPage() {
   return (
-    <PageLayout title='Renavest' backButtonHref='/'>
-      <h1 className='text-3xl sm:text-4xl font-bold text-gray-900 mb-8 text-center'>
-        Privacy & Security Policy
-      </h1>
+    <div className={`min-h-screen ${COLORS.WARM_WHITE.bg} font-sans`}>
+      <Navbar title='Renavest' />
+      <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-20'>
+        <Link href='/' className='inline-flex items-center text-gray-600 hover:text-gray-800 mb-6'>
+          <ChevronLeft className='h-5 w-5 mr-2' />
+          <span>Back</span>
+        </Link>
+        <h1 className='text-3xl sm:text-4xl font-bold text-gray-900 mb-8 text-center'>
+          Privacy & Security Policy
+        </h1>
 
-      <div className='space-y-8'>
-        <SecurityFrameworkSection />
-        <FinancialDataProtectionSection />
-        <SecurityInfrastructureSection />
-        <EnterpriseReadinessSection />
-        <ContactSection />
-      </div>
-    </PageLayout>
+        <div className='space-y-8'>
+          <SecurityFrameworkSection />
+          <FinancialDataProtectionSection />
+          <SecurityInfrastructureSection />
+          <EnterpriseReadinessSection />
+          <ContactSection />
+        </div>
+      </main>
+    </div>
   );
 }

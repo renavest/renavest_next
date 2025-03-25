@@ -41,7 +41,7 @@ export default function Navbar({ title }: NavbarProps) {
   return (
     <header
       className={`
-        fixed top-0 left-0 right-0 
+        w-full
         z-50
         transition-all duration-300 ease-in-out
         bg-white py-3 sm:py-4 px-4 sm:px-6 lg:px-8
