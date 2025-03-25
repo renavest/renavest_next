@@ -1,5 +1,6 @@
 'use client';
 
+import { useUser } from '@clerk/nextjs';
 import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
@@ -107,11 +108,32 @@ const ContactSection = () => (
 );
 
 export default function PrivacyPage() {
+  const { user, isLoaded } = useUser();
+
+  // Determine the back navigation path
+  const backPath =
+    isLoaded && user
+      ? (() => {
+          const role = (user.publicMetadata?.role as string) || 'employee';
+          switch (role) {
+            case 'employer':
+              return '/employer/dashboard';
+            case 'therapist':
+              return '/therapist/dashboard';
+            default:
+              return '/employee';
+          }
+        })()
+      : '/login';
+
   return (
     <div className={`min-h-screen ${COLORS.WARM_WHITE.bg} font-sans`}>
       <Navbar title='Renavest' />
       <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-20'>
-        <Link href='/' className='inline-flex items-center text-gray-600 hover:text-gray-800 mb-6'>
+        <Link
+          href={backPath}
+          className='inline-flex items-center text-gray-600 hover:text-gray-800 mb-6'
+        >
           <ChevronLeft className='h-5 w-5 mr-2' />
           <span>Back</span>
         </Link>
