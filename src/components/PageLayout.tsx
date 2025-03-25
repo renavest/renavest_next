@@ -28,6 +28,7 @@ export default function PageLayout({
           <Link
             href={backButtonHref}
             className='inline-flex items-center text-gray-600 hover:text-gray-800 mb-6'
+            onClick={() => console.log('Back button href:', backButtonHref)}
           >
             <ChevronLeft className='h-5 w-5 mr-2' />
             <span>Back</span>
