@@ -21,8 +21,24 @@ export default function AdvisorImage({
   width = 350,
   height = 350,
 }: AdvisorImageProps) {
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
+  const [imageLoadState, setImageLoadState] = useState({
+    isLoaded: false,
+    hasError: false,
+  });
+
+  const handleImageLoad = () => {
+    setImageLoadState({
+      isLoaded: true,
+      hasError: false,
+    });
+  };
+
+  const handleImageError = () => {
+    setImageLoadState({
+      isLoaded: false,
+      hasError: true,
+    });
+  };
 
   const fallbackUrl = '/experts/placeholderexp.png';
 
@@ -35,26 +51,39 @@ export default function AdvisorImage({
       )}
     >
       {/* Loading state */}
-      {isLoading && <div className='absolute inset-0 bg-gray-200 animate-pulse' />}
+      {!imageLoadState.isLoaded && !imageLoadState.hasError && (
+        <div
+          className='absolute inset-0 bg-gray-200 animate-pulse'
+          aria-label='Image loading placeholder'
+        />
+      )}
 
-      <Image
-        src={hasError ? fallbackUrl : advisor.profileUrl || fallbackUrl}
-        alt={advisor.name}
-        {...(fill ? { fill: true } : { width, height })}
-        className={cn(
-          'object-cover',
-          fill ? 'absolute inset-0' : '',
-          isLoading ? 'opacity-0' : 'opacity-100',
-          'transition-opacity duration-300',
-        )}
-        priority={priority}
-        sizes={fill ? '100vw' : undefined}
-        onLoadingComplete={() => setIsLoading(false)}
-        onError={() => {
-          setHasError(true);
-          setIsLoading(false);
-        }}
-      />
+      {imageLoadState.hasError ? (
+        <div
+          className='absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-500'
+          aria-label='Image failed to load'
+        >
+          No Image
+        </div>
+      ) : (
+        <Image
+          src={advisor.profileUrl || fallbackUrl}
+          alt={advisor.name}
+          {...(fill ? { fill: true } : { width, height })}
+          className={cn(
+            'object-cover',
+            fill ? 'absolute inset-0' : '',
+            !imageLoadState.isLoaded ? 'opacity-0' : 'opacity-100',
+            'transition-opacity duration-300',
+          )}
+          priority={priority}
+          sizes={fill ? '100vw' : undefined}
+          placeholder='blur'
+          blurDataURL='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+          onLoadingComplete={handleImageLoad}
+          onError={handleImageError}
+        />
+      )}
     </div>
   );
 }

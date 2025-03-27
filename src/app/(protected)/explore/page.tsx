@@ -14,11 +14,11 @@ export default async function Home() {
 
     // Transform the database records into the Advisor type
     const advisors: Advisor[] = dbTherapists.map((therapist) => {
-      // Use the original S3 image URL generation
-      const profileUrl = therapist.name
-        ? getTherapistImageUrl(therapist.name)
+      // Fallback to a default image if no profile URL is provided
+      const profileUrl = therapist.profileUrl
+        ? getTherapistImageUrl(therapist.profileUrl)
         : '/experts/placeholderexp.png';
-      
+
       return {
         id: therapist.id.toString(),
         name: therapist.name,
