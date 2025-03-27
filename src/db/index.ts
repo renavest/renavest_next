@@ -16,18 +16,21 @@ const pool = new Pool({
   database: process.env.DB_DATABASE || 'renavest',
   port: parseInt(process.env.DB_PORT || '5432'),
   ssl: {
-    rejectUnauthorized: false, // This is needed for AWS RDS
-    ca: process.env.DB_CA_CERT, // Optional: provide CA certificate if needed
+    rejectUnauthorized: false,
+    ca: process.env.CA_CERT || undefined,
   },
 });
 
-// Log the pool connection details (excluding sensitive info)
+// Log the pool connection details
 console.log('Database connection pool created with the following details:');
 console.log('Host:', process.env.DB_HOST || 'localhost');
 console.log('User:', process.env.DB_USER || 'postgres');
 console.log('Database:', process.env.DB_DATABASE || 'renavest');
 console.log('Port:', parseInt(process.env.DB_PORT || '5432'));
-console.log('SSL:', { rejectUnauthorized: false });
+console.log('SSL:', {
+  rejectUnauthorized: false,
+  ca: process.env.CA_CERT ? 'Configured' : 'Not configured',
+});
 
 // Create the Drizzle database instance
 export const db = drizzle(pool, { schema });

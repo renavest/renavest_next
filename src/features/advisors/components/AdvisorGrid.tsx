@@ -1,34 +1,107 @@
-import { InferSelectModel } from 'drizzle-orm';
+'use client';
+import { Award } from 'lucide-react';
 import React from 'react';
 
-import { therapists } from '@/src/db/schema';
+import { cn } from '@/src/lib/utils';
+import { Advisor } from '@/src/shared/types';
+import { COLORS } from '@/src/styles/colors';
 
-// Define Advisor type based on the therapists table schema
-export type Advisor = InferSelectModel<typeof therapists>;
+import { advisorSignal, isOpenSignal } from '../state/advisorSignals';
 
-interface AdvisorGridProps {
-  advisors: Advisor[];
+import AdvisorImage from './AdvisorImage';
+import AdvisorModal from './AdvisorModal';
+
+interface AdvisorCardProps {
+  advisor: Advisor;
+  onClick: () => void;
 }
 
-export default function AdvisorGrid({ advisors }: AdvisorGridProps) {
+const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
+  // Get the first 3 expertise tags
+  const expertiseTags = advisor.expertise?.split(',') || [];
+  const displayTags = expertiseTags.slice(0, 3);
+  const hasMoreTags = expertiseTags.length > 3;
+
   return (
-    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-      {advisors.map((advisor) => (
-        <div
-          key={advisor.id.toString()}
-          className='bg-white shadow-md rounded-lg p-6 flex flex-col items-center'
-        >
-          {advisor.profileUrl && (
-            <img
-              src={advisor.profileUrl}
-              alt={advisor.name}
-              className='w-24 h-24 rounded-full mb-4 object-cover'
-            />
-          )}
-          <h2 className='text-xl font-semibold'>{advisor.name}</h2>
-          {advisor.title && <p className='text-gray-600 text-sm'>{advisor.title}</p>}
+    <div
+      onClick={onClick}
+      className={cn(
+        'relative rounded-2xl flex flex-col mb-4 p-2 sm:p-4 transition-all duration-300 cursor-pointer',
+        'hover:bg-purple-50',
+      )}
+    >
+      <div className='group relative aspect-[4/5] sm:aspect-[3/4] w-full overflow-hidden rounded-2xl'>
+        <AdvisorImage advisor={advisor} className='!rounded-2xl' priority={true} fill={true} />
+        <div className='absolute top-2 sm:top-4 left-2 sm:left-4 bg-white/90 backdrop-blur-sm px-2 sm:px-3 py-1 rounded-full text-xs font-medium tracking-wide text-gray-700 shadow-sm z-10'>
+          {advisor.yoe} years of experience
         </div>
-      ))}
+      </div>
+      <div className='p-2 sm:p-4 flex-1 flex flex-col'>
+        <div className='flex items-start justify-between'>
+          <div>
+            <h3 className='font-semibold text-gray-900 tracking-wide text-base sm:text-lg'>
+              {advisor.name}
+            </h3>
+            <p className='text-xs sm:text-sm text-gray-600 mt-0.5 flex items-center tracking-wide'>
+              <Award className='w-3 h-3 sm:w-4 sm:h-4 mr-1' />
+              {advisor.title}
+            </p>
+          </div>
+        </div>
+        <div className='mt-2 flex flex-wrap gap-1 sm:gap-1.5'>
+          {displayTags.map((exp, index) => (
+            <span
+              key={index}
+              className={cn(
+                'px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs tracking-wide',
+                COLORS.WARM_PURPLE['10'],
+                'text-purple-700',
+              )}
+            >
+              {exp.trim()}
+            </span>
+          ))}
+          {hasMoreTags && (
+            <span
+              className={cn(
+                'px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs tracking-wide',
+                'bg-gray-100 text-gray-600',
+              )}
+            >
+              +{expertiseTags.length - 3} more
+            </span>
+          )}
+        </div>
+        <p className='mt-2 sm:mt-3 text-xs sm:text-sm text-gray-600 tracking-wide line-clamp-2 sm:line-clamp-3'>
+          {advisor.previewBlurb || advisor.introduction}
+        </p>
+      </div>
     </div>
   );
-}
+};
+
+const AdvisorGrid: React.FC<{ advisors: Advisor[] }> = ({ advisors }) => {
+  // Update the signals when an advisor is clicked.
+  const handleAdvisorClick = (advisor: Advisor) => {
+    advisorSignal.value = advisor;
+    isOpenSignal.value = true;
+  };
+
+  return (
+    <div className='max-w-7xl mx-auto px-3 sm:px-6 lg:px-8'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8'>
+        {advisors.map((advisor) => (
+          <AdvisorCard
+            key={advisor.id}
+            advisor={advisor}
+            onClick={() => handleAdvisorClick(advisor)}
+          />
+        ))}
+      </div>
+
+      <AdvisorModal />
+    </div>
+  );
+};
+
+export default AdvisorGrid;

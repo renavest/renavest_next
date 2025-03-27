@@ -1,30 +1,49 @@
 // AdivsorModal.tsx
 'use client';
 import { X } from 'lucide-react';
-import Image from 'next/image';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
 import { advisorSignal, isOpenSignal } from '../state/advisorSignals';
 
+import AdvisorImage from './AdvisorImage';
+
 const AdvisorModal = () => {
+  const modalRef = useRef<HTMLDivElement>(null);
   const advisor = advisorSignal.value;
   const isOpen = isOpenSignal.value;
+
+  const handleClose = useCallback(() => {
+    isOpenSignal.value = false;
+    advisorSignal.value = null;
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        handleClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isOpen, handleClose]);
 
   if (!isOpen || !advisor) {
     return null;
   }
 
-  const handleClose = () => {
-    isOpenSignal.value = false;
-    advisorSignal.value = null;
-  };
-
   return (
     <div className='fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50'>
       <div className='min-h-screen px-4 text-center'>
-        <div className='inline-block w-full max-w-4xl my-8 text-left align-middle transition-all transform bg-white rounded-2xl shadow-xl'>
+        <div
+          ref={modalRef}
+          className='inline-block w-full max-w-4xl my-8 text-left align-middle transition-all transform bg-white rounded-2xl shadow-xl'
+        >
           <div className='relative p-6 sm:p-8'>
             <button
               onClick={handleClose}
@@ -35,13 +54,12 @@ const AdvisorModal = () => {
 
             <div className='flex flex-col md:flex-row gap-6 md:gap-8 mt-6'>
               <div className='md:w-1/3'>
-                <div className='aspect-[3/4] w-full relative rounded-xl overflow-hidden'>
-                  <Image
-                    src={advisor.profileUrl || '/experts/placeholderexp.png'}
-                    alt={advisor.name}
-                    fill
-                    className='object-cover'
-                    priority
+                <div className='aspect-[3/4] w-full relative rounded-xl overflow-hidden bg-gray-100'>
+                  <AdvisorImage
+                    advisor={advisor}
+                    priority={true}
+                    fill={true}
+                    className='!rounded-xl'
                   />
                 </div>
                 <div className='mt-6 space-y-4'>
@@ -76,12 +94,12 @@ const AdvisorModal = () => {
                 <div className='space-y-6'>
                   <div>
                     <h3 className='text-lg font-semibold mb-2'>Areas of Expertise</h3>
-                    <div className='flex flex-wrap gap-2'>
+                    <div className='flex flex-wrap gap-2 max-h-32 overflow-y-auto pr-2'>
                       {advisor.expertise?.split(',').map((exp, index) => (
                         <span
                           key={index}
                           className={cn(
-                            'px-3 py-1 rounded-full text-sm',
+                            'px-3 py-1 rounded-full text-sm whitespace-nowrap',
                             COLORS.WARM_PURPLE['10'],
                             'text-purple-700',
                           )}

@@ -13,8 +13,13 @@ const config: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'app.renavestapp.com', // Replace with your production domain
+        hostname: 'app.renavestapp.com',
         pathname: '/api/images/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'renavest-therapist-images.s3.amazonaws.com',
+        pathname: '/**',
       },
     ],
   },

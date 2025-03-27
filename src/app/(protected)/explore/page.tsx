@@ -1,30 +1,77 @@
-import { auth } from '@clerk/nextjs/server';
-
 import { db } from '@/src/db';
 import { therapists } from '@/src/db/schema';
-import AdvisorGrid from '@/src/features/advisors/components/AdvisorGrid';
-import OnboardingModalServerWrapper from '@/src/features/onboarding/components/OnboardingModalServerWrapper';
+import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
+import { Advisor } from '@/src/shared/types';
 
-export default async function ExplorePage() {
-  const { userId } = await auth();
+import AdvisorGrid from '../../../features/advisors/components/AdvisorGrid';
+import FloatingHeader from '../../../features/home/components/Navbar';
 
+// Make this a server component since we're doing DB fetching
+export default async function Home() {
   try {
     // Fetch therapists from the database
-    const advisors = await db.select().from(therapists);
+    const dbTherapists = await db.select().from(therapists);
+
+    // Transform the database records into the Advisor type
+    const advisors: Advisor[] = dbTherapists.map((therapist) => {
+      // Use the original S3 image URL generation
+      const profileUrl = therapist.name
+        ? getTherapistImageUrl(therapist.name)
+        : '/experts/placeholderexp.png';
+
+      return {
+        id: therapist.id.toString(),
+        name: therapist.name,
+        title: therapist.title || 'Financial Therapist',
+        bookingURL: therapist.bookingURL || '',
+        expertise: therapist.expertise || '',
+        certifications: therapist.certifications || '',
+        song: therapist.song || '',
+        yoe: therapist.yoe?.toString() || 'N/A',
+        clientele: therapist.clientele || '',
+        longBio: therapist.longBio || '',
+        previewBlurb: therapist.previewBlurb || 'Experienced financial therapist',
+        profileUrl: profileUrl,
+      };
+    });
 
     return (
-      <div>
-        <OnboardingModalServerWrapper userId={userId} />
-        <section className='container mx-auto px-4 py-8'>
-          <h1 className='text-3xl font-bold mb-6'>Explore Advisors</h1>
-          <main className='pb-12'>
-            {advisors.length > 0 ? <AdvisorGrid advisors={advisors} /> : <p>No advisors found.</p>}
-          </main>
+      <div className='min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)]'>
+        <FloatingHeader title='Renavest' />
+        <section className='pt-20 pb-6 px-4 sm:px-6'>
+          <h2 className='text-2xl sm:text-3xl font-bold text-center text-gray-900'>
+            Financial Therapists
+          </h2>
+          <p className='mt-2 text-center text-sm sm:text-base text-gray-600 max-w-2xl mx-auto'>
+            Connect with experienced financial therapists who can help you build a healthier
+            relationship with money
+          </p>
         </section>
+        <main className='pb-12'>
+          {advisors.length > 0 ? (
+            <AdvisorGrid advisors={advisors} />
+          ) : (
+            <div className='text-center text-gray-600'>
+              No therapists available at the moment. Please check back later.
+            </div>
+          )}
+        </main>
       </div>
     );
   } catch (error) {
-    console.error('Error fetching advisors:', error);
-    return <p>Error loading advisors</p>;
+    console.error('Error fetching therapists:', error);
+    return (
+      <div className='min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)]'>
+        <FloatingHeader title='Renavest' />
+        <section className='pt-20 pb-6 px-4 sm:px-6'>
+          <h2 className='text-2xl sm:text-3xl font-bold text-center text-gray-900'>
+            Financial Therapists
+          </h2>
+          <p className='mt-2 text-center text-sm sm:text-base text-gray-600 max-w-2xl mx-auto'>
+            Unable to load therapists at this time. Please try again later.
+          </p>
+        </section>
+      </div>
+    );
   }
 }

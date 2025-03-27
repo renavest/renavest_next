@@ -43,7 +43,7 @@ export async function GET(
     // Get the content type from S3 or default to jpeg
     const contentType = response.ContentType || 'image/jpeg';
 
-    // Create headers for caching
+    // C  reate headers for caching
     const headers = new Headers({
       'Content-Type': contentType,
       'Cache-Control': 'public, max-age=31536000', // Cache for 1 year
