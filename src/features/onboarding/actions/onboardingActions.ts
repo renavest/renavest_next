@@ -1,6 +1,7 @@
 'use server';
 
 import { auth } from '@clerk/nextjs/server';
+import { clerkClient } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
 
 import { db } from '@/src/db';
@@ -16,11 +17,19 @@ export async function submitOnboardingData(answers: Record<number, string[]>) {
   }
 
   try {
-    // Insert onboarding data
+    // Insert onboarding data into our database
     await db.insert(userOnboarding).values({
       userId,
       answers: JSON.stringify(answers),
       version: ONBOARDING_VERSION,
+    });
+
+    // Update Clerk public metadata to mark onboarding as complete
+    const clerk = await clerkClient();
+    await clerk.users.updateUser(userId, {
+      publicMetadata: {
+        onboardingComplete: true,
+      },
     });
 
     // Revalidate the explore page

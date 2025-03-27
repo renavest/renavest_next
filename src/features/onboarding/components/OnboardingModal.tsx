@@ -10,7 +10,7 @@ import { submitOnboardingData } from '../actions/onboardingActions';
 import {
   OnboardingQuestion,
   onboardingQuestions,
-  onboardingSignal,
+  onboardingSignal, 
 } from '../state/onboardingState';
 
 interface OnboardingContentProps {
