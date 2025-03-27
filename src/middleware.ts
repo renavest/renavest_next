@@ -9,7 +9,6 @@ const protectedRoutes = [
   '/employer/dashboard/(.*)',
   '/therapist/dashboard/(.*)',
   '/explore/(.*)',
-  '/onboarding/(.*)',
 ];
 
 // Create route matcher for protected routes
