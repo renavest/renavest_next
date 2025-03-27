@@ -1,6 +1,7 @@
-import { clerkMiddleware, createRouteMatcher, currentUser } from '@clerk/nextjs/server';
-import type { User } from '@clerk/nextjs/server';
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 // Define protected routes that require authentication
 const protectedRoutes = [
@@ -8,81 +9,96 @@ const protectedRoutes = [
   '/employer/dashboard/(.*)',
   '/therapist/dashboard/(.*)',
   '/explore/(.*)',
+  '/onboarding/(.*)',
 ];
 
 // Create route matcher for protected routes
 const isProtectedRoute = createRouteMatcher(protectedRoutes);
 
-// Seth's user IDs
-const SETH_USER_IDS = ['user_2ujgBxILoKp4ICRZ7A3LYlbKceU', 'user_2uGym23xBrjDzFTgsT0BEkgj3Ux'];
+// Allowed emails for traditional routing
+const ALLOWED_EMAILS = [
+  // Add your allowed emails here
+  'test@renavest.com',
+  'admin@renavest.com',
+  'sethmorton05@gmail.com',
+];
 
-// Helper function to get dashboard path for Seth
-function getSethDashboardPath(user: User): string {
-  console.log('Determining Seth dashboard path');
-
-  // Check user metadata or custom properties
-  const role = user.publicMetadata?.role as string | undefined;
-
-  console.log('Seth Role from Metadata:', role);
-
+// Helper function to get dashboard path based on role metadata
+function getDashboardPath(role?: string | null): string {
   switch (role) {
     case 'employer':
-      return '/employer/dashboard';
+      return '/employer';
     case 'therapist':
       return '/therapist/dashboard';
     case 'employee':
       return '/employee';
     default:
-      console.log('No specific role found for Seth, defaulting to employee');
       return '/employee';
   }
 }
 
-export default clerkMiddleware(async (auth, req) => {
-  console.log('Middleware processing request:', {
-    pathname: req.nextUrl.pathname,
-    method: req.method,
-  });
+// Define a type for session claims to handle metadata
+interface CustomSessionClaims {
+  email?: string;
+  metadata?: {
+    role?: string;
+    onboardingComplete?: boolean;
+  };
+}
 
-  // Get current user
-  const user = await currentUser();
+export default clerkMiddleware(async (auth, request: NextRequest) => {
+  // Get current user details using auth()
+  const { userId, sessionClaims } = await auth();
+  let emailAddress: string | undefined;
 
-  // Log user details
-  console.log('Current User Details:', {
-    userId: user?.id,
-    email: user?.emailAddresses?.[0]?.emailAddress,
-    firstName: user?.firstName,
-    lastName: user?.lastName,
-  });
-
-  // Determine routing based on user
-  if (user) {
-    // Check if user is Seth
-    const isSethUser = SETH_USER_IDS.includes(user.id);
-
-    if (isSethUser) {
-      // Seth's routing logic
-      const sethDashboard = getSethDashboardPath(user);
-
-      if (req.nextUrl.pathname !== sethDashboard) {
-        console.log(`Redirecting Seth to: ${sethDashboard}`);
-        return NextResponse.redirect(new URL(sethDashboard, req.url));
-      }
-    } else {
-      // Non-Seth users always go to explore
-      if (!req.nextUrl.pathname.startsWith('/explore')) {
-        console.log('Redirecting non-Seth user to explore');
-        return NextResponse.redirect(new URL('/explore', req.url));
-      }
+  // Try to get email from session claims first
+  const claims = sessionClaims as CustomSessionClaims;
+  if (claims?.email) {
+    emailAddress = claims.email;
+  }
+  // If no email in session claims, fetch from Clerk user
+  else if (userId) {
+    try {
+      const client = await clerkClient();
+      const user = await client.users.getUser(userId);
+      emailAddress = user.emailAddresses[0]?.emailAddress;
+    } catch (error) {
+      console.error('Error fetching user email:', error);
     }
   }
 
-  // Handle protected routes
-  if (isProtectedRoute(req) && !user) {
-    console.log('No user, redirecting to login');
-    const loginUrl = new URL('/login', req.url);
-    loginUrl.searchParams.set('redirect_url', req.url);
+  // Handle protected routes first
+  if (isProtectedRoute(request) && !userId) {
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('redirect_url', request.url);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // If user is authenticated, handle routing
+  if (userId && emailAddress) {
+    // Check if user's email is in the allowed list
+    if (ALLOWED_EMAILS.includes(emailAddress)) {
+      // Traditional routing based on role
+      const userRole = claims?.metadata?.role;
+      const dashboardPath = getDashboardPath(userRole);
+
+      if (!request.nextUrl.pathname.startsWith(dashboardPath)) {
+        return NextResponse.redirect(new URL(dashboardPath, request.url));
+      }
+    } else {
+      // Non-allowed users need to complete onboarding before accessing explore
+      const onboardingComplete = claims?.metadata?.onboardingComplete;
+
+      // If onboarding is not complete and user is not on onboarding page, redirect to onboarding
+      if (!onboardingComplete && !request.nextUrl.pathname.startsWith('/onboarding')) {
+        return NextResponse.redirect(new URL('/onboarding', request.url));
+      }
+
+      // If onboarding is complete and user is not on explore, redirect to explore
+      if (onboardingComplete && !request.nextUrl.pathname.startsWith('/explore')) {
+        return NextResponse.redirect(new URL('/explore', request.url));
+      }
+    }
   }
 
   return NextResponse.next();

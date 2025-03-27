@@ -1,9 +1,12 @@
 'use client';
 
+import { useClerk } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import { COLORS } from '@/src/styles/colors';
 
+import { submitOnboardingData } from '../actions/onboardingActions';
 import {
   OnboardingQuestion,
   onboardingQuestions,
@@ -17,6 +20,7 @@ interface OnboardingContentProps {
   onNext: () => void;
   isLastStep: boolean;
   canProceed: boolean;
+  isSubmitting: boolean;
 }
 
 interface LeftSideContentProps {
@@ -89,6 +93,7 @@ function OnboardingContent({
   onNext,
   isLastStep,
   canProceed,
+  isSubmitting,
 }: OnboardingContentProps) {
   const isOptionSelected = (optionId: string) =>
     (selectedAnswers[currentQuestion.id] || []).includes(optionId);
@@ -156,27 +161,60 @@ function OnboardingContent({
       <div className='mt-2 md:mt-auto'>
         <button
           onClick={onNext}
-          disabled={!canProceed}
-          className={`w-full px-4 md:px-8 py-2.5 md:py-3 text-sm md:text-base text-white rounded-lg font-medium disabled:opacity-50 ${COLORS.WARM_PURPLE.bg} disabled:cursor-not-allowed ${COLORS.WARM_PURPLE.hover} transition-colors`}
+          disabled={!canProceed || isSubmitting}
+          className={`w-full px-4 md:px-8 py-2.5 md:py-3 text-sm md:text-base text-white rounded-lg font-medium 
+            disabled:opacity-50 disabled:cursor-not-allowed 
+            ${COLORS.WARM_PURPLE.bg} 
+            ${COLORS.WARM_PURPLE.hover} 
+            transition-colors`}
         >
-          {isLastStep ? 'Complete' : 'Next'}
+          {isLastStep ? (isSubmitting ? 'Submitting...' : 'Complete') : 'Next'}
         </button>
       </div>
     </div>
   );
 }
 
-const updateOnboardingSignal = (
-  currentStep: number,
-  selectedAnswers: Record<number, string[]>,
-  isLastStep: boolean,
-) => {
-  onboardingSignal.value = {
-    isComplete: isLastStep,
-    currentStep: isLastStep ? currentStep : currentStep + 1,
-    answers: { ...selectedAnswers },
+function useOnboardingSubmission() {
+  const { user: clerkUser } = useClerk();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (selectedAnswers: Record<number, string[]>, currentStep: number) => {
+    setIsSubmitting(true);
+    try {
+      // Submit onboarding data to our database
+      await submitOnboardingData(selectedAnswers);
+
+      // Update Clerk user metadata to mark onboarding as complete
+      if (clerkUser) {
+        await clerkUser.update({
+          unsafeMetadata: {
+            ...clerkUser.unsafeMetadata,
+            onboardingComplete: true,
+          },
+        });
+      }
+
+      onboardingSignal.value = {
+        isComplete: true,
+        currentStep: currentStep,
+        answers: selectedAnswers,
+      };
+
+      toast.success('Onboarding completed successfully!');
+
+      // Redirect to explore page after successful onboarding
+      window.location.href = '/explore';
+    } catch (error) {
+      console.error('Onboarding submission failed', error);
+      toast.error('Failed to complete onboarding. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-};
+
+  return { handleSubmit, isSubmitting };
+}
 
 export default function OnboardingModal() {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string[]>>(
@@ -184,6 +222,7 @@ export default function OnboardingModal() {
   );
 
   const [signalState, setSignalState] = useState(onboardingSignal.value);
+  const { handleSubmit, isSubmitting } = useOnboardingSubmission();
 
   useEffect(() => {
     const unsubscribe = onboardingSignal.subscribe((newValue) => {
@@ -215,7 +254,16 @@ export default function OnboardingModal() {
   const handleNext = () => {
     const nextStep = currentStep + 1;
     const isLastStep = nextStep >= onboardingQuestions.length;
-    updateOnboardingSignal(currentStep, selectedAnswers, isLastStep);
+
+    if (isLastStep) {
+      handleSubmit(selectedAnswers, currentStep);
+    } else {
+      onboardingSignal.value = {
+        isComplete: false,
+        currentStep: nextStep,
+        answers: { ...selectedAnswers },
+      };
+    }
   };
 
   const canProceed = selectedAnswers[currentQuestion.id]?.length > 0;
@@ -230,7 +278,6 @@ export default function OnboardingModal() {
             currentStep={currentStep}
           />
 
-          {/* Right side - Form */}
           <div className='w-full md:w-7/12 flex'>
             <OnboardingContent
               currentQuestion={currentQuestion}
@@ -239,11 +286,11 @@ export default function OnboardingModal() {
               onNext={handleNext}
               isLastStep={isLastStep}
               canProceed={canProceed}
+              isSubmitting={isSubmitting}
             />
           </div>
         </div>
 
-        {/* Bottom progress bar */}
         <div className='h-0.5 md:h-1 bg-gray-100'>
           <div
             className={`h-full ${COLORS.WARM_PURPLE.bg} transition-all duration-300 ease-out`}

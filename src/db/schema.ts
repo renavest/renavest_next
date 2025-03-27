@@ -7,6 +7,7 @@ import {
   integer,
   numeric,
   boolean,
+  jsonb,
 } from 'drizzle-orm/pg-core';
 
 // Users table (connected to Clerk)
@@ -20,6 +21,16 @@ export const users = pgTable('users', {
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Onboarding table with flexible JSON storage
+export const userOnboarding = pgTable('user_onboarding', {
+  id: serial('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  answers: jsonb('answers'), // Flexible JSON storage for onboarding answers
+  version: integer('version').notNull().default(1), // Track onboarding form version
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
 // Therapists table with optional user relationship

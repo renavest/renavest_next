@@ -1,5 +1,5 @@
 import * as dotenv from 'dotenv';
-import { drizzle } from 'drizzle-orm/node-postgres';
+import { drizzle } from 'drizzle-orm/node-postgres/driver';
 import { Pool } from 'pg';
 
 import * as schema from './schema';
@@ -8,16 +8,26 @@ import * as schema from './schema';
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local';
 dotenv.config({ path: envFile });
 
-// For server-side operations (API routes, Server Components, etc.)
+// Create a connection pool
 const pool = new Pool({
-  host: process.env.DB_HOST || '',
-  user: process.env.DB_USER || '',
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_DATABASE || '',
+  database: process.env.DB_DATABASE || 'renavest',
   port: parseInt(process.env.DB_PORT || '5432'),
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
+// Log the pool connection details
+console.log('Database connection pool created with the following details:');
+console.log('Host:', process.env.DB_HOST || 'localhost');
+console.log('User:', process.env.DB_USER || 'postgres');
+console.log('Database:', process.env.DB_DATABASE || 'renavest');
+console.log('Port:', parseInt(process.env.DB_PORT || '5432'));
+console.log('SSL:', process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false);
+
+// Create the Drizzle database instance
 export const db = drizzle(pool, { schema });
+
+// Optional: Add a method to end the pool when the application closes
+export const closeDbConnection = () => pool.end();
