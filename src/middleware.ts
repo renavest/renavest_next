@@ -85,16 +85,9 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
         return NextResponse.redirect(new URL(dashboardPath, request.url));
       }
     } else {
-      // Non-allowed users need to complete onboarding before accessing explore
-      const onboardingComplete = claims?.metadata?.onboardingComplete;
-
-      // If onboarding is not complete and user is not on onboarding page, redirect to onboarding
-      if (!onboardingComplete && !request.nextUrl.pathname.startsWith('/onboarding')) {
-        return NextResponse.redirect(new URL('/onboarding', request.url));
-      }
-
-      // If onboarding is complete and user is not on explore, redirect to explore
-      if (onboardingComplete && !request.nextUrl.pathname.startsWith('/explore')) {
+      // Non-allowed users always go to explore
+      // The onboarding modal will be shown on the explore page if needed
+      if (!request.nextUrl.pathname.startsWith('/explore')) {
         return NextResponse.redirect(new URL('/explore', request.url));
       }
     }
