@@ -2,7 +2,6 @@ import Image from 'next/image';
 import { useState } from 'react';
 
 import { cn } from '@/src/lib/utils';
-import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
 import { Advisor } from '@/src/shared/types';
 
 interface AdvisorImageProps {
@@ -25,10 +24,6 @@ export default function AdvisorImage({
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
-  // Generate image URL once
-  const imageUrl = advisor.name
-    ? getTherapistImageUrl(advisor.name)
-    : '/experts/placeholderexp.png';
   const fallbackUrl = '/experts/placeholderexp.png';
 
   return (
@@ -43,7 +38,7 @@ export default function AdvisorImage({
       {isLoading && <div className='absolute inset-0 bg-gray-200 animate-pulse' />}
 
       <Image
-        src={hasError ? fallbackUrl : imageUrl}
+        src={hasError ? fallbackUrl : advisor.profileUrl || fallbackUrl}
         alt={advisor.name}
         {...(fill ? { fill: true } : { width, height })}
         className={cn(

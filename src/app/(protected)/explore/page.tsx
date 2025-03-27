@@ -18,7 +18,7 @@ export default async function Home() {
       const profileUrl = therapist.name
         ? getTherapistImageUrl(therapist.name)
         : '/experts/placeholderexp.png';
-
+      
       return {
         id: therapist.id.toString(),
         name: therapist.name,
