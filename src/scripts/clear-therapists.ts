@@ -53,7 +53,7 @@ async function clearUsers() {
         email: users.email,
       })
       .from(users);
-
+      
     // Clear user interactions table first (if it exists)
     // Uncomment and modify as needed:
     await db.delete(userOnboarding);

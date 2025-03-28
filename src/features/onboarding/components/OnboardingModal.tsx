@@ -1,9 +1,10 @@
 'use client';
 
 import { useClerk } from '@clerk/nextjs';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { ALLOWED_EMAILS } from '@/src/constants';
 import { COLORS } from '@/src/styles/colors';
 
 import { submitOnboardingData } from '../actions/onboardingActions';
@@ -182,9 +183,13 @@ function useOnboardingSubmission() {
   const handleSubmit = async (selectedAnswers: Record<number, string[]>, currentStep: number) => {
     setIsSubmitting(true);
     try {
-      // Only submit if on the explore page
-      if (window.location.pathname === '/explore') {
-        // Submit onboarding data to our database
+      // Check if user is in allowed emails list (salesperson)
+      const isAllowedEmail = ALLOWED_EMAILS.includes(
+        clerkUser?.emailAddresses[0]?.emailAddress || '',
+      );
+
+      if (!isAllowedEmail) {
+        // Only submit data for non-salespeople
         await submitOnboardingData(selectedAnswers);
 
         // Update Clerk user metadata to mark onboarding as complete
@@ -198,6 +203,7 @@ function useOnboardingSubmission() {
         }
       }
 
+      // Update local state regardless of user type
       onboardingSignal.value = {
         isComplete: true,
         currentStep: currentStep,
@@ -205,9 +211,6 @@ function useOnboardingSubmission() {
       };
 
       toast.success('Onboarding completed successfully!');
-
-      // Redirect to explore page after successful onboarding
-      window.location.href = '/explore';
     } catch (error) {
       console.error('Onboarding submission failed', error);
       toast.error('Failed to complete onboarding. Please try again.');
@@ -224,15 +227,8 @@ export default function OnboardingModal() {
     () => onboardingSignal.value.answers,
   );
 
-  const [signalState, setSignalState] = useState(onboardingSignal.value);
+  const signalState = onboardingSignal.value;
   const { handleSubmit, isSubmitting } = useOnboardingSubmission();
-
-  useEffect(() => {
-    const unsubscribe = onboardingSignal.subscribe((newValue) => {
-      setSignalState(newValue);
-    });
-    return () => unsubscribe();
-  }, []);
 
   const currentStep = signalState.currentStep;
   const currentQuestion = onboardingQuestions[currentStep];
@@ -269,12 +265,38 @@ export default function OnboardingModal() {
     }
   };
 
+  const handleClose = () => {
+    onboardingSignal.value = {
+      ...onboardingSignal.value,
+      isComplete: true,
+    };
+  };
+
   const canProceed = selectedAnswers[currentQuestion.id]?.length > 0;
 
   return (
     <div className='fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 md:p-4'>
       <div className='bg-white rounded-xl md:rounded-2xl w-full max-w-5xl shadow-xl overflow-hidden h-[98vh] md:h-auto flex flex-col'>
-        <div className='flex flex-col md:flex-row flex-1 overflow-hidden'>
+        <div className='flex flex-col md:flex-row flex-1 overflow-hidden relative'>
+          {/* Close button */}
+          <button
+            onClick={handleClose}
+            className='absolute right-4 top-4 z-50 rounded-full bg-gray-100 p-2 hover:bg-gray-200 transition-colors'
+          >
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              className='h-5 w-5'
+              viewBox='0 0 20 20'
+              fill='currentColor'
+            >
+              <path
+                fillRule='evenodd'
+                d='M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z'
+                clipRule='evenodd'
+              />
+            </svg>
+          </button>
+
           <LeftSideContent
             isFirstQuestion={isFirstQuestion}
             currentQuestion={currentQuestion}

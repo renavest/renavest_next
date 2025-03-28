@@ -28,18 +28,18 @@ const ALLOWED_EMAILS = [
 ];
 
 // Helper function to get dashboard path based on role metadata
-function getDashboardPath(role?: string | null): string {
-  switch (role) {
-    case 'employer':
-      return '/employer';
-    case 'therapist':
-      return '/therapist/dashboard';
-    case 'employee':
-      return '/employee';
-    default:
-      return '/employee';
-  }
-}
+// function getDashboardPath(role?: string | null): string {
+//   switch (role) {
+//     case 'employer':
+//       return '/employer';
+//     case 'therapist':
+//       return '/therapist/dashboard';
+//     case 'employee':
+//       return '/employee';
+//     default:
+//       return '/employee';
+//   }
+// }
 
 // Define a type for session claims to handle metadata
 interface CustomSessionClaims {
@@ -56,11 +56,10 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   let emailAddress: string | undefined;
 
   // Enhanced debugging: Log the current request and authentication status
-  console.log('Middleware Detailed Request:', {
+  console.log('🔍 Middleware Detailed Request:', {
     fullPath: request.nextUrl.pathname,
     userId: userId,
     isProtectedRoute: isProtectedRoute(request),
-    protectedRoutes: protectedRoutes,
   });
 
   // Get email from session claims or fetch from Clerk user
@@ -70,8 +69,11 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   } else if (userId) {
     try {
       const client = await clerkClient();
+
       const user = await client.users.getUser(userId);
+      console.log(user);
       emailAddress = user.emailAddresses[0]?.emailAddress;
+      console.log(emailAddress);
     } catch (error) {
       console.error('Error fetching user email:', error);
     }
@@ -88,27 +90,48 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
     }
   }
 
-  // If user is authenticated, handle routing based on allowed emails
-  if (userId && emailAddress) {
-    // Check if user's email is in the allowed list
-    if (ALLOWED_EMAILS.includes(emailAddress)) {
-      // Traditional routing based on role
-      const userRole = claims?.metadata?.role;
-      const dashboardPath = getDashboardPath(userRole);
+  // Handle initial routing after login
+  if (
+    userId &&
+    emailAddress &&
+    (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/sign-up/sso-callback')
+  ) {
+    console.log('THE EMAIL ADDRESS IS:');
+    console.log(emailAddress);
+    const isAllowedEmail = ALLOWED_EMAILS.includes(emailAddress);
+    console.log('THE IS ALLOWED EMAIL IS:');
+    console.log(isAllowedEmail);
+    const userRole = claims?.metadata?.role;
 
-      // Only redirect if not on dashboard or explore
-      if (
-        !request.nextUrl.pathname.startsWith(dashboardPath) &&
-        !request.nextUrl.pathname.startsWith('/explore')
-      ) {
-        return NextResponse.redirect(new URL(dashboardPath, request.url));
-      }
-    } else {
-      // For non-allowed emails, ensure they can access explore page
-      if (!request.nextUrl.pathname.startsWith('/explore')) {
-        return NextResponse.redirect(new URL('/explore', request.url));
+    // For allowed emails (salespeople), set role if not already set
+    if (isAllowedEmail && !userRole) {
+      const clerk = await clerkClient();
+      await clerk.users.updateUser(userId, {
+        publicMetadata: {
+          ...claims?.metadata,
+          role: 'employer', // Set default role for allowed emails to employer
+        },
+      });
+      return NextResponse.redirect(new URL('/employee', request.url));
+    }
+
+    // For allowed emails with existing roles, redirect to appropriate dashboard
+    if (isAllowedEmail) {
+      if (userRole === 'employee') {
+        console.log('🎯 Redirecting salesperson to employee dashboard');
+        return NextResponse.redirect(new URL('/employee', request.url));
+      } else if (userRole === 'employer') {
+        console.log('🎯 Redirecting salesperson to employer dashboard');
+        return NextResponse.redirect(new URL('/employer', request.url));
+      } else if (userRole === 'therapist') {
+        console.log('🎯 Redirecting salesperson to therapist dashboard');
+        return NextResponse.redirect(new URL('/therapist', request.url));
       }
     }
+
+    // For regular users, redirect to explore
+    console.log('🌐 Redirecting regular user to explore');
+    return NextResponse.redirect(new URL('/explore', request.url));
   }
 
   return NextResponse.next();

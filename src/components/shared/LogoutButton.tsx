@@ -23,8 +23,8 @@ export function LogoutButton({
 
   const handleLogout = async () => {
     try {
-      clearOnboardingState();
       await signOut();
+      clearOnboardingState();
       toast.success('Logged out successfully');
     } catch (error) {
       console.error('Logout failed', error);
