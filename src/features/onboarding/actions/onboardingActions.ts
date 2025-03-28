@@ -10,23 +10,32 @@ import { userOnboarding } from '@/src/db/schema';
 const ONBOARDING_VERSION = 1;
 
 export async function submitOnboardingData(answers: Record<number, string[]>) {
-  const { userId } = await auth();
+  const { userId: clerkUserId } = await auth();
 
-  if (!userId) {
+  if (!clerkUserId) {
     throw new Error('User not authenticated');
   }
 
   try {
-    // Insert onboarding data into our database
+    // First, fetch the numeric user ID based on the Clerk user ID
+    const user = await db.query.users.findFirst({
+      where: (users, { eq }) => eq(users.clerkId, clerkUserId),
+    });
+
+    if (!user) {
+      throw new Error('User not found in database');
+    }
+
+    // Insert onboarding data into our database using the numeric user ID
     await db.insert(userOnboarding).values({
-      userId,
+      userId: user.id,
       answers: JSON.stringify(answers),
       version: ONBOARDING_VERSION,
     });
 
     // Update Clerk public metadata to mark onboarding as complete
     const clerk = await clerkClient();
-    await clerk.users.updateUser(userId, {
+    await clerk.users.updateUser(clerkUserId, {
       publicMetadata: {
         onboardingComplete: true,
       },

@@ -26,7 +26,9 @@ export const users = pgTable('users', {
 // Onboarding table with flexible JSON storage
 export const userOnboarding = pgTable('user_onboarding', {
   id: serial('id').primaryKey(),
-  userId: text('user_id').notNull(),
+  userId: integer('user_id')
+    .references(() => users.id)
+    .notNull(),
   answers: jsonb('answers'), // Flexible JSON storage for onboarding answers
   version: integer('version').notNull().default(1), // Track onboarding form version
   createdAt: timestamp('created_at').notNull().defaultNow(),
