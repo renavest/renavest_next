@@ -91,7 +91,11 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   }
 
   // Handle initial routing after login
-  if (userId && emailAddress && request.nextUrl.pathname === '/login') {
+  if (
+    userId &&
+    emailAddress &&
+    (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/sign-up/sso-callback')
+  ) {
     console.log('THE EMAIL ADDRESS IS:');
     console.log(emailAddress);
     const isAllowedEmail = ALLOWED_EMAILS.includes(emailAddress);
@@ -108,7 +112,7 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
           role: 'employer', // Set default role for allowed emails to employer
         },
       });
-      return NextResponse.redirect(new URL('/employer/dashboard', request.url));
+      return NextResponse.redirect(new URL('/employee', request.url));
     }
 
     // For allowed emails with existing roles, redirect to appropriate dashboard
@@ -118,10 +122,10 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
         return NextResponse.redirect(new URL('/employee', request.url));
       } else if (userRole === 'employer') {
         console.log('🎯 Redirecting salesperson to employer dashboard');
-        return NextResponse.redirect(new URL('/employer/dashboard', request.url));
+        return NextResponse.redirect(new URL('/employer', request.url));
       } else if (userRole === 'therapist') {
         console.log('🎯 Redirecting salesperson to therapist dashboard');
-        return NextResponse.redirect(new URL('/therapist/dashboard', request.url));
+        return NextResponse.redirect(new URL('/therapist', request.url));
       }
     }
 
