@@ -61,7 +61,6 @@ const config: NextConfig = {
       },
     ];
   },
-  skipTrailingSlashRedirect: true,
 };
 
 export default config;

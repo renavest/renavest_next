@@ -7,23 +7,12 @@ import { Suspense, useEffect } from 'react';
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    // Only initialize PostHog if the key is present and in production
-    if (process.env.NEXT_PUBLIC_POSTHOG_KEY && process.env.NODE_ENV === 'production') {
-      if (!posthog.__loaded) {
-        posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
-          api_host: 'https://us.i.posthog.com',
-          loaded: () => {
-            // Minimal logging in production
-            console.log('PostHog initialized');
-          },
-          persistence: 'localStorage',
-          disable_session_recording: false,
-          capture_pageview: true,
-          debug: false,
-          advanced_disable_decide: false,
-        });
-      }
-    }
+    posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
+      api_host: 'https://us.i.posthog.com',
+      ui_host: 'https://us.posthog.com',
+      capture_pageview: false, // We capture pageviews manually
+      capture_pageleave: true, // Enable pageleave capture
+    });
   }, []);
 
   return (
@@ -46,15 +35,7 @@ function PostHogPageView() {
       if (search) {
         url += '?' + search;
       }
-
-      // Only capture pageview in production
-      if (process.env.NODE_ENV === 'production') {
-        posthog.capture('$pageview', {
-          $current_url: url,
-          pathname,
-          search,
-        });
-      }
+      posthog.capture('$pageview', { $current_url: url });
     }
   }, [pathname, searchParams, posthog]);
 
