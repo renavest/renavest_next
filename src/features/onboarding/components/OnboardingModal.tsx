@@ -4,6 +4,7 @@ import { useClerk } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+import { ALLOWED_EMAILS } from '@/src/constants';
 import { COLORS } from '@/src/styles/colors';
 
 import { submitOnboardingData } from '../actions/onboardingActions';
@@ -182,9 +183,13 @@ function useOnboardingSubmission() {
   const handleSubmit = async (selectedAnswers: Record<number, string[]>, currentStep: number) => {
     setIsSubmitting(true);
     try {
-      // Only submit if on the explore page
-      if (window.location.pathname === '/explore') {
-        // Submit onboarding data to our database
+      // Check if user is in allowed emails list (salesperson)
+      const isAllowedEmail = ALLOWED_EMAILS.includes(
+        clerkUser?.emailAddresses[0]?.emailAddress || '',
+      );
+
+      if (!isAllowedEmail) {
+        // Only submit data for non-salespeople
         await submitOnboardingData(selectedAnswers);
 
         // Update Clerk user metadata to mark onboarding as complete
@@ -198,6 +203,7 @@ function useOnboardingSubmission() {
         }
       }
 
+      // Update local state regardless of user type
       onboardingSignal.value = {
         isComplete: true,
         currentStep: currentStep,
@@ -206,7 +212,13 @@ function useOnboardingSubmission() {
 
       toast.success('Onboarding completed successfully!');
 
-      // Redirect to explore page after successful onboarding
+      // For salespeople, stay on current page
+      if (isAllowedEmail) {
+        // Close modal by updating signal
+        return;
+      }
+
+      // For regular users, redirect to explore
       window.location.href = '/explore';
     } catch (error) {
       console.error('Onboarding submission failed', error);

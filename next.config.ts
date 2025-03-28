@@ -3,7 +3,12 @@ import type { NextConfig } from 'next';
 
 const config: NextConfig = {
   images: {
-    domains: ['randomuser.me', 'localhost'],
+    domains: [
+      'randomuser.me',
+      'localhost',
+      'app.renavestapp.com',
+      'renavest-therapist-images.s3.amazonaws.com',
+    ],
     remotePatterns: [
       {
         protocol: 'http',
@@ -14,7 +19,7 @@ const config: NextConfig = {
       {
         protocol: 'https',
         hostname: 'app.renavestapp.com',
-        pathname: '/api/images/**',
+        pathname: '/**',
       },
       {
         protocol: 'https',
