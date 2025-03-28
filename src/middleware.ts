@@ -25,7 +25,6 @@ const ALLOWED_EMAILS = [
   'admin@renavest.com',
   'sethmorton05@gmail.com',
   'stanley@renavestapp.com',
-  'rameau.stan@gmail.com',
 ];
 
 // Helper function to get dashboard path based on role metadata
