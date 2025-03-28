@@ -3,6 +3,8 @@ import { clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+import { ALLOWED_EMAILS } from './constants';
+
 // Define protected routes that require authentication
 const protectedRoutes = [
   '/employee',
@@ -17,29 +19,6 @@ const protectedRoutes = [
 
 // Create route matcher for protected routes
 const isProtectedRoute = createRouteMatcher(protectedRoutes);
-
-// Allowed emails for traditional routing
-const ALLOWED_EMAILS = [
-  // Add your allowed emails here
-  'test@renavest.com',
-  'admin@renavest.com',
-  'sethmorton05@gmail.com',
-  'stanley@renavestapp.com',
-];
-
-// Helper function to get dashboard path based on role metadata
-// function getDashboardPath(role?: string | null): string {
-//   switch (role) {
-//     case 'employer':
-//       return '/employer';
-//     case 'therapist':
-//       return '/therapist/dashboard';
-//     case 'employee':
-//       return '/employee';
-//     default:
-//       return '/employee';
-//   }
-// }
 
 // Define a type for session claims to handle metadata
 interface CustomSessionClaims {
@@ -72,7 +51,6 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   // Enhanced protection for all protected routes
   if (isProtectedRoute(request)) {
     if (!userId) {
-      console.log('🔒 Redirecting unauthenticated user to login');
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect_url', request.url);
       return NextResponse.redirect(loginUrl);
@@ -101,7 +79,6 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
           },
         });
       }
-
       // Always redirect to appropriate dashboard based on role or default to employee
       if (userRole === 'employer') {
         return NextResponse.redirect(new URL('/employer', request.url));
