@@ -17,7 +17,7 @@ interface AdvisorCardProps {
   onClick: () => void;
 }
 
-const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
+const useImageLoadState = () => {
   const [imageLoadState, setImageLoadState] = useState({
     isLoaded: false,
     hasError: false,
@@ -36,6 +36,12 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
       hasError: true,
     });
   };
+
+  return { imageLoadState, handleImageLoad, handleImageError };
+};
+
+const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
+  const { imageLoadState, handleImageLoad, handleImageError } = useImageLoadState();
 
   // Limit expertise tags and add ellipsis if more exist
   const expertiseTags = advisor.expertise?.split(',') || [];
@@ -75,6 +81,7 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
               'h-full w-full rounded-2xl object-cover object-center transition-transform duration-500',
               'group-hover:scale-110',
               !imageLoadState.isLoaded ? 'opacity-0' : 'opacity-100',
+              'overflow-hidden',
             )}
             placeholder='blur'
             blurDataURL='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
