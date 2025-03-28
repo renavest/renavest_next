@@ -1,5 +1,6 @@
 'use client';
 
+import { useUser } from '@clerk/nextjs';
 import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
@@ -107,11 +108,34 @@ const ContactSection = () => (
 );
 
 export default function PrivacyPage() {
+  const { user, isLoaded } = useUser();
+
+  // Determine the back navigation path
+  // TODO: Create a more robust way to determine default dashboard based on user role
+  const backPath =
+    isLoaded && user
+      ? (() => {
+          // If no role metadata is set, default to employee dashboard
+          const role = (user.publicMetadata?.role as string | undefined) || 'employee';
+          switch (role) {
+            case 'employer':
+              return '/employer/dashboard';
+            case 'therapist':
+              return '/therapist/dashboard';
+            default:
+              return '/employee';
+          }
+        })()
+      : '/employee'; // Default to employee dashboard for logged-in users without explicit routing
+
   return (
     <div className={`min-h-screen ${COLORS.WARM_WHITE.bg} font-sans`}>
       <Navbar title='Renavest' />
       <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-20'>
-        <Link href='/' className='inline-flex items-center text-gray-600 hover:text-gray-800 mb-6'>
+        <Link
+          href={backPath}
+          className='inline-flex items-center text-gray-600 hover:text-gray-800 mb-6'
+        >
           <ChevronLeft className='h-5 w-5 mr-2' />
           <span>Back</span>
         </Link>

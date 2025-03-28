@@ -1,15 +1,12 @@
-'use client';
-
-import { useClerk } from '@clerk/nextjs';
-import { Calendar, LogOut, FileText } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { auth } from '@clerk/nextjs/server';
+import { Calendar, FileText } from 'lucide-react';
+import { redirect } from 'next/navigation';
 
 import {
   clientMetricsSignal,
   sessionStatsSignal,
   earningsMetricsSignal,
 } from '@/src/features/therapist-dashboard/state/therapistDashboardState';
-import { cn } from '@/src/lib/utils';
 import MetricCard from '@/src/shared/components/MetricCard';
 
 function AppointmentCard() {
@@ -100,7 +97,7 @@ function MetricsSection({ title, children }: { title: string; children: React.Re
   );
 }
 
-function DashboardHeader({ userName, onLogout }: { userName: string; onLogout: () => void }) {
+function DashboardHeader({ userName }: { userName: string }) {
   return (
     <header className='bg-white -mx-6 px-6 py-8 border-b border-purple-100 mb-12'>
       <div className='flex justify-between items-start'>
@@ -112,13 +109,6 @@ function DashboardHeader({ userName, onLogout }: { userName: string; onLogout: (
             Manage your sessions, client progress, and therapeutic resources.
           </p>
         </div>
-        <button
-          onClick={onLogout}
-          className='flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors'
-        >
-          <LogOut className='h-5 w-5' />
-          <span className='hidden md:inline'>Logout</span>
-        </button>
       </div>
     </header>
   );
@@ -186,30 +176,22 @@ function MetricsContent() {
   );
 }
 
-export default function TherapistDashboardPage() {
-  const { user, signOut } = useClerk();
-  const router = useRouter();
+export default async function TherapistDashboardPage() {
+  const { userId } = await auth();
 
-  const handleLogout = () => {
-    if (user) {
-      signOut();
-    } else {
-      router.push('/login');
-    }
-  };
+  if (!userId) {
+    redirect('/login');
+  }
 
   return (
-    <div className={cn('min-h-screen bg-gray-50')}>
-      <main className='container mx-auto px-6'>
-        <DashboardHeader userName={user?.firstName || ''} onLogout={handleLogout} />
-        <div className='grid grid-cols-1 md:grid-cols-12 gap-8'>
-          <MetricsContent />
-          {/* Sidebar */}
-          <div className='md:col-span-4'>
-            <AppointmentCard />
-          </div>
+    <div className='container mx-auto px-4 md:px-6 py-8'>
+      <DashboardHeader userName={userId} />
+      <div className='grid md:grid-cols-12 gap-6'>
+        <MetricsContent />
+        <div className='md:col-span-4'>
+          <AppointmentCard />
         </div>
-      </main>
+      </div>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { cn } from '@/src/lib/utils';
 import { Advisor } from '@/src/shared/types';
 import { COLORS } from '@/src/styles/colors';
 
+import OnboardingModalServerWrapper from '../../onboarding/components/OnboardingModalServerWrapper';
 import { advisorSignal, isOpenSignal } from '../state/advisorSignals';
 
 import AdvisorModal from './AdvisorModal';
@@ -35,6 +36,11 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
       hasError: true,
     });
   };
+
+  // Limit expertise tags and add ellipsis if more exist
+  const expertiseTags = advisor.expertise?.split(',') || [];
+  const displayTags = expertiseTags.slice(0, 3);
+  const hasMoreTags = expertiseTags.length > 3;
 
   return (
     <div
@@ -94,7 +100,7 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
           </div>
         </div>
         <div className='mt-2 flex flex-wrap gap-1 sm:gap-1.5 max-h-12 sm:max-h-16 overflow-hidden'>
-          {advisor.expertise?.split(',')?.map((exp, index) => (
+          {displayTags.map((exp, index) => (
             <span
               key={index}
               className={cn(
@@ -106,6 +112,17 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
               {exp.trim()}
             </span>
           ))}
+          {hasMoreTags && (
+            <span
+              className={cn(
+                'px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs tracking-wide',
+                COLORS.WARM_PURPLE['10'],
+                'text-purple-700',
+              )}
+            >
+              +{expertiseTags.length - 3}
+            </span>
+          )}
         </div>
         <p className='mt-2 sm:mt-3 text-xs sm:text-sm text-gray-600 tracking-wide line-clamp-2 sm:line-clamp-3'>
           {advisor.previewBlurb || advisor.introduction}
@@ -115,7 +132,7 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
   );
 };
 
-const AdvisorGrid: React.FC<{ advisors: Advisor[] }> = ({ advisors }) => {
+const AdvisorGrid: React.FC<{ advisors: Advisor[]; userId?: string }> = ({ advisors, userId }) => {
   // Update the signals when an advisor is clicked.
   const handleAdvisorClick = (advisor: Advisor) => {
     advisorSignal.value = advisor;
@@ -123,20 +140,22 @@ const AdvisorGrid: React.FC<{ advisors: Advisor[] }> = ({ advisors }) => {
   };
 
   return (
-    <div className='max-w-7xl mx-auto px-3 sm:px-6 lg:px-8'>
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8'>
-        {advisors.map((advisor) => (
-          <AdvisorCard
-            key={advisor.id}
-            advisor={advisor}
-            onClick={() => handleAdvisorClick(advisor)}
-          />
-        ))}
-      </div>
+    <OnboardingModalServerWrapper>
+      <div className='max-w-7xl mx-auto px-3 sm:px-6 lg:px-8'>
+        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8'>
+          {advisors.map((advisor) => (
+            <AdvisorCard
+              key={advisor.id}
+              advisor={advisor}
+              onClick={() => handleAdvisorClick(advisor)}
+            />
+          ))}
+        </div>
 
-      {/* The AdvisorPopover now reads its state from signals */}
-      <AdvisorModal />
-    </div>
+        {/* The AdvisorPopover now reads its state from signals */}
+        <AdvisorModal />
+      </div>
+    </OnboardingModalServerWrapper>
   );
 };
 

@@ -3,18 +3,23 @@ import type { NextConfig } from 'next';
 
 const config: NextConfig = {
   images: {
-    domains: ['randomuser.me'],
+    domains: ['randomuser.me', 'localhost'],
     remotePatterns: [
       {
         protocol: 'http',
         hostname: 'localhost',
-        port: '3000',
+        port: '*',
         pathname: '/api/images/**',
       },
       {
         protocol: 'https',
-        hostname: 'app.renavestapp.com', // Replace with your production domain
+        hostname: 'app.renavestapp.com',
         pathname: '/api/images/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'renavest-therapist-images.s3.amazonaws.com',
+        pathname: '/**',
       },
     ],
   },

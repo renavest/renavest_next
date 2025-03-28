@@ -25,7 +25,7 @@ const s3Client = new S3Client({
 
 const bucketName = process.env.AWS_S3_IMAGES_BUCKET_NAME || '';
 
-async function uploadImageToS3(imageUrl: string, therapistName: string): Promise<string> {
+export async function uploadImageToS3(imageUrl: string, therapistName: string): Promise<string> {
   try {
     // Skip if no image URL
     if (!imageUrl) {
