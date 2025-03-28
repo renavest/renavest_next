@@ -187,7 +187,7 @@ function useOnboardingSubmission() {
       const isAllowedEmail = ALLOWED_EMAILS.includes(
         clerkUser?.emailAddresses[0]?.emailAddress || '',
       );
-      
+
       if (!isAllowedEmail) {
         // Only submit data for non-salespeople
         await submitOnboardingData(selectedAnswers);
@@ -211,15 +211,6 @@ function useOnboardingSubmission() {
       };
 
       toast.success('Onboarding completed successfully!');
-
-      // For salespeople, stay on current page
-      if (isAllowedEmail) {
-        // Close modal by updating signal
-        return;
-      }
-
-      // For regular users, redirect to explore
-      window.location.href = '/explore';
     } catch (error) {
       console.error('Onboarding submission failed', error);
       toast.error('Failed to complete onboarding. Please try again.');

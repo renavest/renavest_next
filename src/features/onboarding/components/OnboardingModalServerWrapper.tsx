@@ -15,9 +15,9 @@ export default function OnboardingModalServerWrapper({ children }: OnboardingMod
 
   // Check if onboarding is complete based on Clerk's public metadata AND localStorage
   const shouldShowOnboardingModal =
-    (isLoaded && user?.publicMetadata?.onboardingComplete !== true) ||
+    isLoaded &&
+    user?.publicMetadata?.onboardingComplete !== true &&
     !onboardingSignal.value.isComplete;
-
   if (!isLoaded) {
     return null;
   }
