@@ -34,10 +34,16 @@ export async function handleUserCreateOrUpdate(
   }
 
   try {
-    // Check if user already exists
-    const existingUser = await db.select().from(users).where(eq(users.clerkId, id)).limit(1);
+    // Check if user exists by either clerkId or email
+    const [existingUserByClerkId, existingUserByEmail] = await Promise.all([
+      db.select().from(users).where(eq(users.clerkId, id)).limit(1),
+      db.select().from(users).where(eq(users.email, primaryEmail)).limit(1),
+    ]);
 
-    if (existingUser.length > 0) {
+    const existingUser = existingUserByClerkId[0];
+    const userWithEmail = existingUserByEmail[0];
+
+    if (existingUser) {
       // Update existing user
       await db
         .update(users)
@@ -50,22 +56,40 @@ export async function handleUserCreateOrUpdate(
         })
         .where(eq(users.clerkId, id));
 
-      console.log(`Updated user with ID: ${id}`);
+      console.log(`Updated user with Clerk ID: ${id}`);
     } else if (eventType === 'user.created') {
-      // Insert new user
-      await db.insert(users).values({
-        clerkId: id,
-        email: primaryEmail,
-        firstName: first_name || null,
-        lastName: last_name || null,
-        imageUrl: image_url || null,
-      });
+      if (userWithEmail) {
+        // Handle case where email exists but with different Clerk ID
+        // This can happen if user signs up with different auth method
+        await db
+          .update(users)
+          .set({
+            clerkId: id, // Update to new Clerk ID
+            firstName: first_name || userWithEmail.firstName,
+            lastName: last_name || userWithEmail.lastName,
+            imageUrl: image_url || userWithEmail.imageUrl,
+            updatedAt: new Date(),
+          })
+          .where(eq(users.email, primaryEmail));
 
-      console.log(`Created new user with ID: ${id}`);
+        console.log(`Updated existing user with new Clerk ID: ${id}`);
+      } else {
+        // Create new user
+        await db.insert(users).values({
+          clerkId: id,
+          email: primaryEmail,
+          firstName: first_name || null,
+          lastName: last_name || null,
+          imageUrl: image_url || null,
+        });
+
+        console.log(`Created new user with Clerk ID: ${id}`);
+      }
     }
   } catch (error) {
     console.error(`Error ${eventType === 'user.created' ? 'creating' : 'updating'} user:`, error);
-    throw error;
+    // Don't throw the error - we want to return 200 to Clerk
+    // This prevents webhook retries for non-critical errors
   }
 }
 

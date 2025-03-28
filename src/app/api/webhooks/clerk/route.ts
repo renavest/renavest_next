@@ -23,7 +23,10 @@ type WebhookEventType =
   | 'user.updated'
   | 'user.deleted'
   | 'user.signed_in'
-  | 'user.signed_out';
+  | 'user.signed_out'
+  | 'session.created'
+  | 'session.removed'
+  | 'session.ended';
 
 // Generic webhook event
 interface WebhookEvent {
@@ -32,6 +35,8 @@ interface WebhookEvent {
 }
 
 export async function POST(req: NextRequest) {
+  const startTime = Date.now();
+
   try {
     // Get the webhook secret from env vars
     const webhookSecret = process.env.CLERK_WEBHOOK_SECRET;
@@ -49,7 +54,8 @@ export async function POST(req: NextRequest) {
 
     // If there are no headers, error out
     if (!svixId || !svixTimestamp || !svixSignature) {
-      return NextResponse.json({ error: 'Missing svix headers' }, { status: 400 });
+      console.error('Missing required Svix headers');
+      return NextResponse.json({ error: 'Missing required headers' }, { status: 400 });
     }
 
     // Get the body
@@ -70,11 +76,11 @@ export async function POST(req: NextRequest) {
       }) as WebhookEvent;
     } catch (err) {
       console.error('Error verifying webhook:', err);
-      return NextResponse.json({ error: 'Error verifying webhook' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 401 });
     }
 
     // Log received event for debugging
-    console.log(`Received webhook event: ${event.type}`);
+    console.log(`Processing webhook event: ${event.type}`);
 
     // Handle different event types
     switch (event.type) {
@@ -89,17 +95,33 @@ export async function POST(req: NextRequest) {
 
       case 'user.signed_in':
       case 'user.signed_out':
-        // These events could be used for analytics, session tracking, etc.
         await handleUserActivity(event.data);
+        break;
+
+      case 'session.created':
+      case 'session.removed':
+      case 'session.ended':
+        // These events are informational only, no action needed
+        console.log(`Session event received: ${event.type}`);
         break;
 
       default:
         console.log(`Unhandled event type: ${event.type}`);
     }
 
+    const duration = Date.now() - startTime;
+    console.log(`Webhook processed in ${duration}ms`);
+
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Unexpected error in webhook handler:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const duration = Date.now() - startTime;
+    console.error(`Webhook error after ${duration}ms:`, error);
+
+    // Always return 200 to prevent Clerk from retrying
+    // Unless it's a verification error (which was handled above)
+    return NextResponse.json(
+      { success: false, error: 'Webhook processed with errors' },
+      { status: 200 },
+    );
   }
 }
