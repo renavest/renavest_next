@@ -5,9 +5,13 @@ import type { NextRequest } from 'next/server';
 
 // Define protected routes that require authentication
 const protectedRoutes = [
+  '/employee',
   '/employee/(.*)',
+  '/employer/dashboard',
   '/employer/dashboard/(.*)',
+  '/therapist/dashboard',
   '/therapist/dashboard/(.*)',
+  '/explore',
   '/explore/(.*)',
 ];
 
@@ -50,13 +54,19 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   const { userId, sessionClaims } = await auth();
   let emailAddress: string | undefined;
 
-  // Try to get email from session claims first
+  // Enhanced debugging: Log the current request and authentication status
+  console.log('Middleware Detailed Request:', {
+    fullPath: request.nextUrl.pathname,
+    userId: userId,
+    isProtectedRoute: isProtectedRoute(request),
+    protectedRoutes: protectedRoutes,
+  });
+
+  // Get email from session claims or fetch from Clerk user
   const claims = sessionClaims as CustomSessionClaims;
   if (claims?.email) {
     emailAddress = claims.email;
-  }
-  // If no email in session claims, fetch from Clerk user
-  else if (userId) {
+  } else if (userId) {
     try {
       const client = await clerkClient();
       const user = await client.users.getUser(userId);
@@ -66,14 +76,18 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
     }
   }
 
-  // Handle protected routes first
-  if (isProtectedRoute(request) && !userId) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect_url', request.url);
-    return NextResponse.redirect(loginUrl);
+  // Enhanced protection for all protected routes
+  if (isProtectedRoute(request)) {
+    // If no user ID, always redirect to login
+    if (!userId) {
+      console.log('🔒 Redirecting unauthenticated user to login');
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect_url', request.url);
+      return NextResponse.redirect(loginUrl);
+    }
   }
 
-  // If user is authenticated, handle routing
+  // If user is authenticated, handle routing based on allowed emails
   if (userId && emailAddress) {
     // Check if user's email is in the allowed list
     if (ALLOWED_EMAILS.includes(emailAddress)) {
@@ -85,8 +99,7 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
         return NextResponse.redirect(new URL(dashboardPath, request.url));
       }
     } else {
-      // Non-allowed users always go to explore
-      // The onboarding modal will be shown on the explore page if needed
+      // Redirect non-allowed emails to explore if not already there
       if (!request.nextUrl.pathname.startsWith('/explore')) {
         return NextResponse.redirect(new URL('/explore', request.url));
       }

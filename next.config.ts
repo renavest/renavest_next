@@ -3,12 +3,12 @@ import type { NextConfig } from 'next';
 
 const config: NextConfig = {
   images: {
-    domains: ['randomuser.me'],
+    domains: ['randomuser.me', 'localhost'],
     remotePatterns: [
       {
         protocol: 'http',
         hostname: 'localhost',
-        port: '3000',
+        port: '*',
         pathname: '/api/images/**',
       },
       {

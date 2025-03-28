@@ -1,33 +1,27 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { useEffect, useState } from 'react';
 
 import OnboardingModal from './OnboardingModal';
 
 interface OnboardingModalWrapperProps {
-  userId: string | null;
+  children: React.ReactNode;
 }
 
-export default function OnboardingModalServerWrapper({ userId }: OnboardingModalWrapperProps) {
+export default function OnboardingModalServerWrapper({ children }: OnboardingModalWrapperProps) {
   const { user, isLoaded } = useUser();
-  const [showModal, setShowModal] = useState(false);
 
-  useEffect(() => {
-    if (isLoaded && user) {
-      // Check if onboarding is complete in Clerk metadata
-      const isOnboardingComplete = user.publicMetadata?.onboardingComplete;
+  // Check if onboarding is complete based on Clerk's public metadata
+  const shouldShowOnboardingModal = isLoaded && user?.publicMetadata?.onboardingComplete !== true;
 
-      // Show modal if onboarding is not complete and user is not a "seth" user
-      setShowModal(
-        !isOnboardingComplete && !user.emailAddresses[0]?.emailAddress?.includes('seth'),
-      );
-    }
-  }, [user, isLoaded]);
-
-  if (!isLoaded || !userId) {
+if (!isLoaded) {
     return null;
   }
 
-  return showModal ? <OnboardingModal /> : null;
+  return (
+    <>
+      {shouldShowOnboardingModal && <OnboardingModal />}
+      {children}
+    </>
+  );
 }
