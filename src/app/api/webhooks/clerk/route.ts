@@ -4,6 +4,7 @@
  * To enable webhooks during local development:
  * 1. Run: lt --port 3000 --subdomain tall-sloths
  * 2. Add webhook URL in Clerk Dashboard: https://tall-sloths.loca.lt/api/webhooks/clerk
+ * 3. Make sure to verify webhook secret key is what's in .env.local
  */
 import { headers } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';

@@ -76,3 +76,4 @@ async function clearUsers() {
 // Run the clear function
 clearTherapists().catch(console.error);
 clearUsers().catch(console.error);
+
