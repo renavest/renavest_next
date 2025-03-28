@@ -1,10 +1,8 @@
 'use client';
 
-import { useClerk } from '@clerk/nextjs';
-import { LogOut } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+import { LogoutButton } from '@/src/components/shared/LogoutButton';
 import CreditRequestsModal from '@/src/features/employer-dashboard/components/CreditRequestsModal';
 import LoginFrequencyChart from '@/src/features/employer-dashboard/components/LoginFrequencyChart';
 import SessionsChart from '@/src/features/employer-dashboard/components/SessionsChart';
@@ -159,17 +157,6 @@ function DashboardContent() {
 }
 
 export default function EmployerDashboardPage() {
-  const { user, signOut } = useClerk();
-  const router = useRouter();
-
-  const handleLogout = () => {
-    if (user) {
-      signOut();
-    } else {
-      router.push('/login');
-    }
-  };
-
   return (
     <div className={cn('min-h-screen bg-gray-50')}>
       <header className='bg-white border-b border-purple-100'>
@@ -177,20 +164,14 @@ export default function EmployerDashboardPage() {
           <div className='flex justify-between items-start'>
             <div className='max-w-2xl'>
               <h1 className='text-3xl md:text-4xl font-bold text-gray-900 mb-3'>
-                Welcome back, {user?.firstName || 'Guest'}
+                Welcome back, Employer
               </h1>
               <p className='text-base md:text-lg text-gray-600'>
                 Each employee has <strong>400</strong> credits to book sessions.
               </p>
             </div>
             <div className='flex items-center gap-4'>
-              <button
-                onClick={handleLogout}
-                className='flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors'
-              >
-                <LogOut className='h-5 w-5' />
-                <span className='hidden md:inline'>Logout</span>
-              </button>
+              <LogoutButton />
             </div>
           </div>
         </div>

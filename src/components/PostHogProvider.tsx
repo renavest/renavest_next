@@ -8,10 +8,12 @@ import { Suspense, useEffect } from 'react';
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
-      api_host: 'https://us.i.posthog.com',
+      api_host: 'https://d2e1vtlzfyuae1.cloudfront.net/',
       ui_host: 'https://us.posthog.com',
-      capture_pageview: false, // We capture pageviews manually
-      capture_pageleave: true, // Enable pageleave capture
+      capture_pageview: false,
+      capture_pageleave: true,
+      request_batching: false,
+      debug: true,
     });
   }, []);
 

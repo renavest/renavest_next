@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
+import { LogoutButton } from '@/src/components/shared/LogoutButton';
+
 interface NavbarProps {
   title: string;
 }
@@ -60,13 +62,9 @@ export default function Navbar({ title }: NavbarProps) {
             {title}
           </h1>
         </div>
-        <button
-          onClick={handleLogout}
-          className='flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors text-sm sm:text-base'
-        >
-          <LogOut className='h-4 w-4' />
-          <span className='hidden sm:inline'>Logout</span>
-        </button>
+        <div className='flex items-center space-x-2'>
+          <LogoutButton />
+        </div>
       </div>
     </header>
   );

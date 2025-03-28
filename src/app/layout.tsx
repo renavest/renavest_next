@@ -21,13 +21,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <ClerkProvider>
       <html lang='en'>
-        <head>
-          <script
-            defer
-            src='https://cloud.umami.is/script.js'
-            data-website-id='aba27467-1b37-4c88-8c5a-614f67b16936'
-          ></script>
-        </head>
         <body className={`${figtreeFont.variable} antialiased bg-amber-50/30`}>
           <Toaster position='bottom-right' />
           <PostHogProvider>{children}</PostHogProvider>

@@ -3,7 +3,8 @@ import * as dotenv from 'dotenv';
 
 import { db } from '../db';
 import { therapists } from '../db/schema';
-
+import { users } from '../db/schema';
+import { userOnboarding } from '../db/schema';
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local';
 dotenv.config({ path: envFile });
 
@@ -43,5 +44,35 @@ async function clearTherapists() {
   }
 }
 
+async function clearUsers() {
+  try {
+    // Optionally, fetch user data before deletion if needed for logging
+    const existingUsers = await db
+      .select({
+        clerkId: users.clerkId,
+        email: users.email,
+      })
+      .from(users);
+
+    // Clear user interactions table first (if it exists)
+    // Uncomment and modify as needed:
+    await db.delete(userOnboarding);
+
+    // Clear users table
+    await db.delete(users);
+
+    console.log('Successfully cleared users table');
+    console.log('Deleted users:', existingUsers.length);
+
+    // Optional: Log deleted user details
+    existingUsers.forEach((user) => {
+      console.log(`Deleted user - Clerk ID: ${user.clerkId}, Email: ${user.email}`);
+    });
+  } catch (error) {
+    console.error('Error clearing users:', error);
+  }
+}
+
 // Run the clear function
 clearTherapists().catch(console.error);
+clearUsers().catch(console.error);
