@@ -1,7 +1,7 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { signal } from '@preact-signals/safe-react';
+import { computed } from '@preact-signals/safe-react';
 
 import OnboardingModal from '@/src/features/onboarding/components/OnboardingModal';
 import { onboardingSignal } from '@/src/features/onboarding/state/onboardingState';
@@ -15,11 +15,13 @@ import TherapistConnectionSummary from './insights/TherapistConnectionSummary';
 import TherapistRecommendations from './insights/TherapistRecommendations';
 import WeeklyFinancialReport from './insights/WeeklyFinancialReport';
 
-// Create a signal for showing onboarding
-const showOnboardingSignal = signal(
-  !onboardingSignal.value.isComplete &&
-    (typeof window !== 'undefined' ? window.location.pathname !== '/explore' : false),
-);
+// Create a computed signal for showing onboarding
+const showOnboardingSignal = computed(() => {
+  return (
+    !onboardingSignal.value.isComplete &&
+    (typeof window !== 'undefined' ? window.location.pathname !== '/explore' : false)
+  );
+});
 
 export default function DashboardClient() {
   const { user } = useUser();
