@@ -25,6 +25,7 @@ const ALLOWED_EMAILS = [
   'admin@renavest.com',
   'sethmorton05@gmail.com',
   'stanley@renavestapp.com',
+  'rameau.stan@gmail.com',
 ];
 
 // Helper function to get dashboard path based on role metadata
@@ -96,11 +97,15 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
       const userRole = claims?.metadata?.role;
       const dashboardPath = getDashboardPath(userRole);
 
-      if (!request.nextUrl.pathname.startsWith(dashboardPath)) {
+      // Only redirect if not on dashboard or explore
+      if (
+        !request.nextUrl.pathname.startsWith(dashboardPath) &&
+        !request.nextUrl.pathname.startsWith('/explore')
+      ) {
         return NextResponse.redirect(new URL(dashboardPath, request.url));
       }
     } else {
-      // Redirect non-allowed emails to explore if not already there
+      // For non-allowed emails, ensure they can access explore page
       if (!request.nextUrl.pathname.startsWith('/explore')) {
         return NextResponse.redirect(new URL('/explore', request.url));
       }

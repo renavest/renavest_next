@@ -2,6 +2,7 @@
 'use client';
 import { X } from 'lucide-react';
 import Image from 'next/image';
+import posthog from 'posthog-js';
 
 import { cn } from '@/src/lib/utils';
 // import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
@@ -11,6 +12,14 @@ import { COLORS } from '@/src/styles/colors';
 import { advisorSignal, isOpenSignal } from '../state/advisorSignals';
 
 const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
+  const handleBookSession = () => {
+    // Track booking event
+    posthog.capture('advisor_session_booked', {
+      advisor_name: advisor.name,
+      advisor_id: advisor.id,
+    });
+  };
+
   return (
     <div className='md:w-1/3'>
       <div className='aspect-[3/4] w-full relative rounded-xl overflow-hidden'>
@@ -19,15 +28,9 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
           height={350}
           src={advisor.profileUrl || ''}
           alt={advisor.name}
-          className={cn(
-            'h-full w-full object-cover',
-            'transition-opacity duration-300',
-            // !imageLoadState.isLoaded ? 'opacity-0' : 'opacity-100',
-          )}
+          className={cn('h-full w-full object-cover', 'transition-opacity duration-300')}
           placeholder='blur'
           blurDataURL='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
-          // onLoadingComplete={handleImageLoad}
-          // onError={handleImageError}
           priority
         />
       </div>
@@ -36,6 +39,7 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
           href={advisor.bookingURL}
           target='_blank'
           rel='noopener noreferrer'
+          onClick={handleBookSession}
           className={cn(
             'block w-full py-3 px-4 text-center text-white rounded-lg transition-colors font-medium',
             COLORS.WARM_PURPLE.bg,

@@ -1,12 +1,12 @@
 'use client';
 
-import { UserButton, useClerk } from '@clerk/nextjs';
-import { LogOut, Menu, Users, X, Shield } from 'lucide-react';
+import { UserButton } from '@clerk/nextjs';
+import { Menu, Users, X, Shield } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
+import { LogoutButton } from '@/src/components/shared/LogoutButton';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
@@ -37,9 +37,6 @@ const NavigationItem = ({
 );
 
 export default function DashboardHeader() {
-  const { signOut } = useClerk();
-  const router = useRouter();
-
   useEffect(() => {
     const handleScroll = () => {
       isHeaderScrolledSignal.value = window.scrollY > 0;
@@ -51,15 +48,6 @@ export default function DashboardHeader() {
 
   const toggleMobileMenu = () => {
     isMobileMenuOpenSignal.value = !isMobileMenuOpenSignal.value;
-  };
-
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      router.push('/login');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
   };
 
   return (
@@ -97,13 +85,7 @@ export default function DashboardHeader() {
         <div className='hidden md:flex items-center gap-4'>
           <NavigationItem href='/home' icon={Users} label='Find Therapists' />
           <NavigationItem href='/privacy' icon={Shield} label='Privacy & Security' />
-          <button
-            onClick={handleLogout}
-            className='flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors'
-          >
-            <LogOut className='h-4 w-4' />
-            <span>Logout</span>
-          </button>
+          <LogoutButton />
           <div className='ml-2'>
             <UserButton afterSignOutUrl='/login' />
           </div>
@@ -120,13 +102,13 @@ export default function DashboardHeader() {
           <div className='p-4 space-y-2'>
             <NavigationItem href='/explore' icon={Users} label='Find Therapists' isMobile />
             <NavigationItem href='/privacy' icon={Shield} label='Privacy & Security' isMobile />
-            <button
-              onClick={handleLogout}
-              className='flex items-center gap-2 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors w-full'
-            >
-              <LogOut className='h-5 w-5' />
-              <span>Logout</span>
-            </button>
+            <div className='px-4 py-2 border-t'>
+              <LogoutButton
+                className='w-full flex items-center justify-center space-x-2 text-red-600 hover:bg-red-50 p-2 rounded-md'
+                iconClassName='h-5 w-5'
+                textClassName=''
+              />
+            </div>
             <div className='px-4 py-3'>
               <UserButton afterSignOutUrl='/login' />
             </div>

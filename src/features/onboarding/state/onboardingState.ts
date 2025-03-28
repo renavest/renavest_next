@@ -11,11 +11,41 @@ export interface OnboardingQuestion {
   type?: 'dropdown';
 }
 
-export const onboardingSignal = signal({
-  isComplete: false,
-  currentStep: 0,
-  answers: {} as Record<number, string[]>,
+// Helper function to get initial onboarding state
+function getInitialOnboardingState() {
+  if (typeof window !== 'undefined') {
+    const storedState = localStorage.getItem('onboardingState');
+    if (storedState) {
+      return JSON.parse(storedState);
+    }
+  }
+  return {
+    isComplete: false,
+    currentStep: 0,
+    answers: {} as Record<number, string[]>,
+  };
+}
+
+export const onboardingSignal = signal(getInitialOnboardingState());
+
+// Update localStorage whenever the signal changes
+onboardingSignal.subscribe((newValue) => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('onboardingState', JSON.stringify(newValue));
+  }
 });
+
+// Method to clear onboarding state (useful for logout)
+export function clearOnboardingState() {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('onboardingState');
+    onboardingSignal.value = {
+      isComplete: false,
+      currentStep: 0,
+      answers: {},
+    };
+  }
+}
 
 export const onboardingQuestions: OnboardingQuestion[] = [
   {
@@ -36,8 +66,7 @@ export const onboardingQuestions: OnboardingQuestion[] = [
     id: 2,
     title: 'Location',
     question: 'What state do you currently reside in?',
-    supportiveText:
-      'We’re interested in how your state impacts your spending habits.',
+    supportiveText: 'We’re interested in how your state impacts your spending habits.',
     type: 'dropdown',
     options: [
       { id: 'AL', label: 'Alabama' },

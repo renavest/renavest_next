@@ -2,6 +2,7 @@
 
 import { useSignIn } from '@clerk/nextjs';
 import Link from 'next/link';
+import posthog from 'posthog-js';
 
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
@@ -48,7 +49,7 @@ const ROLE_OPTIONS: { value: UserType; label: string; description: string }[] = 
   {
     value: 'employer',
     label: 'Employer',
-    description: 'Manage your HSA program',
+    description: "Manage your team's financial wellness program",
   },
   {
     value: 'therapist',
@@ -107,6 +108,12 @@ function LoginFormFields() {
       });
 
       if (result.status === 'complete') {
+        // Track login event
+        posthog.capture('user_login', {
+          role: selectedRoleSignal.value,
+          method: 'email',
+        });
+
         // Use Clerk's setActive method to handle session
         await result.createdSessionId;
 

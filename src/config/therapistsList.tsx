@@ -3,7 +3,7 @@ const TherapistList = [
     id: '1',
     name: 'Paige Williams',
     title: 'Financial Coach ',
-    bookingURL: 'https://millenniummoney.myclickfunnels.com/bookacall1',
+    bookingURL: 'https://calendly.com/paigevic98/strategy-session-paige',
     expertise: 'Debt Management, Saving, Investing',
     certifications:
       'Bachelor’s Degree in Biopsychology, Master’s Degree in Medical Sciences – Liberty University (2022), Founder of the Millennium Money Master Program, Helped over 100 clients',

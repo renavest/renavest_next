@@ -10,7 +10,7 @@ import { submitOnboardingData } from '../actions/onboardingActions';
 import {
   OnboardingQuestion,
   onboardingQuestions,
-  onboardingSignal, 
+  onboardingSignal,
 } from '../state/onboardingState';
 
 interface OnboardingContentProps {
@@ -168,7 +168,7 @@ function OnboardingContent({
             ${COLORS.WARM_PURPLE.hover} 
             transition-colors`}
         >
-          {isLastStep ? (isSubmitting ? 'Submitting...' : 'Complete') : 'Next'}
+          {isLastStep ? 'Complete' : 'Next'}
         </button>
       </div>
     </div>
@@ -182,17 +182,20 @@ function useOnboardingSubmission() {
   const handleSubmit = async (selectedAnswers: Record<number, string[]>, currentStep: number) => {
     setIsSubmitting(true);
     try {
-      // Submit onboarding data to our database
-      await submitOnboardingData(selectedAnswers);
+      // Only submit if on the explore page
+      if (window.location.pathname === '/explore') {
+        // Submit onboarding data to our database
+        await submitOnboardingData(selectedAnswers);
 
-      // Update Clerk user metadata to mark onboarding as complete
-      if (clerkUser) {
-        await clerkUser.update({
-          unsafeMetadata: {
-            ...clerkUser.unsafeMetadata,
-            onboardingComplete: true,
-          },
-        });
+        // Update Clerk user metadata to mark onboarding as complete
+        if (clerkUser) {
+          await clerkUser.update({
+            unsafeMetadata: {
+              ...clerkUser.unsafeMetadata,
+              onboardingComplete: true,
+            },
+          });
+        }
       }
 
       onboardingSignal.value = {

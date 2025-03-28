@@ -1,7 +1,7 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { useEffect, useState } from 'react';
+import { signal } from '@preact-signals/safe-react';
 
 import OnboardingModal from '@/src/features/onboarding/components/OnboardingModal';
 import { onboardingSignal } from '@/src/features/onboarding/state/onboardingState';
@@ -15,16 +15,21 @@ import TherapistConnectionSummary from './insights/TherapistConnectionSummary';
 import TherapistRecommendations from './insights/TherapistRecommendations';
 import WeeklyFinancialReport from './insights/WeeklyFinancialReport';
 
+// Create a signal for showing onboarding
+const showOnboardingSignal = signal(
+  !onboardingSignal.value.isComplete &&
+    (typeof window !== 'undefined' ? window.location.pathname !== '/explore' : false),
+);
+
 export default function DashboardClient() {
-  const [showOnboarding, setShowOnboarding] = useState(!onboardingSignal.value.isComplete);
   const { user } = useUser();
 
-  useEffect(() => {
-    const unsubscribe = onboardingSignal.subscribe((newValue) => {
-      setShowOnboarding(!newValue.isComplete);
-    });
-    return () => unsubscribe();
-  }, []);
+  // Subscribe to onboarding signal changes
+  onboardingSignal.subscribe((newValue) => {
+    showOnboardingSignal.value =
+      !newValue.isComplete &&
+      (typeof window !== 'undefined' ? window.location.pathname !== '/explore' : false);
+  });
 
   return (
     <div className={`min-h-screen ${COLORS.WARM_WHITE.bg} font-sans`}>
@@ -104,7 +109,7 @@ export default function DashboardClient() {
       </main>
 
       {/* Onboarding Modal */}
-      {showOnboarding && <OnboardingModal />}
+      {showOnboardingSignal.value && <OnboardingModal />}
     </div>
   );
 }
