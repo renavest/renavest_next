@@ -1,10 +1,13 @@
 'use client';
 
+import { useClerk } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+import { ALLOWED_EMAILS } from '@/src/constants';
 import { COLORS } from '@/src/styles/colors';
 
+import { submitOnboardingData } from '../actions/onboardingActions';
 import {
   OnboardingQuestion,
   onboardingQuestions,
@@ -174,12 +177,33 @@ function OnboardingContent({
 }
 
 function useOnboardingSubmission() {
+  const { user: clerkUser } = useClerk();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (selectedAnswers: Record<number, string[]>, currentStep: number) => {
     setIsSubmitting(true);
     try {
-      // Just update local state and close modal
+      // Check if user is in allowed emails list (salesperson)
+      const isAllowedEmail = ALLOWED_EMAILS.includes(
+        clerkUser?.emailAddresses[0]?.emailAddress || '',
+      );
+      
+      if (!isAllowedEmail) {
+        // Only submit data for non-salespeople
+        await submitOnboardingData(selectedAnswers);
+
+        // Update Clerk user metadata to mark onboarding as complete
+        if (clerkUser) {
+          await clerkUser.update({
+            unsafeMetadata: {
+              ...clerkUser.unsafeMetadata,
+              onboardingComplete: true,
+            },
+          });
+        }
+      }
+
+      // Update local state regardless of user type
       onboardingSignal.value = {
         isComplete: true,
         currentStep: currentStep,
@@ -187,6 +211,15 @@ function useOnboardingSubmission() {
       };
 
       toast.success('Onboarding completed successfully!');
+
+      // For salespeople, stay on current page
+      if (isAllowedEmail) {
+        // Close modal by updating signal
+        return;
+      }
+
+      // For regular users, redirect to explore
+      window.location.href = '/explore';
     } catch (error) {
       console.error('Onboarding submission failed', error);
       toast.error('Failed to complete onboarding. Please try again.');

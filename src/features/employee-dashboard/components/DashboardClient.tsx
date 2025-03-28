@@ -23,14 +23,6 @@ const showOnboardingSignal = signal(
 
 export default function DashboardClient() {
   const { user } = useUser();
-
-  // Subscribe to onboarding signal changes
-  onboardingSignal.subscribe((newValue) => {
-    showOnboardingSignal.value =
-      !newValue.isComplete &&
-      (typeof window !== 'undefined' ? window.location.pathname !== '/explore' : false);
-  });
-
   return (
     <div className={`min-h-screen ${COLORS.WARM_WHITE.bg} font-sans`}>
       <DashboardHeader />
