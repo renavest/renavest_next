@@ -6,13 +6,13 @@ import { redirect } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { ALLOWED_EMAILS } from '@/src/constants';
+import Navbar from '@/src/features/home/components/Navbar';
 import {
   clientMetricsSignal,
   sessionStatsSignal,
   earningsMetricsSignal,
 } from '@/src/features/therapist-dashboard/state/therapistDashboardState';
 import MetricCard from '@/src/shared/components/MetricCard';
-
 function AppointmentCard() {
   return (
     <div className='space-y-6'>
@@ -98,23 +98,6 @@ function MetricsSection({ title, children }: { title: string; children: React.Re
       </div>
       <div className='grid grid-cols-1 sm:grid-cols-2 gap-6'>{children}</div>
     </section>
-  );
-}
-
-function DashboardHeader({ userName }: { userName: string }) {
-  return (
-    <header className='bg-white -mx-6 px-6 py-8 border-b border-purple-100 mb-12'>
-      <div className='flex justify-between items-start'>
-        <div>
-          <h1 className='text-3xl md:text-4xl font-bold text-gray-900 mb-3'>
-            Welcome back, {userName || 'Guest'}
-          </h1>
-          <p className='text-gray-500 mt-2 text-base md:text-lg'>
-            Manage your sessions, client progress, and therapeutic resources.
-          </p>
-        </div>
-      </div>
-    </header>
   );
 }
 
@@ -210,7 +193,7 @@ export default function TherapistDashboardPage() {
 
   return (
     <div className='container mx-auto px-4 md:px-6 py-8'>
-      <DashboardHeader userName={user?.firstName || 'Guest'} />
+      <Navbar title={user?.firstName || 'Guest'} />
       <div className='grid md:grid-cols-12 gap-6'>
         <MetricsContent />
         <div className='md:col-span-4'>
