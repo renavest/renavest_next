@@ -114,7 +114,8 @@ const AdvisorModal = () => {
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Close modal if clicking on the overlay (outside the modal content)
-    if (e.currentTarget === e.target) {
+    const modalContent = e.currentTarget.firstElementChild?.firstElementChild;
+    if (modalContent && !modalContent.contains(e.target as Node)) {
       handleClose();
     }
   };
