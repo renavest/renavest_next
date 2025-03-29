@@ -9,7 +9,7 @@ import { userOnboarding } from '@/src/db/schema';
 
 const ONBOARDING_VERSION = 1;
 
-export async function submitOnboardingData(answers: Record<number, string[]>) {
+export async function   submitOnboardingData(answers: Record<number, string[]>) {
   const { userId: clerkUserId } = await auth();
 
   if (!clerkUserId) {

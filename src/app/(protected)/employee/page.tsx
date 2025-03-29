@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 
 import { ALLOWED_EMAILS } from '@/src/constants';
 import DashboardClient from '@/src/features/employee-dashboard/components/DashboardClient';
+import { clearOnboardingState } from '@/src/features/onboarding/state/onboardingState';
 
 export default async function DashboardPage() {
   const clerk = await clerkClient();
@@ -14,6 +15,8 @@ export default async function DashboardPage() {
   // Redirect to explore if email not in allowed list
   if (!email || !ALLOWED_EMAILS.includes(email)) {
     redirect('/explore');
+  } else {
+    clearOnboardingState();
   }
 
   return <DashboardClient />;

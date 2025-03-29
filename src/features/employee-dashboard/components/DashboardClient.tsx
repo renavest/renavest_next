@@ -4,8 +4,9 @@ import { useUser } from '@clerk/nextjs';
 import { computed } from '@preact-signals/safe-react';
 
 import OnboardingModal from '@/src/features/onboarding/components/OnboardingModal';
-import { onboardingSignal } from '@/src/features/onboarding/state/onboardingState';
 import { COLORS } from '@/src/styles/colors';
+
+import { onboardingSignal } from '../../onboarding/state/onboardingState';
 
 import DashboardHeader from './DashboardHeader';
 import PersonalActionableInsights from './insights/PersonalActionableInsights';
