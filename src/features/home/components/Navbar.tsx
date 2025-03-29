@@ -51,8 +51,8 @@ export default function Navbar({ title }: NavbarProps) {
           </h1>
         </div>
         <div className='flex items-center space-x-2'>
-          <UserButton />
           <LogoutButton />
+          <UserButton />
         </div>
       </div>
     </header>

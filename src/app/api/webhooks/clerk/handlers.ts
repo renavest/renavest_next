@@ -1,7 +1,9 @@
 import { eq } from 'drizzle-orm';
+import { Result, ok, err } from 'neverthrow';
 
 import { db } from '@/src/db';
 import { users } from '@/src/db/schema';
+import logger from '@/src/lib/logger';
 
 // User-related webhook data
 export interface WebhookUserData {
@@ -12,26 +14,57 @@ export interface WebhookUserData {
   image_url: string | null;
 }
 
-/**
- * Handle user created or updated events
- */
-export async function handleUserCreateOrUpdate(
-  eventType: 'user.created' | 'user.updated',
-  data: WebhookUserData,
-) {
-  const { id, email_addresses, first_name, last_name, image_url } = data;
+// Custom error types for user handling
+type UserHandlingError =
+  | { type: 'NoValidEmail'; userId: string }
+  | { type: 'DatabaseError'; message: string; originalError: unknown };
 
-  // Get primary email - prefer verified emails if available
+/**
+ * Get primary email from user data
+ */
+function getPrimaryEmail(
+  email_addresses: WebhookUserData['email_addresses'],
+): Result<string, UserHandlingError> {
   const verifiedEmail = email_addresses?.find(
     (email) => email.verification?.status === 'verified',
   )?.email_address;
 
   const primaryEmail = verifiedEmail || email_addresses?.[0]?.email_address;
 
-  if (!primaryEmail) {
-    console.error(`No valid email found for user: ${id}`);
-    return;
+  return primaryEmail
+    ? ok(primaryEmail)
+    : (err({ type: 'NoValidEmail', userId: email_addresses?.[0]?.id || 'unknown' }) as Result<
+        string,
+        UserHandlingError
+      >);
+}
+
+/**
+ * Handle user created or updated events
+ */
+export async function handleUserCreateOrUpdate(
+  eventType: 'user.created' | 'user.updated',
+
+  data: WebhookUserData,
+): Promise<Result<boolean, UserHandlingError>> {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  const { id, email_addresses, first_name, last_name, image_url } = data;
+
+  // Get primary email
+  const emailResult = getPrimaryEmail(email_addresses);
+  // Early return if no valid email
+  if (emailResult.isErr()) {
+    logger.error('No valid email found for user', {
+      userId: id,
+      eventType,
+    });
+    return err({
+      type: 'NoValidEmail',
+      userId: id,
+    });
   }
+
+  const primaryEmail = emailResult.value;
 
   try {
     // Check if user exists by either clerkId or email
@@ -56,11 +89,13 @@ export async function handleUserCreateOrUpdate(
         })
         .where(eq(users.clerkId, id));
 
-      console.log(`Updated user with Clerk ID: ${id}`);
+      logger.info('Updated existing user', {
+        userId: id,
+        eventType,
+      });
     } else if (eventType === 'user.created') {
       if (userWithEmail) {
         // Handle case where email exists but with different Clerk ID
-        // This can happen if user signs up with different auth method
         await db
           .update(users)
           .set({
@@ -72,7 +107,10 @@ export async function handleUserCreateOrUpdate(
           })
           .where(eq(users.email, primaryEmail));
 
-        console.log(`Updated existing user with new Clerk ID: ${id}`);
+        logger.info('Updated user with new Clerk ID', {
+          userId: id,
+          eventType,
+        });
       } else {
         // Create new user
         await db.insert(users).values({
@@ -83,25 +121,41 @@ export async function handleUserCreateOrUpdate(
           imageUrl: image_url || null,
         });
 
-        console.log(`Created new user with Clerk ID: ${id}`);
+        logger.info('Created new user', {
+          userId: id,
+          eventType,
+        });
       }
     }
+
+    return ok(true);
   } catch (error) {
-    console.error(`Error ${eventType === 'user.created' ? 'creating' : 'updating'} user:`, error);
-    // Don't throw the error - we want to return 200 to Clerk
-    // This prevents webhook retries for non-critical errors
+    const errorDetails: UserHandlingError = {
+      type: 'DatabaseError',
+      message: `Error ${eventType === 'user.created' ? 'creating' : 'updating'} user`,
+      originalError: error,
+    };
+
+    logger.error('User handling error', {
+      userId: id,
+      eventType,
+      error,
+    });
+
+    return err(errorDetails);
   }
 }
 
 /**
  * Handle user deletion events
  */
-export async function handleUserDeletion(data: WebhookUserData) {
+export async function handleUserDeletion(
+  data: WebhookUserData,
+): Promise<Result<boolean, UserHandlingError>> {
   const { id } = data;
 
   try {
     // Mark user as inactive instead of deleting
-    // This is often better than hard deletes for data integrity
     await db
       .update(users)
       .set({
@@ -110,21 +164,31 @@ export async function handleUserDeletion(data: WebhookUserData) {
       })
       .where(eq(users.clerkId, id));
 
-    console.log(`Marked user as inactive: ${id}`);
+    logger.info('Marked user as inactive', { userId: id });
 
-    // Alternatively, if you want to hard delete:
-    // await db.delete(users).where(eq(users.clerkId, id));
-    // console.log(`Deleted user with ID: ${id}`);
+    return ok(true);
   } catch (error) {
-    console.error(`Error handling deletion for user: ${id}`, error);
-    throw error;
+    const errorDetails: UserHandlingError = {
+      type: 'DatabaseError',
+      message: 'Error handling user deletion',
+      originalError: error,
+    };
+
+    logger.error('User deletion error', {
+      userId: id,
+      error,
+    });
+
+    return err(errorDetails);
   }
 }
 
 /**
  * Handle user activity events (sign in, sign out)
  */
-export async function handleUserActivity(data: WebhookUserData) {
+export async function handleUserActivity(
+  data: WebhookUserData,
+): Promise<Result<boolean, UserHandlingError>> {
   const { id } = data;
 
   try {
@@ -136,9 +200,21 @@ export async function handleUserActivity(data: WebhookUserData) {
       })
       .where(eq(users.clerkId, id));
 
-    console.log(`Updated activity for user: ${id}`);
+    logger.info('Updated user activity', { userId: id });
+
+    return ok(true);
   } catch (error) {
-    console.error(`Error handling activity for user: ${id}`, error);
-    throw error;
+    const errorDetails: UserHandlingError = {
+      type: 'DatabaseError',
+      message: 'Error handling user activity',
+      originalError: error,
+    };
+
+    logger.error('User activity update error', {
+      userId: id,
+      error,
+    });
+
+    return err(errorDetails);
   }
 }

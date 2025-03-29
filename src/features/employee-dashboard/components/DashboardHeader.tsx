@@ -83,7 +83,7 @@ export default function DashboardHeader() {
 
         {/* Desktop Navigation */}
         <div className='hidden md:flex items-center gap-4'>
-          <NavigationItem href='/home' icon={Users} label='Find Therapists' />
+          <NavigationItem href='/explore' icon={Users} label='Find Therapists' />
           <NavigationItem href='/privacy' icon={Shield} label='Privacy & Security' />
           <LogoutButton />
           <div className='ml-2'>
