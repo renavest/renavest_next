@@ -1,5 +1,6 @@
 import { useSignIn, useClerk } from '@clerk/nextjs';
 import { OAuthStrategy } from '@clerk/types';
+import posthog from 'posthog-js';
 import * as React from 'react';
 
 import { cn } from '@/src/lib/utils';
@@ -17,24 +18,11 @@ export function OAuthButton({ strategy, icon, label }: OAuthButtonProps) {
   const { signIn, isLoaded } = useSignIn();
   const clerk = useClerk();
 
-  const getDashboardPath = (role: string) => {
-    switch (role) {
-      case 'employer':
-        return '/employer/dashboard';
-      case 'therapist':
-        return '/therapist/dashboard';
-      default:
-        return '/employee';
-    }
-  };
-
   const handleOAuthSignIn = async () => {
     if (!selectedRoleSignal.value) {
       authErrorSignal.value = 'Please select a role before continuing';
       return;
     }
-
-    const dashboardPath = getDashboardPath(selectedRoleSignal.value);
 
     try {
       if (!isLoaded || !signIn) {
@@ -45,10 +33,24 @@ export function OAuthButton({ strategy, icon, label }: OAuthButtonProps) {
       // Sign out of any existing session before OAuth sign-in
       await clerk.signOut();
 
+      // Capture login attempt
+      posthog.capture('user_login_attempt', {
+        method: strategy,
+        role: selectedRoleSignal.value,
+      });
+      const redirectUrlComplete =
+        selectedRoleSignal.value === 'employee'
+          ? '/employee'
+          : selectedRoleSignal.value === 'therapist'
+            ? '/therapist'
+            : selectedRoleSignal.value === 'employer'
+              ? '/employer'
+              : '/employee';
+      // Authenticate with redirect and pass role in redirectUrl
       await signIn.authenticateWithRedirect({
         strategy,
-        redirectUrl: '/sign-up/sso-callback',
-        redirectUrlComplete: dashboardPath,
+        redirectUrl: `/sign-up/sso-callback`,
+        redirectUrlComplete,
       });
     } catch (err) {
       console.error('OAuth error:', err);

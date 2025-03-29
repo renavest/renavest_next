@@ -1,6 +1,6 @@
 'use client';
 
-import { useSignIn } from '@clerk/nextjs';
+import { useSignIn, useClerk } from '@clerk/nextjs';
 import Link from 'next/link';
 import posthog from 'posthog-js';
 
@@ -17,17 +17,6 @@ import { UserType } from '../types/auth';
 
 import GoogleSignInButton from './GoogleSignInButton';
 import MicrosoftSignInButton from './MicrosoftSignInButton';
-
-function getDashboardPath(role: UserType) {
-  switch (role) {
-    case 'employer':
-      return '/employer/dashboard';
-    case 'therapist':
-      return '/therapist/dashboard';
-    default:
-      return '/employee';
-  }
-}
 
 function AuthErrorMessage({ message }: { message: string }) {
   return (
@@ -81,55 +70,91 @@ function RoleSelection() {
   );
 }
 
-function LoginFormFields() {
-  const { signIn, isLoaded } = useSignIn();
+// Extract email sign-in logic to a separate function
+async function handleEmailSignIn(
+  e: React.FormEvent,
+  signIn: ReturnType<typeof useSignIn>['signIn'],
+  isLoaded: boolean,
+  clerk: ReturnType<typeof useClerk>,
+): Promise<boolean> {
+  e.preventDefault();
 
-  const handleEmailSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedRoleSignal.value) {
-      authErrorSignal.value = 'Please select a role before continuing';
-      return;
+  // Validate role selection
+  if (!selectedRoleSignal.value) {
+    authErrorSignal.value = 'Please select a role before continuing';
+    return false;
+  }
+
+  // Validate email and password
+  if (!emailSignal.value || !passwordSignal.value) {
+    authErrorSignal.value = 'Please enter both email and password';
+    return false;
+  }
+
+  try {
+    // Check authentication system readiness
+    if (!isLoaded || !signIn) {
+      authErrorSignal.value = 'Authentication system is not ready';
+      return false;
     }
 
-    if (!emailSignal.value || !passwordSignal.value) {
-      authErrorSignal.value = 'Please enter both email and password';
-      return;
-    }
+    // Determine redirect URL based on selected role
+    const redirectUrl =
+      selectedRoleSignal.value === 'employee'
+        ? '/employee'
+        : selectedRoleSignal.value === 'therapist'
+          ? '/therapist'
+          : selectedRoleSignal.value === 'employer'
+            ? '/employer'
+            : '/employee';
 
-    try {
-      if (!isLoaded || !signIn) {
-        authErrorSignal.value = 'Authentication system is not ready';
-        return;
+    // Attempt sign-in
+    const result = await signIn.create({
+      identifier: emailSignal.value,
+      password: passwordSignal.value,
+      redirectUrl,
+    });
+
+    // Handle successful sign-in
+    if (result.status === 'complete') {
+      // Update user's metadata with selected role
+      const user = clerk.user;
+      if (user) {
+        await user.update({
+          unsafeMetadata: {
+            role: selectedRoleSignal.value,
+          },
+        });
       }
 
-      const result = await signIn.create({
-        identifier: emailSignal.value,
-        password: passwordSignal.value,
+      // Track login event
+      posthog.capture('user_login', {
+        role: selectedRoleSignal.value,
+        method: 'email',
       });
 
-      if (result.status === 'complete') {
-        // Track login event
-        posthog.capture('user_login', {
-          role: selectedRoleSignal.value,
-          method: 'email',
-        });
-
-        // Use Clerk's setActive method to handle session
-        await result.createdSessionId;
-
-        // Redirect will be handled by middleware
-        window.location.href = getDashboardPath(selectedRoleSignal.value);
-      } else {
-        authErrorSignal.value = 'Sign in failed. Please try again.';
-      }
-    } catch (err) {
-      console.error('Sign in error:', err);
-      authErrorSignal.value = 'Failed to sign in. Please try again.';
+      return true;
+    } else {
+      authErrorSignal.value = 'Sign in failed. Please try again.';
+      return false;
     }
+  } catch (err) {
+    console.error('Sign in error:', err);
+    authErrorSignal.value = 'Failed to sign in. Please try again.';
+    return false;
+  }
+}
+
+function EmailSignInForm() {
+  const { signIn, isLoaded } = useSignIn();
+  const clerk = useClerk();
+
+  const onSubmit = async (e: React.FormEvent) => {
+    await handleEmailSignIn(e, signIn, isLoaded, clerk);
   };
 
   return (
-    <form onSubmit={handleEmailSignIn} className='space-y-6'>
+    <form onSubmit={onSubmit} className='space-y-6'>
       <div>
         <label htmlFor='email' className='block text-sm font-medium text-gray-700 mb-2'>
           Email address
@@ -197,7 +222,7 @@ export default function LoginForm() {
 
       {selectedRoleSignal.value && (
         <>
-          <LoginFormFields />
+          <EmailSignInForm />
 
           <div className='relative my-6'>
             <div className='absolute inset-0 flex items-center'>

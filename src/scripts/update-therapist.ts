@@ -67,8 +67,8 @@ async function updateTherapist(nameOrId: string, updateData: TherapistUpdateFiel
 async function exampleUsage() {
   try {
     // Update booking URL for a therapist by name
-    await updateTherapist('Paige Williams', {
-      bookingURL: 'https://calendly.com/paigevic98/strategy-session-paige',
+    await updateTherapist('Haylie Castillo', {
+      profileUrl: 'therapists/haylie-castillo.jpg',
     });
 
     // Update multiple fields for a therapist by ID
