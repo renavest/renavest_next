@@ -84,7 +84,7 @@ async function handleEmailSignIn(
     authErrorSignal.value = 'Please select a role before continuing';
     return false;
   }
-
+    
   // Validate email and password
   if (!emailSignal.value || !passwordSignal.value) {
     authErrorSignal.value = 'Please enter both email and password';
