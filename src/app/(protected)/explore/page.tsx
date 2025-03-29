@@ -2,9 +2,10 @@ import { db } from '@/src/db';
 import { therapists } from '@/src/db/schema';
 import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
 import { Advisor } from '@/src/shared/types';
+import { COLORS } from '@/src/styles/colors';
 
 import AdvisorGrid from '../../../features/advisors/components/AdvisorGrid';
-import FloatingHeader from '../../../features/home/components/Navbar';
+import Navbar from '../../../features/home/components/Navbar';
 
 // Make this a server component since we're doing DB fetching
 export default async function Home() {
@@ -18,7 +19,7 @@ export default async function Home() {
       const profileUrl = therapist.profileUrl
         ? getTherapistImageUrl(therapist.profileUrl)
         : '/experts/placeholderexp.png';
-
+      console.log('profileUrl', profileUrl);
       return {
         id: therapist.id.toString(),
         name: therapist.name,
@@ -36,8 +37,10 @@ export default async function Home() {
     });
 
     return (
-      <div className='min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)]'>
-        <FloatingHeader title='Renavest' />
+      <div
+        className={`min-h-screen ${COLORS.WARM_WHITE.bg} font-[family-name:var(--font-geist-sans)]`}
+      >
+        <Navbar title='Renavest' />
         <section className='pt-20 pb-6 px-4 sm:px-6'>
           <h2 className='text-2xl sm:text-3xl font-bold text-center text-gray-900'>
             Financial Therapists
@@ -61,8 +64,10 @@ export default async function Home() {
   } catch (error) {
     console.error('Error fetching therapists:', error);
     return (
-      <div className='min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)]'>
-        <FloatingHeader title='Renavest' />
+      <div
+        className={`min-h-screen ${COLORS.WARM_WHITE.bg} font-[family-name:var(--font-geist-sans)]`}
+      >
+        <Navbar title='Renavest' />
         <section className='pt-20 pb-6 px-4 sm:px-6'>
           <h2 className='text-2xl sm:text-3xl font-bold text-center text-gray-900'>
             Financial Therapists

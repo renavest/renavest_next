@@ -1,11 +1,10 @@
 'use client';
-import { useClerk } from '@clerk/nextjs';
-import { LogOut } from 'lucide-react';
+import { UserButton } from '@clerk/nextjs';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
 import { LogoutButton } from '@/src/components/shared/LogoutButton';
+import { COLORS } from '@/src/styles/colors';
 
 interface NavbarProps {
   title: string;
@@ -13,8 +12,6 @@ interface NavbarProps {
 
 export default function Navbar({ title }: NavbarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
-  const { signOut } = useClerk();
-  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -31,22 +28,13 @@ export default function Navbar({ title }: NavbarProps) {
     };
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      router.push('/login');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
-
   return (
     <header
       className={`
         w-full
         z-50
         transition-all duration-300 ease-in-out
-        bg-white py-3 sm:py-4 px-4 sm:px-6 lg:px-8
+        ${COLORS.WARM_WHITE.bg} py-3 sm:py-4 px-4 sm:px-6 lg:px-8
         ${isScrolled ? 'shadow-md' : 'shadow-lg'}`}
     >
       <div className='max-w-7xl mx-auto flex items-center justify-between'>
@@ -63,6 +51,7 @@ export default function Navbar({ title }: NavbarProps) {
           </h1>
         </div>
         <div className='flex items-center space-x-2'>
+          <UserButton />
           <LogoutButton />
         </div>
       </div>
