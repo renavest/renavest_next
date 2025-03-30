@@ -1,6 +1,7 @@
 'use client';
 
 import { COLORS } from '@/src/styles/colors';
+
 import { OnboardingQuestion, onboardingQuestions } from '../state/onboardingState';
 
 export interface LeftSideContentProps {

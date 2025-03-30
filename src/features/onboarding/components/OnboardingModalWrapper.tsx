@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
+import { useState, useEffect } from 'react';
+
 import OnboardingModal from './OnboardingModal';
 
 interface OnboardingModalWrapperProps {

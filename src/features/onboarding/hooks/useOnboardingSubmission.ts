@@ -1,26 +1,26 @@
 'use client';
 
 import { useClerk } from '@clerk/nextjs';
-import { signal } from '@preact-signals/safe-react';
 import posthog from 'posthog-js';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { ALLOWED_EMAILS } from '@/src/constants';
 
 import { submitOnboardingData } from '../actions/onboardingActions';
-import { onboardingSignal } from '../state/onboardingState';
+import { onboardingSignal, onboardingQuestions } from '../state/onboardingState';
 
 export function useOnboardingSubmission() {
   const { user: clerkUser } = useClerk();
-  const isSubmitting = signal(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (selectedAnswers: Record<number, string[]>, currentStep: number) => {
-    isSubmitting.value = true;
+    setIsSubmitting(true);
 
     // Track onboarding submission start
     posthog.capture('onboarding_submission_start', {
       user_id: clerkUser?.id,
-      total_questions: Object.keys(selectedAnswers).length,
+      total_questions: onboardingQuestions.length,
       current_step: currentStep,
     });
 
@@ -68,14 +68,13 @@ export function useOnboardingSubmission() {
         }
 
         // Show success toast
-        toast.success('Onboarding completed successfully!', {
-          description: `We've matched you with personalized financial insights.`,
-        });
+        toast.success('Onboarding completed successfully!');
 
         // Close the onboarding modal
         onboardingSignal.value = {
-          ...onboardingSignal.value,
           isComplete: true,
+          currentStep: 0,
+          answers: {},
         };
       } else {
         // Track skipped onboarding for salespeople
@@ -100,12 +99,9 @@ export function useOnboardingSubmission() {
 
       console.error('Onboarding submission error:', error);
     } finally {
-      isSubmitting.value = false;
+      setIsSubmitting(false);
     }
   };
 
-  return {
-    handleSubmit,
-    isSubmitting,
-  };
+  return { handleSubmit, isSubmitting };
 }

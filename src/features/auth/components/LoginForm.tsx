@@ -43,7 +43,7 @@ const ROLE_OPTIONS: { value: UserType; label: string; description: string }[] = 
   },
   {
     value: 'therapist',
-    label: 'Therapist',
+    label: 'Financial Therapist',
     description: 'Manage your client sessions',
   },
 ];
@@ -246,7 +246,7 @@ export default function AuthenticationForm() {
         </p>
 
         <div className='flex justify-center mb-6'>
-          <div className='inline-flex rounded-md shadow-sm' role='group'>
+          <div className='inline-flex rounded-full shadow-sm bg-gray-100 p-1' role='group'>
             <button
               type='button'
               onClick={() => {
@@ -254,10 +254,10 @@ export default function AuthenticationForm() {
                 authErrorSignal.value = '';
               }}
               className={cn(
-                'px-4 py-2 text-sm font-medium border',
+                'px-4 py-2 text-sm font-medium rounded-full transition-all duration-200',
                 authModeSignal.value === 'signin'
-                  ? `${COLORS.WARM_PURPLE.bg} text-white border-transparent`
-                  : 'bg-white text-gray-900 border-gray-200 hover:bg-gray-100',
+                  ? `${COLORS.WARM_PURPLE.bg} text-white`
+                  : 'bg-transparent text-gray-600 hover:bg-gray-200',
               )}
             >
               Sign In
@@ -269,10 +269,10 @@ export default function AuthenticationForm() {
                 authErrorSignal.value = '';
               }}
               className={cn(
-                'px-4 py-2 text-sm font-medium border -ml-px',
+                'px-4 py-2 text-sm font-medium rounded-full transition-all duration-200',
                 authModeSignal.value === 'signup'
-                  ? `${COLORS.WARM_PURPLE.bg} text-white border-transparent`
-                  : 'bg-white text-gray-900 border-gray-200 hover:bg-gray-100',
+                  ? `${COLORS.WARM_PURPLE.bg} text-white`
+                  : 'bg-transparent text-gray-600 hover:bg-gray-200',
               )}
             >
               Sign Up

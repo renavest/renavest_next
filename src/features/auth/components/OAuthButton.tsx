@@ -14,7 +14,7 @@ interface OAuthButtonProps {
   label: string;
 }
 
-export function OAuthButton({ strategy, icon, label }: OAuthButtonProps) {
+export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProps) {
   const { signIn, isLoaded } = useSignIn();
   const clerk = useClerk();
 
@@ -81,7 +81,7 @@ export function OAuthButton({ strategy, icon, label }: OAuthButtonProps) {
     <button
       type='button'
       onClick={handleOAuthSignIn}
-      disabled={!isLoaded}
+      disabled={!isLoaded || disabled}
       className={cn(
         'w-full border-2 text-gray-900 rounded-lg h-11 font-medium transition-colors flex items-center justify-center',
         COLORS.WARM_PURPLE[20],
