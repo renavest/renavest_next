@@ -1,6 +1,7 @@
 'use client';
-import { UserButton } from '@clerk/nextjs';
+import { UserButton, SignedIn, SignedOut } from '@clerk/nextjs';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
 import { LogoutButton } from '@/src/components/shared/LogoutButton';
@@ -51,8 +52,23 @@ export default function Navbar({ title }: NavbarProps) {
           </h1>
         </div>
         <div className='flex items-center space-x-2'>
-          <LogoutButton />
-          <UserButton />
+          <SignedIn>
+            <LogoutButton />
+            <UserButton />
+          </SignedIn>
+          <SignedOut>
+            <Link
+              href='/login'
+              className={`
+                px-4 py-2 rounded-md text-white font-medium 
+                ${COLORS.WARM_PURPLE.bg} 
+                ${COLORS.WARM_PURPLE.hover}
+                transition-colors duration-300
+              `}
+            >
+              Sign Up
+            </Link>
+          </SignedOut>
         </div>
       </div>
     </header>

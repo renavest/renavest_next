@@ -9,6 +9,7 @@ import { COLORS } from '@/src/styles/colors';
 
 import {
   authErrorSignal,
+  authModeSignal,
   emailSignal,
   passwordSignal,
   selectedRoleSignal,
@@ -84,7 +85,7 @@ async function handleEmailSignIn(
     authErrorSignal.value = 'Please select a role before continuing';
     return false;
   }
-    
+
   // Validate email and password
   if (!emailSignal.value || !passwordSignal.value) {
     authErrorSignal.value = 'Please enter both email and password';
@@ -108,6 +109,13 @@ async function handleEmailSignIn(
             ? '/employer'
             : '/employee';
 
+    // Track signup attempt
+    posthog.capture('user_signup_attempt', {
+      method: 'email',
+      role: selectedRoleSignal.value,
+      email_domain: emailSignal.value.split('@')[1] || 'unknown',
+    });
+
     // Attempt sign-in
     const result = await signIn.create({
       identifier: emailSignal.value,
@@ -125,27 +133,45 @@ async function handleEmailSignIn(
             role: selectedRoleSignal.value,
           },
         });
-      }
 
-      // Track login event
-      posthog.capture('user_login', {
-        role: selectedRoleSignal.value,
-        method: 'email',
-      });
+        // Track successful signup
+        posthog.capture('user_signup_success', {
+          user_id: user.id,
+          role: selectedRoleSignal.value,
+          method: 'email',
+          email_domain: emailSignal.value.split('@')[1] || 'unknown',
+        });
+      }
 
       return true;
     } else {
       authErrorSignal.value = 'Sign in failed. Please try again.';
+
+      // Track signup failure
+      posthog.capture('user_signup_failed', {
+        error: 'Sign in incomplete',
+        role: selectedRoleSignal.value,
+        signup_stage: 'final_authentication',
+      });
+
       return false;
     }
   } catch (err) {
     console.error('Sign in error:', err);
     authErrorSignal.value = 'Failed to sign in. Please try again.';
+
+    // Track signup error
+    posthog.capture('user_signup_error', {
+      error: err instanceof Error ? err.message : 'Unknown error',
+      role: selectedRoleSignal.value,
+      signup_stage: 'exception',
+    });
+
     return false;
   }
 }
 
-function EmailSignInForm() {
+function EmailAuthForm() {
   const { signIn, isLoaded } = useSignIn();
   const clerk = useClerk();
 
@@ -200,20 +226,59 @@ function EmailSignInForm() {
         )}
         disabled={!isLoaded}
       >
-        Sign in with Email
+        {authModeSignal.value === 'signin' ? 'Sign In' : 'Create Account'}
       </button>
     </form>
   );
 }
 
-export default function LoginForm() {
+export default function AuthenticationForm() {
   return (
-    <div className='space-y-8'>
+    <div className='space-y-8 max-w-md mx-auto'>
       <div className='text-center'>
-        <h1 className='text-3xl md:text-4xl font-bold text-gray-900 mb-4'>Welcome to Renavest</h1>
-        <p className='text-lg text-gray-600 max-w-2xl mx-auto'>
-          Transform your relationship with money through Financial Therapy
+        <h1 className='text-3xl md:text-4xl font-bold text-gray-900 mb-4'>
+          {authModeSignal.value === 'signin' ? 'Welcome Back' : 'Create Your Account'}
+        </h1>
+        <p className='text-lg text-gray-600 max-w-2xl mx-auto mb-6'>
+          {authModeSignal.value === 'signin'
+            ? 'Continue your financial wellness journey'
+            : 'Start transforming your relationship with money'}
         </p>
+
+        <div className='flex justify-center mb-6'>
+          <div className='inline-flex rounded-md shadow-sm' role='group'>
+            <button
+              type='button'
+              onClick={() => {
+                authModeSignal.value = 'signin';
+                authErrorSignal.value = '';
+              }}
+              className={cn(
+                'px-4 py-2 text-sm font-medium border',
+                authModeSignal.value === 'signin'
+                  ? `${COLORS.WARM_PURPLE.bg} text-white border-transparent`
+                  : 'bg-white text-gray-900 border-gray-200 hover:bg-gray-100',
+              )}
+            >
+              Sign In
+            </button>
+            <button
+              type='button'
+              onClick={() => {
+                authModeSignal.value = 'signup';
+                authErrorSignal.value = '';
+              }}
+              className={cn(
+                'px-4 py-2 text-sm font-medium border -ml-px',
+                authModeSignal.value === 'signup'
+                  ? `${COLORS.WARM_PURPLE.bg} text-white border-transparent`
+                  : 'bg-white text-gray-900 border-gray-200 hover:bg-gray-100',
+              )}
+            >
+              Sign Up
+            </button>
+          </div>
+        </div>
       </div>
 
       <RoleSelection />
@@ -222,7 +287,7 @@ export default function LoginForm() {
 
       {selectedRoleSignal.value && (
         <>
-          <EmailSignInForm />
+          <EmailAuthForm />
 
           <div className='relative my-6'>
             <div className='absolute inset-0 flex items-center'>
