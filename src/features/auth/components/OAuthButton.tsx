@@ -12,6 +12,7 @@ interface OAuthButtonProps {
   strategy: OAuthStrategy;
   icon: React.ReactNode;
   label: string;
+  disabled?: boolean;
 }
 
 export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProps) {
@@ -35,6 +36,7 @@ export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProp
         method: strategy,
         role: selectedRoleSignal.value,
         oauth_provider: strategy,
+        // Note: Email will be captured in the callback/after successful authentication
       });
 
       // Sign out of any existing session before OAuth sign-in
