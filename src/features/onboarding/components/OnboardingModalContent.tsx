@@ -1,32 +1,8 @@
 'use client';
 
-import { useClerk } from '@clerk/nextjs';
-import posthog from 'posthog-js';
-import { useState } from 'react';
-import { toast } from 'sonner';
-
-import { ALLOWED_EMAILS } from '@/src/constants';
 import { COLORS } from '@/src/styles/colors';
 
-import { submitOnboardingData } from '../actions/onboardingActions';
-import {
-  OnboardingQuestion,
-  onboardingQuestions,
-  onboardingSignal,
-} from '../state/onboardingState';
-
-import { OnboardingModalContent } from './OnboardingModalContent';
-import { useOnboardingSubmission } from './useOnboardingSubmission';
-
-interface OnboardingContentProps {
-  currentQuestion: OnboardingQuestion;
-  selectedAnswers: Record<number, string[]>;
-  onOptionSelect: (optionId: string) => void;
-  onNext: () => void;
-  isLastStep: boolean;
-  canProceed: boolean;
-  isSubmitting: boolean;
-}
+import { OnboardingQuestion, onboardingQuestions } from '../state/onboardingState';
 
 interface LeftSideContentProps {
   isFirstQuestion: boolean;
@@ -77,7 +53,7 @@ function LeftSideContent({ isFirstQuestion, currentQuestion, currentStep }: Left
           Question {currentStep + 1} of {onboardingQuestions.length}
         </p>
         <div className='flex gap-1 md:gap-2'>
-          {onboardingQuestions.map((_, index) => (
+          {onboardingQuestions.map((_, index: number) => (
             <div
               key={index}
               className={`h-1.5 md:h-2 w-1.5 md:w-2 rounded-full transition-colors ${
@@ -89,6 +65,16 @@ function LeftSideContent({ isFirstQuestion, currentQuestion, currentStep }: Left
       </div>
     </div>
   );
+}
+
+interface OnboardingContentProps {
+  currentQuestion: OnboardingQuestion;
+  selectedAnswers: Record<number, string[]>;
+  onOptionSelect: (optionId: string) => void;
+  onNext: () => void;
+  isLastStep: boolean;
+  canProceed: boolean;
+  isSubmitting: boolean;
 }
 
 function OnboardingContent({
@@ -180,101 +166,7 @@ function OnboardingContent({
   );
 }
 
-function useOnboardingSubmission() {
-  const { user: clerkUser } = useClerk();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = async (selectedAnswers: Record<number, string[]>, currentStep: number) => {
-    setIsSubmitting(true);
-
-    // Track onboarding submission start
-    posthog.capture('onboarding_submission_start', {
-      user_id: clerkUser?.id,
-      total_questions: onboardingQuestions.length,
-      current_step: currentStep,
-    });
-
-    try {
-      // Check if user is in allowed emails list (salesperson)
-      const userEmail = clerkUser?.emailAddresses[0]?.emailAddress || '';
-      const isAllowedEmail = ALLOWED_EMAILS.includes(userEmail);
-
-      if (!isAllowedEmail) {
-        // Prepare onboarding data for tracking
-        const onboardingData = Object.entries(selectedAnswers).map(([questionId, answers]) => ({
-          questionId: parseInt(questionId),
-          answers,
-        }));
-
-        // Track onboarding data details
-        posthog.capture('onboarding_data_collected', {
-          user_id: clerkUser?.id,
-          email_domain: userEmail.split('@')[1] || 'unknown',
-          total_questions_answered: onboardingData.length,
-          questions_data: onboardingData.map((q) => ({
-            questionId: q.questionId,
-            answersCount: q.answers.length,
-          })),
-        });
-
-        // Only submit data for non-salespeople
-        await submitOnboardingData(selectedAnswers);
-
-        // Update Clerk user metadata to mark onboarding as complete
-        if (clerkUser) {
-          await clerkUser.update({
-            unsafeMetadata: {
-              ...clerkUser.unsafeMetadata,
-              onboardingComplete: true,
-            },
-          });
-
-          // Track successful onboarding completion
-          posthog.capture('onboarding_completed', {
-            user_id: clerkUser.id,
-            email_domain: userEmail.split('@')[1] || 'unknown',
-            total_questions_answered: onboardingData.length,
-          });
-        }
-
-        // Show success toast
-        toast.success('Onboarding completed successfully!', {
-          description: `We've matched you with personalized financial insights.`,
-        });
-
-        // Close the onboarding modal
-        onboardingSignal.value = false;
-      } else {
-        // Track skipped onboarding for salespeople
-        posthog.capture('onboarding_skipped', {
-          user_id: clerkUser?.id,
-          reason: 'Salesperson email',
-          email_domain: userEmail.split('@')[1] || 'unknown',
-        });
-      }
-    } catch (error) {
-      // Track onboarding submission error
-      posthog.capture('onboarding_submission_error', {
-        user_id: clerkUser?.id,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        current_step: currentStep,
-      });
-
-      // Show error toast
-      toast.error('Onboarding submission failed', {
-        description: 'Please try again or contact support.',
-      });
-
-      console.error('Onboarding submission error:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return { handleSubmit, isSubmitting };
-}
-
-function OnboardingModalContent({
+export function OnboardingModalContent({
   _clerkUser,
   currentStep,
   currentQuestion,
@@ -351,100 +243,5 @@ function OnboardingModalContent({
         </div>
       </div>
     </div>
-  );
-}
-
-export default function OnboardingModal() {
-  const { user: clerkUser } = useClerk();
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string[]>>(
-    () => onboardingSignal.value.answers,
-  );
-
-  const signalState = onboardingSignal.value;
-  const { handleSubmit, isSubmitting } = useOnboardingSubmission();
-
-  const currentStep = signalState.currentStep;
-  const currentQuestion = onboardingQuestions[currentStep];
-  const progress = ((currentStep + 1) / onboardingQuestions.length) * 100;
-  const isLastStep = currentStep === onboardingQuestions.length - 1;
-  const isFirstQuestion = currentStep === 0;
-
-  const handleOptionSelect = (optionId: string) => {
-    setSelectedAnswers((prev) => {
-      const questionId = currentQuestion.id;
-
-      // Track option selection
-      posthog.capture('onboarding_step_interaction', {
-        user_id: clerkUser?.id,
-        question_id: questionId,
-        selected_option: optionId,
-        question_type: currentQuestion.type,
-        is_multi_select: currentQuestion.multiSelect || false,
-      });
-
-      if (currentQuestion.multiSelect) {
-        const current = prev[questionId] || [];
-        const updated = current.includes(optionId)
-          ? current.filter((id) => id !== optionId)
-          : [...current, optionId];
-        return { ...prev, [questionId]: updated };
-      }
-      return { ...prev, [questionId]: [optionId] };
-    });
-  };
-
-  const handleNext = () => {
-    const nextStep = currentStep + 1;
-    const isLastStep = nextStep >= onboardingQuestions.length;
-
-    // Track progress through onboarding steps
-    posthog.capture('onboarding_step_progress', {
-      user_id: clerkUser?.id,
-      current_step: currentStep,
-      total_steps: onboardingQuestions.length,
-      question_id: currentQuestion.id,
-      selected_answers: selectedAnswers[currentQuestion.id] || [],
-    });
-
-    if (isLastStep) {
-      handleSubmit(selectedAnswers, currentStep);
-    } else {
-      onboardingSignal.value = {
-        isComplete: false,
-        currentStep: nextStep,
-        answers: { ...selectedAnswers },
-      };
-    }
-  };
-
-  const handleClose = () => {
-    // Track if user closes onboarding prematurely
-    posthog.capture('onboarding_abandoned', {
-      user_id: clerkUser?.id,
-      current_step: currentStep,
-      total_steps: onboardingQuestions.length,
-      progress_percentage: ((currentStep + 1) / onboardingQuestions.length) * 100,
-    });
-
-    onboardingSignal.value = {
-      ...onboardingSignal.value,
-      isComplete: true,
-    };
-  };
-
-  return (
-    <OnboardingModalContent
-      _clerkUser={{ id: clerkUser?.id }}
-      currentStep={currentStep}
-      currentQuestion={currentQuestion}
-      isFirstQuestion={isFirstQuestion}
-      isLastStep={isLastStep}
-      selectedAnswers={selectedAnswers}
-      handleOptionSelect={handleOptionSelect}
-      handleNext={handleNext}
-      handleClose={handleClose}
-      isSubmitting={isSubmitting.value}
-      progress={progress}
-    />
   );
 }
