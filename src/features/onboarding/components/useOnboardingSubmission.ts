@@ -1,11 +1,12 @@
 'use client';
 
 import { useClerk } from '@clerk/nextjs';
-import posthog from 'posthog-js';
 import { signal } from '@preact-signals/safe-react';
+import posthog from 'posthog-js';
 import { toast } from 'sonner';
 
 import { ALLOWED_EMAILS } from '@/src/constants';
+
 import { submitOnboardingData } from '../actions/onboardingActions';
 import { onboardingSignal } from '../state/onboardingState';
 

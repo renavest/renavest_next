@@ -18,6 +18,30 @@ import {
 import { OnboardingModalContent } from './OnboardingModalContent';
 import { useOnboardingSubmission } from './useOnboardingSubmission';
 
+// Type declarations to resolve import issues
+declare module './OnboardingModalContent' {
+  export function OnboardingModalContent(props: {
+    _clerkUser: { id?: string };
+    currentStep: number;
+    currentQuestion: OnboardingQuestion;
+    isFirstQuestion: boolean;
+    isLastStep: boolean;
+    selectedAnswers: Record<number, string[]>;
+    handleOptionSelect: (optionId: string) => void;
+    handleNext: () => void;
+    handleClose: () => void;
+    isSubmitting: boolean;
+    progress: number;
+  }): JSX.Element;
+}
+
+declare module './useOnboardingSubmission' {
+  export function useOnboardingSubmission(): {
+    handleSubmit: (selectedAnswers: Record<number, string[]>, currentStep: number) => Promise<void>;
+    isSubmitting: { value: boolean };
+  };
+}
+
 interface OnboardingContentProps {
   currentQuestion: OnboardingQuestion;
   selectedAnswers: Record<number, string[]>;
