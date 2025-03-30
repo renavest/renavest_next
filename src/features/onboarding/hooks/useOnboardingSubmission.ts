@@ -36,7 +36,7 @@ export function useOnboardingSubmission() {
     try {
       // Check if user is in allowed emails list (salesperson)
       const isAllowedEmail = ALLOWED_EMAILS.includes(userEmail);
-
+      
       if (!isAllowedEmail) {
         // Prepare onboarding data for tracking
         const onboardingData = Object.entries(selectedAnswers).map(([questionId, answers]) => ({
