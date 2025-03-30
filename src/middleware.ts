@@ -27,6 +27,12 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
       return NextResponse.redirect(loginUrl);
     }
   }
+  if (request.nextUrl.pathname === '/login') {
+    const { userId } = await auth();
+    if (userId) {
+      return NextResponse.redirect(new URL('/employee', request.url));
+    }
+  }
 });
 
 export const config = {

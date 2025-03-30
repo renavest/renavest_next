@@ -139,7 +139,7 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
   );
 };
 
-const AdvisorGrid: React.FC<{ advisors: Advisor[]; userId?: string }> = ({ advisors, userId }) => {
+const AdvisorGrid: React.FC<{ advisors: Advisor[] }> = ({ advisors }) => {
   // Update the signals when an advisor is clicked.
   const handleAdvisorClick = (advisor: Advisor) => {
     advisorSignal.value = advisor;

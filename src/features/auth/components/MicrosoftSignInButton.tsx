@@ -15,6 +15,11 @@ export default function MicrosoftSignInButton() {
   );
 
   return (
-    <OAuthButton strategy='oauth_microsoft' icon={microsoftIcon} label='Sign in with Microsoft' />
+    <OAuthButton
+      disabled={true}
+      strategy='oauth_microsoft'
+      icon={microsoftIcon}
+      label='Sign in with Microsoft'
+    />
   );
 }

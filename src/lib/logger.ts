@@ -1,4 +1,4 @@
-import { Result, ok, err } from 'neverthrow';
+import { Result, ok } from 'neverthrow';
 import winston from 'winston';
 
 // Log levels with numeric severity

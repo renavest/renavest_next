@@ -72,17 +72,17 @@ const LoginLeftSection = () => (
         >
           💡
         </div>
-        <h2 className='text-4xl font-bold text-gray-900 mb-6'>Reimagine Your Financial Wellness</h2>
+        <h2 className='text-4xl font-bold text-gray-900 mb-6'>Financial Wellness Beyond Numbers</h2>
         <p className='text-xl text-gray-600 mb-10'>
-          More than just numbers. A holistic approach to financial health.
+          Where emotional intelligence meets financial empowerment
         </p>
       </div>
     </div>
 
     <div className='space-y-6 max-w-md relative z-10'>
+      <LoginFeature icon={CheckCircle2} text='Emotional Insights into Financial Behaviors' />
       <LoginFeature icon={CheckCircle2} text='Personalized Financial Therapy' />
-      <LoginFeature icon={CheckCircle2} text='Emotional Intelligence in Finance' />
-      <LoginFeature icon={CheckCircle2} text='Comprehensive Wellness Support' />
+      <LoginFeature icon={CheckCircle2} text='Holistic Approach to Financial Well-being' />
     </div>
 
     <div className='mt-12 relative z-10'>
@@ -102,9 +102,7 @@ const LoginLeftSection = () => (
             <path d='M12 12v5' />
           </svg>
         </div>
-        <span className='text-sm text-gray-600'>
-          Your journey to financial wellness starts here
-        </span>
+        <span className='text-sm text-gray-600'>Transform your relationship with money</span>
       </div>
     </div>
   </div>
