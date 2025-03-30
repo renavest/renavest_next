@@ -30,14 +30,16 @@ export function OAuthButton({ strategy, icon, label }: OAuthButtonProps) {
         return;
       }
 
+      // Track OAuth signup attempt
+      posthog.capture('user_signup_attempt', {
+        method: strategy,
+        role: selectedRoleSignal.value,
+        oauth_provider: strategy,
+      });
+
       // Sign out of any existing session before OAuth sign-in
       await clerk.signOut();
 
-      // Capture login attempt
-      posthog.capture('user_login_attempt', {
-        method: strategy,
-        role: selectedRoleSignal.value,
-      });
       const redirectUrlComplete =
         selectedRoleSignal.value === 'employee'
           ? '/employee'
@@ -46,6 +48,15 @@ export function OAuthButton({ strategy, icon, label }: OAuthButtonProps) {
             : selectedRoleSignal.value === 'employer'
               ? '/employer'
               : '/employee';
+
+      // Track OAuth redirect
+      posthog.capture('user_signup_oauth_redirect', {
+        method: strategy,
+        role: selectedRoleSignal.value,
+        redirect_url: `/sign-up/sso-callback`,
+        redirect_url_complete: redirectUrlComplete,
+      });
+
       // Authenticate with redirect and pass role in redirectUrl
       await signIn.authenticateWithRedirect({
         strategy,
@@ -55,6 +66,14 @@ export function OAuthButton({ strategy, icon, label }: OAuthButtonProps) {
     } catch (err) {
       console.error('OAuth error:', err);
       authErrorSignal.value = 'Failed to sign in. Please try again.';
+
+      // Track OAuth signup error
+      posthog.capture('user_signup_error', {
+        error: err instanceof Error ? err.message : 'Unknown error',
+        role: selectedRoleSignal.value,
+        signup_stage: 'oauth_exception',
+        oauth_method: strategy,
+      });
     }
   };
 
