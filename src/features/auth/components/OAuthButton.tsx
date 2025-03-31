@@ -12,6 +12,7 @@ interface OAuthButtonProps {
   strategy: OAuthStrategy;
   icon: React.ReactNode;
   label: string;
+  disabled?: boolean;
 }
 
 export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProps) {
