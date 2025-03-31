@@ -108,7 +108,7 @@ export function useOnboardingSubmission() {
           reason: 'Salesperson email',
           email_domain: userEmail.split('@')[1] || 'unknown',
         });
-        toast.error('Onboarding completed successfully!');
+        toast.error('Onboarding skipped for salesperson email');
 
         // Close the onboarding modal for salespeople
         onboardingSignal.value = {
