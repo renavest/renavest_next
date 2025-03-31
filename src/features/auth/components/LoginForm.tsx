@@ -1,14 +1,23 @@
 'use client';
 
 import Link from 'next/link';
+// import { useSignIn, useClerk } from '@clerk/nextjs';
+// import posthog from 'posthog-js';
 
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
-import { authErrorSignal, selectedRoleSignal } from '../state/authState';
+import {
+  authErrorSignal,
+  // authModeSignal,
+  // emailSignal,
+  // passwordSignal,
+  selectedRoleSignal,
+} from '../state/authState';
 import { UserType } from '../types/auth';
 
 import GoogleSignInButton from './GoogleSignInButton';
+// import MicrosoftSignInButton from './MicrosoftSignInButton';
 
 function AuthErrorMessage({ message }: { message: string }) {
   return (
@@ -38,6 +47,35 @@ const ROLE_OPTIONS: { value: UserType; label: string; description: string }[] = 
     description: 'Manage your client sessions',
   },
 ];
+
+// Commented out email sign-in function
+/*
+async function handleEmailSignIn(
+  e: React.FormEvent,
+  signIn: ReturnType<typeof useSignIn>['signIn'],
+  isLoaded: boolean,
+  clerk: ReturnType<typeof useClerk>,
+): Promise<boolean> {
+  // Previous email sign-in implementation
+  // ... (full previous implementation)
+}
+
+function EmailAuthForm() {
+  const { signIn, isLoaded } = useSignIn();
+  const clerk = useClerk();
+
+  const onSubmit = async (e: React.FormEvent) => {
+    await handleEmailSignIn(e, signIn, isLoaded, clerk);
+  };
+
+  return (
+    <form onSubmit={onSubmit} className='space-y-6'>
+      // Previous email form implementation
+      // ... (full previous implementation)
+    </form>
+  );
+}
+*/
 
 function RoleSelection() {
   return (
@@ -72,6 +110,43 @@ export default function AuthenticationForm() {
         <p className='text-lg text-gray-600 max-w-2xl mx-auto mb-6'>
           Transform your relationship with money
         </p>
+
+        {/* Commented out sign-in/sign-up toggle
+        <div className='flex justify-center mb-6'>
+          <div className='inline-flex rounded-full shadow-sm bg-gray-100 p-1' role='group'>
+            <button
+              type='button'
+              onClick={() => {
+                authModeSignal.value = 'signin';
+                authErrorSignal.value = '';
+              }}
+              className={cn(
+                'px-4 py-2 text-sm font-medium rounded-full transition-all duration-200',
+                authModeSignal.value === 'signin'
+                  ? `${COLORS.WARM_PURPLE.bg} text-white`
+                  : 'bg-transparent text-gray-600 hover:bg-gray-200',
+              )}
+            >
+              Sign In
+            </button>
+            <button
+              type='button'
+              onClick={() => {
+                authModeSignal.value = 'signup';
+                authErrorSignal.value = '';
+              }}
+              className={cn(
+                'px-4 py-2 text-sm font-medium rounded-full transition-all duration-200',
+                authModeSignal.value === 'signup'
+                  ? `${COLORS.WARM_PURPLE.bg} text-white`
+                  : 'bg-transparent text-gray-600 hover:bg-gray-200',
+              )}
+            >
+              Sign Up
+            </button>
+          </div>
+        </div>
+        */}
       </div>
 
       <RoleSelection />
@@ -80,8 +155,20 @@ export default function AuthenticationForm() {
 
       {selectedRoleSignal.value && (
         <>
+          {/* Commented out "Or continue with" divider
+          <div className='relative my-6'>
+            <div className='absolute inset-0 flex items-center'>
+              <div className='w-full border-t border-gray-300' />
+            </div>
+            <div className='relative flex justify-center text-sm'>
+              <span className='px-4 bg-white text-gray-500'>Or continue with</span>
+            </div>
+          </div>
+          */}
+
           <div className='grid gap-4'>
             <GoogleSignInButton />
+            {/* <MicrosoftSignInButton /> */}
           </div>
         </>
       )}
