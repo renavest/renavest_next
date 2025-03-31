@@ -36,7 +36,7 @@ export function useOnboardingSubmission() {
     try {
       // Check if user is in allowed emails list (salesperson)
       const isAllowedEmail = ALLOWED_EMAILS.includes(userEmail);
-      
+
       if (!isAllowedEmail) {
         // Prepare onboarding data for tracking
         const onboardingData = Object.entries(selectedAnswers).map(([questionId, answers]) => ({
@@ -108,6 +108,16 @@ export function useOnboardingSubmission() {
           reason: 'Salesperson email',
           email_domain: userEmail.split('@')[1] || 'unknown',
         });
+        toast.error('Onboarding completed successfully!');
+
+        // Close the onboarding modal for salespeople
+        onboardingSignal.value = {
+          isComplete: true,
+          currentStep: 0,
+          answers: {},
+        };
+
+        setIsSubmitting(false);
       }
     } catch (error) {
       // Track onboarding submission error
