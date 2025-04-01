@@ -50,13 +50,8 @@ export function PricingCard({ plan }: { plan: Plan }) {
       </p>
       <div className='flex flex-col gap-1 mt-2'>
         <p className={cn(plan.featured ? 'text-gray-300' : 'text-gray-600', 'text-sm leading-6')}>
-          Billed annually: ${plan.annualPrice}/employee/year
+          Billed annually
         </p>
-        {plan.savings !== '0' && (
-          <p className='text-green-500 text-sm font-medium'>
-            Save {plan.savings} with annual billing
-          </p>
-        )}
       </div>
       <Link
         href='/employer'
