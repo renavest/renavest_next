@@ -22,7 +22,7 @@ export const plans: Plan[] = [
     savings: '0',
     features: [
       'Comprehensive financial wellness platform for your team',
-      'Up to 100 personalized therapy sessions for employees',
+      '100 Financial Therapy Credits for flexible employee support',
       'Bi-annual expert-led financial wellness workshops',
       'Track employee engagement and program impact',
     ],
@@ -37,7 +37,7 @@ export const plans: Plan[] = [
     savings: '20%',
     features: [
       'Enhanced financial wellness platform with advanced tools',
-      'Up to 200 personalized therapy sessions for deeper employee support',
+      '200 Financial Therapy Credits for expanded employee support',
       'Quarterly expert-led workshops to boost financial literacy',
       'Detailed insights on program effectiveness and engagement',
       'Fast-track support to resolve issues quickly',
@@ -54,7 +54,7 @@ export const plans: Plan[] = [
     savings: '30%',
     features: [
       'Premium financial wellness ecosystem with all advanced features',
-      'Up to 400 therapy sessions for maximum team coverage',
+      '400 Financial Therapy Credits for comprehensive team coverage',
       'Bi-monthly workshops and tailored financial education programs',
       'Comprehensive ROI analysis and strategic program insights',
       'Immediate support access via phone and email',
