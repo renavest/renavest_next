@@ -1,10 +1,5 @@
 import DashboardHeader from '@/src/features/employee-dashboard/components/DashboardHeader';
-import {
-  PricingCard,
-  PricingHeader,
-  WhyChooseUs,
-  CTASection,
-} from '@/src/features/pricing/components';
+import { PricingCard, PricingHeader, WhyChooseUs } from '@/src/features/pricing/components';
 import { plans, Plan } from '@/src/features/pricing/data/pricing-data';
 
 export default function PricingPage() {
@@ -22,13 +17,8 @@ export default function PricingPage() {
 
         <div className='mt-20 flex flex-col items-center'>
           <WhyChooseUs />
-          <CTASection />
         </div>
       </div>
     </div>
   );
 }
-
-
-
-
