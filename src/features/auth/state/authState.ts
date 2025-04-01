@@ -21,7 +21,7 @@ const initialState: AuthState = {
 };
 
 export const selectedRoleSignal = signal<UserType | null>(null);
-export const authModeSignal = signal<'signin' | 'signup'>('signin');
+// export const authModeSignal = signal<'signin' | 'signup'>('signin');
 export const authErrorSignal = signal<string | null>(null);
 export const emailSignal = signal<string>('');
 export const passwordSignal = signal<string>('');
