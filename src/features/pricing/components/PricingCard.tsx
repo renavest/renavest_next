@@ -1,7 +1,10 @@
 import Link from 'next/link';
+
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
+
 import { Plan } from '../data/pricing-data';
+
 import { CheckIcon, XIcon } from './pricing-icons';
 
 export function PricingCard({ plan }: { plan: Plan }) {
