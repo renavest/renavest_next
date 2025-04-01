@@ -1,7 +1,7 @@
 'use client';
 
 import { UserButton } from '@clerk/nextjs';
-import { Menu, Users, X, Shield } from 'lucide-react';
+import { Menu, Users, X, Shield, DollarSign } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect } from 'react';
@@ -84,6 +84,7 @@ export default function DashboardHeader() {
         {/* Desktop Navigation */}
         <div className='hidden md:flex items-center gap-4'>
           <NavigationItem href='/explore' icon={Users} label='Find Therapists' />
+          <NavigationItem href='/pricing' icon={DollarSign} label='Pricing' />
           <NavigationItem href='/privacy' icon={Shield} label='Privacy & Security' />
           <LogoutButton />
           <div className='ml-2'>
@@ -101,6 +102,7 @@ export default function DashboardHeader() {
         >
           <div className='p-4 space-y-2'>
             <NavigationItem href='/explore' icon={Users} label='Find Therapists' isMobile />
+            <NavigationItem href='/pricing' icon={DollarSign} label='Pricing' isMobile />
             <NavigationItem href='/privacy' icon={Shield} label='Privacy & Security' isMobile />
             <div className='px-4 py-2 border-t'>
               <LogoutButton
