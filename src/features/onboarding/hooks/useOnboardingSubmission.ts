@@ -1,6 +1,6 @@
 'use client';
 
-import { useClerk } from '@clerk/nextjs';
+import { useClerk, useUser } from '@clerk/nextjs';
 import posthog from 'posthog-js';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -13,6 +13,7 @@ import { onboardingSignal, onboardingQuestions } from '../state/onboardingState'
 
 export function useOnboardingSubmission() {
   const { user: clerkUser } = useClerk();
+  const { user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (selectedAnswers: Record<number, string[]>, currentStep: number) => {
@@ -23,9 +24,9 @@ export function useOnboardingSubmission() {
     const userEmail = clerkUser?.emailAddresses[0]?.emailAddress || '';
     const isStaff = ['employee', 'therapist', 'employer'].includes(userRole || '');
 
-    // Track onboarding submission start
+    // Track onboarding submission start with comprehensive context
     posthog.capture('onboarding_submission_start', {
-      user_id: clerkUser?.id,
+      user_id: user?.id || clerkUser?.id || 'anonymous',
       email: userEmail,
       role: userRole,
       is_staff: isStaff,
@@ -44,9 +45,9 @@ export function useOnboardingSubmission() {
           answers,
         }));
 
-        // Track onboarding data details
+        // Track onboarding data details with more context
         posthog.capture('onboarding_data_collected', {
-          user_id: clerkUser?.id,
+          user_id: user?.id || clerkUser?.id || 'anonymous',
           email: userEmail,
           role: userRole,
           is_staff: isStaff,
@@ -71,9 +72,9 @@ export function useOnboardingSubmission() {
             },
           });
 
-          // Track successful onboarding completion
+          // Track successful onboarding completion with comprehensive context
           posthog.capture('onboarding_completed', {
-            user_id: clerkUser.id,
+            user_id: user?.id || clerkUser.id,
             email: userEmail,
             role: userRole,
             is_staff: isStaff,
@@ -81,11 +82,13 @@ export function useOnboardingSubmission() {
             total_questions_answered: onboardingData.length,
           });
 
-          // Identify user in PostHog
-          posthog.identify(clerkUser.id, {
+          // Identify user in PostHog with comprehensive metadata
+          posthog.identify(user?.id || clerkUser.id, {
             email: userEmail,
             role: userRole,
             is_staff: isStaff,
+            onboarding_complete: true,
+            created_at: user?.createdAt || new Date().toISOString(),
           });
         }
 
@@ -99,9 +102,9 @@ export function useOnboardingSubmission() {
           answers: {},
         };
       } else {
-        // Track skipped onboarding for salespeople
+        // Track skipped onboarding for salespeople with more context
         posthog.capture('onboarding_skipped', {
-          user_id: clerkUser?.id,
+          user_id: user?.id || clerkUser?.id || 'anonymous',
           email: userEmail,
           role: userRole,
           is_staff: isStaff,
@@ -120,9 +123,9 @@ export function useOnboardingSubmission() {
         setIsSubmitting(false);
       }
     } catch (error) {
-      // Track onboarding submission error
+      // Track onboarding submission error with comprehensive context
       posthog.capture('onboarding_submission_error', {
-        user_id: clerkUser?.id,
+        user_id: user?.id || clerkUser?.id || 'anonymous',
         email: userEmail,
         role: userRole,
         is_staff: isStaff,

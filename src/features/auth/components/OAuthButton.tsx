@@ -1,4 +1,4 @@
-import { useSignIn, useClerk } from '@clerk/nextjs';
+import { useSignIn, useClerk, useUser } from '@clerk/nextjs';
 import { OAuthStrategy } from '@clerk/types';
 import posthog from 'posthog-js';
 import * as React from 'react';
@@ -18,6 +18,7 @@ interface OAuthButtonProps {
 export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProps) {
   const { signIn, isLoaded } = useSignIn();
   const clerk = useClerk();
+  const { user } = useUser();
 
   const handleOAuthSignIn = async () => {
     if (!selectedRoleSignal.value) {
@@ -31,11 +32,13 @@ export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProp
         return;
       }
 
-      // Track OAuth signup attempt
+      // Track OAuth signup attempt with more context
       posthog.capture('user_signup_attempt', {
         method: strategy,
         role: selectedRoleSignal.value,
         oauth_provider: strategy,
+        user_id: user?.id || 'anonymous',
+        email: user?.emailAddresses[0]?.emailAddress || 'unknown',
       });
 
       // Sign out of any existing session before OAuth sign-in
@@ -50,12 +53,14 @@ export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProp
               ? '/employer'
               : '/employee';
 
-      // Track OAuth redirect
+      // Track OAuth redirect with more detailed information
       posthog.capture('user_signup_oauth_redirect', {
         method: strategy,
         role: selectedRoleSignal.value,
         redirect_url: `/sign-up/sso-callback`,
         redirect_url_complete: redirectUrlComplete,
+        user_id: user?.id || 'anonymous',
+        email: user?.emailAddresses[0]?.emailAddress || 'unknown',
       });
 
       // Authenticate with redirect and pass role in redirectUrl
@@ -68,12 +73,14 @@ export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProp
       console.error('OAuth error:', err);
       authErrorSignal.value = 'Failed to sign in. Please try again.';
 
-      // Track OAuth signup error
+      // Track OAuth signup error with comprehensive context
       posthog.capture('user_signup_error', {
         error: err instanceof Error ? err.message : 'Unknown error',
         role: selectedRoleSignal.value,
         signup_stage: 'oauth_exception',
         oauth_method: strategy,
+        user_id: user?.id || 'anonymous',
+        email: user?.emailAddresses[0]?.emailAddress || 'unknown',
       });
     }
   };
