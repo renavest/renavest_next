@@ -1,6 +1,6 @@
 'use client';
 
-import { useClerk } from '@clerk/nextjs';
+import { useClerk, useUser } from '@clerk/nextjs';
 import posthog from 'posthog-js';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -10,127 +10,117 @@ import { selectedRoleSignal } from '@/src/features/auth/state/authState';
 
 import { submitOnboardingData } from '../actions/onboardingActions';
 import { onboardingSignal, onboardingQuestions } from '../state/onboardingState';
+import {
+  OnboardingContext,
+  OnboardingData,
+  trackOnboardingStart,
+  trackOnboardingDataCollection,
+  trackOnboardingCompletion,
+  trackOnboardingSkipped,
+  trackOnboardingError,
+} from '../utils/onboardingTracking';
 
 export function useOnboardingSubmission() {
   const { user: clerkUser } = useClerk();
+  const { user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const prepareOnboardingData = (selectedAnswers: Record<number, string[]>): OnboardingData[] =>
+    Object.entries(selectedAnswers).map(([questionId, answers]) => ({
+      questionId: parseInt(questionId),
+      answers,
+    }));
+
+  const updateClerkUserMetadata = async (userRole: string | null) => {
+    if (clerkUser) {
+      await clerkUser.update({
+        unsafeMetadata: {
+          ...clerkUser.unsafeMetadata,
+          onboardingComplete: true,
+          role: userRole,
+        },
+      });
+    }
+  };
+
+  const processNonSalespersonOnboarding = async (
+    selectedAnswers: Record<number, string[]>,
+    context: OnboardingContext,
+  ) => {
+    const onboardingData = prepareOnboardingData(selectedAnswers);
+
+    // Track data collection
+    trackOnboardingDataCollection(onboardingData, context);
+
+    await submitOnboardingData(selectedAnswers);
+    await updateClerkUserMetadata(context.userRole);
+
+    // Track completion
+    trackOnboardingCompletion(context, onboardingData);
+
+    // Identify user
+    posthog.identify(user?.id || clerkUser?.id, {
+      email: context.userEmail,
+      role: context.userRole,
+      is_staff: ['employee', 'therapist', 'employer'].includes(context.userRole || ''),
+      onboarding_complete: true,
+      created_at: user?.createdAt || new Date().toISOString(),
+    });
+
+    toast.success('Onboarding completed successfully!');
+
+    onboardingSignal.value = {
+      isComplete: true,
+      currentStep: 0,
+      answers: {},
+    };
+  };
 
   const handleSubmit = async (selectedAnswers: Record<number, string[]>, currentStep: number) => {
     setIsSubmitting(true);
 
-    // Get user role and email
     const userRole = selectedRoleSignal.value;
     const userEmail = clerkUser?.emailAddresses[0]?.emailAddress || '';
-    const isStaff = ['employee', 'therapist', 'employer'].includes(userRole || '');
 
-    // Track onboarding submission start
-    posthog.capture('onboarding_submission_start', {
-      user_id: clerkUser?.id,
-      email: userEmail,
-      role: userRole,
-      is_staff: isStaff,
-      total_questions: onboardingQuestions.length,
-      current_step: currentStep,
-    });
+    const context: OnboardingContext = {
+      userEmail,
+      userRole,
+      currentStep,
+    };
 
     try {
-      // Check if user is in allowed emails list (salesperson)
       const isAllowedEmail = ALLOWED_EMAILS.includes(userEmail);
 
+      // Tracking start of onboarding
+      trackOnboardingStart(context, onboardingQuestions.length);
+
       if (!isAllowedEmail) {
-        // Prepare onboarding data for tracking
-        const onboardingData = Object.entries(selectedAnswers).map(([questionId, answers]) => ({
-          questionId: parseInt(questionId),
-          answers,
-        }));
-
-        // Track onboarding data details
-        posthog.capture('onboarding_data_collected', {
-          user_id: clerkUser?.id,
-          email: userEmail,
-          role: userRole,
-          is_staff: isStaff,
-          email_domain: userEmail.split('@')[1] || 'unknown',
-          total_questions_answered: onboardingData.length,
-          questions_data: onboardingData.map((q) => ({
-            questionId: q.questionId,
-            answersCount: q.answers.length,
-          })),
-        });
-
-        // Only submit data for non-salespeople
-        await submitOnboardingData(selectedAnswers);
-
-        // Update Clerk user metadata to mark onboarding as complete
-        if (clerkUser) {
-          await clerkUser.update({
-            unsafeMetadata: {
-              ...clerkUser.unsafeMetadata,
-              onboardingComplete: true,
-              role: userRole,
-            },
-          });
-
-          // Track successful onboarding completion
-          posthog.capture('onboarding_completed', {
-            user_id: clerkUser.id,
-            email: userEmail,
-            role: userRole,
-            is_staff: isStaff,
-            email_domain: userEmail.split('@')[1] || 'unknown',
-            total_questions_answered: onboardingData.length,
-          });
-
-          // Identify user in PostHog
-          posthog.identify(clerkUser.id, {
-            email: userEmail,
-            role: userRole,
-            is_staff: isStaff,
-          });
-        }
-
-        // Show success toast
-        toast.success('Onboarding completed successfully!');
-
-        // Close the onboarding modal
-        onboardingSignal.value = {
-          isComplete: true,
-          currentStep: 0,
-          answers: {},
-        };
+        await processNonSalespersonOnboarding(selectedAnswers, context);
       } else {
         // Track skipped onboarding for salespeople
-        posthog.capture('onboarding_skipped', {
-          user_id: clerkUser?.id,
-          email: userEmail,
-          role: userRole,
-          is_staff: isStaff,
-          reason: 'Salesperson email',
-          email_domain: userEmail.split('@')[1] || 'unknown',
+        trackOnboardingSkipped(context);
+
+        // Identify user even for allowed emails
+        posthog.identify(user?.id || clerkUser?.id, {
+          email: context.userEmail,
+          role: context.userRole,
+          is_staff: ['employee', 'therapist', 'employer'].includes(context.userRole || ''),
+          onboarding_complete: true,
+          created_at: user?.createdAt || new Date().toISOString(),
         });
+        
         toast.error('Onboarding completed successfully!');
 
-        // Close the onboarding modal for salespeople
         onboardingSignal.value = {
           isComplete: true,
           currentStep: 0,
           answers: {},
         };
-
-        setIsSubmitting(false);
       }
     } catch (error) {
-      // Track onboarding submission error
-      posthog.capture('onboarding_submission_error', {
-        user_id: clerkUser?.id,
-        email: userEmail,
-        role: userRole,
-        is_staff: isStaff,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        current_step: currentStep,
-      });
+      // Track submission error
+      trackOnboardingError(context, error);
 
-      // Show error toast
       toast.error('Onboarding submission failed', {
         description: 'Please try again or contact support.',
       });
