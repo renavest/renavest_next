@@ -1,8 +1,7 @@
 'use client';
 import { Award } from 'lucide-react';
 import Image from 'next/image';
-import posthog from 'posthog-js';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 import { cn } from '@/src/lib/utils';
 import { Advisor } from '@/src/shared/types';
@@ -16,16 +15,6 @@ import AdvisorModal from './AdvisorModal';
 interface AdvisorCardProps {
   advisor: Advisor;
   onClick: () => void;
-}
-
-interface AdvisorGridProps {
-  advisors: Advisor[];
-  filters?: {
-    expertise?: string[];
-    certifications?: string[];
-    yearsOfExperience?: number;
-  };
-  searchQuery?: string;
 }
 
 const useImageLoadState = () => {
@@ -150,84 +139,18 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
   );
 };
 
-const AdvisorGrid: React.FC<AdvisorGridProps> = ({ advisors, filters, searchQuery }) => {
-  const [filteredAdvisors, setFilteredAdvisors] = useState<Advisor[]>(advisors);
-
-  useEffect(() => {
-    // Apply filters and search
-    let filtered = advisors;
-
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (advisor) =>
-          advisor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          advisor.expertise.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          advisor.certifications.toLowerCase().includes(searchQuery.toLowerCase()),
-      );
-
-      // Track search event
-      posthog.capture('therapist_search', {
-        search_query: searchQuery,
-        results_count: filtered.length,
-        total_advisors: advisors.length,
-      });
-    }
-
-    if (filters) {
-      if (filters.expertise?.length) {
-        filtered = filtered.filter((advisor) =>
-          filters.expertise?.some((exp) =>
-            advisor.expertise.toLowerCase().includes(exp.toLowerCase()),
-          ),
-        );
-      }
-
-      if (filters.certifications?.length) {
-        filtered = filtered.filter((advisor) =>
-          filters.certifications?.some((cert) =>
-            advisor.certifications.toLowerCase().includes(cert.toLowerCase()),
-          ),
-        );
-      }
-
-      if (filters.yearsOfExperience) {
-        filtered = filtered.filter(
-          (advisor) => parseInt(advisor.yoe) >= (filters.yearsOfExperience || 0),
-        );
-      }
-
-      // Track filter application
-      posthog.capture('therapist_filter_applied', {
-        filters_applied: filters,
-        results_count: filtered.length,
-        total_advisors: advisors.length,
-      });
-    }
-
-    setFilteredAdvisors(filtered);
-  }, [advisors, filters, searchQuery]);
-
+const AdvisorGrid: React.FC<{ advisors: Advisor[] }> = ({ advisors }) => {
   // Update the signals when an advisor is clicked.
   const handleAdvisorClick = (advisor: Advisor) => {
     advisorSignal.value = advisor;
     isOpenSignal.value = true;
-
-    // Track advisor selection
-    posthog.capture('therapist_selected', {
-      therapist_id: advisor.id,
-      therapist_name: advisor.name,
-      therapist_title: advisor.title,
-      therapist_expertise: advisor.expertise,
-      from_search: !!searchQuery,
-      from_filters: !!filters,
-    });
   };
 
   return (
     <OnboardingModalServerWrapper>
       <div className='max-w-7xl mx-auto px-3 sm:px-6 lg:px-8'>
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8'>
-          {filteredAdvisors.map((advisor) => (
+          {advisors.map((advisor) => (
             <AdvisorCard
               key={advisor.id}
               advisor={advisor}

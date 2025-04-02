@@ -193,16 +193,7 @@ export function OnboardingModalContent({
   isSubmitting,
   progress,
 }: OnboardingModalContentProps) {
-  // Hydration-safe check for proceeding
-  const canProceed = selectedAnswers && selectedAnswers[currentQuestion.id]?.length > 0;
-
-  // Ensure progress is a number and within 0-100 range
-  const safeProgress = typeof progress === 'number' ? Math.max(0, Math.min(100, progress)) : 0;
-
-  // Prevent rendering if critical props are missing
-  if (!currentQuestion) {
-    return null;
-  }
+  const canProceed = selectedAnswers[currentQuestion.id]?.length > 0;
 
   return (
     <div className='fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 md:p-4'>
@@ -249,7 +240,7 @@ export function OnboardingModalContent({
         <div className='h-0.5 md:h-1 bg-gray-100'>
           <div
             className={`h-full ${COLORS.WARM_PURPLE.bg} transition-all duration-300 ease-out`}
-            style={{ width: `${safeProgress}%` }}
+            style={{ width: `${progress}%` }}
           />
         </div>
       </div>

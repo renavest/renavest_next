@@ -13,10 +13,10 @@ import { advisorSignal, isOpenSignal } from '../state/advisorSignals';
 
 const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
   const handleBookSession = () => {
-    // Track booking event
-    posthog.capture('advisor_session_booked', {
-      advisor_name: advisor.name,
-      advisor_id: advisor.id,
+    // Track booking event with enhanced context
+    posthog.capture('therapist_session_booked', {
+      therapist_id: advisor.id,
+      therapist_name: advisor.name,
     });
   };
 
@@ -32,6 +32,15 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
           placeholder='blur'
           blurDataURL='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
           priority
+          onClick={() => {
+            // Track profile view event
+            posthog.capture('therapist_profile_viewed', {
+              therapist_id: advisor.id,
+              therapist_name: advisor.name,
+              therapist_title: advisor.title,
+              therapist_expertise: advisor.expertise,
+            });
+          }}
         />
       </div>
       <div className='mt-6 space-y-4'>

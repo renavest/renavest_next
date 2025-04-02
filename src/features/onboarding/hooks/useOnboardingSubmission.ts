@@ -108,7 +108,7 @@ export function useOnboardingSubmission() {
           onboarding_complete: true,
           created_at: user?.createdAt || new Date().toISOString(),
         });
-
+        
         toast.error('Onboarding completed successfully!');
 
         onboardingSignal.value = {
