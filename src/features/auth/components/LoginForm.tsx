@@ -84,14 +84,16 @@ function EmailAuthForm() {
 function RoleSelection() {
   // const { user } = useUser();
   // const { user: clerkUser } = useClerk();
-  clearSelectedRole();
+  if (typeof window !== 'undefined') {
+    clearSelectedRole();
+  }
   const handleRoleSelection = async (role: UserType) => {
     try {
       setSelectedRole(role);
     } catch (error) {
       authErrorSignal.value = 'Failed to set role. Please try again.';
       console.error('Role selection error:', error);
-    } 
+    }
   };
 
   return (
