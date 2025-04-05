@@ -1,4 +1,4 @@
-import { useSignIn, useClerk, useUser } from '@clerk/nextjs';
+import { useSignIn, useUser } from '@clerk/nextjs';
 import { OAuthStrategy } from '@clerk/types';
 import posthog from 'posthog-js';
 import * as React from 'react';
@@ -6,7 +6,7 @@ import * as React from 'react';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
-import { authErrorSignal, selectedRoleSignal } from '../state/authState';
+import { authErrorSignal, selectedRoleSignal, setUserType } from '../state/authState';
 
 interface OAuthButtonProps {
   strategy: OAuthStrategy;
@@ -17,33 +17,17 @@ interface OAuthButtonProps {
 
 export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProps) {
   const { signIn, isLoaded } = useSignIn();
-  const clerk = useClerk();
   const { user } = useUser();
 
   const handleOAuthSignIn = async () => {
+    if (!isLoaded) return;
     if (!selectedRoleSignal.value) {
-      authErrorSignal.value = 'Please select a role before continuing';
+      authErrorSignal.value = 'Please select a role before signing in';
       return;
     }
 
     try {
-      if (!isLoaded || !signIn) {
-        authErrorSignal.value = 'Authentication system is not ready';
-        return;
-      }
-
-      // Track OAuth signup attempt with more context
-      posthog.capture('user_signup_attempt', {
-        method: strategy,
-        role: selectedRoleSignal.value,
-        oauth_provider: strategy,
-        user_id: user?.id || 'anonymous',
-        email: user?.emailAddresses[0]?.emailAddress || 'unknown',
-      });
-
-      // Sign out of any existing session before OAuth sign-in
-      await clerk.signOut();
-
+      // Determine redirect URL based on selected role
       const redirectUrlComplete =
         selectedRoleSignal.value === 'employee'
           ? '/employee'
@@ -51,13 +35,13 @@ export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProp
             ? '/therapist'
             : selectedRoleSignal.value === 'employer'
               ? '/employer'
-              : '/employee';
+              : '/dashboard';
 
-      // Track OAuth redirect with more detailed information
+      // Track OAuth redirect with detailed information
       posthog.capture('user_signup_oauth_redirect', {
         method: strategy,
         role: selectedRoleSignal.value,
-        redirect_url: `/sign-up/sso-callback`,
+        redirect_url: '/sign-up/sso-callback',
         redirect_url_complete: redirectUrlComplete,
         user_id: user?.id || 'anonymous',
         email: user?.emailAddresses[0]?.emailAddress || 'unknown',
@@ -66,12 +50,21 @@ export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProp
       // Authenticate with redirect and pass role in redirectUrl
       await signIn.authenticateWithRedirect({
         strategy,
-        redirectUrl: `/sign-up/sso-callback`,
+        redirectUrl: '/sign-up/sso-callback',
         redirectUrlComplete,
+      });
+
+      // Capture initial signup attempt with role
+      posthog.capture('user_signup_attempt', {
+        role: selectedRoleSignal.value,
+        oauth_method: strategy,
       });
     } catch (err) {
       console.error('OAuth error:', err);
       authErrorSignal.value = 'Failed to sign in. Please try again.';
+
+      // Ensure email is captured even in error scenarios
+      const userEmail = user?.emailAddresses[0]?.emailAddress || 'unknown';
 
       // Track OAuth signup error with comprehensive context
       posthog.capture('user_signup_error', {
@@ -80,7 +73,14 @@ export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProp
         signup_stage: 'oauth_exception',
         oauth_method: strategy,
         user_id: user?.id || 'anonymous',
-        email: user?.emailAddresses[0]?.emailAddress || 'unknown',
+        email: userEmail,
+      });
+
+      // Fallback tracking to ensure email is always present
+      posthog.identify(userEmail, {
+        email: userEmail,
+        role: selectedRoleSignal.value,
+        signup_error: true,
       });
     }
   };

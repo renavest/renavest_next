@@ -9,6 +9,7 @@ interface AuthState {
   password: string;
   error?: string | null;
   isLoading: boolean;
+  userType: UserType | null;
 }
 
 const initialState: AuthState = {
@@ -18,6 +19,7 @@ const initialState: AuthState = {
   password: '',
   error: null,
   isLoading: false,
+  userType: null,
 };
 
 export const selectedRoleSignal = signal<UserType | null>(null);
@@ -54,4 +56,9 @@ export const resetAuth = () => {
 
 export const setAuthStatus = (status: Partial<AuthState>) => {
   authState.value = { ...authState.value, ...status };
+};
+
+export const setUserType = (userType: UserType | null) => {
+  authState.value = { ...authState.value, userType };
+  selectedRoleSignal.value = userType;
 };

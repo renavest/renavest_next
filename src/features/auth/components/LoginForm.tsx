@@ -13,6 +13,7 @@ import {
   // emailSignal,
   // passwordSignal,
   selectedRoleSignal,
+  setUserType,
 } from '../state/authState';
 import { UserType } from '../types/auth';
 
@@ -84,7 +85,7 @@ function RoleSelection() {
         <button
           key={role.value}
           type='button'
-          onClick={() => (selectedRoleSignal.value = role.value)}
+          onClick={() => setUserType(role.value)}
           className={cn(
             'p-4 rounded-lg border-2 text-left transition-all duration-200',
             selectedRoleSignal.value === role.value
@@ -150,6 +151,12 @@ export default function AuthenticationForm() {
       </div>
 
       <RoleSelection />
+
+      {!selectedRoleSignal.value && (
+        <div className='text-center text-red-600 text-sm mb-4'>
+          Please select a role to continue
+        </div>
+      )}
 
       {authErrorSignal.value && <AuthErrorMessage message={authErrorSignal.value} />}
 
