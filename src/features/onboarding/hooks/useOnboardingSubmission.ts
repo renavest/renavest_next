@@ -1,6 +1,7 @@
 'use client';
 
 import { useClerk, useUser } from '@clerk/nextjs';
+import { clerkClient } from '@clerk/nextjs/server';
 import posthog from 'posthog-js';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -33,6 +34,7 @@ export function useOnboardingSubmission() {
 
   const updateClerkUserMetadata = async (userRole: string | null) => {
     if (clerkUser) {
+      // Separate updates for unsafeMetadata and publicMetadata
       await clerkUser.update({
         unsafeMetadata: {
           ...clerkUser.unsafeMetadata,
@@ -40,7 +42,57 @@ export function useOnboardingSubmission() {
           role: userRole,
         },
       });
+
+      // Use separate Clerk client call for public metadata
+      const clerk = await clerkClient();
+      await clerk.users.updateUser(clerkUser.id, {
+        publicMetadata: {
+          onboardingComplete: true,
+          onboardingVersion: 1,
+          onboardingCompletedAt: new Date().toISOString(),
+          role: userRole,
+        },
+      });
     }
+  };
+
+  const identifyUser = (context: OnboardingContext, isStaff: boolean) => {
+    posthog.identify(user?.id || clerkUser?.id, {
+      email: context.userEmail,
+      role: context.userRole,
+      is_staff: isStaff,
+      onboarding_complete: true,
+      created_at: user?.createdAt || new Date().toISOString(),
+    });
+  };
+
+  const finishOnboarding = () => {
+    toast.success('Onboarding completed successfully!');
+
+    onboardingSignal.value = {
+      isComplete: true,
+      currentStep: 0,
+      answers: {},
+    };
+  };
+
+  const processSalespersonOnboarding = async (
+    selectedAnswers: Record<number, string[]>,
+    context: OnboardingContext,
+  ) => {
+    // Track skipped onboarding for salespeople
+    trackOnboardingSkipped(context);
+
+    // Update Clerk metadata for salespeople
+    await updateClerkUserMetadata(context.userRole);
+
+    // Identify user even for allowed emails
+    identifyUser(
+      context,
+      ['employee', 'therapist', 'employer', 'salesperson'].includes(context.userRole || ''),
+    );
+
+    finishOnboarding();
   };
 
   const processNonSalespersonOnboarding = async (
@@ -52,28 +104,19 @@ export function useOnboardingSubmission() {
     // Track data collection
     trackOnboardingDataCollection(onboardingData, context);
 
+    // Submit onboarding data to database
     await submitOnboardingData(selectedAnswers);
+
+    // Update Clerk metadata
     await updateClerkUserMetadata(context.userRole);
 
     // Track completion
     trackOnboardingCompletion(context, onboardingData);
 
     // Identify user
-    posthog.identify(user?.id || clerkUser?.id, {
-      email: context.userEmail,
-      role: context.userRole,
-      is_staff: ['employee', 'therapist', 'employer'].includes(context.userRole || ''),
-      onboarding_complete: true,
-      created_at: user?.createdAt || new Date().toISOString(),
-    });
+    identifyUser(context, ['employee', 'therapist', 'employer'].includes(context.userRole || ''));
 
-    toast.success('Onboarding completed successfully!');
-
-    onboardingSignal.value = {
-      isComplete: true,
-      currentStep: 0,
-      answers: {},
-    };
+    finishOnboarding();
   };
 
   const handleSubmit = async (selectedAnswers: Record<number, string[]>, currentStep: number) => {
@@ -89,43 +132,39 @@ export function useOnboardingSubmission() {
     };
 
     try {
-      const isAllowedEmail = ALLOWED_EMAILS.includes(userEmail);
+      // Validate inputs
+      if (!userRole) {
+        throw new Error('User role is required');
+      }
 
       // Tracking start of onboarding
       trackOnboardingStart(context, onboardingQuestions.length);
 
-      if (!isAllowedEmail) {
-        await processNonSalespersonOnboarding(selectedAnswers, context);
+      const isAllowedEmail = ALLOWED_EMAILS.includes(userEmail);
+
+      if (isAllowedEmail) {
+        // Process salesperson onboarding
+        await processSalespersonOnboarding(selectedAnswers, context);
       } else {
-        // Track skipped onboarding for salespeople
-        trackOnboardingSkipped(context);
-
-        // Identify user even for allowed emails
-        posthog.identify(user?.id || clerkUser?.id, {
-          email: context.userEmail,
-          role: context.userRole,
-          is_staff: ['employee', 'therapist', 'employer'].includes(context.userRole || ''),
-          onboarding_complete: true,
-          created_at: user?.createdAt || new Date().toISOString(),
-        });
-        
-        toast.error('Onboarding completed successfully!');
-
-        onboardingSignal.value = {
-          isComplete: true,
-          currentStep: 0,
-          answers: {},
-        };
+        // Process non-salesperson onboarding
+        await processNonSalespersonOnboarding(selectedAnswers, context);
       }
     } catch (error) {
       // Track submission error
       trackOnboardingError(context, error);
 
       toast.error('Onboarding submission failed', {
-        description: 'Please try again or contact support.',
+        description: `Please try again or contact support. ${error instanceof Error ? error.message : 'Unknown error'}`,
       });
 
       console.error('Onboarding submission error:', error);
+
+      // Reset onboarding state on error
+      onboardingSignal.value = {
+        isComplete: false,
+        currentStep,
+        answers: selectedAnswers,
+      };
     } finally {
       setIsSubmitting(false);
     }
