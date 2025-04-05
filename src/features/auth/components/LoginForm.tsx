@@ -1,5 +1,6 @@
 'use client';
 
+// import { useClerk, useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 // import { useSignIn, useClerk } from '@clerk/nextjs';
 // import posthog from 'posthog-js';
@@ -9,10 +10,13 @@ import { COLORS } from '@/src/styles/colors';
 
 import {
   authErrorSignal,
+  clearSelectedRole,
   // authModeSignal,
   // emailSignal,
   // passwordSignal,
   selectedRoleSignal,
+  setSelectedRole,
+  // setUserType,
 } from '../state/authState';
 import { UserType } from '../types/auth';
 
@@ -78,13 +82,25 @@ function EmailAuthForm() {
 */
 
 function RoleSelection() {
+  // const { user } = useUser();
+  // const { user: clerkUser } = useClerk();
+  clearSelectedRole();
+  const handleRoleSelection = async (role: UserType) => {
+    try {
+      setSelectedRole(role);
+    } catch (error) {
+      authErrorSignal.value = 'Failed to set role. Please try again.';
+      console.error('Role selection error:', error);
+    } 
+  };
+
   return (
     <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
       {ROLE_OPTIONS.map((role) => (
         <button
           key={role.value}
           type='button'
-          onClick={() => (selectedRoleSignal.value = role.value)}
+          onClick={() => handleRoleSelection(role.value)}
           className={cn(
             'p-4 rounded-lg border-2 text-left transition-all duration-200',
             selectedRoleSignal.value === role.value
@@ -101,6 +117,8 @@ function RoleSelection() {
 }
 
 export default function AuthenticationForm() {
+  // const { user } = useUser();
+
   return (
     <div className='space-y-8 max-w-md mx-auto'>
       <div className='text-center'>

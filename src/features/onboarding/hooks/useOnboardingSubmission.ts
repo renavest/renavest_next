@@ -6,7 +6,9 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { ALLOWED_EMAILS } from '@/src/constants';
-import { selectedRoleSignal } from '@/src/features/auth/state/authState';
+import { getSelectedRole } from '@/src/features/auth/state/authState';
+import { UserType } from '@/src/features/auth/types/auth';
+import { useClerkUserMetadata } from '@/src/features/auth/utils/clerkUtils';
 
 import { submitOnboardingData } from '../actions/onboardingActions';
 import { onboardingSignal, onboardingQuestions } from '../state/onboardingState';
@@ -24,6 +26,7 @@ export function useOnboardingSubmission() {
   const { user: clerkUser } = useClerk();
   const { user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { updateUserRole } = useClerkUserMetadata();
 
   const prepareOnboardingData = (selectedAnswers: Record<number, string[]>): OnboardingData[] =>
     Object.entries(selectedAnswers).map(([questionId, answers]) => ({
@@ -31,16 +34,50 @@ export function useOnboardingSubmission() {
       answers,
     }));
 
-  const updateClerkUserMetadata = async (userRole: string | null) => {
-    if (clerkUser) {
-      await clerkUser.update({
-        unsafeMetadata: {
-          ...clerkUser.unsafeMetadata,
-          onboardingComplete: true,
-          role: userRole,
-        },
-      });
-    }
+  const identifyUser = (context: OnboardingContext, isStaff: boolean) => {
+    const onboardingAnswers = onboardingSignal.value.answers;
+
+    posthog.identify(user?.id || clerkUser?.id, {
+      email: context.userEmail,
+      role: context.userRole,
+      is_staff: isStaff,
+      onboarding_complete: true,
+      created_at: user?.createdAt || new Date().toISOString(),
+      onboarding_questions: Object.entries(onboardingAnswers).map(([questionId, answers]) => ({
+        questionId: parseInt(questionId),
+        answers,
+      })),
+      total_onboarding_questions_answered: Object.keys(onboardingAnswers).length,
+    });
+  };
+
+  const finishOnboarding = () => {
+    toast.success('Onboarding completed successfully!');
+
+    onboardingSignal.value = {
+      isComplete: true,
+      currentStep: 0,
+      answers: {},
+    };
+  };
+
+  const processSalespersonOnboarding = async (
+    selectedAnswers: Record<number, string[]>,
+    context: OnboardingContext,
+  ) => {
+    // Track skipped onboarding for salespeople
+    trackOnboardingSkipped(context);
+
+    // Update Clerk metadata for salespeople
+    await updateUserRole(context.userRole as UserType);
+
+    // Identify user even for allowed emails
+    identifyUser(
+      context,
+      ['employee', 'therapist', 'employer', 'salesperson'].includes(context.userRole || ''),
+    );
+
+    finishOnboarding();
   };
 
   const processNonSalespersonOnboarding = async (
@@ -52,34 +89,26 @@ export function useOnboardingSubmission() {
     // Track data collection
     trackOnboardingDataCollection(onboardingData, context);
 
+    // Submit onboarding data to database
     await submitOnboardingData(selectedAnswers);
-    await updateClerkUserMetadata(context.userRole);
+
+    // Update Clerk metadata
+    await updateUserRole(context.userRole as UserType);
 
     // Track completion
     trackOnboardingCompletion(context, onboardingData);
 
     // Identify user
-    posthog.identify(user?.id || clerkUser?.id, {
-      email: context.userEmail,
-      role: context.userRole,
-      is_staff: ['employee', 'therapist', 'employer'].includes(context.userRole || ''),
-      onboarding_complete: true,
-      created_at: user?.createdAt || new Date().toISOString(),
-    });
+    identifyUser(context, ['employee', 'therapist', 'employer'].includes(context.userRole || ''));
 
-    toast.success('Onboarding completed successfully!');
-
-    onboardingSignal.value = {
-      isComplete: true,
-      currentStep: 0,
-      answers: {},
-    };
+    finishOnboarding();
   };
 
   const handleSubmit = async (selectedAnswers: Record<number, string[]>, currentStep: number) => {
     setIsSubmitting(true);
 
-    const userRole = selectedRoleSignal.value;
+    // Use the role set in LoginForm via selectedRoleSignal
+    const userRole = getSelectedRole();
     const userEmail = clerkUser?.emailAddresses[0]?.emailAddress || '';
 
     const context: OnboardingContext = {
@@ -89,43 +118,43 @@ export function useOnboardingSubmission() {
     };
 
     try {
-      const isAllowedEmail = ALLOWED_EMAILS.includes(userEmail);
+      // Validate inputs with more comprehensive role checking
+      if (!userRole) {
+        // If no role is found, prompt user to select a role
+        toast.error('User role is required', {
+          description: 'Please select a role before continuing.',
+        });
+        throw new Error('User role is required');
+      }
 
       // Tracking start of onboarding
       trackOnboardingStart(context, onboardingQuestions.length);
 
-      if (!isAllowedEmail) {
-        await processNonSalespersonOnboarding(selectedAnswers, context);
+      const isAllowedEmail = ALLOWED_EMAILS.includes(userEmail);
+
+      if (isAllowedEmail) {
+        // Process salesperson onboarding
+        await processSalespersonOnboarding(selectedAnswers, context);
       } else {
-        // Track skipped onboarding for salespeople
-        trackOnboardingSkipped(context);
-
-        // Identify user even for allowed emails
-        posthog.identify(user?.id || clerkUser?.id, {
-          email: context.userEmail,
-          role: context.userRole,
-          is_staff: ['employee', 'therapist', 'employer'].includes(context.userRole || ''),
-          onboarding_complete: true,
-          created_at: user?.createdAt || new Date().toISOString(),
-        });
-        
-        toast.error('Onboarding completed successfully!');
-
-        onboardingSignal.value = {
-          isComplete: true,
-          currentStep: 0,
-          answers: {},
-        };
+        // Process non-salesperson onboarding
+        await processNonSalespersonOnboarding(selectedAnswers, context);
       }
     } catch (error) {
       // Track submission error
       trackOnboardingError(context, error);
 
       toast.error('Onboarding submission failed', {
-        description: 'Please try again or contact support.',
+        description: `Please try again or contact support. ${error instanceof Error ? error.message : 'Unknown error'}`,
       });
 
       console.error('Onboarding submission error:', error);
+
+      // Reset onboarding state on error
+      onboardingSignal.value = {
+        isComplete: false,
+        currentStep,
+        answers: selectedAnswers,
+      };
     } finally {
       setIsSubmitting(false);
     }
