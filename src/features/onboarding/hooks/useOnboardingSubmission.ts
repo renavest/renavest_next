@@ -1,13 +1,14 @@
 'use client';
 
 import { useClerk, useUser } from '@clerk/nextjs';
-import { clerkClient } from '@clerk/nextjs/server';
 import posthog from 'posthog-js';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { ALLOWED_EMAILS } from '@/src/constants';
-import { selectedRoleSignal } from '@/src/features/auth/state/authState';
+import { getSelectedRole } from '@/src/features/auth/state/authState';
+import { UserType } from '@/src/features/auth/types/auth';
+import { useClerkUserMetadata } from '@/src/features/auth/utils/clerkUtils';
 
 import { submitOnboardingData } from '../actions/onboardingActions';
 import { onboardingSignal, onboardingQuestions } from '../state/onboardingState';
@@ -25,6 +26,7 @@ export function useOnboardingSubmission() {
   const { user: clerkUser } = useClerk();
   const { user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { updateUserRole } = useClerkUserMetadata();
 
   const prepareOnboardingData = (selectedAnswers: Record<number, string[]>): OnboardingData[] =>
     Object.entries(selectedAnswers).map(([questionId, answers]) => ({
@@ -32,37 +34,20 @@ export function useOnboardingSubmission() {
       answers,
     }));
 
-  const updateClerkUserMetadata = async (userRole: string | null) => {
-    if (clerkUser) {
-      // Separate updates for unsafeMetadata and publicMetadata
-      await clerkUser.update({
-        unsafeMetadata: {
-          ...clerkUser.unsafeMetadata,
-          onboardingComplete: true,
-          role: userRole,
-        },
-      });
-
-      // Use separate Clerk client call for public metadata
-      const clerk = await clerkClient();
-      await clerk.users.updateUser(clerkUser.id, {
-        publicMetadata: {
-          onboardingComplete: true,
-          onboardingVersion: 1,
-          onboardingCompletedAt: new Date().toISOString(),
-          role: userRole,
-        },
-      });
-    }
-  };
-
   const identifyUser = (context: OnboardingContext, isStaff: boolean) => {
+    const onboardingAnswers = onboardingSignal.value.answers;
+
     posthog.identify(user?.id || clerkUser?.id, {
       email: context.userEmail,
       role: context.userRole,
       is_staff: isStaff,
       onboarding_complete: true,
       created_at: user?.createdAt || new Date().toISOString(),
+      onboarding_questions: Object.entries(onboardingAnswers).map(([questionId, answers]) => ({
+        questionId: parseInt(questionId),
+        answers,
+      })),
+      total_onboarding_questions_answered: Object.keys(onboardingAnswers).length,
     });
   };
 
@@ -84,7 +69,7 @@ export function useOnboardingSubmission() {
     trackOnboardingSkipped(context);
 
     // Update Clerk metadata for salespeople
-    await updateClerkUserMetadata(context.userRole);
+    await updateUserRole(context.userRole as UserType);
 
     // Identify user even for allowed emails
     identifyUser(
@@ -108,7 +93,7 @@ export function useOnboardingSubmission() {
     await submitOnboardingData(selectedAnswers);
 
     // Update Clerk metadata
-    await updateClerkUserMetadata(context.userRole);
+    await updateUserRole(context.userRole as UserType);
 
     // Track completion
     trackOnboardingCompletion(context, onboardingData);
@@ -122,7 +107,8 @@ export function useOnboardingSubmission() {
   const handleSubmit = async (selectedAnswers: Record<number, string[]>, currentStep: number) => {
     setIsSubmitting(true);
 
-    const userRole = selectedRoleSignal.value;
+    // Use the role set in LoginForm via selectedRoleSignal
+    const userRole = getSelectedRole();
     const userEmail = clerkUser?.emailAddresses[0]?.emailAddress || '';
 
     const context: OnboardingContext = {
@@ -132,8 +118,12 @@ export function useOnboardingSubmission() {
     };
 
     try {
-      // Validate inputs
+      // Validate inputs with more comprehensive role checking
       if (!userRole) {
+        // If no role is found, prompt user to select a role
+        toast.error('User role is required', {
+          description: 'Please select a role before continuing.',
+        });
         throw new Error('User role is required');
       }
 

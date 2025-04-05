@@ -4,8 +4,8 @@ import { useClerk } from '@clerk/nextjs';
 import { LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { clearSelectedRole } from '@/src/features/auth/state/authState';
 import { clearOnboardingState } from '@/src/features/onboarding/state/onboardingState';
-
 interface LogoutButtonProps {
   className?: string;
   textClassName?: string;
@@ -25,6 +25,7 @@ export function LogoutButton({
     try {
       await signOut();
       clearOnboardingState();
+      clearSelectedRole();
       toast.success('Logged out successfully');
     } catch (error) {
       console.error('Logout failed', error);

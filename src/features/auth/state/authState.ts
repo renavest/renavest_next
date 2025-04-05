@@ -62,3 +62,17 @@ export const setUserType = (userType: UserType | null) => {
   authState.value = { ...authState.value, userType };
   selectedRoleSignal.value = userType;
 };
+
+export const setSelectedRole = (role: UserType | null) => {
+  selectedRoleSignal.value = role;
+  localStorage.setItem('selectedRole', role || '');
+};
+
+export const getSelectedRole = (): UserType | null => {
+  const role = localStorage.getItem('selectedRole');
+  return role ? (role as UserType) : null;
+};
+
+export const clearSelectedRole = () => {
+  localStorage.removeItem('selectedRole');
+};

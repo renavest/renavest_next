@@ -6,7 +6,7 @@ import * as React from 'react';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
-import { authErrorSignal, selectedRoleSignal, setUserType } from '../state/authState';
+import { authErrorSignal, getSelectedRole, selectedRoleSignal } from '../state/authState';
 
 interface OAuthButtonProps {
   strategy: OAuthStrategy;
@@ -21,26 +21,28 @@ export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProp
 
   const handleOAuthSignIn = async () => {
     if (!isLoaded) return;
-    if (!selectedRoleSignal.value) {
-      authErrorSignal.value = 'Please select a role before signing in';
+
+    const userRole = getSelectedRole();
+    if (!userRole) {
+      selectedRoleSignal.value = null;
       return;
     }
 
     try {
       // Determine redirect URL based on selected role
       const redirectUrlComplete =
-        selectedRoleSignal.value === 'employee'
+        userRole === 'employee'
           ? '/employee'
-          : selectedRoleSignal.value === 'therapist'
+          : userRole === 'therapist'
             ? '/therapist'
-            : selectedRoleSignal.value === 'employer'
+            : userRole === 'employer'
               ? '/employer'
               : '/dashboard';
 
       // Track OAuth redirect with detailed information
       posthog.capture('user_signup_oauth_redirect', {
         method: strategy,
-        role: selectedRoleSignal.value,
+        role: userRole,
         redirect_url: '/sign-up/sso-callback',
         redirect_url_complete: redirectUrlComplete,
         user_id: user?.id || 'anonymous',
@@ -53,10 +55,9 @@ export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProp
         redirectUrl: '/sign-up/sso-callback',
         redirectUrlComplete,
       });
-
       // Capture initial signup attempt with role
       posthog.capture('user_signup_attempt', {
-        role: selectedRoleSignal.value,
+        role: userRole,
         oauth_method: strategy,
       });
     } catch (err) {
@@ -69,7 +70,7 @@ export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProp
       // Track OAuth signup error with comprehensive context
       posthog.capture('user_signup_error', {
         error: err instanceof Error ? err.message : 'Unknown error',
-        role: selectedRoleSignal.value,
+        role: userRole,
         signup_stage: 'oauth_exception',
         oauth_method: strategy,
         user_id: user?.id || 'anonymous',
@@ -79,7 +80,7 @@ export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProp
       // Fallback tracking to ensure email is always present
       posthog.identify(userEmail, {
         email: userEmail,
-        role: selectedRoleSignal.value,
+        role: userRole,
         signup_error: true,
       });
     }

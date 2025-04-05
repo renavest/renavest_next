@@ -1,5 +1,6 @@
 // AdivsorModal.tsx
 'use client';
+import { useUser } from '@clerk/nextjs';
 import { X } from 'lucide-react';
 import Image from 'next/image';
 import posthog from 'posthog-js';
@@ -12,11 +13,15 @@ import { COLORS } from '@/src/styles/colors';
 import { advisorSignal, isOpenSignal } from '../state/advisorSignals';
 
 const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
+  const { user } = useUser();
   const handleBookSession = () => {
     // Track booking event with enhanced context
     posthog.capture('therapist_session_booked', {
       therapist_id: advisor.id,
       therapist_name: advisor.name,
+    });
+    posthog.identify(user?.id, {
+      current_therapist: advisor.name,
     });
   };
 
