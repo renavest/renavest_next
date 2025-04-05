@@ -22,7 +22,29 @@ const initialState: AuthState = {
   userType: null,
 };
 
-export const selectedRoleSignal = signal<UserType | null>(null);
+// Safely check localStorage only on the client side
+const getLocalStorageItem = (key: string): string | null => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem(key);
+  }
+  return null;
+};
+
+const setLocalStorageItem = (key: string, value: string) => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(key, value);
+  }
+};
+
+const removeLocalStorageItem = (key: string) => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(key);
+  }
+};
+
+export const selectedRoleSignal = signal<UserType | null>(
+  getLocalStorageItem('selectedRole') as UserType | null,
+);
 // export const authModeSignal = signal<'signin' | 'signup'>('signin');
 export const authErrorSignal = signal<string | null>(null);
 export const emailSignal = signal<string>('');
@@ -65,14 +87,15 @@ export const setUserType = (userType: UserType | null) => {
 
 export const setSelectedRole = (role: UserType | null) => {
   selectedRoleSignal.value = role;
-  localStorage.setItem('selectedRole', role || '');
+  setLocalStorageItem('selectedRole', role || '');
 };
 
 export const getSelectedRole = (): UserType | null => {
-  const role = localStorage.getItem('selectedRole');
+  const role = getLocalStorageItem('selectedRole');
   return role ? (role as UserType) : null;
 };
 
 export const clearSelectedRole = () => {
-  localStorage.removeItem('selectedRole');
+  selectedRoleSignal.value = null;
+  removeLocalStorageItem('selectedRole');
 };
