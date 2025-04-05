@@ -9,7 +9,7 @@ import { userOnboarding } from '@/src/db/schema';
 
 const ONBOARDING_VERSION = 1;
 
-export async function   submitOnboardingData(answers: Record<number, string[]>) {
+export async function submitOnboardingData(answers: Record<number, string[]>) {
   const { userId: clerkUserId } = await auth();
 
   if (!clerkUserId) {
@@ -66,6 +66,12 @@ export async function   submitOnboardingData(answers: Record<number, string[]>) 
     await clerk.users.updateUser(clerkUserId, {
       publicMetadata: {
         onboardingComplete: true,
+        onboardingVersion: ONBOARDING_VERSION,
+        onboardingCompletedAt: new Date().toISOString(),
+        onboardingAnswers: Object.entries(answers).map(([key, value]) => ({
+          questionId: Number(key),
+          answeredCategories: value,
+        })),
       },
     });
 
