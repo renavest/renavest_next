@@ -10,7 +10,6 @@ import { COLORS } from '@/src/styles/colors';
 
 import {
   authErrorSignal,
-  clearSelectedRole,
   // authModeSignal,
   // emailSignal,
   // passwordSignal,
@@ -84,9 +83,9 @@ function EmailAuthForm() {
 function RoleSelection() {
   // const { user } = useUser();
   // const { user: clerkUser } = useClerk();
-  if (typeof window !== 'undefined') {
-    clearSelectedRole();
-  }
+  // if (typeof window !== 'undefined') {
+  //   clearSelectedRole();
+  // }
   const handleRoleSelection = async (role: UserType) => {
     try {
       setSelectedRole(role);
