@@ -1,176 +1,123 @@
-// 'use client';
+'use client';
 
-// import { useUser } from '@clerk/nextjs';
-// import { format, parseISO } from 'date-fns';
-// import { Clock, ExternalLink } from 'lucide-react';
-// import { useRouter } from 'next/navigation';
-// import { posthog } from 'posthog-js';
-// import { useState, useEffect } from 'react';
+import { useUser } from '@clerk/nextjs';
+import dotenv from 'dotenv';
+import posthog from 'posthog-js';
+import { useState } from 'react';
+import { InlineWidget } from 'react-calendly';
 
-// import { advisorSignal } from '@/src/features/advisors/state/advisorSignals';
-// import { Advisor } from '@/src/shared/types';
-// import { COLORS } from '@/src/styles/colors';
+import { advisorSignal } from '@/src/features/advisors/state/advisorSignals';
+import { BookingConfirmation } from '@/src/features/booking/components/BookingConfirmation';
+import { ManualBooking } from '@/src/features/booking/components/ManualBooking';
+import { useCalendlyEvents } from '@/src/features/booking/hooks/useCalendlyEvents';
+import { useManualBooking } from '@/src/features/booking/hooks/useManualBooking';
+import { BookingDetails } from '@/src/features/booking/utils/calendlyTypes';
+import { COLORS } from '@/src/styles/colors';
 
-// function TherapistHeader({ therapist }: { therapist: Advisor }) {
-//   return (
-//     <div className='flex items-center mb-6'>
-//       <div className='mr-4'>
-//         <img
-//           src={therapist.profileUrl || '/default-avatar.png'}
-//           alt={therapist.name}
-//           className='w-16 h-16 rounded-full object-cover'
-//         />
-//       </div>
-//       <div>
-//         <h1 className='text-2xl font-bold text-gray-900'>{therapist.name}</h1>
-//         <p className='text-gray-600'>{therapist.title}</p>
-//       </div>
-//     </div>
-//   );
-// }
+if (process.env.NODE_ENV === 'development') {
+  // Production environment
+  // Do not load dotenv in production
+  dotenv.config({ path: '.env.local' });
+}
 
-// function TimeSlotGrid({
-//   slots,
-//   selectedSlot,
-//   onSelectSlot,
-// }: {
-//   slots: AvailableSlot[];
-//   selectedSlot: string | null;
-//   onSelectSlot: (time: string) => void;
-// }) {
-//   if (slots.length === 0) {
-//     return <p className='text-gray-500'>No available slots at the moment</p>;
-//   }
+const TherapistCalendly = () => {
+  const [isBooked, setIsBooked] = useState(false);
+  const [isManualBooking, setIsManualBooking] = useState(false);
+  const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
 
-//   return (
-//     <div className='grid grid-cols-2 sm:grid-cols-3 gap-3'>
-//       {slots.map((slot, index) => (
-//         <button
-//           key={index}
-//           onClick={() => onSelectSlot(slot.startTime)}
-//           className={`
-//             flex items-center justify-center p-3 rounded-lg transition-all
-//             ${
-//               selectedSlot === slot.startTime
-//                 ? `${COLORS.WARM_PURPLE.bg} text-white`
-//                 : 'bg-gray-100 text-gray-700 hover:bg-purple-50'
-//             }
-//           `}
-//         >
-//           <Clock className='mr-2 h-4 w-4' />
-//           {format(parseISO(slot.startTime), 'MMM d, h:mm a')}
-//         </button>
-//       ))}
-//     </div>
-//   );
-// }
+  const advisor = advisorSignal.value;
+  const { user } = useUser();
 
-// type AvailableSlot = {
-//   startTime: string;
-//   endTime: string;
-// };
+  const handleBookingComplete = (details: BookingDetails) => {
+    setBookingDetails(details);
+    setIsBooked(true);
+  };
 
-// export default function BookingPage() {
-//   const router = useRouter();
-//   const { user } = useUser();
+  const { selectedDate, selectedTime, setSelectedDate, setSelectedTime, handleManualBooking } =
+    useManualBooking({
+      advisorId: advisor?.id,
+      advisorName: advisor?.name,
+      onBookingComplete: handleBookingComplete,
+    });
 
-//   const [therapist] = useState<Advisor | null>(advisorSignal.value);
-//   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
-//   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-//   const [isLoading, setIsLoading] = useState(true);
-//   const [error, setError] = useState<string | null>(null);
+  useCalendlyEvents({
+    advisorId: advisor?.id,
+    advisorName: advisor?.name,
+    onEventScheduled: handleBookingComplete,
+  });
 
-//   useEffect(() => {
-//     // If no advisor is selected, redirect back
-//     if (!therapist) {
-//       router.push('/explore');
-//       return;
-//     }
+  const handleConfirmation = () => {
+    posthog.capture('booking_details_confirmed', {
+      therapist_id: advisor?.id,
+      therapist_name: advisor?.name,
+    });
+  };
 
-//     async function fetchBookingDetails() {
-//       try {
-//         // Fetch available slots from API route
-//         const response = await fetch('/api/calendly/availability');
+  // If no advisor or booking URL, show a fallback
+  if (!advisor?.bookingURL) {
+    return (
+      <div className='flex justify-center items-center h-screen'>
+        <p>No booking URL available for this advisor.</p>
+      </div>
+    );
+  }
 
-//         if (!response.ok) {
-//           const errorData = await response.json();
-//           throw new Error(errorData.details || 'Failed to fetch availability');
-//         }
+  if (isBooked) {
+    return (
+      <BookingConfirmation
+        bookingDetails={bookingDetails}
+        onConfirm={handleConfirmation}
+        onReschedule={() => {
+          setIsBooked(false);
+          setIsManualBooking(false);
+        }}
+      />
+    );
+  }
 
-//         const slots = await response.json();
-//         setAvailableSlots(slots);
-//       } catch (err) {
-//         console.error(err);
-//         setError(err instanceof Error ? err.message : 'Failed to load booking information');
-//       } finally {
-//         setIsLoading(false);
-//       }
-//     }
+  if (isManualBooking) {
+    return (
+      <ManualBooking
+        selectedDate={selectedDate}
+        selectedTime={selectedTime}
+        onDateChange={setSelectedDate}
+        onTimeChange={setSelectedTime}
+        onBook={handleManualBooking}
+        onCancel={() => setIsManualBooking(false)}
+      />
+    );
+  }
 
-//     if (user) {
-//       fetchBookingDetails();
-//     }
-//   }, [therapist, user, router]);
+  return (
+    <div className='fixed inset-0 z-50 bg-white'>
+      <div className='absolute top-4 right-4 z-10'>
+        <button
+          onClick={() => setIsManualBooking(true)}
+          className={`${COLORS.WARM_PURPLE.DEFAULT} border ${COLORS.WARM_PURPLE.border} px-4 py-2 rounded-lg ${COLORS.WARM_PURPLE.hoverBorder} transition-colors`}
+        >
+          Manual Booking
+        </button>
+      </div>
+      <InlineWidget
+        url={'https://calendly.com/seth-renavestapp'}
+        styles={{
+          height: '100%',
+          width: '100%',
+          minHeight: '100vh',
+        }}
+        prefill={{
+          email: user?.emailAddresses[0]?.emailAddress || '',
+          firstName: user?.firstName || '',
+          lastName: user?.lastName || '',
+        }}
+        pageSettings={{
+          backgroundColor: 'ffffff',
+          primaryColor: '9071FF', // Using WARM_PURPLE color
+          textColor: '4d5055',
+        }}
+      />
+    </div>
+  );
+};
 
-//   const handleBookSlot = () => {
-//     if (therapist?.bookingURL && selectedSlot) {
-//       // Redirect to Calendly with pre-selected time
-//       const bookingUrlWithTime = `${therapist.bookingURL}?date=${encodeURIComponent(selectedSlot)}`;
-
-//       // Track therapist booking
-//       posthog.identify(user?.id, {
-//         current_therapist: {
-//           name: therapist.name,
-//           id: therapist.id,
-//           booking_time: selectedSlot,
-//         },
-//       });
-
-//       window.location.href = bookingUrlWithTime;
-//     }
-//   };
-
-//   if (isLoading) return <div className='text-center py-10'>Loading booking details...</div>;
-//   if (error) return <div className='text-red-500 text-center py-10'>{error}</div>;
-//   if (!therapist) return <div className='text-center py-10'>Therapist not found</div>;
-
-//   return (
-//     <div className='max-w-2xl mx-auto px-4 py-8'>
-//       <div className='bg-white shadow-lg rounded-2xl p-6'>
-//         <TherapistHeader therapist={therapist} />
-
-//         <div className='mb-6'>
-//           <h2 className='text-xl font-semibold mb-4'>Select a Time Slot</h2>
-//           <TimeSlotGrid
-//             slots={availableSlots}
-//             selectedSlot={selectedSlot}
-//             onSelectSlot={setSelectedSlot}
-//           />
-//         </div>
-
-//         <div className='flex space-x-4'>
-//           <button
-//             onClick={handleBookSlot}
-//             disabled={!selectedSlot}
-//             className={`flex-1 ${selectedSlot ? COLORS.WARM_PURPLE.bg : 'bg-gray-300'}`}
-//           >
-//             {selectedSlot ? 'Book Selected Time' : 'Select a Time Slot'}
-//           </button>
-
-//           <a
-//             href={therapist.bookingURL}
-//             target='_blank'
-//             rel='noopener noreferrer'
-//             className={`
-//               flex-1 inline-flex items-center justify-center py-2 px-4
-//               rounded-lg text-center transition-colors
-//               ${COLORS.WARM_PURPLE['10']} text-purple-700 hover:bg-purple-100
-//             `}
-//           >
-//             Full Calendly Page <ExternalLink className='ml-2 h-4 w-4' />
-//           </a>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
+export default TherapistCalendly;
