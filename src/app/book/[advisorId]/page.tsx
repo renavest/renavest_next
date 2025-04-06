@@ -21,8 +21,8 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 const TherapistCalendly = () => {
+  const [isCalendlyBooked, setIsCalendlyBooked] = useState(false);
   const [isBooked, setIsBooked] = useState(false);
-  const [isManualBooking, setIsManualBooking] = useState(false);
   const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
 
   const advisor = advisorSignal.value;
@@ -43,7 +43,9 @@ const TherapistCalendly = () => {
   useCalendlyEvents({
     advisorId: advisor?.id,
     advisorName: advisor?.name,
-    onEventScheduled: handleBookingComplete,
+    onEventScheduled: () => {
+      setIsCalendlyBooked(true);
+    },
   });
 
   const handleConfirmation = () => {
@@ -69,13 +71,13 @@ const TherapistCalendly = () => {
         onConfirm={handleConfirmation}
         onReschedule={() => {
           setIsBooked(false);
-          setIsManualBooking(false);
+          setIsCalendlyBooked(false);
         }}
       />
     );
   }
 
-  if (isManualBooking) {
+  if (isCalendlyBooked) {
     return (
       <ManualBooking
         selectedDate={selectedDate}
@@ -83,20 +85,17 @@ const TherapistCalendly = () => {
         onDateChange={setSelectedDate}
         onTimeChange={setSelectedTime}
         onBook={handleManualBooking}
-        onCancel={() => setIsManualBooking(false)}
+        onCancel={() => setIsCalendlyBooked(false)}
       />
     );
   }
 
   return (
     <div className='fixed inset-0 z-50 bg-white'>
-      <div className='absolute top-4 right-4 z-10'>
-        <button
-          onClick={() => setIsManualBooking(true)}
-          className={`${COLORS.WARM_PURPLE.DEFAULT} border ${COLORS.WARM_PURPLE.border} px-4 py-2 rounded-lg ${COLORS.WARM_PURPLE.hoverBorder} transition-colors`}
-        >
-          Manual Booking
-        </button>
+      <div className='absolute top-4 left-4 right-4 z-10 flex justify-between items-center'>
+        <h1 className={`text-xl font-semibold ${COLORS.WARM_PURPLE.DEFAULT}`}>
+          Book a Session with {advisor?.name}
+        </h1>
       </div>
       <InlineWidget
         url={'https://calendly.com/seth-renavestapp'}
