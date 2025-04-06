@@ -1,18 +1,14 @@
 'use client';
 
-import { useUser } from '@clerk/nextjs';
 import dotenv from 'dotenv';
 import posthog from 'posthog-js';
 import { useState } from 'react';
-import { InlineWidget } from 'react-calendly';
 
 import { advisorSignal } from '@/src/features/advisors/state/advisorSignals';
 import { BookingConfirmation } from '@/src/features/booking/components/BookingConfirmation';
+import { CalendlyBooking } from '@/src/features/booking/components/CalendlyBooking';
 import { ManualBooking } from '@/src/features/booking/components/ManualBooking';
-import { useCalendlyEvents } from '@/src/features/booking/hooks/useCalendlyEvents';
-import { useManualBooking } from '@/src/features/booking/hooks/useManualBooking';
 import { BookingDetails } from '@/src/features/booking/utils/calendlyTypes';
-import { COLORS } from '@/src/styles/colors';
 
 if (process.env.NODE_ENV === 'development') {
   // Production environment
@@ -23,39 +19,49 @@ if (process.env.NODE_ENV === 'development') {
 const TherapistCalendly = () => {
   const [isCalendlyBooked, setIsCalendlyBooked] = useState(false);
   const [isBooked, setIsBooked] = useState(false);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
   const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
 
   const advisor = advisorSignal.value;
-  const { user } = useUser();
 
-  const handleBookingComplete = (details: BookingDetails) => {
-    setBookingDetails(details);
+  const handleManualBooking = () => {
+    if (!selectedDate || !selectedTime) return;
+
+    const [hours, minutes] = selectedTime.split(':');
+    const startDate = new Date(selectedDate);
+    startDate.setHours(parseInt(hours), parseInt(minutes));
+
+    const endDate = new Date(startDate);
+    endDate.setHours(startDate.getHours() + 1); // Assuming 1-hour sessions
+
+    const manualBookingDetails: BookingDetails = {
+      date: startDate.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
+      startTime: startDate.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+      endTime: endDate.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    };
+
+    setBookingDetails(manualBookingDetails);
     setIsBooked(true);
-  };
 
-  const { selectedDate, selectedTime, setSelectedDate, setSelectedTime, handleManualBooking } =
-    useManualBooking({
-      advisorId: advisor?.id,
-      advisorName: advisor?.name,
-      onBookingComplete: handleBookingComplete,
-    });
-
-  useCalendlyEvents({
-    advisorId: advisor?.id,
-    advisorName: advisor?.name,
-    onEventScheduled: () => {
-      setIsCalendlyBooked(true);
-    },
-  });
-
-  const handleConfirmation = () => {
     posthog.capture('booking_details_confirmed', {
       therapist_id: advisor?.id,
       therapist_name: advisor?.name,
+      booking_method: 'manual',
     });
   };
 
-  // If no advisor or booking URL, show a fallback
   if (!advisor?.bookingURL) {
     return (
       <div className='flex justify-center items-center h-screen'>
@@ -64,14 +70,22 @@ const TherapistCalendly = () => {
     );
   }
 
-  if (isBooked) {
+  if (isBooked && bookingDetails) {
     return (
       <BookingConfirmation
         bookingDetails={bookingDetails}
-        onConfirm={handleConfirmation}
+        onConfirm={() => {
+          posthog.capture('booking_details_confirmed', {
+            therapist_id: advisor?.id,
+            therapist_name: advisor?.name,
+          });
+        }}
         onReschedule={() => {
           setIsBooked(false);
           setIsCalendlyBooked(false);
+          setSelectedDate('');
+          setSelectedTime('');
+          setBookingDetails(null);
         }}
       />
     );
@@ -85,37 +99,22 @@ const TherapistCalendly = () => {
         onDateChange={setSelectedDate}
         onTimeChange={setSelectedTime}
         onBook={handleManualBooking}
-        onCancel={() => setIsCalendlyBooked(false)}
+        onCancel={() => {
+          setIsCalendlyBooked(false);
+          setSelectedDate('');
+          setSelectedTime('');
+        }}
       />
     );
   }
 
   return (
-    <div className='fixed inset-0 z-50 bg-white'>
-      <div className='absolute top-4 left-4 right-4 z-10 flex justify-between items-center'>
-        <h1 className={`text-xl font-semibold ${COLORS.WARM_PURPLE.DEFAULT}`}>
-          Book a Session with {advisor?.name}
-        </h1>
-      </div>
-      <InlineWidget
-        url={'https://calendly.com/seth-renavestapp'}
-        styles={{
-          height: '100%',
-          width: '100%',
-          minHeight: '100vh',
-        }}
-        prefill={{
-          email: user?.emailAddresses[0]?.emailAddress || '',
-          firstName: user?.firstName || '',
-          lastName: user?.lastName || '',
-        }}
-        pageSettings={{
-          backgroundColor: 'ffffff',
-          primaryColor: '9071FF', // Using WARM_PURPLE color
-          textColor: '4d5055',
-        }}
-      />
-    </div>
+    <CalendlyBooking
+      advisorId={advisor.id}
+      advisorName={advisor.name}
+      advisorUrl={'https://calendly.com/seth-renavestapp'}
+      onEventScheduled={() => setIsCalendlyBooked(true)}
+    />
   );
 };
 
