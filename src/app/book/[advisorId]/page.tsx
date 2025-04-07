@@ -44,7 +44,7 @@ function TherapistCalendly() {
 
   return (
     <InlineWidget
-      url={`https://calendly.com/seth-renavestapp`}
+      url={advisor.bookingURL}
       styles={{
         height: '100%',
         width: '100%',
