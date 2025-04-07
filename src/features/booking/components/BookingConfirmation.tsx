@@ -1,116 +1,55 @@
+import { useUser } from '@clerk/nextjs';
+import posthog from 'posthog-js';
 import { useState } from 'react';
 
 import { COLORS } from '@/src/styles/colors';
 
-import { BookingDetails } from '../utils/calendlyTypes';
-
 interface BookingConfirmationProps {
-  bookingDetails: BookingDetails | null;
-  onConfirm: (confirmedDetails: BookingDetails) => void;
-  _onReschedule?: () => void; // Prefixed with underscore to satisfy linter
+  onConfirm: (details: { date: string; startTime: string }) => void;
 }
 
-export const BookingConfirmation = ({
-  bookingDetails,
-  onConfirm,
-  _onReschedule,
-}: BookingConfirmationProps) => {
-  const [localDate, setLocalDate] = useState(bookingDetails?.date || '');
-  const [localStartTime, setLocalStartTime] = useState(bookingDetails?.startTime || '');
-  const [localEndTime, setLocalEndTime] = useState(bookingDetails?.endTime || '');
-  const [isEditing, setIsEditing] = useState(false);
+export const BookingConfirmation = ({ onConfirm }: BookingConfirmationProps) => {
+  const { user } = useUser();
+  const [localDate, setLocalDate] = useState('');
+  const [localStartTime, setLocalStartTime] = useState('');
 
   const handleConfirm = () => {
-    if (localDate && localStartTime && localEndTime) {
+    if (localDate && localStartTime) {
       onConfirm({
         date: localDate,
         startTime: localStartTime,
-        endTime: localEndTime,
+      });
+
+      // Add PostHog identify for session tracking
+      posthog.identify(user?.id, {
+        sessionDate: localDate,
+        sessionStartTime: localStartTime,
+        sessionType: 'booking_confirmation',
       });
     }
   };
 
-  const renderInput = (
-    label: string,
-    value: string,
-    onChange: (v: string) => void,
-    placeholder: string,
-  ) => (
+  const renderDateInput = (label: string, value: string, onChange: (v: string) => void) => (
     <div className='mb-4'>
       <label className='block text-sm font-medium text-gray-700 mb-2'>{label}</label>
       <input
-        type='text'
+        type='date'
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={`w-full px-4 py-2 rounded-lg border ${COLORS.WARM_PURPLE[20]} ${COLORS.WARM_PURPLE.focus} outline-none`}
-        placeholder={placeholder}
       />
     </div>
   );
 
-  const renderInitialConfirmation = () => (
-    <>
-      {bookingDetails && (
-        <div className='space-y-4 mb-6'>
-          <p className='text-gray-700'>
-            <span className='font-semibold'>Date:</span> {bookingDetails.date}
-          </p>
-          <p className='text-gray-700'>
-            <span className='font-semibold'>Time:</span> {bookingDetails.startTime} -{' '}
-            {bookingDetails.endTime}
-          </p>
-        </div>
-      )}
-
-      <div className='space-y-4'>
-        <button
-          onClick={() => setIsEditing(true)}
-          className={`w-full ${COLORS.WARM_PURPLE.DEFAULT} border ${COLORS.WARM_PURPLE.border} py-3 rounded-lg ${COLORS.WARM_PURPLE.hoverBorder} transition-colors`}
-        >
-          Verify Session Details
-        </button>
-        <button
-          onClick={() => onConfirm(bookingDetails!)}
-          className={`w-full ${COLORS.WARM_PURPLE.bg} text-white py-3 rounded-lg ${COLORS.WARM_PURPLE.hover} transition-colors`}
-        >
-          Confirm Details
-        </button>
-      </div>
-    </>
-  );
-
-  const renderDetailVerification = () => (
-    <div className='space-y-4'>
-      <p className='text-gray-600 mb-4'>
-        To help us ensure accuracy, please verify and confirm your session details:
-      </p>
-
-      {renderInput('Session Date', localDate, setLocalDate, 'e.g., Monday, July 15, 2024')}
-
-      <div className='flex space-x-4'>
-        <div className='flex-1'>
-          {renderInput('Start Time', localStartTime, setLocalStartTime, 'e.g., 02:00 PM')}
-        </div>
-        <div className='flex-1'>
-          {renderInput('End Time', localEndTime, setLocalEndTime, 'e.g., 03:00 PM')}
-        </div>
-      </div>
-
-      <div className='space-y-3 mt-4'>
-        <button
-          onClick={handleConfirm}
-          disabled={!localDate || !localStartTime || !localEndTime}
-          className={`w-full ${COLORS.WARM_PURPLE.bg} text-white py-3 rounded-lg ${COLORS.WARM_PURPLE.hover} transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
-        >
-          Confirm Session Details
-        </button>
-        <button
-          onClick={() => setIsEditing(false)}
-          className={`w-full ${COLORS.WARM_PURPLE.DEFAULT} border ${COLORS.WARM_PURPLE.border} py-3 rounded-lg ${COLORS.WARM_PURPLE.hoverBorder} transition-colors`}
-        >
-          Back to Confirmation
-        </button>
-      </div>
+  const renderTimeInput = (label: string, value: string, onChange: (v: string) => void) => (
+    <div className='mb-4'>
+      <label className='block text-sm font-medium text-gray-700 mb-2'>{label}</label>
+      <input
+        type='time'
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`w-full px-4 py-2 rounded-lg border ${COLORS.WARM_PURPLE[20]} ${COLORS.WARM_PURPLE.focus} outline-none`}
+      />
     </div>
   );
 
@@ -125,7 +64,24 @@ export const BookingConfirmation = ({
           Appointment Confirmed! 🎉
         </h2>
 
-        {!isEditing ? renderInitialConfirmation() : renderDetailVerification()}
+        <p className='text-gray-600 mb-4'>
+          Your appointment has been confirmed! Now, for our records, could you kindly enter the
+          session details?
+        </p>
+
+        <div className='space-y-4'>
+          {renderDateInput('Session Date', localDate, setLocalDate)}
+
+          {renderTimeInput('Start Time', localStartTime, setLocalStartTime)}
+
+          <button
+            onClick={handleConfirm}
+            disabled={!localDate || !localStartTime}
+            className={`w-full ${COLORS.WARM_PURPLE.bg} text-white py-3 rounded-lg ${COLORS.WARM_PURPLE.hover} transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            Submit Session Details
+          </button>
+        </div>
 
         <p className='text-xs text-gray-500 mt-4'>
           A confirmation email has been sent to your registered email address.

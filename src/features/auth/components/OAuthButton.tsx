@@ -6,7 +6,12 @@ import * as React from 'react';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
-import { authErrorSignal, getSelectedRole, selectedRoleSignal } from '../state/authState';
+import {
+  authErrorSignal,
+  getSelectedRole,
+  selectedRoleSignal,
+  setUserType,
+} from '../state/authState';
 
 interface OAuthButtonProps {
   strategy: OAuthStrategy;
@@ -15,73 +20,56 @@ interface OAuthButtonProps {
   disabled?: boolean;
 }
 
-export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProps) {
-  const { signIn, isLoaded } = useSignIn();
+export default function OAuthButton({ strategy, icon, label, disabled = false }: OAuthButtonProps) {
+  const { signIn, setActive } = useSignIn();
   const { user } = useUser();
 
   const handleOAuthSignIn = async () => {
-    if (!isLoaded) return;
-
-    const userRole = getSelectedRole();
-    if (!userRole) {
-      selectedRoleSignal.value = null;
-      return;
-    }
+    if (!signIn) return;
 
     try {
-      // Determine redirect URL based on selected role
-      const redirectUrlComplete =
-        userRole === 'employee'
-          ? '/employee'
-          : userRole === 'therapist'
-            ? '/therapist'
-            : userRole === 'employer'
-              ? '/employer'
-              : '/dashboard';
-
-      // Track OAuth redirect with detailed information
-      posthog.capture('user_signup_oauth_redirect', {
-        method: strategy,
-        role: userRole,
-        redirect_url: '/sign-up/sso-callback',
-        redirect_url_complete: redirectUrlComplete,
-        user_id: user?.id || 'anonymous',
-        email: user?.emailAddresses[0]?.emailAddress || 'unknown',
-      });
-
-      // Authenticate with redirect and pass role in redirectUrl
-      await signIn.authenticateWithRedirect({
+      const result = await signIn.create({
         strategy,
         redirectUrl: '/sign-up/sso-callback',
-        redirectUrlComplete,
-      });
-      // Capture initial signup attempt with role
-      posthog.capture('user_signup_attempt', {
-        role: userRole,
-        oauth_method: strategy,
-      });
-    } catch (err) {
-      console.error('OAuth error:', err);
-      authErrorSignal.value = 'Failed to sign in. Please try again.';
-
-      // Ensure email is captured even in error scenarios
-      const userEmail = user?.emailAddresses[0]?.emailAddress || 'unknown';
-
-      // Track OAuth signup error with comprehensive context
-      posthog.capture('user_signup_error', {
-        error: err instanceof Error ? err.message : 'Unknown error',
-        role: userRole,
-        signup_stage: 'oauth_exception',
-        oauth_method: strategy,
-        user_id: user?.id || 'anonymous',
-        email: userEmail,
       });
 
-      // Fallback tracking to ensure email is always present
-      posthog.identify(userEmail, {
-        email: userEmail,
-        role: userRole,
-        signup_error: true,
+      if (result.status === 'complete') {
+        await setActive({ session: result.createdSessionId });
+
+        // Identify user with PostHog
+        const selectedRole = getSelectedRole() || selectedRoleSignal.value;
+
+        posthog.identify(user?.id, {
+          email: user?.emailAddresses[0]?.emailAddress,
+          name: user?.fullName,
+          user_type: selectedRole,
+          oauth_strategy: strategy,
+          first_login: true,
+        });
+
+        // Capture login event
+        posthog.capture('user_login', {
+          user_id: user?.id,
+          login_method: strategy,
+          user_type: selectedRole,
+        });
+
+        // Set user type if selected
+        if (selectedRole) {
+          setUserType(selectedRole);
+        }
+      }
+    } catch (error: unknown) {
+      console.error('OAuth Sign In Error:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : 'An error occurred during sign in';
+
+      authErrorSignal.value = errorMessage;
+
+      // Track login failure
+      posthog.capture('user_login_failed', {
+        login_method: strategy,
+        error_message: errorMessage,
       });
     }
   };
@@ -90,17 +78,18 @@ export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProp
     <button
       type='button'
       onClick={handleOAuthSignIn}
-      disabled={!isLoaded || disabled}
+      disabled={disabled}
       className={cn(
-        'w-full border-2 text-gray-900 rounded-lg h-11 font-medium transition-colors flex items-center justify-center',
-        COLORS.WARM_PURPLE[20],
-        COLORS.WARM_PURPLE[5],
+        'w-full flex items-center justify-center py-3 rounded-lg transition-all duration-200 border',
+        disabled
+          ? 'cursor-not-allowed opacity-50'
+          : `${COLORS.WARM_PURPLE.border} hover:${COLORS.WARM_PURPLE.hoverBorder} hover:bg-gray-50`,
       )}
     >
-      {icon}
-      {label}
+      <div className='flex items-center space-x-2'>
+        {icon}
+        <span className='text-sm font-medium'>Continue with {label}</span>
+      </div>
     </button>
   );
 }
-
-export default OAuthButton;
