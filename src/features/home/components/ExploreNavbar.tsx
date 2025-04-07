@@ -31,7 +31,7 @@ const MobileNavigation = () => (
           textClassName='font-medium'
         />
       </div>
-      <div className='px-4 py-3 flex items-center'>
+      <div className='px-4 py-3 flex items-center justify-center'>
         <span className='text-sm text-gray-500 mr-3'>Your Account</span>
         <UserButton afterSignOutUrl='/login' />
       </div>

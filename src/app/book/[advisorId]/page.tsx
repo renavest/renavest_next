@@ -11,7 +11,7 @@ import { BookingConfirmation } from '@/src/features/booking/components/BookingCo
 
 function TherapistCalendly() {
   const advisor = advisorSignal.value;
-  const [isBookingConfirmed, setIsBookingConfirmed] = useState(true);
+  const [isBookingConfirmed, setIsBookingConfirmed] = useState(false);
   // Redirect if no advisor is found
   if (!advisor?.id || !advisor?.bookingURL) {
     redirect('/explore');

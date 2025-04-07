@@ -17,43 +17,43 @@ export const BookingConfirmation = ({ onConfirm }: BookingConfirmationProps) => 
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleConfirm = () => {
-    if (!localDate || !localStartTime) return;
+    if (localDate && localStartTime) {
+      onConfirm({
+        date: localDate,
+        startTime: localStartTime,
+      });
 
-    onConfirm({
-      date: localDate,
-      startTime: localStartTime,
-    });
+      // Capture session booking event
+      posthog.capture('session_booked', {
+        sessionDate: localDate,
+        sessionStartTime: localStartTime,
+      });
 
-    // Capture session booking event
-    posthog.capture('session_booked', {
-      sessionDate: localDate,
-      sessionStartTime: localStartTime,
-    });
+      // Update user profile with cumulative session tracking
+      posthog.identify(user?.id, {
+        $set: {
+          sessions: posthog.get_property('sessions')
+            ? [
+                ...posthog.get_property('sessions'),
+                {
+                  date: localDate,
+                  startTime: localStartTime,
+                  timestamp: new Date().toISOString(),
+                },
+              ]
+            : [
+                {
+                  date: localDate,
+                  startTime: localStartTime,
+                  timestamp: new Date().toISOString(),
+                },
+              ],
+        },
+      });
 
-    // Update user profile with cumulative session tracking
-    posthog.identify(user?.id, {
-      $set: {
-        sessions: posthog.get_property('sessions')
-          ? [
-              ...posthog.get_property('sessions'),
-              {
-                date: localDate,
-                startTime: localStartTime,
-                timestamp: new Date().toISOString(),
-              },
-            ]
-          : [
-              {
-                date: localDate,
-                startTime: localStartTime,
-                timestamp: new Date().toISOString(),
-              },
-            ],
-      },
-    });
-
-    // Set submitted state
-    setIsSubmitted(true);
+      // Set submitted state
+      setIsSubmitted(true);
+    }
   };
 
   const renderDateInput = (label: string, value: string, onChange: (v: string) => void) => (
@@ -82,13 +82,7 @@ export const BookingConfirmation = ({ onConfirm }: BookingConfirmationProps) => 
 
   // Render confirmation screen if submitted
   if (isSubmitted) {
-    return (
-      <BookingConfirmationScreen
-        date={localDate}
-        startTime={localStartTime}
-        onReturn={() => setIsSubmitted(false)}
-      />
-    );
+    return <BookingConfirmationScreen date={localDate} startTime={localStartTime} />;
   }
 
   // Original input screen
@@ -100,18 +94,17 @@ export const BookingConfirmation = ({ onConfirm }: BookingConfirmationProps) => 
         className={`${COLORS.WARM_WHITE.bg} p-8 rounded-xl shadow-lg max-w-md w-full text-center`}
       >
         <h2 className={`text-2xl font-bold ${COLORS.WARM_PURPLE.DEFAULT} mb-4`}>
-          Appointment Confirmed! 🎉
+          Your Healing Journey Continues Here 🌱
         </h2>
 
         <p className='text-gray-600 mb-4'>
-          Your appointment has been confirmed! Now, for our records, could you kindly enter the
-          session details?
+          To ensure our records are accurate, please re-enter the session date and time you booked.
         </p>
 
         <div className='space-y-4'>
-          {renderDateInput('Session Date', localDate, setLocalDate)}
+          {renderDateInput('Re-enter Session Date', localDate, setLocalDate)}
 
-          {renderTimeInput('Start Time', localStartTime, setLocalStartTime)}
+          {renderTimeInput('Re-enter Start Time', localStartTime, setLocalStartTime)}
 
           <button
             onClick={handleConfirm}
