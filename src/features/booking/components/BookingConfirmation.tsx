@@ -20,11 +20,32 @@ export const BookingConfirmation = ({ onConfirm }: BookingConfirmationProps) => 
         startTime: localStartTime,
       });
 
-      // Add PostHog identify for session tracking
-      posthog.identify(user?.id, {
+      // Capture session booking event
+      posthog.capture('session_booked', {
         sessionDate: localDate,
         sessionStartTime: localStartTime,
-        sessionType: 'booking_confirmation',
+      });
+
+      // Update user profile with cumulative session tracking
+      posthog.identify(user?.id, {
+        $set: {
+          sessions: posthog.get_property('sessions')
+            ? [
+                ...posthog.get_property('sessions'),
+                {
+                  date: localDate,
+                  startTime: localStartTime,
+                  timestamp: new Date().toISOString(),
+                },
+              ]
+            : [
+                {
+                  date: localDate,
+                  startTime: localStartTime,
+                  timestamp: new Date().toISOString(),
+                },
+              ],
+        },
       });
     }
   };
