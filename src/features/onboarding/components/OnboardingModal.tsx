@@ -4,8 +4,7 @@ import { useClerk } from '@clerk/nextjs';
 import posthog from 'posthog-js';
 import { useState } from 'react';
 
-import { selectedRoleSignal } from '@/src/features/auth/state/authState';
-
+import { getSelectedRole } from '../../auth/state/authState';
 import { useOnboardingSubmission } from '../hooks/useOnboardingSubmission';
 import { onboardingSignal, onboardingQuestions } from '../state/onboardingState';
 
@@ -16,7 +15,12 @@ export default function OnboardingModal() {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string[]>>(
     () => onboardingSignal.value.answers,
   );
-
+  if (typeof window !== 'undefined') {
+    posthog.identify(clerkUser?.id, {
+      email: clerkUser?.emailAddresses[0]?.emailAddress,
+      role: getSelectedRole(),
+    });
+  }
   const signalState = onboardingSignal.value;
   const { handleSubmit, isSubmitting } = useOnboardingSubmission();
 
@@ -30,21 +34,13 @@ export default function OnboardingModal() {
     setSelectedAnswers((prev) => {
       const questionId = currentQuestion.id;
 
-      // Track option selection with enhanced user context
-      posthog.identify(clerkUser?.id, {
-        email: clerkUser?.emailAddresses[0]?.emailAddress,
-        name: clerkUser?.fullName,
-        user_type: selectedRoleSignal.value,
-        [`onboarding_question_${questionId}`]: optionId,
-      });
-
+      // Track option selection
       posthog.capture('onboarding_step_interaction', {
         user_id: clerkUser?.id,
         question_id: questionId,
         selected_option: optionId,
         question_type: currentQuestion.type,
         is_multi_select: currentQuestion.multiSelect || false,
-        user_type: selectedRoleSignal.value,
       });
 
       if (currentQuestion.multiSelect) {
@@ -62,21 +58,13 @@ export default function OnboardingModal() {
     const nextStep = currentStep + 1;
     const isLastStep = nextStep >= onboardingQuestions.length;
 
-    // Track progress through onboarding steps with enhanced context
-    posthog.identify(clerkUser?.id, {
-      email: clerkUser?.emailAddresses[0]?.emailAddress,
-      name: clerkUser?.fullName,
-      user_type: selectedRoleSignal.value,
-      onboarding_progress: ((currentStep + 1) / onboardingQuestions.length) * 100,
-    });
-
+    // Track progress through onboarding steps
     posthog.capture('onboarding_step_progress', {
       user_id: clerkUser?.id,
       current_step: currentStep,
       total_steps: onboardingQuestions.length,
       question_id: currentQuestion.id,
       selected_answers: selectedAnswers[currentQuestion.id] || [],
-      user_type: selectedRoleSignal.value,
     });
 
     if (isLastStep) {
@@ -91,20 +79,12 @@ export default function OnboardingModal() {
   };
 
   const handleClose = () => {
-    // Track if user closes onboarding prematurely with enhanced context
-    posthog.identify(clerkUser?.id, {
-      email: clerkUser?.emailAddresses[0]?.emailAddress,
-      name: clerkUser?.fullName,
-      user_type: selectedRoleSignal.value,
-      onboarding_status: 'abandoned',
-    });
-
+    // Track if user closes onboarding prematurely
     posthog.capture('onboarding_abandoned', {
       user_id: clerkUser?.id,
       current_step: currentStep,
       total_steps: onboardingQuestions.length,
       progress_percentage: ((currentStep + 1) / onboardingQuestions.length) * 100,
-      user_type: selectedRoleSignal.value,
     });
 
     onboardingSignal.value = {
