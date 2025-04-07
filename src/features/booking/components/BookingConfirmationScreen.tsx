@@ -1,22 +1,15 @@
+import { redirect } from 'next/navigation';
+
 import { COLORS } from '@/src/styles/colors';
 
 interface BookingConfirmationScreenProps {
   date: string;
   startTime: string;
-  onReturn?: () => void;
 }
 
-export const BookingConfirmationScreen = ({
-  date,
-  startTime,
-  onReturn,
-}: BookingConfirmationScreenProps) => {
+export const BookingConfirmationScreen = ({ date, startTime }: BookingConfirmationScreenProps) => {
   const handleReturn = () => {
-    if (onReturn) {
-      onReturn();
-    } else {
-      window.location.href = '/explore';
-    }
+    redirect('/explore');
   };
 
   return (
