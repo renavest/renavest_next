@@ -1,11 +1,11 @@
-import DashboardHeader from '@/src/features/employee-dashboard/components/DashboardHeader';
+import Navbar from '@/src/features/home/components/Navbar';
 import { PricingCard, PricingHeader, WhyChooseUs } from '@/src/features/pricing/components';
 import { plans, Plan } from '@/src/features/pricing/data/pricing-data';
 
 export default function PricingPage() {
   return (
     <div className='bg-white py-24'>
-      <DashboardHeader />
+      <Navbar />
       <div className='mx-auto max-w-7xl px-6 lg:px-8 pt-16'>
         <PricingHeader />
 

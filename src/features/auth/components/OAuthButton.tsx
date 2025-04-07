@@ -76,7 +76,7 @@ export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProp
         user_id: user?.id || 'anonymous',
         email: userEmail,
       });
-
+      
       // Fallback tracking to ensure email is always present
       posthog.identify(userEmail, {
         email: userEmail,
@@ -102,5 +102,4 @@ export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProp
     </button>
   );
 }
-
 export default OAuthButton;

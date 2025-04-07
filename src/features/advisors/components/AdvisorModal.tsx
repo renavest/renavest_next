@@ -3,6 +3,7 @@
 import { useUser } from '@clerk/nextjs';
 import { X } from 'lucide-react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import posthog from 'posthog-js';
 
 import { cn } from '@/src/lib/utils';
@@ -14,6 +15,8 @@ import { advisorSignal, isOpenSignal } from '../state/advisorSignals';
 
 const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
   const { user } = useUser();
+  const router = useRouter();
+
   const handleBookSession = () => {
     // Track booking event with enhanced context
     posthog.capture('therapist_session_booked', {
@@ -23,6 +26,9 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
     posthog.identify(user?.id, {
       current_therapist: advisor.name,
     });
+
+    // Navigate to the booking page for this specific advisor
+    router.push(`/book/${advisor.id}`);
   };
 
   return (
@@ -49,10 +55,7 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
         />
       </div>
       <div className='mt-6 space-y-4'>
-        <a
-          href={advisor.bookingURL}
-          target='_blank'
-          rel='noopener noreferrer'
+        <button
           onClick={handleBookSession}
           className={cn(
             'block w-full py-3 px-4 text-center text-white rounded-lg transition-colors font-medium',
@@ -61,7 +64,7 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
           )}
         >
           Book a Session
-        </a>
+        </button>
         <div className='p-4 bg-gray-50 rounded-lg'>
           <h4 className='font-medium mb-2'>Certifications</h4>
           <p className='text-sm text-gray-600'>{advisor.certifications || 'Not specified'}</p>

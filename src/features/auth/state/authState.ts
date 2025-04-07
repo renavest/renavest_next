@@ -69,8 +69,11 @@ export const setSelectedRole = (role: UserType | null) => {
 };
 
 export const getSelectedRole = (): UserType | null => {
-  const role = localStorage.getItem('selectedRole');
-  return role ? (role as UserType) : null;
+  const role = localStorage.getItem('selectedRole') || selectedRoleSignal.value;
+  if (!role) {
+    return null;
+  }
+  return role as UserType;
 };
 
 export const clearSelectedRole = () => {

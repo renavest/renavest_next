@@ -4,6 +4,7 @@ import { useClerk } from '@clerk/nextjs';
 import posthog from 'posthog-js';
 import { useState } from 'react';
 
+import { getSelectedRole } from '../../auth/state/authState';
 import { useOnboardingSubmission } from '../hooks/useOnboardingSubmission';
 import { onboardingSignal, onboardingQuestions } from '../state/onboardingState';
 
@@ -14,7 +15,12 @@ export default function OnboardingModal() {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string[]>>(
     () => onboardingSignal.value.answers,
   );
-
+  if (typeof window !== 'undefined') {
+    posthog.identify(clerkUser?.id, {
+      email: clerkUser?.emailAddresses[0]?.emailAddress,
+      role: getSelectedRole(),
+    });
+  }
   const signalState = onboardingSignal.value;
   const { handleSubmit, isSubmitting } = useOnboardingSubmission();
 

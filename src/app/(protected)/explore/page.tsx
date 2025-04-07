@@ -5,7 +5,8 @@ import { Advisor } from '@/src/shared/types';
 import { COLORS } from '@/src/styles/colors';
 
 import AdvisorGrid from '../../../features/advisors/components/AdvisorGrid';
-import Navbar from '../../../features/home/components/Navbar';
+import ExploreNavbar from '../../../features/home/components/ExploreNavbar';
+// import Navbar from '../../../features/home/components/Navbar';
 
 // Make this a server component since we're doing DB fetching
 export default async function Home() {
@@ -19,7 +20,6 @@ export default async function Home() {
       const profileUrl = therapist.profileUrl
         ? getTherapistImageUrl(therapist.profileUrl)
         : '/experts/placeholderexp.png';
-      console.log('profileUrl', profileUrl);
       return {
         id: therapist.id.toString(),
         name: therapist.name,
@@ -40,7 +40,7 @@ export default async function Home() {
       <div
         className={`min-h-screen ${COLORS.WARM_WHITE.bg} font-[family-name:var(--font-geist-sans)]`}
       >
-        <Navbar title='Renavest' />
+        <ExploreNavbar />
         <section className='pt-20 pb-6 px-4 sm:px-6'>
           <h2 className='text-2xl sm:text-3xl font-bold text-center text-gray-900'>
             Financial Therapists
@@ -67,7 +67,7 @@ export default async function Home() {
       <div
         className={`min-h-screen ${COLORS.WARM_WHITE.bg} font-[family-name:var(--font-geist-sans)]`}
       >
-        <Navbar title='Renavest' />
+        <ExploreNavbar />
         <section className='pt-20 pb-6 px-4 sm:px-6'>
           <h2 className='text-2xl sm:text-3xl font-bold text-center text-gray-900'>
             Financial Therapists

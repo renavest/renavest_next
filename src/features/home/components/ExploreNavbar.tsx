@@ -1,7 +1,7 @@
 'use client';
 
 import { UserButton } from '@clerk/nextjs';
-import { Menu, Users, X, Shield, DollarSign, ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Menu, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect } from 'react';
@@ -15,31 +15,6 @@ import {
   isMobileMenuOpenSignal,
 } from '../../employee-dashboard/state/dashboardState';
 
-// Extract common navigation items into a separate component
-const NavigationItem = ({
-  href,
-  icon: Icon,
-  label,
-  isMobile = false,
-}: {
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  isMobile?: boolean;
-}) => (
-  <Link
-    href={href}
-    className={cn(
-      'flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors',
-      isMobile && 'w-full py-3 hover:bg-gray-50',
-    )}
-  >
-    <Icon className={isMobile ? 'h-5 w-5' : 'h-4 w-4'} />
-    <span className={isMobile ? 'text-base' : 'text-sm font-medium'}>{label}</span>
-  </Link>
-);
-
-// Mobile Navigation Component
 const MobileNavigation = () => (
   <div
     className={`
@@ -49,9 +24,6 @@ const MobileNavigation = () => (
     `}
   >
     <div className='p-4 space-y-2'>
-      <NavigationItem href='/explore' icon={Users} label='Find Therapists' isMobile />
-      <NavigationItem href='/pricing' icon={DollarSign} label='Pricing' isMobile />
-      <NavigationItem href='/privacy' icon={Shield} label='Privacy & Security' isMobile />
       <div className='px-4 py-3 border-t border-gray-100 mt-3'>
         <LogoutButton
           className='w-full flex items-center justify-center space-x-2 text-red-600 hover:bg-red-50 p-2 rounded-md'
@@ -59,7 +31,7 @@ const MobileNavigation = () => (
           textClassName='font-medium'
         />
       </div>
-      <div className='px-4 py-3 flex items-center'>
+      <div className='px-4 py-3 flex items-center justify-center'>
         <span className='text-sm text-gray-500 mr-3'>Your Account</span>
         <UserButton afterSignOutUrl='/login' />
       </div>
@@ -67,12 +39,8 @@ const MobileNavigation = () => (
   </div>
 );
 
-// Desktop Navigation Component
 const DesktopNavigation = () => (
   <div className='hidden md:flex items-center gap-3 lg:gap-4'>
-    <NavigationItem href='/explore' icon={Users} label='Find Therapists' />
-    <NavigationItem href='/pricing' icon={DollarSign} label='Pricing' />
-    <NavigationItem href='/privacy' icon={Shield} label='Privacy & Security' />
     <div className='h-6 w-px bg-gray-200 mx-1'></div>
     <LogoutButton />
     <div className='ml-1 lg:ml-2'>
@@ -81,8 +49,8 @@ const DesktopNavigation = () => (
   </div>
 );
 
-export default function DashboardHeader({
-  pageTitle = 'Dashboard',
+export default function ExploreNavbar({
+  pageTitle = 'Explore',
   showBackButton = false,
   additionalActions = null,
 }: {

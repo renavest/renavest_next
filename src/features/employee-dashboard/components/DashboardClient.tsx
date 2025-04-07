@@ -6,9 +6,9 @@ import { computed } from '@preact-signals/safe-react';
 import OnboardingModal from '@/src/features/onboarding/components/OnboardingModal';
 import { COLORS } from '@/src/styles/colors';
 
+import Navbar from '../../home/components/Navbar';
 import { onboardingSignal } from '../../onboarding/state/onboardingState';
 
-import DashboardHeader from './DashboardHeader';
 import PersonalActionableInsights from './insights/PersonalActionableInsights';
 import PersonalGoalsTracker from './insights/PersonalGoalsTracker';
 import ProgressComparisonChart from './insights/ProgressComparisonChart';
@@ -28,7 +28,7 @@ export default function DashboardClient() {
   const { user } = useUser();
   return (
     <div className={`min-h-screen ${COLORS.WARM_WHITE.bg} font-sans`}>
-      <DashboardHeader />
+      <Navbar />
 
       {/* Main Content */}
       <main className='container mx-auto px-4 pt-24 md:pt-32 pb-8'>
