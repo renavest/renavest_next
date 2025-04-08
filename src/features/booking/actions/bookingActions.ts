@@ -12,14 +12,19 @@ const BookingSessionSchema = z.object({
   therapistId: z.string(),
   sessionDate: z.string().refine(
     (val) => {
-      const date = new Date(val);
+      // Check if val is a full datetime or just a date
+      const date = val.includes('T') ? new Date(val) : new Date(val);
       return !isNaN(date.getTime()) && date >= new Date();
     },
     { message: 'Invalid date' },
   ),
-  sessionStartTime: z.string().refine((val) => /^([01]\d|2[0-3]):([0-5]\d)$/.test(val), {
-    message: 'Invalid time format (HH:MM)',
-  }),
+  sessionStartTime: z.string().refine(
+    (val) => {
+      // Accept either full datetime or just time
+      return val.includes('T') || /^([01]\d|2[0-3]):([0-5]\d)$/.test(val);
+    },
+    { message: 'Invalid time format' },
+  ),
   userEmail: z.string().email(),
 });
 
@@ -33,6 +38,11 @@ export async function createBookingSession(rawData: unknown) {
 
   const { userId, therapistId, sessionDate, sessionStartTime, userEmail } = result.data;
 
+  // Normalize date and time
+  const normalizedDate = sessionDate.includes('T')
+    ? new Date(sessionDate)
+    : new Date(`${sessionDate}T${sessionStartTime}`);
+
   try {
     // Fetch therapist details for additional tracking
     const therapist = await db.query.therapists.findFirst({
@@ -45,8 +55,8 @@ export async function createBookingSession(rawData: unknown) {
       .values({
         userId: parseInt(userId),
         therapistId: parseInt(therapistId),
-        sessionDate: new Date(`${sessionDate}T${sessionStartTime}:00`),
-        sessionStartTime: new Date(`${sessionDate}T${sessionStartTime}:00`),
+        sessionDate: normalizedDate,
+        sessionStartTime: normalizedDate,
         status: 'scheduled',
         metadata: {
           calendlyEventData: null,
