@@ -61,15 +61,13 @@ export async function createBookingSession(rawData: unknown) {
   }
 
   try {
-    // Ensure userId and therapistId are parsed to integers
-    const parsedUserId = parseInt(userId);
+    // No need to parse userId to integer anymore
     const parsedTherapistId = parseInt(therapistId);
 
     // Log parsed IDs
     console.log('Parsed IDs:', {
-      parsedUserId,
+      userId,
       parsedTherapistId,
-      isUserIdNaN: isNaN(parsedUserId),
       isTherapistIdNaN: isNaN(parsedTherapistId),
     });
 
@@ -82,7 +80,7 @@ export async function createBookingSession(rawData: unknown) {
     const bookingSession = await db
       .insert(bookingSessions)
       .values({
-        userId: parsedUserId,
+        userId: userId, // Use Clerk ID directly
         therapistId: parsedTherapistId,
         sessionDate: normalizedDate,
         sessionStartTime: normalizedDate,

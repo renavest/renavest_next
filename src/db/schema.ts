@@ -55,3 +55,25 @@ export const therapists = pgTable('therapists', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+// Add this after the existing tables
+export const bookingSessions = pgTable('booking_sessions', {
+  id: serial('id').primaryKey(),
+  userId: text('user_id')
+    .references(() => users.clerkId)
+    .notNull(),
+  therapistId: integer('therapist_id')
+    .references(() => therapists.id)
+    .notNull(),
+  sessionDate: timestamp('session_date').notNull(),
+  sessionStartTime: timestamp('session_start_time').notNull(),
+  status: varchar('status', {
+    length: 50,
+    enum: ['scheduled', 'completed', 'cancelled', 'rescheduled'],
+  })
+    .notNull()
+    .default('scheduled'),
+  metadata: jsonb('metadata'), // Flexible JSON field for additional data
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
