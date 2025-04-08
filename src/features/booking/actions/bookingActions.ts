@@ -12,16 +12,23 @@ const BookingSessionSchema = z.object({
   therapistId: z.string(),
   sessionDate: z.string().refine(
     (val) => {
-      // Check if val is a full datetime or just a date
-      const date = val.includes('T') ? new Date(val) : new Date(val);
-      return !isNaN(date.getTime()) && date >= new Date();
+      // More flexible date validation
+      try {
+        const date = new Date(val);
+        return !isNaN(date.getTime()) && date >= new Date(new Date().toDateString());
+      } catch {
+        return false;
+      }
     },
     { message: 'Invalid date' },
   ),
   sessionStartTime: z.string().refine(
     (val) => {
-      // Accept either full datetime or just time
-      return val.includes('T') || /^([01]\d|2[0-3]):([0-5]\d)$/.test(val);
+      // Accept time in HH:MM format or full datetime
+      return (
+        /^([01]\d|2[0-3]):([0-5]\d)$/.test(val) ||
+        /^\d{4}-\d{2}-\d{2}T([01]\d|2[0-3]):([0-5]\d)/.test(val)
+      );
     },
     { message: 'Invalid time format' },
   ),
@@ -33,15 +40,21 @@ export async function createBookingSession(rawData: unknown) {
   const result = BookingSessionSchema.safeParse(rawData);
 
   if (!result.success) {
-    throw new Error(`Invalid booking data: ${result.error.message}`);
+    console.error('Validation Errors:', result.error.errors);
+    throw new Error(`Invalid booking data: ${JSON.stringify(result.error.errors)}`);
   }
 
   const { userId, therapistId, sessionDate, sessionStartTime, userEmail } = result.data;
 
   // Normalize date and time
-  const normalizedDate = sessionDate.includes('T')
-    ? new Date(sessionDate)
-    : new Date(`${sessionDate}T${sessionStartTime}`);
+  let normalizedDate;
+  if (sessionStartTime.includes('T')) {
+    // Full datetime provided
+    normalizedDate = new Date(sessionStartTime);
+  } else {
+    // Separate date and time
+    normalizedDate = new Date(`${sessionDate}T${sessionStartTime}`);
+  }
 
   try {
     // Fetch therapist details for additional tracking
