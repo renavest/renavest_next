@@ -10,28 +10,8 @@ import { bookingSessions } from '@/src/db/schema';
 const BookingSessionSchema = z.object({
   userId: z.string(),
   therapistId: z.string(),
-  sessionDate: z.string().refine(
-    (val) => {
-      // More flexible date validation
-      try {
-        const date = new Date(val);
-        return !isNaN(date.getTime()) && date >= new Date(new Date().toDateString());
-      } catch {
-        return false;
-      }
-    },
-    { message: 'Invalid date' },
-  ),
-  sessionStartTime: z.string().refine(
-    (val) => {
-      // Accept time in HH:MM format or full datetime
-      return (
-        /^([01]\d|2[0-3]):([0-5]\d)$/.test(val) ||
-        /^\d{4}-\d{2}-\d{2}T([01]\d|2[0-3]):([0-5]\d)/.test(val)
-      );
-    },
-    { message: 'Invalid time format' },
-  ),
+  sessionDate: z.string(),
+  sessionStartTime: z.string(),
   userEmail: z.string().email(),
 });
 
@@ -48,12 +28,22 @@ export async function createBookingSession(rawData: unknown) {
 
   // Normalize date and time
   let normalizedDate;
-  if (sessionStartTime.includes('T')) {
-    // Full datetime provided
+  try {
+    // Try parsing the full datetime first
     normalizedDate = new Date(sessionStartTime);
-  } else {
-    // Separate date and time
-    normalizedDate = new Date(`${sessionDate}T${sessionStartTime}`);
+
+    // If that fails, try combining date and time
+    if (isNaN(normalizedDate.getTime())) {
+      normalizedDate = new Date(`${sessionDate}T${sessionStartTime}`);
+    }
+
+    // Validate the date
+    if (isNaN(normalizedDate.getTime())) {
+      throw new Error('Invalid date');
+    }
+  } catch (error) {
+    console.error('Date parsing error:', error);
+    throw new Error('Invalid date format');
   }
 
   try {
