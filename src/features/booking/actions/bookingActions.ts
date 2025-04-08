@@ -1,8 +1,8 @@
 'use server';
 
-import posthog from 'posthog-js';
 import { z } from 'zod';
 
+import PostHogClient from '@/posthog'; // Ensure this is a server-side PostHog client
 import { db } from '@/src/db';
 import { bookingSessions } from '@/src/db/schema';
 
@@ -79,14 +79,22 @@ export async function createBookingSession(rawData: unknown) {
       .returning();
 
     // PostHog tracking
-    posthog.capture('therapist_session_booked', {
-      therapist_id: therapistId,
-      therapist_name: therapist?.name,
-      user_id: userId,
-      user_email: userEmail,
-      session_date: sessionDate,
-      session_start_time: sessionStartTime,
+    const posthogClient = PostHogClient();
+    posthogClient.capture({
+      distinctId: userId,
+      event: 'therapist_session_booked',
+      properties: {
+        therapist_id: therapistId,
+        therapist_name: therapist?.name,
+        user_id: userId,
+        user_email: userEmail,
+        session_date: sessionDate,
+        session_start_time: sessionStartTime,
+      },
     });
+
+    // Close the PostHog client to ensure tracking
+    await posthogClient.shutdown();
 
     return {
       success: true,
