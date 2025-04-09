@@ -4,6 +4,8 @@ import { useState } from 'react';
 
 import { COLORS } from '@/src/styles/colors';
 
+import { sendBookingConfirmationEmail } from '../actions/sendBookingConfirmationEmail';
+
 import { BookingConfirmationScreen } from './BookingConfirmationScreen';
 import { DateInput } from './BookingFormComponents/DateInput';
 import { TimeSelect } from './BookingFormComponents/TimeSelect';
@@ -34,7 +36,7 @@ export const BookingConfirmation = ({ advisorId, onConfirm }: BookingConfirmatio
     return selectedDate >= today;
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!localDate || !localStartTime) return;
 
     if (!isValidDate(localDate)) {
@@ -45,26 +47,44 @@ export const BookingConfirmation = ({ advisorId, onConfirm }: BookingConfirmatio
     // Remove AM/PM and convert to 24-hour format
     const convertTo24Hour = (time: string) => {
       const [timePart, modifier] = time.split(' ');
-      let [hours, minutes] = timePart.split(':').map(Number);
+      const [hours, minutes] = timePart.split(':').map(Number);
 
+      let adjustedHours = hours;
       if (modifier === 'PM' && hours !== 12) {
-        hours += 12;
+        adjustedHours += 12;
       }
       if (modifier === 'AM' && hours === 12) {
-        hours = 0;
+        adjustedHours = 0;
       }
 
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      return `${adjustedHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
     };
 
     const formattedTime = convertTo24Hour(localStartTime);
     const sessionTimestamp = new Date(`${localDate}T${formattedTime}`).toISOString();
 
+    // Format the date for display
+    const formattedDate = new Date(sessionTimestamp).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+
+    // Confirm booking and send email
     onConfirm({
       date: sessionTimestamp,
       startTime: formattedTime,
       timezone: selectedTimezone,
       therapistId: advisorId,
+    });
+
+    // Send email to Stanley
+    await sendBookingConfirmationEmail({
+      clientName: user?.fullName || 'Client',
+      sessionDate: formattedDate,
+      sessionTime: formattedTime,
+      timezone: selectedTimezone,
     });
 
     posthog.capture('session_booked', {
