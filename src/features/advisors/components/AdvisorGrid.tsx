@@ -105,6 +105,11 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
               {advisor.title}
             </p>
           </div>
+          {advisor.hourlyRate && (
+            <div className='bg-purple-50 text-purple-700 px-2 py-1 rounded-full text-xs font-medium'>
+              {advisor.hourlyRate}/hr
+            </div>
+          )}
         </div>
         <div className='mt-2 flex flex-wrap gap-1 sm:gap-1.5 max-h-12 sm:max-h-16 overflow-hidden'>
           {displayTags.map((exp, index) => (

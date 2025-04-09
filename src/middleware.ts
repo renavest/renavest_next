@@ -12,6 +12,8 @@ const protectedRoutes = [
   '/employee/(.*)',
   '/employer',
   '/employer/(.*)',
+  '/book',
+  '/book/(.*)',
 ];
 
 // Create route matcher for protected routes

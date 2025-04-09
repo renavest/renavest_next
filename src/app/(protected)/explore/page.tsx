@@ -33,6 +33,9 @@ export default async function Home() {
         longBio: therapist.longBio || '',
         previewBlurb: therapist.previewBlurb || 'Experienced financial therapist',
         profileUrl: profileUrl,
+        hourlyRate: therapist.hourlyRate
+          ? `$${Math.round(Number(therapist.hourlyRate))}`
+          : undefined,
       };
     });
 

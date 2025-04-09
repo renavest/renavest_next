@@ -16,6 +16,7 @@ const TherapistList = [
     previewBlurb:
       'Empowering women to crush debt, invest smartly, and build lasting financial confidence!',
     profileUrl: '/experts/PaigeW.jpg',
+    hourlyRate: 150,
   },
   {
     id: '2',
@@ -50,6 +51,7 @@ const TherapistList = [
       'Michele Paiva is a financial therapist, trauma therapist, fractional CMO, and publicist with over 30 years of experience helping individuals and businesses thrive. Millennials value her relatable, "I’ve been there" approach, while Boomers appreciate her wisdom from successfully living through life’s financial challenges. Michele’s work focuses on uncovering the emotions beneath financial struggles, resolving couples\' money conflicts, and empowering clients to showcase their value, build abundance, and create lasting change. Michele has autism and is also a certified clinical autism specialist who enjoys helping neurodivergent employees regain their feelings and finances. In 2023, she was voted top 100 publicists out of 14,000. She likes Tofu.',
     previewBlurb: 'A casual approach to emotional depth and elegant living!',
     profileUrl: '/experts/Michele.jpeg',
+    hourlyRate: 180,
   },
   {
     id: '4',
@@ -82,6 +84,7 @@ const TherapistList = [
       'Aitza is a passionate financial coach, accountant, and entrepreneur dedicated to helping professionals and aspiring business owners achieve financial clarity and time freedom. With a background as a CPA and years of experience in personal finance and business management, she empowers her clients to bridge the gap between their current reality and their ideal lifestyle. Aitza’s journey into financial coaching was inspired by her own transformational story—turning her life around in high school with the support of a mentor, she now dedicates her career to helping others see possibilities and take control of their futures. Her coaching program, moneyFLOW$™ Academy, guides high-earning professionals through mastering personal finances, reducing debt, and building sustainable businesses. In addition to coaching, Aitza specializes in bookkeeping, bookkeeping diagnostics, Profit First implementation, and financial clean-ups, ensuring business owners have the tools they need for long-term profitability. Her clients have achieved remarkable results, from saving thousands of dollars to confidently launching businesses that align with their goals and values. Aitza’s mission is to create financial confidence and economic resilience for her clients, equipping them to build wealth and lead change for themselves, their families, and their communities.',
     previewBlurb: 'Transforming finances, empowering dreams, and creating lasting wealth!',
     profileUrl: '/experts/Aitzarelys.jpeg',
+    hourlyRate: 222,
   },
   {
     id: '6',
@@ -100,6 +103,7 @@ const TherapistList = [
     previewBlurb:
       'Transform your relationship with money to enhance life and strengthen family connections!',
     profileUrl: '/experts/Maureen.jpeg',
+    hourlyRate: 150,
   },
   {
     id: '7',
@@ -117,6 +121,7 @@ const TherapistList = [
     previewBlurb:
       'Empowering financial freedom through practical education and relatable money management insights!',
     profileUrl: '/experts/TiffanyGrant.jpeg',
+    hourlyRate: 150,
   },
   {
     id: '8',
@@ -135,6 +140,7 @@ const TherapistList = [
     previewBlurb:
       'Empowering communities to heal money wounds and achieve financial peace through holistic wellness!',
     profileUrl: '/experts/TyanaIngram.jpeg',
+    hourlyRate: 197,
   },
   {
     id: '9',
@@ -152,6 +158,7 @@ const TherapistList = [
     previewBlurb:
       'Empowering millennials to achieve financial freedom through mindset shifts and effective money systems!',
     profileUrl: '/experts/vince.jpg',
+    hourlyRate: 197,
   },
   {
     id: '10',
@@ -172,6 +179,7 @@ const TherapistList = [
     previewBlurb:
       'Empowering holistic wealth and wellness through financial therapy and mindset transformation!',
     profileUrl: '/experts/jaelyn.jpg',
+    hourlyRate: 80,
   },
   {
     id: '11',
@@ -236,9 +244,10 @@ const TherapistList = [
     clientele:
       'Women. Gender expansive individuals. Clients who feel they make "enough" money. Those who still struggle with complicated feelings about money and success.',
     longBio:
-      'Hi! I’m Haylie (she/her). My mission is to help people heal their relationship with money so that they can create the life they truly want to live. I am passionate about helping people reclaim freedom and agency over their lives, and I believe a crucial part of that is having a healthy relationship with money. As a financial therapist, I help people work through their financial trauma and shift their negative emotions around money. I support them in building a healthy relationship with money by relearning how to have a healthy relationship with themselves. We work together to redefine their concept of success, and identify financial goals that align with their values. My clients long to experience freedom and agency in their lives, and their relationship with money is the one area that they haven’t been able to figure out. Many of them have financial trauma holding them back from chasing their dreams. Our families, communities, and society at large hand us a lot of default beliefs about money and success, but these default beliefs no longer work for my clients. You may have looked into personal finance, but whether it’s impulsive spending, avoiding your bank statements, or grappling with indecisiveness, you still find yourself struggling and secretly wonder if you’ll ever feel good about money. Trying to navigate the complicated, overwhelming feelings of depression, shame, anger, or anxiety around money is exhausting. As both a financial coach and trained psychotherapist, I offer a unique experience to those who work with me. First, we will work together to define your beliefs about money and develop a healthy relationship with money. I provide a shame-free space to work through your emotions and psychology around money, and I will help you cultivate a healthy, positive money mindset. Then, through personalized financial education and coaching, I will help you create a money practice that is realistic and aligned with your values and goals. My clients end their work with me feeling at ease with their finances and with the confidence and clarity to use money as a resource to nourish the life they want to live. You deserve to have a relationship with money that gives you confidence and joy. You can have a relationship with money that is peaceful, empowering, and allows you to chase your dreams. If this is you, schedule your free consultation and let’s chat!',
+      'Hi! I’m Haylie (she/her). My mission is to help people heal their relationship with money so that they can create the life they truly want to live. I am passionate about helping people reclaim freedom and agency over their lives, and I believe a crucial part of that is having a healthy relationship with money. As a financial therapist, I help people work through their financial trauma and shift their negative emotions around money. I support them in building a healthy relationship with money by relearning how to have a healthy relationship with themselves. Then, through personalized financial education and coaching, I will help you create a money practice that is realistic and aligned with your values and goals. My clients end their work with me feeling at ease with their finances and with the confidence and clarity to use money as a resource to nourish the life they want to live. You deserve to have a relationship with money that gives you confidence and joy. You can have a relationship with money that is peaceful, empowering, and allows you to chase your dreams. If this is you, schedule your free consultation and let’s chat!',
     previewBlurb: 'Heal your money mindset, reclaim your freedom, and live your dreams!',
     profileUrl: '/experts/HaylieCastillo.jpeg',
+    hourlyRate: 195,
   },
   {
     id: '15',
@@ -255,6 +264,7 @@ const TherapistList = [
     previewBlurb:
       'Transforming financial wellness through compassionate guidance and personalized money healing!',
     profileUrl: '/experts/Sarah_Carr_Headshot.jpeg',
+    hourlyRate: 120,
   },
   {
     id: '16',
@@ -271,6 +281,7 @@ const TherapistList = [
       'LaQueshia Clemons is a LCSW, Trauma of Money Certified, and Financial Counselor, who guides individuals and couples towards financial well-being and emotional resilience. As the founder of Freedom Life Therapy and Wellness, she helps clients explore money-related emotional and behavioral patterns. Through engaging workshops and speeches, LaQueshia empowers others to understand their unique money stories, emphasizing the profound influences shaping financial decisions. Featured in media outlets like Word in Black, Nerd Wallet, and Yahoo Finance, her dynamic and warm approach transforms lives and fosters healthy money relationships. Outside work, LaQueshia enjoys cooking, adding zest to life through culinary adventures.',
     previewBlurb: "Heal your money mindset, empower your future, and savor life's journey!",
     profileUrl: '/experts/LaQueshiaClemons.jpeg',
+    hourlyRate: 175,
   },
   {
     id: '17',
@@ -288,6 +299,7 @@ const TherapistList = [
       'Kelly is a CERTIFIED FINANCIAL PLANNER(TM) professional, Certified Student Loan professional (R), a Certified Divorce Financial Analyst (R) practitioner, and Certified Financial Therapist-1(TM). She maintains those credentials with annual continuing education programs to stay up to date and would consider herself a lifelong learner. Life credentials include growing up in a home with a single mom who worked miracles with financial resources available, business ownership, college funding and student loan survival, buying and selling property and cars, military service member household with multiple PCS moves, divorced family members and friends, life’s twists and turns.',
     previewBlurb: 'Empowering financial journeys through expertise, empathy, and life experience!',
     profileUrl: '/experts/Kelly_Reddy_Heffner.jpeg',
+    hourlyRate: 175,
   },
   {
     id: '18',
@@ -322,6 +334,7 @@ const TherapistList = [
     previewBlurb:
       'Transforming financial trauma into empowerment through holistic healing and hope!',
     profileUrl: '/experts/TamoaDanielleSmith.jpeg',
+    hourlyRate: 222,
   },
   {
     id: '20',

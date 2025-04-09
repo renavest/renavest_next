@@ -5,9 +5,14 @@ import { COLORS } from '@/src/styles/colors';
 interface BookingConfirmationScreenProps {
   date: string;
   startTime: string;
+  timezone: string;
 }
 
-export const BookingConfirmationScreen = ({ date, startTime }: BookingConfirmationScreenProps) => {
+export const BookingConfirmationScreen = ({
+  date,
+  startTime,
+  timezone,
+}: BookingConfirmationScreenProps) => {
   const handleReturn = () => {
     redirect('/explore');
   };
@@ -37,7 +42,7 @@ export const BookingConfirmationScreen = ({ date, startTime }: BookingConfirmati
             <span className='font-medium'>Date:</span> {formattedDate}
           </p>
           <p className='text-gray-700'>
-            <span className='font-medium'>Time:</span> {startTime}
+            <span className='font-medium'>Time:</span> {startTime} {timezone}
           </p>
         </div>
 

@@ -1,8 +1,9 @@
 import * as dotenv from 'dotenv';
 import { eq } from 'drizzle-orm';
 
-import { db } from '../db';
-import { therapists } from '../db/schema';
+import TherapistList from '@/src/config/therapistsList';
+import { db } from '@/src/db';
+import { therapists } from '@/src/db/schema';
 
 // import { uploadImageToS3 } from './migrate-therapists';
 
@@ -23,6 +24,7 @@ type TherapistUpdateFields = Partial<{
   longBio: string;
   previewBlurb: string;
   profileUrl: string;
+  hourlyRate: number;
 }>;
 
 /**
@@ -84,6 +86,37 @@ async function exampleUsage() {
 
 // Uncomment the line below to run the example usage
 exampleUsage().catch(console.error);
+
+/**
+ * Bulk update therapist hourly rates from the therapist list
+ */
+export async function updateTherapistHourlyRates() {
+  console.log('Starting therapist hourly rate update...');
+
+  for (const therapist of TherapistList) {
+    try {
+      // Skip therapists without an hourly rate
+      if (!therapist.hourlyRate) continue;
+
+      // Update the therapist's hourly rate
+      await db
+        .update(therapists)
+        .set({
+          hourlyRate: therapist.hourlyRate.toString(),
+        })
+        .where(eq(therapists.name, therapist.name));
+
+      console.log(`Updated hourly rate for ${therapist.name}: $${therapist.hourlyRate}`);
+    } catch (error) {
+      console.error(`Error updating hourly rate for ${therapist.name}:`, error);
+    }
+  }
+
+  console.log('Hourly rate update completed!');
+}
+
+// Uncomment to run directly
+// updateTherapistHourlyRates().catch(console.error);
 
 // Export the function so it can be imported and used in other scripts
 // export { updateTherapist };

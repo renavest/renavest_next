@@ -1,57 +1,48 @@
-'use client';
-
+import { currentUser } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
-import posthog from 'posthog-js';
-import { useState } from 'react';
-import { InlineWidget } from 'react-calendly';
-import { useCalendlyEventListener } from 'react-calendly';
 
-import { advisorSignal } from '@/src/features/advisors/state/advisorSignals';
-import { BookingConfirmation } from '@/src/features/booking/components/BookingConfirmation';
+import { trackSessionSearch } from '@/src/app/api/track/calendly/route';
+import { db } from '@/src/db';
+import { therapists } from '@/src/db/schema';
 
-function TherapistCalendly() {
-  const advisor = advisorSignal.value;
-  const [isBookingConfirmed, setIsBookingConfirmed] = useState(false);
-  // Redirect if no advisor is found
-  if (!advisor?.id || !advisor?.bookingURL) {
+import TherapistCalendlyClient from './TherapistCalendlyClient';
+
+export default async function TherapistCalendlyPage({ params }: { params: { advisorId: string } }) {
+  const { advisorId } = await params;
+  // Validate and parse advisorId
+  if (!advisorId) {
     redirect('/explore');
   }
 
-  useCalendlyEventListener({
-    onEventScheduled: (e) => {
-      console.log('e', e);
-      setIsBookingConfirmed(true);
-      posthog.capture('calendly_event_scheduled', {
-        therapist_id: advisor.id,
-        therapist_name: advisor.name,
-        event_data: e,
-      });
-    },
+  const user = await currentUser();
+
+  // Fetch therapist data server-side
+  const advisor = await db.query.therapists.findFirst({
+    where: eq(therapists.id, parseInt(advisorId)),
   });
 
-  if (isBookingConfirmed) {
-    return (
-      <BookingConfirmation
-        onConfirm={() => {
-          posthog.capture('booking_details_confirmed', {
-            therapist_id: advisor.id,
-            therapist_name: advisor.name,
-          });
-        }}
-      />
-    );
+  // Redirect if no user or advisor
+  if (!user || !advisor?.id || !advisor?.bookingURL) {
+    redirect('/explore');
   }
+  // Track session search
+  await trackSessionSearch({
+    therapistId: advisor.id.toString(),
+    therapistName: advisor.name,
+    userId: user.id,
+    userEmail: user.emailAddresses[0]?.emailAddress || '',
+  });
 
   return (
-    <InlineWidget
-      url={advisor.bookingURL}
-      styles={{
-        height: '100%',
-        width: '100%',
-        minHeight: '100vh',
+    <TherapistCalendlyClient
+      advisor={{
+        id: advisor.id.toString(),
+        name: advisor.name,
+        bookingURL: advisor.bookingURL,
       }}
+      userId={user.id}
+      userEmail={user.emailAddresses[0]?.emailAddress || ''}
     />
   );
 }
-
-export default TherapistCalendly;
