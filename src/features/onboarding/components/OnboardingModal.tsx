@@ -17,8 +17,12 @@ export default function OnboardingModal() {
   );
   if (typeof window !== 'undefined') {
     posthog.identify(clerkUser?.id, {
-      email: clerkUser?.emailAddresses[0]?.emailAddress,
-      role: getSelectedRole(),
+      $set_once: {
+        email: clerkUser?.emailAddresses[0]?.emailAddress,
+      },
+      $set: {
+        role: getSelectedRole(),
+      },
     });
   }
   const signalState = onboardingSignal.value;

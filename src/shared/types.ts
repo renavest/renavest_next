@@ -12,4 +12,5 @@ export interface Advisor {
   previewBlurb: string;
   profileUrl?: string;
   introduction?: string;
+  hourlyRate?: string;
 }

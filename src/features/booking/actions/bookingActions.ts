@@ -8,12 +8,30 @@ import { bookingSessions } from '@/src/db/schema';
 
 // Validation schema
 const BookingSessionSchema = z.object({
-  userId: z.string(),
   therapistId: z.string(),
   sessionDate: z.string(),
   sessionStartTime: z.string(),
   userEmail: z.string().email(),
 });
+
+// Helper function to parse and normalize time
+function normalizeDateTime(sessionTimestamp: string): Date {
+  const normalizedDate = new Date(sessionTimestamp);
+
+  // Validate the date
+  if (isNaN(normalizedDate.getTime())) {
+    throw new Error('Invalid date');
+  }
+
+  // Ensure date is not in the past
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (normalizedDate < today) {
+    throw new Error('Booking date cannot be in the past');
+  }
+
+  return normalizedDate;
+}
 
 export async function createBookingSession(rawData: unknown) {
   // Log the raw input data for debugging
@@ -24,49 +42,49 @@ export async function createBookingSession(rawData: unknown) {
 
   if (!result.success) {
     console.error('Validation Errors:', JSON.stringify(result.error.errors, null, 2));
-    throw new Error(`Invalid booking data: ${JSON.stringify(result.error.errors)}`);
+    throw new Error(
+      `Invalid booking data: ${result.error.errors.map((e) => e.message).join(', ')}`,
+    );
   }
 
-  const { userId, therapistId, sessionDate, sessionStartTime, userEmail } = result.data;
+  const { therapistId, sessionDate, sessionStartTime, userEmail } = result.data;
 
   // Additional logging for each field
   console.log('Parsed Booking Session Details:', {
-    userId,
     therapistId,
     sessionDate,
     sessionStartTime,
     userEmail,
-    userIdType: typeof userId,
     therapistIdType: typeof therapistId,
   });
 
   // Normalize date and time
   let normalizedDate;
   try {
-    // Try parsing the full datetime first
-    normalizedDate = new Date(sessionStartTime);
-
-    // If that fails, try combining date and time
-    if (isNaN(normalizedDate.getTime())) {
-      normalizedDate = new Date(`${sessionDate}T${sessionStartTime}`);
-    }
-
-    // Validate the date
-    if (isNaN(normalizedDate.getTime())) {
-      throw new Error('Invalid date');
-    }
+    normalizedDate = normalizeDateTime(sessionDate);
   } catch (error) {
     console.error('Date parsing error:', error);
-    throw new Error('Invalid date format');
+    throw new Error(
+      `Invalid date format: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    );
   }
 
   try {
     // No need to parse userId to integer anymore
     const parsedTherapistId = parseInt(therapistId);
 
+    // Find the user by email
+    const user = await db.query.users.findFirst({
+      where: (users, { eq }) => eq(users.email, userEmail),
+    });
+
+    if (!user) {
+      throw new Error(`User with email ${userEmail} not found`);
+    }
+
     // Log parsed IDs
     console.log('Parsed IDs:', {
-      userId,
+      userId: user.clerkId,
       parsedTherapistId,
       isTherapistIdNaN: isNaN(parsedTherapistId),
     });
@@ -80,7 +98,7 @@ export async function createBookingSession(rawData: unknown) {
     const bookingSession = await db
       .insert(bookingSessions)
       .values({
-        userId: userId, // Use Clerk ID directly
+        userId: user.clerkId, // Use the Clerk ID from the found user
         therapistId: parsedTherapistId,
         sessionDate: normalizedDate,
         sessionStartTime: normalizedDate,
@@ -95,12 +113,18 @@ export async function createBookingSession(rawData: unknown) {
     // PostHog tracking
     const posthogClient = PostHogClient();
     posthogClient.capture({
-      distinctId: userId,
+      distinctId: user.clerkId,
       event: 'therapist_session_booked',
       properties: {
+        $set_once: {
+          email: userEmail,
+          first_name: user.firstName,
+          last_name: user.lastName,
+          clerk_id: user.clerkId,
+        },
         therapist_id: therapistId,
         therapist_name: advisor?.name,
-        user_id: userId,
+        user_id: user.clerkId,
         user_email: userEmail,
         session_date: sessionDate,
         session_start_time: sessionStartTime,

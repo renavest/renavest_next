@@ -1,7 +1,8 @@
 import { S3Client, DeleteObjectsCommand } from '@aws-sdk/client-s3';
 import * as dotenv from 'dotenv';
+import { eq } from 'drizzle-orm';
 
-import { db } from '../db';
+import { db } from '../db/';
 import { therapists } from '../db/schema';
 import { users } from '../db/schema';
 import { userOnboarding } from '../db/schema';
@@ -73,6 +74,20 @@ async function clearUsers() {
   }
 }
 
+async function deleteSpecificTherapist() {
+  try {
+    const result = await db
+      .delete(therapists)
+      .where(eq(therapists.name, 'Monica Bradshaw'))
+      .returning({ deletedId: therapists.id });
+
+    console.log('Deleted therapist:', result);
+  } catch (error) {
+    console.error('Error deleting therapist:', error);
+  }
+}
+
 // Run the clear function
 // clearTherapists().catch(console.error);
-clearUsers().catch(console.error);
+// clearUsers().catch(console.error);
+deleteSpecificTherapist();

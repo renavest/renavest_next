@@ -5,87 +5,109 @@ import { useState } from 'react';
 import { COLORS } from '@/src/styles/colors';
 
 import { BookingConfirmationScreen } from './BookingConfirmationScreen';
+import { DateInput } from './BookingFormComponents/DateInput';
+import { TimeSelect } from './BookingFormComponents/TimeSelect';
+import { TimezoneSelect } from './BookingFormComponents/TimezoneSelect';
 
 interface BookingConfirmationProps {
-  onConfirm: (details: { date: string; startTime: string }) => void;
+  advisorId: string;
+  onConfirm: (details: {
+    date: string;
+    startTime: string;
+    timezone: string;
+    therapistId: string;
+  }) => void;
 }
 
-export const BookingConfirmation = ({ onConfirm }: BookingConfirmationProps) => {
+export const BookingConfirmation = ({ advisorId, onConfirm }: BookingConfirmationProps) => {
   const { user } = useUser();
   const [localDate, setLocalDate] = useState('');
   const [localStartTime, setLocalStartTime] = useState('');
+  const [selectedTimezone, setSelectedTimezone] = useState('EST');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [dateError, setDateError] = useState('');
+
+  const isValidDate = (date: string) => {
+    const selectedDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return selectedDate >= today;
+  };
 
   const handleConfirm = () => {
-    if (localDate && localStartTime) {
-      onConfirm({
-        date: localDate,
-        startTime: localStartTime,
-      });
+    if (!localDate || !localStartTime) return;
 
-      // Capture session booking event
-      posthog.capture('session_booked', {
-        sessionDate: localDate,
-        sessionStartTime: localStartTime,
-      });
+    if (!isValidDate(localDate)) {
+      setDateError('Please select a future date');
+      return;
+    }
 
-      // Update user profile with cumulative session tracking
-      posthog.identify(user?.id, {
-        $set: {
-          sessions: posthog.get_property('sessions')
-            ? [
-                ...posthog.get_property('sessions'),
-                {
-                  date: localDate,
-                  startTime: localStartTime,
-                  timestamp: new Date().toISOString(),
-                },
-              ]
-            : [
-                {
-                  date: localDate,
-                  startTime: localStartTime,
-                  timestamp: new Date().toISOString(),
-                },
-              ],
+    // Remove AM/PM and convert to 24-hour format
+    const convertTo24Hour = (time: string) => {
+      const [timePart, modifier] = time.split(' ');
+      let [hours, minutes] = timePart.split(':').map(Number);
+
+      if (modifier === 'PM' && hours !== 12) {
+        hours += 12;
+      }
+      if (modifier === 'AM' && hours === 12) {
+        hours = 0;
+      }
+
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    };
+
+    const formattedTime = convertTo24Hour(localStartTime);
+    const sessionTimestamp = new Date(`${localDate}T${formattedTime}`).toISOString();
+
+    onConfirm({
+      date: sessionTimestamp,
+      startTime: formattedTime,
+      timezone: selectedTimezone,
+      therapistId: advisorId,
+    });
+
+    posthog.capture('session_booked', {
+      sessionDate: sessionTimestamp,
+      sessionStartTime: formattedTime,
+      timezone: selectedTimezone,
+      therapistId: advisorId,
+    });
+
+    posthog.identify(user?.id, {
+      $add_to_list: {
+        sessions: {
+          date: sessionTimestamp,
+          startTime: formattedTime,
+          timezone: selectedTimezone,
+          therapistId: advisorId,
+          timestamp: new Date().toISOString(),
         },
-      });
+      },
+    });
 
-      // Set submitted state
-      setIsSubmitted(true);
+    setIsSubmitted(true);
+  };
+
+  const handleDateChange = (value: string) => {
+    setLocalDate(value);
+    if (value && !isValidDate(value)) {
+      setDateError('Please select a future date');
+    } else {
+      setDateError('');
     }
   };
 
-  const renderDateInput = (label: string, value: string, onChange: (v: string) => void) => (
-    <div className='mb-4'>
-      <label className='block text-sm font-medium text-gray-700 mb-2'>{label}</label>
-      <input
-        type='date'
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={`w-full px-4 py-2 rounded-lg border ${COLORS.WARM_PURPLE[20]} ${COLORS.WARM_PURPLE.focus} outline-none`}
-      />
-    </div>
-  );
-
-  const renderTimeInput = (label: string, value: string, onChange: (v: string) => void) => (
-    <div className='mb-4'>
-      <label className='block text-sm font-medium text-gray-700 mb-2'>{label}</label>
-      <input
-        type='time'
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={`w-full px-4 py-2 rounded-lg border ${COLORS.WARM_PURPLE[20]} ${COLORS.WARM_PURPLE.focus} outline-none`}
-      />
-    </div>
-  );
-
-  // Render confirmation screen if submitted
   if (isSubmitted) {
-    return <BookingConfirmationScreen date={localDate} startTime={localStartTime} />;
+    return (
+      <BookingConfirmationScreen
+        date={localDate}
+        startTime={localStartTime}
+        timezone={selectedTimezone}
+      />
+    );
   }
 
-  // Original input screen
   return (
     <div
       className={`fixed inset-0 z-50 flex flex-col items-center justify-center min-h-screen p-4 ${COLORS.WARM_PURPLE[5]}`}
@@ -102,9 +124,18 @@ export const BookingConfirmation = ({ onConfirm }: BookingConfirmationProps) => 
         </p>
 
         <div className='space-y-4'>
-          {renderDateInput('Re-enter Session Date', localDate, setLocalDate)}
-
-          {renderTimeInput('Re-enter Start Time', localStartTime, setLocalStartTime)}
+          <DateInput
+            label='Re-enter Session Date'
+            value={localDate}
+            onChange={handleDateChange}
+            error={dateError}
+          />
+          <TimeSelect
+            label='Re-enter Start Time'
+            value={localStartTime}
+            onChange={setLocalStartTime}
+          />
+          <TimezoneSelect value={selectedTimezone} onChange={setSelectedTimezone} />
 
           <button
             onClick={handleConfirm}
