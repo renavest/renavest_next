@@ -15,7 +15,6 @@ const BookingSessionSchema = z.object({
   sessionDate: z.string(),
   sessionStartTime: z.string(),
   userEmail: z.string().email(),
-  therapistEmail: z.string().email(),
   timezone: z.string().optional().default('EST'),
 });
 
@@ -38,18 +37,10 @@ function normalizeDateTime(sessionTimestamp: string): Date {
   return normalizedDate;
 }
 
-export async function createBookingSession(rawData: unknown) {
-  // Log the raw input data for debugging
-  console.log('Raw Booking Session Input:', JSON.stringify(rawData, null, 2));
-
-  // Validate input
+// Helper to validate and parse input data
+async function validateAndParseInput(rawData: unknown) {
   const result = BookingSessionSchema.safeParse(rawData);
-
   if (!result.success) {
-    // More descriptive error logging
-    console.error('Validation Errors:', JSON.stringify(result.error.errors, null, 2));
-
-    // Provide a more user-friendly error message
     const errorMessages = result.error.errors.map((e) => {
       switch (e.path[0]) {
         case 'timezone':
@@ -66,70 +57,77 @@ export async function createBookingSession(rawData: unknown) {
           return e.message;
       }
     });
-
     throw new Error(`Booking validation failed: ${errorMessages.join(', ')}`);
   }
+  return result.data;
+}
 
-  const { therapistId, sessionDate, sessionStartTime, userEmail, timezone } = result.data;
+// Helper to fetch user and therapist details
+async function fetchUserAndTherapist(userEmail: string, therapistId: string) {
+  const parsedTherapistId = parseInt(therapistId);
 
-  // Additional logging for each field
-  console.log('Parsed Booking Session Details:', {
-    therapistId,
-    sessionDate,
-    sessionStartTime,
-    userEmail,
-    timezone,
-    therapistIdType: typeof therapistId,
+  const user = await db.query.users.findFirst({
+    where: (users, { eq }) => eq(users.email, userEmail),
   });
-
-  // Normalize date and time
-  let normalizedDate;
-  try {
-    normalizedDate = normalizeDateTime(sessionDate);
-  } catch (error) {
-    console.error('Date parsing error:', error);
-    throw new Error(
-      `Invalid date format: ${error instanceof Error ? error.message : 'Unknown error'}`,
-    );
+  if (!user) {
+    throw new Error(`User with email ${userEmail} not found`);
   }
 
+  const advisor = await db.query.therapists.findFirst({
+    where: (therapists, { eq }) => eq(therapists.id, parsedTherapistId),
+  });
+  if (!advisor) {
+    throw new Error(`Therapist with ID ${therapistId} not found`);
+  }
+
+  return { user, advisor, parsedTherapistId };
+}
+
+// Helper to create booking record
+async function createBookingRecord(data: {
+  userId: string;
+  therapistId: number;
+  sessionDate: Date;
+  userEmail: string;
+}) {
+  return db
+    .insert(bookingSessions)
+    .values({
+      userId: data.userId,
+      therapistId: data.therapistId,
+      sessionDate: data.sessionDate,
+      sessionStartTime: data.sessionDate,
+      status: 'scheduled',
+      metadata: {
+        calendlyEventData: null,
+        userEmail: data.userEmail,
+      },
+    })
+    .returning();
+}
+
+export async function createBookingSession(rawData: unknown) {
   try {
-    // No need to parse userId to integer anymore
-    const parsedTherapistId = parseInt(therapistId);
+    // Validate and parse input
+    const validatedData = await validateAndParseInput(rawData);
+    const { therapistId, sessionDate, sessionStartTime, userEmail, timezone } = validatedData;
 
-    // Find the user by email
-    const user = await db.query.users.findFirst({
-      where: (users, { eq }) => eq(users.email, userEmail),
+    // Normalize date
+    const normalizedDate = normalizeDateTime(sessionDate);
+
+    // Fetch user and therapist details
+    const { user, advisor, parsedTherapistId } = await fetchUserAndTherapist(
+      userEmail,
+      therapistId,
+    );
+
+    // Create booking record
+    const bookingSession = await createBookingRecord({
+      userId: user.clerkId,
+      therapistId: parsedTherapistId,
+      sessionDate: normalizedDate,
+      userEmail,
     });
-
-    if (!user) {
-      throw new Error(`User with email ${userEmail} not found`);
-    }
-
-    // Fetch therapist details
-    const advisor = await db.query.therapists.findFirst({
-      where: (therapists, { eq }) => eq(therapists.id, parsedTherapistId),
-    });
-
-    if (!advisor) {
-      throw new Error(`Therapist with ID ${therapistId} not found`);
-    }
-
-    // Insert booking session
-    const bookingSession = await db
-      .insert(bookingSessions)
-      .values({
-        userId: user.clerkId, // Use the Clerk ID from the found user
-        therapistId: parsedTherapistId,
-        sessionDate: normalizedDate,
-        sessionStartTime: normalizedDate,
-        status: 'scheduled',
-        metadata: {
-          calendlyEventData: null,
-          userEmail: userEmail,
-        },
-      })
-      .returning();
 
     // Send confirmation emails
     const emailResult = await sendBookingConfirmationEmail({
@@ -149,12 +147,12 @@ export async function createBookingSession(rawData: unknown) {
           minute: '2-digit',
           hour12: true,
         }) + ` ${timezone}`,
-      timezone: timezone,
+      timezone,
     });
 
-    // PostHog tracking
+    // Track event in PostHog
     const posthogClient = PostHogClient();
-    posthogClient.capture({
+    await posthogClient.capture({
       distinctId: user.clerkId,
       event: 'therapist_session_booked',
       properties: {
@@ -173,8 +171,6 @@ export async function createBookingSession(rawData: unknown) {
         email_sent: emailResult.success,
       },
     });
-
-    // Close the PostHog client to ensure tracking
     await posthogClient.shutdown();
 
     return {
