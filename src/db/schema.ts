@@ -11,7 +11,7 @@ import {
   jsonb,
 } from 'drizzle-orm/pg-core';
 
-// Users table (connected to Clerk)
+// Base table definitions without circular references
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
   clerkId: varchar('clerk_id', { length: 255 }).notNull().unique(),
@@ -20,28 +20,14 @@ export const users = pgTable('users', {
   lastName: text('last_name'),
   imageUrl: text('image_url'),
   isActive: boolean('is_active').default(true).notNull(),
-  therapistId: integer('therapist_id').references(() => therapists.id),
+  therapistId: integer('therapist_id'), // Remove direct reference for now
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-// Onboarding table with flexible JSON storage
-export const userOnboarding = pgTable('user_onboarding', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id')
-    .references(() => users.id)
-    .notNull(),
-  answers: jsonb('answers'), // Flexible JSON storage for onboarding answers
-  version: integer('version').notNull().default(1), // Track onboarding form version
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-});
-
-// Therapists table with optional user relationship
 export const therapists = pgTable('therapists', {
   id: serial('id').primaryKey(),
-  // Optional reference to a user (can be null for manually managed therapists)
-  userId: integer('user_id').references(() => users.id),
+  userId: integer('user_id'), // Remove direct reference for now
   name: varchar('name', { length: 255 }).notNull(),
   title: varchar('title', { length: 255 }),
   bookingURL: text('booking_url'),
@@ -56,6 +42,33 @@ export const therapists = pgTable('therapists', {
   hourlyRate: numeric('hourly_rate', { precision: 10, scale: 2 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Relationships defined separately to avoid circular references
+export const usersRelations = relations(users, ({ one }) => ({
+  therapist: one(therapists, {
+    fields: [users.therapistId],
+    references: [therapists.id],
+  }),
+}));
+
+export const therapistsRelations = relations(therapists, ({ one }) => ({
+  user: one(users, {
+    fields: [therapists.userId],
+    references: [users.id],
+  }),
+}));
+
+// Onboarding table with flexible JSON storage
+export const userOnboarding = pgTable('user_onboarding', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id')
+    .references(() => users.id)
+    .notNull(),
+  answers: jsonb('answers'), // Flexible JSON storage for onboarding answers
+  version: integer('version').notNull().default(1), // Track onboarding form version
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
 // Add this after the existing tables
@@ -98,7 +111,7 @@ export const clientNotes = pgTable('client_notes', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-// Relationships
+// Additional relations
 export const clientNotesRelations = relations(clientNotes, ({ one }) => ({
   user: one(users, {
     fields: [clientNotes.userId],
@@ -114,7 +127,7 @@ export const clientNotesRelations = relations(clientNotes, ({ one }) => ({
   }),
 }));
 
-// Define types for the tables
+// Type definitions
 export type User = typeof users.$inferSelect;
 export type UserInsert = typeof users.$inferInsert;
 export type Therapist = typeof therapists.$inferSelect;
