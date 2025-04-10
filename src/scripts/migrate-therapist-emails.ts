@@ -18,7 +18,7 @@ async function migrateTherapistEmails() {
         await db
           .update(therapists)
           .set({ email: therapist.email })
-          .where(eq(therapists.name, therapist.name));
+          .where(eq(therapists.name, therapist.name.trim()));
         console.log(`Updated email for ${therapist.name}`);
       } else {
         console.log(`Skipping ${therapist.name} - no email provided`);
