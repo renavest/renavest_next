@@ -1,7 +1,7 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { Calendar, Users, Library } from 'lucide-react';
+import { Calendar, Users, Library, UserCircle2 } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -9,14 +9,47 @@ import { ALLOWED_EMAILS } from '@/src/constants';
 import ClientNotesSection from '@/src/features/therapist-dashboard/components/ClientNotesSection';
 import TherapistNavbar from '@/src/features/therapist-dashboard/components/TherapistNavbar';
 
-// Define types for session and metrics
-type UpcomingSession = {
-  id: number;
-  clientName: string;
-  sessionDate: string | Date;
-  sessionStartTime: string | Date;
-  status: string;
+// Define a more comprehensive client type
+type Client = {
+  id: string;
+  name: string;
+  email?: string;
+  phoneNumber?: string;
+  financialGoals?: string[];
+  activeTherapySessions?: number;
+  lastSessionDate?: Date;
 };
+
+// Placeholder client data (would typically come from a database)
+const CLIENTS: Client[] = [
+  {
+    id: '1',
+    name: 'Emily Johnson',
+    email: 'emily.johnson@example.com',
+    phoneNumber: '(555) 123-4567',
+    financialGoals: ['Build emergency fund', 'Reduce debt'],
+    activeTherapySessions: 3,
+    lastSessionDate: new Date('2023-12-15'),
+  },
+  {
+    id: '2',
+    name: 'Michael Chen',
+    email: 'michael.chen@example.com',
+    phoneNumber: '(555) 987-6543',
+    financialGoals: ['Save for home', 'Invest for retirement'],
+    activeTherapySessions: 2,
+    lastSessionDate: new Date('2023-12-10'),
+  },
+  {
+    id: '3',
+    name: 'Sarah Rodriguez',
+    email: 'sarah.rodriguez@example.com',
+    phoneNumber: '(555) 456-7890',
+    financialGoals: ['Start business', 'Improve credit score'],
+    activeTherapySessions: 4,
+    lastSessionDate: new Date('2023-12-20'),
+  },
+];
 
 function AppointmentCard({ upcomingSessions }: { upcomingSessions: UpcomingSession[] }) {
   return (
@@ -105,15 +138,8 @@ function ClientSelectionModal({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  onClientSelect: (clientId: string) => void;
+  onClientSelect: (client: Client) => void;
 }) {
-  // Placeholder client list
-  const clients = [
-    { id: '1', name: 'Emily Johnson' },
-    { id: '2', name: 'Michael Chen' },
-    { id: '3', name: 'Sarah Rodriguez' },
-  ];
-
   if (!isOpen) return null;
 
   return (
@@ -126,17 +152,64 @@ function ClientSelectionModal({
           </button>
         </div>
         <div className='space-y-2'>
-          {clients.map((client) => (
+          {CLIENTS.map((client) => (
             <button
               key={client.id}
               onClick={() => {
-                onClientSelect(client.id);
+                onClientSelect(client);
                 onClose();
               }}
-              className='w-full text-left p-3 bg-gray-50 hover:bg-purple-50 rounded-lg transition-colors'
+              className='w-full text-left p-3 bg-gray-50 hover:bg-purple-50 rounded-lg transition-colors flex items-center gap-3'
             >
-              {client.name}
+              <UserCircle2 className='h-8 w-8 text-purple-600' />
+              <div>
+                <p className='font-medium text-gray-800'>{client.name}</p>
+                <p className='text-xs text-gray-500'>{client.email}</p>
+              </div>
             </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SelectedClientCard({ client }: { client: Client }) {
+  return (
+    <div className='bg-white rounded-xl p-6 border border-purple-100 shadow-sm'>
+      <div className='flex items-center gap-4 mb-6'>
+        <UserCircle2 className='h-12 w-12 text-purple-600' />
+        <div>
+          <h3 className='text-xl font-semibold text-gray-800'>{client.name}</h3>
+          <p className='text-sm text-gray-500'>{client.email}</p>
+        </div>
+      </div>
+      <div className='grid md:grid-cols-3 gap-4'>
+        <div>
+          <p className='text-xs text-gray-500 mb-1'>Phone Number</p>
+          <p className='font-medium text-gray-800'>{client.phoneNumber}</p>
+        </div>
+        <div>
+          <p className='text-xs text-gray-500 mb-1'>Active Therapy Sessions</p>
+          <p className='font-medium text-gray-800'>{client.activeTherapySessions}</p>
+        </div>
+        <div>
+          <p className='text-xs text-gray-500 mb-1'>Last Session</p>
+          <p className='font-medium text-gray-800'>
+            {client.lastSessionDate ? client.lastSessionDate.toLocaleDateString() : 'N/A'}
+          </p>
+        </div>
+      </div>
+      <div className='mt-6'>
+        <p className='text-sm text-gray-500 mb-2'>Financial Goals</p>
+        <div className='flex flex-wrap gap-2'>
+          {client.financialGoals?.map((goal, index) => (
+            <span
+              key={index}
+              className='bg-purple-50 text-purple-700 text-xs px-2 py-1 rounded-full'
+            >
+              {goal}
+            </span>
           ))}
         </div>
       </div>
@@ -147,7 +220,7 @@ function ClientSelectionModal({
 export default function TherapistDashboardPage() {
   const { user, isLoaded } = useUser();
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
-  const [selectedClient, setSelectedClient] = useState<string | null>(null);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   useEffect(() => {
     if (isLoaded && !user) {
@@ -167,7 +240,10 @@ export default function TherapistDashboardPage() {
       <TherapistNavbar pageTitle={user?.firstName || 'Guest'} />
 
       {/* Client Selection Button */}
-      <div className='mb-6 flex justify-end'>
+      <div className='mb-6 flex justify-between items-center'>
+        <h2 className='text-2xl font-semibold text-gray-800'>
+          {selectedClient ? `Client: ${selectedClient.name}` : 'No Client Selected'}
+        </h2>
         <button
           onClick={() => setIsClientModalOpen(true)}
           className='flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors'
@@ -180,17 +256,34 @@ export default function TherapistDashboardPage() {
       <ClientSelectionModal
         isOpen={isClientModalOpen}
         onClose={() => setIsClientModalOpen(false)}
-        onClientSelect={(clientId) => setSelectedClient(clientId)}
+        onClientSelect={(client) => setSelectedClient(client)}
       />
+
+      {selectedClient && (
+        <div className='mb-6'>
+          <SelectedClientCard client={selectedClient} />
+        </div>
+      )}
 
       <div className='grid md:grid-cols-12 gap-6'>
         <div className='md:col-span-12'>
           {/* Session Preparation */}
           <MetricsSection title='Session Preparation'>
             <div className='grid md:grid-cols-3 gap-6'>
-              <MetricCard title='Total Clients' value={0} subtitle='All time' />
-              <MetricCard title='Active Clients' value={0} subtitle='Currently engaged' />
-              <MetricCard title='Completed Sessions' value={0} subtitle='Total sessions' />
+              <MetricCard title='Total Clients' value={CLIENTS.length} subtitle='All time' />
+              <MetricCard
+                title='Active Clients'
+                value={
+                  CLIENTS.filter((c) => c.activeTherapySessions && c.activeTherapySessions > 0)
+                    .length
+                }
+                subtitle='Currently engaged'
+              />
+              <MetricCard
+                title='Completed Sessions'
+                value={CLIENTS.reduce((sum, c) => sum + (c.activeTherapySessions || 0), 0)}
+                subtitle='Total sessions'
+              />
             </div>
 
             {/* Resource Library as a full-width card */}
