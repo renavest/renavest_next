@@ -4,9 +4,7 @@ import { useState } from 'react';
 
 import { COLORS } from '@/src/styles/colors';
 
-import { sendBookingConfirmationEmail } from '../actions/sendBookingConfirmationEmail';
-
-import { BookingConfirmationScreen } from './BookingConfirmationScreen';
+import { BookingConfirmationScreen } from './BookingConfirmed';
 import { DateInput } from './BookingFormComponents/DateInput';
 import { TimeSelect } from './BookingFormComponents/TimeSelect';
 import { TimezoneSelect } from './BookingFormComponents/TimezoneSelect';
@@ -28,6 +26,7 @@ export const BookingConfirmation = ({ advisorId, onConfirm }: BookingConfirmatio
   const [selectedTimezone, setSelectedTimezone] = useState('EST');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [dateError, setDateError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const isValidDate = (date: string) => {
     const selectedDate = new Date(date);
@@ -61,52 +60,45 @@ export const BookingConfirmation = ({ advisorId, onConfirm }: BookingConfirmatio
     };
 
     const formattedTime = convertTo24Hour(localStartTime);
-    const sessionTimestamp = new Date(`${localDate}T${formattedTime}`).toISOString();
 
-    // Format the date for display
-    const formattedDate = new Date(sessionTimestamp).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+    try {
+      setIsLoading(true);
 
-    // Confirm booking and send email
-    onConfirm({
-      date: sessionTimestamp,
-      startTime: formattedTime,
-      timezone: selectedTimezone,
-      therapistId: advisorId,
-    });
+      // Confirm booking
+      onConfirm({
+        date: localDate,
+        startTime: formattedTime,
+        timezone: selectedTimezone,
+        therapistId: advisorId,
+      });
 
-    // Send email to Stanley
-    await sendBookingConfirmationEmail({
-      clientName: user?.fullName || 'Client',
-      sessionDate: formattedDate,
-      sessionTime: formattedTime,
-      timezone: selectedTimezone,
-    });
+      // Track the event in PostHog
+      posthog.capture('session_booked', {
+        sessionDate: localDate,
+        sessionStartTime: formattedTime,
+        timezone: selectedTimezone,
+        therapistId: advisorId,
+      });
 
-    posthog.capture('session_booked', {
-      sessionDate: sessionTimestamp,
-      sessionStartTime: formattedTime,
-      timezone: selectedTimezone,
-      therapistId: advisorId,
-    });
-
-    posthog.identify(user?.id, {
-      $add_to_list: {
-        sessions: {
-          date: sessionTimestamp,
-          startTime: formattedTime,
-          timezone: selectedTimezone,
-          therapistId: advisorId,
-          timestamp: new Date().toISOString(),
+      posthog.identify(user?.id, {
+        $add_to_list: {
+          sessions: {
+            date: localDate,
+            startTime: formattedTime,
+            timezone: selectedTimezone,
+            therapistId: advisorId,
+            timestamp: new Date().toISOString(),
+          },
         },
-      },
-    });
+      });
 
-    setIsSubmitted(true);
+      setIsSubmitted(true);
+    } catch (error) {
+      console.error('Booking confirmation error:', error);
+      // Optionally, add error handling UI
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDateChange = (value: string) => {
@@ -159,15 +151,41 @@ export const BookingConfirmation = ({ advisorId, onConfirm }: BookingConfirmatio
 
           <button
             onClick={handleConfirm}
-            disabled={!localDate || !localStartTime}
+            disabled={!localDate || !localStartTime || isLoading}
             className={`w-full ${COLORS.WARM_PURPLE.bg} text-white py-3 rounded-lg ${COLORS.WARM_PURPLE.hover} transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
           >
-            Submit Session Details
+            {isLoading ? (
+              <div className='flex items-center justify-center'>
+                <svg
+                  className='animate-spin h-5 w-5 mr-3'
+                  xmlns='http://www.w3.org/2000/svg'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                >
+                  <circle
+                    className='opacity-25'
+                    cx='12'
+                    cy='12'
+                    r='10'
+                    stroke='currentColor'
+                    strokeWidth='4'
+                  ></circle>
+                  <path
+                    className='opacity-75'
+                    fill='currentColor'
+                    d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
+                  ></path>
+                </svg>
+                Submitting...
+              </div>
+            ) : (
+              'Submit Session Details'
+            )}
           </button>
         </div>
 
         <p className='text-xs text-gray-500 mt-4'>
-          A confirmation email has been sent to your registered email address.
+          A confirmation email will be sent to your registered email address.
         </p>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { InferSelectModel } from 'drizzle-orm';
+
 import * as schema from './schema';
 
 export type Therapist = InferSelectModel<typeof schema.therapists>;

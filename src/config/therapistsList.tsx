@@ -34,6 +34,7 @@ const TherapistList = [
     previewBlurb:
       'A financial therapist and author, enhancing relationships with money through empowerment! ',
     profileUrl: '/experts/Constance.jpg',
+    hourlyRate: 230,
   },
   {
     id: '3',

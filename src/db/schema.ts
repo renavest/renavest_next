@@ -126,15 +126,3 @@ export const clientNotesRelations = relations(clientNotes, ({ one }) => ({
     references: [bookingSessions.id],
   }),
 }));
-
-// Type definitions
-export type User = typeof users.$inferSelect;
-export type UserInsert = typeof users.$inferInsert;
-export type Therapist = typeof therapists.$inferSelect;
-export type TherapistInsert = typeof therapists.$inferInsert;
-export type BookingSession = typeof bookingSessions.$inferSelect;
-export type BookingSessionInsert = typeof bookingSessions.$inferInsert;
-export type ClientNote = typeof clientNotes.$inferSelect;
-export type ClientNoteInsert = typeof clientNotes.$inferInsert;
-export type UserOnboarding = typeof userOnboarding.$inferSelect;
-export type UserOnboardingInsert = typeof userOnboarding.$inferInsert;

@@ -6,12 +6,15 @@ import PostHogClient from '@/posthog'; // Ensure this is a server-side PostHog c
 import { db } from '@/src/db';
 import { bookingSessions } from '@/src/db/schema';
 
+import { sendBookingConfirmationEmail } from './sendBookingConfirmationEmail';
+
 // Validation schema
 const BookingSessionSchema = z.object({
   therapistId: z.string(),
   sessionDate: z.string(),
   sessionStartTime: z.string(),
   userEmail: z.string().email(),
+  timezone: z.string(),
 });
 
 // Helper function to parse and normalize time
@@ -47,7 +50,7 @@ export async function createBookingSession(rawData: unknown) {
     );
   }
 
-  const { therapistId, sessionDate, sessionStartTime, userEmail } = result.data;
+  const { therapistId, sessionDate, sessionStartTime, userEmail, timezone } = result.data;
 
   // Additional logging for each field
   console.log('Parsed Booking Session Details:', {
@@ -55,6 +58,7 @@ export async function createBookingSession(rawData: unknown) {
     sessionDate,
     sessionStartTime,
     userEmail,
+    timezone,
     therapistIdType: typeof therapistId,
   });
 
@@ -82,17 +86,14 @@ export async function createBookingSession(rawData: unknown) {
       throw new Error(`User with email ${userEmail} not found`);
     }
 
-    // Log parsed IDs
-    console.log('Parsed IDs:', {
-      userId: user.clerkId,
-      parsedTherapistId,
-      isTherapistIdNaN: isNaN(parsedTherapistId),
-    });
-
-    // Fetch therapist details for additional tracking
+    // Fetch therapist details
     const advisor = await db.query.therapists.findFirst({
       where: (therapists, { eq }) => eq(therapists.id, parsedTherapistId),
     });
+
+    if (!advisor) {
+      throw new Error(`Therapist with ID ${therapistId} not found`);
+    }
 
     // Insert booking session
     const bookingSession = await db
@@ -109,6 +110,27 @@ export async function createBookingSession(rawData: unknown) {
         },
       })
       .returning();
+
+    // Send confirmation emails
+    const emailResult = await sendBookingConfirmationEmail({
+      clientName: `${user.firstName} ${user.lastName}`.trim(),
+      clientEmail: userEmail,
+      therapistName: advisor.name || 'Renavest Therapist',
+      therapistEmail: 'seth@renavestapp.com',
+      sessionDate: normalizedDate.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
+      sessionTime:
+        normalizedDate.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+        }) + ` ${timezone}`,
+      timezone: timezone,
+    });
 
     // PostHog tracking
     const posthogClient = PostHogClient();
@@ -128,6 +150,7 @@ export async function createBookingSession(rawData: unknown) {
         user_email: userEmail,
         session_date: sessionDate,
         session_start_time: sessionStartTime,
+        email_sent: emailResult.success,
       },
     });
 
@@ -138,6 +161,7 @@ export async function createBookingSession(rawData: unknown) {
       success: true,
       message: 'Booking session created successfully',
       sessionId: bookingSession[0]?.id,
+      emailSent: emailResult.success,
     };
   } catch (error) {
     console.error('Error creating booking session:', error);

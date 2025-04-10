@@ -1,4 +1,4 @@
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, count } from 'drizzle-orm';
 
 import { db } from '@/src/db';
 import { bookingSessions, therapists, users } from '@/src/db/schema';
@@ -31,22 +31,20 @@ export async function fetchTherapistDashboardData(therapistId: number) {
       .limit(10);
 
     // Fetch client metrics
-    const clientMetrics = await db
-      .select({
-        totalClients: db
-          .select({ count: db.fn.count() })
-          .from(bookingSessions)
-          .where(eq(bookingSessions.therapistId, therapistId)),
-        activeClients: db
-          .select({ count: db.fn.count() })
-          .from(bookingSessions)
-          .where(eq(bookingSessions.therapistId, therapistId)),
-        completedSessions: db
-          .select({ count: db.fn.count() })
-          .from(bookingSessions)
-          .where(eq(bookingSessions.therapistId, therapistId)),
-      })
-      .execute();
+    const totalClients = await db
+      .select({ count: count() })
+      .from(bookingSessions)
+      .where(eq(bookingSessions.therapistId, therapistId));
+
+    const activeClients = await db
+      .select({ count: count() })
+      .from(bookingSessions)
+      .where(eq(bookingSessions.therapistId, therapistId));
+
+    const completedSessions = await db
+      .select({ count: count() })
+      .from(bookingSessions)
+      .where(eq(bookingSessions.therapistId, therapistId));
 
     return {
       therapist,
@@ -54,10 +52,10 @@ export async function fetchTherapistDashboardData(therapistId: number) {
         ...session,
         clientName: `${session.clientName} ${session.clientLastName}`.trim(),
       })),
-      clientMetrics: clientMetrics[0] || {
-        totalClients: 0,
-        activeClients: 0,
-        completedSessions: 0,
+      clientMetrics: {
+        totalClients: totalClients[0]?.count ?? 0,
+        activeClients: activeClients[0]?.count ?? 0,
+        completedSessions: completedSessions[0]?.count ?? 0,
       },
     };
   } catch (error) {

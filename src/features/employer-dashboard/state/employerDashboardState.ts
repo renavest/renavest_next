@@ -68,6 +68,30 @@ interface ProgramStats {
   employeesCompletedAllSessions: number;
 }
 
+interface TherapistMetrics {
+  totalTherapists: number;
+  activeTherapists: number;
+  averageSessionsPerTherapist: number;
+  therapistUtilizationRate: number;
+}
+
+interface BookingMetrics {
+  totalBookings: number;
+  scheduledBookings: number;
+  completedBookings: number;
+  canceledBookings: number;
+  averageBookingsPerEmployee: number;
+  bookingsByTherapist: TherapistBookingData[];
+}
+
+interface TherapistBookingData {
+  therapistId: number;
+  therapistName: string;
+  totalBookings: number;
+  completedBookings: number;
+  upcomingBookings: number;
+}
+
 export const financialWellnessMetricsSignal = signal<FinancialWellnessMetrics>({
   enrollmentRate: 75,
   avgSavingsRate: 12,
@@ -137,4 +161,36 @@ export const programStatsSignal = signal<ProgramStats>({
   activeEmployees: 450,
   employeesWithSessions: 410,
   employeesCompletedAllSessions: 390,
+});
+
+export const therapistMetricsSignal = signal<TherapistMetrics>({
+  totalTherapists: 25,
+  activeTherapists: 20,
+  averageSessionsPerTherapist: 18,
+  therapistUtilizationRate: 80,
+});
+
+export const bookingMetricsSignal = signal<BookingMetrics>({
+  totalBookings: 1750,
+  scheduledBookings: 1560,
+  completedBookings: 1420,
+  canceledBookings: 90,
+  averageBookingsPerEmployee: 3.5,
+  bookingsByTherapist: [
+    {
+      therapistId: 1,
+      therapistName: 'Dr. Emily Chen',
+      totalBookings: 350,
+      completedBookings: 320,
+      upcomingBookings: 30,
+    },
+    {
+      therapistId: 2,
+      therapistName: 'Dr. Michael Rodriguez',
+      totalBookings: 275,
+      completedBookings: 250,
+      upcomingBookings: 25,
+    },
+    // Add more therapist booking data
+  ],
 });

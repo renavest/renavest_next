@@ -56,6 +56,7 @@ export default function TherapistCalendlyClient({
     date: string;
     startTime: string;
     therapistId: string;
+    timezone: string;
   }) => {
     if (!userId) {
       console.error('No user ID found');
@@ -89,12 +90,22 @@ export default function TherapistCalendlyClient({
   });
 
   if (isBookingConfirmed) {
-    return <BookingConfirmation advisorId={advisor.id} onConfirm={handleBookingConfirmation} />;
+    return (
+      <BookingConfirmation
+        advisorId={advisor.id}
+        onConfirm={(details) =>
+          handleBookingConfirmation({
+            ...details,
+            timezone: 'EST', // Default timezone, can be made dynamic if needed
+          })
+        }
+      />
+    );
   }
 
   return (
     <InlineWidget
-      url={advisor.bookingURL}
+      url={'https://calendly.com/seth-renavestapp'}
       styles={{
         height: '100%',
         width: '100%',

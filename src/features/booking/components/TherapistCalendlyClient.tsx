@@ -70,8 +70,8 @@ export default function TherapistCalendlyClient({
         sessionDate: details.date,
         sessionStartTime: `${details.date}T${details.startTime}`,
         userEmail,
+        therapistEmail: 'seth@renavestapp.com',
       });
-
       // Track booking confirmation
       await trackCalendlyEvent('booking_details_confirmed', details);
 
