@@ -56,6 +56,7 @@ export default function TherapistCalendlyClient({
     date: string;
     startTime: string;
     therapistId: string;
+    timezone: string;
   }) => {
     if (!userId) {
       console.error('No user ID found');
@@ -70,7 +71,7 @@ export default function TherapistCalendlyClient({
         sessionDate: details.date,
         sessionStartTime: `${details.date}T${details.startTime}`,
         userEmail,
-        therapistEmail: 'seth@renavestapp.com',
+        timezone: details.timezone || 'EST', // Default to EST if not provided
       });
       // Track booking confirmation
       await trackCalendlyEvent('booking_details_confirmed', details);
@@ -78,6 +79,8 @@ export default function TherapistCalendlyClient({
       console.log('Booking session saved successfully');
     } catch (error) {
       console.error('Error saving booking session:', error);
+      // Show error to user
+      throw error;
     }
   };
 
