@@ -1,3 +1,4 @@
+import { relations } from 'drizzle-orm';
 import {
   pgTable,
   serial,
@@ -19,6 +20,7 @@ export const users = pgTable('users', {
   lastName: text('last_name'),
   imageUrl: text('image_url'),
   isActive: boolean('is_active').default(true).notNull(),
+  therapistId: integer('therapist_id').references(() => therapists.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -77,3 +79,49 @@ export const bookingSessions = pgTable('booking_sessions', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+export const clientNotes = pgTable('client_notes', {
+  id: serial('id').primaryKey(),
+  userId: text('user_id').notNull(), // Client's user ID
+  therapistId: integer('therapist_id').notNull(), // Therapist who created the note
+  sessionId: integer('session_id'), // Optional link to a specific session
+  title: text('title').notNull(),
+  content: jsonb('content').$type<{
+    keyObservations?: string[];
+    progressNotes?: string[];
+    actionItems?: string[];
+    emotionalState?: string;
+    additionalContext?: string;
+  }>(),
+  isConfidential: boolean('is_confidential').default(false),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Relationships
+export const clientNotesRelations = relations(clientNotes, ({ one }) => ({
+  user: one(users, {
+    fields: [clientNotes.userId],
+    references: [users.clerkId],
+  }),
+  therapist: one(therapists, {
+    fields: [clientNotes.therapistId],
+    references: [therapists.id],
+  }),
+  session: one(bookingSessions, {
+    fields: [clientNotes.sessionId],
+    references: [bookingSessions.id],
+  }),
+}));
+
+// Define types for the tables
+export type User = typeof users.$inferSelect;
+export type UserInsert = typeof users.$inferInsert;
+export type Therapist = typeof therapists.$inferSelect;
+export type TherapistInsert = typeof therapists.$inferInsert;
+export type BookingSession = typeof bookingSessions.$inferSelect;
+export type BookingSessionInsert = typeof bookingSessions.$inferInsert;
+export type ClientNote = typeof clientNotes.$inferSelect;
+export type ClientNoteInsert = typeof clientNotes.$inferInsert;
+export type UserOnboarding = typeof userOnboarding.$inferSelect;
+export type UserOnboardingInsert = typeof userOnboarding.$inferInsert;
