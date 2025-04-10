@@ -7,6 +7,11 @@ import { therapists } from '../db/schema';
 async function migrateTherapistEmails() {
   console.log('Starting therapist email migration...');
 
+  // First, clear all existing emails
+  await db.update(therapists).set({ email: null });
+  console.log('Cleared all existing emails');
+
+  // Then update with new emails
   for (const therapist of TherapistList) {
     try {
       if (therapist.email) {
