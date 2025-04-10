@@ -1,9 +1,9 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { Calendar } from 'lucide-react';
+import { Calendar, Users, Library } from 'lucide-react';
 import { redirect } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { ALLOWED_EMAILS } from '@/src/constants';
 import ClientNotesSection from '@/src/features/therapist-dashboard/components/ClientNotesSection';
@@ -98,8 +98,56 @@ function MetricCard({
   );
 }
 
+function ClientSelectionModal({
+  isOpen,
+  onClose,
+  onClientSelect,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onClientSelect: (clientId: string) => void;
+}) {
+  // Placeholder client list
+  const clients = [
+    { id: '1', name: 'Emily Johnson' },
+    { id: '2', name: 'Michael Chen' },
+    { id: '3', name: 'Sarah Rodriguez' },
+  ];
+
+  if (!isOpen) return null;
+
+  return (
+    <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
+      <div className='bg-white rounded-xl p-6 w-96 max-h-[80vh] overflow-y-auto'>
+        <div className='flex justify-between items-center mb-4'>
+          <h2 className='text-xl font-semibold text-gray-800'>Select Client</h2>
+          <button onClick={onClose} className='text-gray-500 hover:text-gray-700'>
+            Close
+          </button>
+        </div>
+        <div className='space-y-2'>
+          {clients.map((client) => (
+            <button
+              key={client.id}
+              onClick={() => {
+                onClientSelect(client.id);
+                onClose();
+              }}
+              className='w-full text-left p-3 bg-gray-50 hover:bg-purple-50 rounded-lg transition-colors'
+            >
+              {client.name}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function TherapistDashboardPage() {
   const { user, isLoaded } = useUser();
+  const [isClientModalOpen, setIsClientModalOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<string | null>(null);
 
   useEffect(() => {
     if (isLoaded && !user) {
@@ -117,6 +165,24 @@ export default function TherapistDashboardPage() {
   return (
     <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24'>
       <TherapistNavbar pageTitle={user?.firstName || 'Guest'} />
+
+      {/* Client Selection Button */}
+      <div className='mb-6 flex justify-end'>
+        <button
+          onClick={() => setIsClientModalOpen(true)}
+          className='flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors'
+        >
+          <Users className='h-5 w-5' />
+          Select Client
+        </button>
+      </div>
+
+      <ClientSelectionModal
+        isOpen={isClientModalOpen}
+        onClose={() => setIsClientModalOpen(false)}
+        onClientSelect={(clientId) => setSelectedClient(clientId)}
+      />
+
       <div className='grid md:grid-cols-12 gap-6'>
         <div className='md:col-span-12'>
           {/* Session Preparation */}
@@ -126,9 +192,37 @@ export default function TherapistDashboardPage() {
               <MetricCard title='Active Clients' value={0} subtitle='Currently engaged' />
               <MetricCard title='Completed Sessions' value={0} subtitle='Total sessions' />
             </div>
-            <div className='grid md:grid-cols-3 gap-6 mt-6'>
-              <MetricCard title='Resource Library' value='24' subtitle='Custom worksheets' />
+
+            {/* Resource Library as a full-width card */}
+            <div className='mt-6'>
+              <div className='flex items-center gap-4 mb-6'>
+                <h3 className='text-lg font-semibold text-gray-800 flex items-center gap-2'>
+                  <Library className='h-5 w-5 text-purple-600' />
+                  Resource Library
+                </h3>
+                <div className='h-px flex-grow bg-purple-50' />
+              </div>
+              <div className='bg-white rounded-xl p-6 border border-purple-100 shadow-sm'>
+                <div className='grid md:grid-cols-4 gap-4'>
+                  {[
+                    { title: 'Money Scripts', count: 12 },
+                    { title: 'Goal Worksheets', count: 8 },
+                    { title: 'Emotional Guides', count: 4 },
+                    { title: 'Financial Assessments', count: 6 },
+                  ].map((resource, index) => (
+                    <div
+                      key={index}
+                      className='bg-gray-50 p-4 rounded-lg hover:bg-purple-50 transition-colors'
+                    >
+                      <h4 className='font-medium text-gray-800 mb-2'>{resource.title}</h4>
+                      <p className='text-2xl font-bold text-purple-600'>{resource.count}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
+
+            {/* Upcoming Sessions */}
             <div className='mt-6'>
               <div className='flex items-center gap-4 mb-6'>
                 <h3 className='text-lg font-semibold text-gray-800'>Upcoming Sessions</h3>
