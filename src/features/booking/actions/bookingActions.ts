@@ -23,7 +23,7 @@ const BookingSessionSchema = z.object({
   sessionStartTime: z.string(),
   userEmail: z.string().email(),
   timezone: z.string().transform((val) => {
-    // Map common timezone abbreviations to IANA timezone identifiers
+    // Timezone abbreviation to IANA timezone mapping
     const timezoneMap: Record<string, TimezoneIdentifier> = {
       EST: 'America/New_York',
       EDT: 'America/New_York',
@@ -38,10 +38,10 @@ const BookingSessionSchema = z.object({
     // If it's a known abbreviation, return the mapped timezone
     if (timezoneMap[val]) return timezoneMap[val];
 
-    // If it's already in SUPPORTED_TIMEZONES, return it
+    // If it's already a supported timezone, return it
     if (Object.keys(SUPPORTED_TIMEZONES).includes(val)) return val as TimezoneIdentifier;
 
-    // If no match, default to America/New_York
+    // If no match, default to America/New_York with a warning
     console.warn(`Unsupported timezone: ${val}. Defaulting to America/New_York`);
     return 'America/New_York';
   }),
