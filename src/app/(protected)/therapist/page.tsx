@@ -1,13 +1,13 @@
-'use server';
+'use client';
 
-import { currentUser } from '@clerk/nextjs/server';
-import { Calendar, FileText } from 'lucide-react';
+import { useUser } from '@clerk/nextjs';
+import { Calendar } from 'lucide-react';
 import { redirect } from 'next/navigation';
+import { useEffect } from 'react';
 
 import { ALLOWED_EMAILS } from '@/src/constants';
-import { db } from '@/src/db';
-import Navbar from '@/src/features/home/components/Navbar';
-import { fetchTherapistDashboardData } from '@/src/features/therapist-dashboard/actions/therapistDashboardActions';
+import ClientNotesSection from '@/src/features/therapist-dashboard/components/ClientNotesSection';
+import TherapistNavbar from '@/src/features/therapist-dashboard/components/TherapistNavbar';
 
 // Define types for session and metrics
 type UpcomingSession = {
@@ -21,7 +21,6 @@ type UpcomingSession = {
 function AppointmentCard({ upcomingSessions }: { upcomingSessions: UpcomingSession[] }) {
   return (
     <div className='space-y-6'>
-      {/* Today's Sessions */}
       <div className='bg-white rounded-xl p-4 md:p-6 border border-purple-100 shadow-sm'>
         <div className='flex items-center justify-between mb-4'>
           <h3 className='text-lg font-semibold text-gray-800'>Upcoming Sessions</h3>
@@ -31,7 +30,7 @@ function AppointmentCard({ upcomingSessions }: { upcomingSessions: UpcomingSessi
           {upcomingSessions.length === 0 ? (
             <p className='text-gray-500 text-center'>No upcoming sessions</p>
           ) : (
-            upcomingSessions.map((session: UpcomingSession) => (
+            upcomingSessions.map((session) => (
               <div
                 key={session.id}
                 className='flex flex-col gap-2 p-4 bg-gray-50 rounded-lg border border-gray-100'
@@ -51,32 +50,6 @@ function AppointmentCard({ upcomingSessions }: { upcomingSessions: UpcomingSessi
               </div>
             ))
           )}
-        </div>
-      </div>
-
-      {/* Action Items */}
-      <div className='bg-white rounded-xl p-4 md:p-6 border border-purple-100 shadow-sm'>
-        <div className='flex items-center justify-between mb-4'>
-          <h3 className='text-lg font-semibold text-gray-800'>Action Items</h3>
-          <FileText className='h-5 w-5 text-purple-600' />
-        </div>
-        <div className='space-y-3'>
-          <p className='text-sm text-gray-600'>Post-meeting tasks:</p>
-          <div className='space-y-2'>
-            {[
-              'Complete session notes for recent clients',
-              'Review client progress and goals',
-              'Update client resources',
-            ].map((task, i) => (
-              <div
-                key={i}
-                className='flex items-center gap-2 p-2 text-sm text-gray-700 hover:bg-gray-50 rounded'
-              >
-                <div className='h-2 w-2 rounded-full bg-purple-400' />
-                {task}
-              </div>
-            ))}
-          </div>
         </div>
       </div>
     </div>
@@ -125,51 +98,38 @@ function MetricCard({
   );
 }
 
-export default async function TherapistDashboardPage() {
-  const user = await currentUser();
+export default function TherapistDashboardPage() {
+  const { user, isLoaded } = useUser();
 
-  if (!user) {
-    redirect('/login');
-  }
+  useEffect(() => {
+    if (isLoaded && !user) {
+      redirect('/login');
+    }
 
-  // Check if the user's email is allowed
-  if (!ALLOWED_EMAILS.includes(user.emailAddresses[0]?.emailAddress || '')) {
-    redirect('/explore');
-  }
+    // Check if the user's email is allowed
+    if (isLoaded && user && !ALLOWED_EMAILS.includes(user.emailAddresses[0]?.emailAddress || '')) {
+      redirect('/explore');
+    }
+  }, [user, isLoaded]);
 
-  // Fetch the first therapist (for now)
-  const firstTherapist = await db.query.therapists.findFirst();
-
-  if (!firstTherapist) {
-    return <div>No therapists found</div>;
-  }
-
-  // Fetch therapist dashboard data
-  const { upcomingSessions, clientMetrics } = await fetchTherapistDashboardData(firstTherapist.id);
-
+  // TODO: Implement data fetching using React Query or SWR
+  // Currently using placeholder values due to server-side data fetching limitations in client components
   return (
-    <div className='container mx-auto px-4 md:px-6 py-8'>
-      <Navbar pageTitle={user.firstName || 'Guest'} />
+    <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24'>
+      <TherapistNavbar pageTitle={user?.firstName || 'Guest'} />
       <div className='grid md:grid-cols-12 gap-6'>
-        <div className='md:col-span-8'>
+        <div className='md:col-span-12'>
           {/* Session Preparation */}
           <MetricsSection title='Session Preparation'>
-            <MetricCard
-              title='Total Clients'
-              value={clientMetrics.totalClients}
-              subtitle='All time'
-            />
-            <MetricCard
-              title='Active Clients'
-              value={clientMetrics.activeClients}
-              subtitle='Currently engaged'
-            />
-            <MetricCard
-              title='Completed Sessions'
-              value={clientMetrics.completedSessions}
-              subtitle='Total sessions'
-            />
-            <MetricCard title='Resource Library' value='24' subtitle='Custom worksheets' />
+            <div className='grid md:grid-cols-4 gap-6'>
+              <MetricCard title='Total Clients' value={0} subtitle='All time' />
+              <MetricCard title='Active Clients' value={0} subtitle='Currently engaged' />
+              <MetricCard title='Completed Sessions' value={0} subtitle='Total sessions' />
+              <AppointmentCard upcomingSessions={[]} />
+            </div>
+            <div className='grid md:grid-cols-4 gap-6'>
+              <MetricCard title='Resource Library' value='24' subtitle='Custom worksheets' />
+            </div>
           </MetricsSection>
 
           {/* Client Progress */}
@@ -200,8 +160,8 @@ export default async function TherapistDashboardPage() {
             />
           </MetricsSection>
         </div>
-        <div className='md:col-span-4'>
-          <AppointmentCard upcomingSessions={upcomingSessions} />
+        <div className='md:col-span-12'>
+          <ClientNotesSection />
         </div>
       </div>
     </div>
