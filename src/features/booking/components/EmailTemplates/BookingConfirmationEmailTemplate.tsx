@@ -68,7 +68,7 @@ export const BookingConfirmationEmailTemplate: React.FC<
               <strong className={COLORS.WARM_PURPLE.DEFAULT}>Date:</strong> {sessionDate}
             </Text>
             <Text className='text-gray-800 my-2'>
-              <strong className={COLORS.WARM_PURPLE.DEFAULT}>Time:</strong> {sessionTime} {timezone}
+              <strong className={COLORS.WARM_PURPLE.DEFAULT}>Time:</strong> {sessionTime}
             </Text>
           </Section>
 

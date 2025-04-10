@@ -1,29 +1,30 @@
 import { COLORS } from '@/src/styles/colors';
 
-const COMMON_TIMEZONES = [
-  { value: 'EST', label: 'Eastern Time (EST)' },
-  { value: 'CST', label: 'Central Time (CST)' },
-  { value: 'MST', label: 'Mountain Time (MST)' },
-  { value: 'PST', label: 'Pacific Time (PST)' },
-];
+import { TimezoneIdentifier } from '../../utils/dateTimeUtils';
 
-interface TimezoneSelectProps {
-  value: string;
-  onChange: (value: string) => void;
+interface TimezoneOption {
+  value: TimezoneIdentifier;
+  label: string;
 }
 
-export const TimezoneSelect = ({ value, onChange }: TimezoneSelectProps) => {
+interface TimezoneSelectProps {
+  value: TimezoneIdentifier;
+  onChange: (value: TimezoneIdentifier) => void;
+  options: TimezoneOption[];
+}
+
+export const TimezoneSelect = ({ value, onChange, options }: TimezoneSelectProps) => {
   return (
-    <div className='mb-4'>
-      <label className='block text-sm font-medium text-gray-700 mb-2'>Select Your Timezone</label>
+    <div className='flex flex-col gap-2'>
+      <label className='text-sm font-medium text-gray-700'>Select Timezone</label>
       <select
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={`w-full px-4 py-2 rounded-lg border ${COLORS.WARM_PURPLE[20]} ${COLORS.WARM_PURPLE.focus} outline-none`}
+        onChange={(e) => onChange(e.target.value as TimezoneIdentifier)}
+        className={`block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-${COLORS.WARM_PURPLE.DEFAULT} focus:border-${COLORS.WARM_PURPLE.DEFAULT} sm:text-sm`}
       >
-        {COMMON_TIMEZONES.map(({ value, label }) => (
-          <option key={value} value={value}>
-            {label}
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
           </option>
         ))}
       </select>

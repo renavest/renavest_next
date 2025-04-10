@@ -7,123 +7,67 @@ export const SUPPORTED_TIMEZONES = {
 
 export type TimezoneIdentifier = keyof typeof SUPPORTED_TIMEZONES;
 
-interface DateTimeComponents {
-  year: number;
-  month: number;
-  day: number;
-  hour: number;
-  minute: number;
+export interface TimezoneOption {
+  value: TimezoneIdentifier;
+  label: string;
 }
 
-function validateTimezone(timezone: string): asserts timezone is TimezoneIdentifier {
-  if (!Object.keys(SUPPORTED_TIMEZONES).includes(timezone)) {
-    throw new Error(
-      `Invalid timezone: ${timezone}. Supported timezones are: ${Object.keys(SUPPORTED_TIMEZONES).join(', ')}`,
-    );
+export function createTimestamp(date: string, time: string, timezone: TimezoneIdentifier): Date {
+  // Convert 12-hour time to 24-hour
+  const [timeStr, modifier] = time.split(' ');
+  let [hours, minutes] = timeStr.split(':').map(Number);
+
+  if (modifier === 'PM' && hours !== 12) {
+    hours += 12;
   }
+  if (modifier === 'AM' && hours === 12) {
+    hours = 0;
+  }
+
+  // Create a date object in the user's selected timezone
+  const userDate = new Date(date);
+  userDate.setHours(hours, minutes, 0, 0);
+
+  // Convert to UTC timestamp
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZoneName: 'short',
+  });
+
+  const parts = formatter.formatToParts(userDate);
+  const dateParts = {
+    year: parseInt(parts.find((p) => p.type === 'year')?.value || '0'),
+    month: parseInt(parts.find((p) => p.type === 'month')?.value || '1') - 1,
+    day: parseInt(parts.find((p) => p.type === 'day')?.value || '1'),
+    hour: hours,
+    minute: minutes,
+  };
+
+  return new Date(
+    Date.UTC(dateParts.year, dateParts.month, dateParts.day, dateParts.hour, dateParts.minute),
+  );
 }
 
-export function parseDateTime(date: string, time: string, timezone: string): Date {
-  try {
-    // Handle ISO 8601 formatted time
-    const parsedTime = time.includes('T')
-      ? time.split('T')[1].slice(0, 5) // Extract HH:mm from ISO 8601
-      : time;
+export function formatDateTime(date: Date, timezone: TimezoneIdentifier) {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZoneName: 'short',
+  });
 
-    const [hours, minutes] = parsedTime.split(':').map(Number);
-
-    // Create a date in the specified timezone
-    const dateObj = new Date(date);
-
-    if (isNaN(dateObj.getTime())) {
-      throw new Error(`Invalid date: ${date}`);
-    }
-
-    if (isNaN(hours) || isNaN(minutes)) {
-      throw new Error(`Invalid time format: ${time}. Expected format: HH:mm or ISO 8601`);
-    }
-
-    // Use the Intl.DateTimeFormat to handle timezone conversions
-    const formatter = new Intl.DateTimeFormat('en-US', {
-      timeZone: timezone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-
-    // Format the date in the target timezone
-    const parts = formatter.formatToParts(dateObj);
-    const components: DateTimeComponents = {
-      year: parseInt(parts.find((p) => p.type === 'year')?.value || '0'),
-      month: parseInt(parts.find((p) => p.type === 'month')?.value || '1') - 1,
-      day: parseInt(parts.find((p) => p.type === 'day')?.value || '1'),
-      hour: hours,
-      minute: minutes,
-    };
-
-    return new Date(
-      Date.UTC(
-        components.year,
-        components.month,
-        components.day,
-        components.hour,
-        components.minute,
-      ),
-    );
-  } catch (error) {
-    throw new Error(
-      `Failed to parse date/time: ${error instanceof Error ? error.message : 'Unknown error'}`,
-    );
-  }
-}
-
-export function formatDateTime(date: Date, timezone: string) {
-  validateTimezone(timezone);
-
-  try {
-    const formatter = new Intl.DateTimeFormat('en-US', {
-      timeZone: timezone,
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-    });
-
-    const parts = formatter.formatToParts(date);
-
-    return {
-      date: [
-        parts.find((p) => p.type === 'weekday')?.value,
-        parts.find((p) => p.type === 'month')?.value,
-        parts.find((p) => p.type === 'day')?.value,
-        parts.find((p) => p.type === 'year')?.value,
-      ]
-        .filter(Boolean)
-        .join(' '),
-
-      time: [
-        parts.find((p) => p.type === 'hour')?.value,
-        ':',
-        parts.find((p) => p.type === 'minute')?.value,
-        ' ',
-        parts.find((p) => p.type === 'dayPeriod')?.value,
-      ]
-        .filter(Boolean)
-        .join(''),
-
-      timezone: SUPPORTED_TIMEZONES[timezone as TimezoneIdentifier],
-    };
-  } catch (error) {
-    throw new Error(
-      `Failed to format date/time: ${error instanceof Error ? error.message : 'Unknown error'}`,
-    );
-  }
+  return formatter.format(date);
 }
 
 export function isValidFutureDate(date: string): boolean {

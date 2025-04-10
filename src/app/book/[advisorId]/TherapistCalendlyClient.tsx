@@ -70,6 +70,7 @@ export default function TherapistCalendlyClient({
         therapistId: details.therapistId,
         sessionDate: details.date,
         sessionStartTime: `${details.date}T${details.startTime}`,
+        timezone: details.timezone,
         userEmail,
       });
 
