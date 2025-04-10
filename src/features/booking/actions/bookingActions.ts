@@ -11,11 +11,12 @@ import { sendBookingConfirmationEmail } from './sendBookingConfirmationEmail';
 // Validation schema
 const BookingSessionSchema = z.object({
   userId: z.string(),
-  therapistId: z.string(),
+  therapistId: z.union([z.string(), z.number()]).transform(String),
   sessionDate: z.string(),
   sessionStartTime: z.string(),
   userEmail: z.string().email(),
   timezone: z.string().optional().default('EST'),
+  therapistEmail: z.string().email().optional().default('seth@renavestapp.com'),
 });
 
 // Helper function to parse and normalize time
@@ -63,8 +64,8 @@ async function validateAndParseInput(rawData: unknown) {
 }
 
 // Helper to fetch user and therapist details
-async function fetchUserAndTherapist(userEmail: string, therapistId: string) {
-  const parsedTherapistId = parseInt(therapistId);
+async function fetchUserAndTherapist(userEmail: string, therapistId: string | number) {
+  const parsedTherapistId = typeof therapistId === 'string' ? parseInt(therapistId) : therapistId;
 
   const user = await db.query.users.findFirst({
     where: (users, { eq }) => eq(users.email, userEmail),
@@ -110,7 +111,8 @@ export async function createBookingSession(rawData: unknown) {
   try {
     // Validate and parse input
     const validatedData = await validateAndParseInput(rawData);
-    const { therapistId, sessionDate, sessionStartTime, userEmail, timezone } = validatedData;
+    const { therapistId, sessionDate, sessionStartTime, userEmail, timezone, therapistEmail } =
+      validatedData;
 
     // Normalize date
     const normalizedDate = normalizeDateTime(sessionDate);
@@ -134,7 +136,7 @@ export async function createBookingSession(rawData: unknown) {
       clientName: `${user.firstName} ${user.lastName}`.trim(),
       clientEmail: userEmail,
       therapistName: advisor.name || 'Renavest Therapist',
-      therapistEmail: 'seth@renavestapp.com',
+      therapistEmail: therapistEmail,
       sessionDate: normalizedDate.toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
