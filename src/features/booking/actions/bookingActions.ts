@@ -20,13 +20,17 @@ const BookingSessionSchema = z.object({
 });
 
 // Helper function to parse and normalize time
-function normalizeDateTime(sessionTimestamp: string): Date {
-  const normalizedDate = new Date(sessionTimestamp);
+function normalizeDateTime(sessionTimestamp: string, _timezone: string = 'EST'): Date {
+  // Parse the input timestamp
+  const inputDate = new Date(sessionTimestamp);
 
   // Validate the date
-  if (isNaN(normalizedDate.getTime())) {
+  if (isNaN(inputDate.getTime())) {
     throw new Error('Invalid date');
   }
+
+  // Create a new date object with the same local time
+  const normalizedDate = new Date(inputDate);
 
   // Ensure date is not in the past
   const today = new Date();
@@ -115,7 +119,7 @@ export async function createBookingSession(rawData: unknown) {
       validatedData;
 
     // Normalize date
-    const normalizedDate = normalizeDateTime(sessionDate);
+    const normalizedDate = normalizeDateTime(sessionDate, timezone);
 
     // Fetch user and therapist details
     const { user, advisor, parsedTherapistId } = await fetchUserAndTherapist(
