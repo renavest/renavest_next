@@ -1,7 +1,17 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { Calendar, Users, Library, UserCircle2, FileText, TrendingUp, Target } from 'lucide-react';
+import {
+  Calendar,
+  Users,
+  UserCircle2,
+  FileText,
+  TrendingUp,
+  Target,
+  BookOpen,
+  Clock,
+  CheckCircle2,
+} from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { useState } from 'react';
 import { useEffect } from 'react';
@@ -125,6 +135,59 @@ function UpcomingSessionsCard({
   );
 }
 
+function TherapistStatisticsCard() {
+  const totalSessions = UPCOMING_SESSIONS.length;
+  const totalClients = CLIENTS.length;
+  const completedSessions = CLIENTS.reduce(
+    (sum, client) => sum + (client.activeTherapySessions || 0),
+    0,
+  );
+
+  const statisticsItems = [
+    {
+      icon: <Clock className='h-5 w-5 text-purple-600' />,
+      title: 'Total Sessions',
+      value: totalSessions,
+      subtitle: 'Upcoming',
+    },
+    {
+      icon: <Users className='h-5 w-5 text-purple-600' />,
+      title: 'Total Clients',
+      value: totalClients,
+      subtitle: 'Active',
+    },
+    {
+      icon: <CheckCircle2 className='h-5 w-5 text-purple-600' />,
+      title: 'Completed Sessions',
+      value: completedSessions,
+      subtitle: 'All time',
+    },
+    {
+      icon: <BookOpen className='h-5 w-5 text-purple-600' />,
+      title: 'Resource Library',
+      value: 24,
+      subtitle: 'Worksheets',
+    },
+  ];
+
+  return (
+    <div className='bg-white rounded-xl p-6 border border-purple-100 shadow-sm'>
+      <div className='grid md:grid-cols-4 gap-4'>
+        {statisticsItems.map((item, index) => (
+          <div key={index} className='flex items-center gap-4 bg-gray-50 p-4 rounded-lg'>
+            {item.icon}
+            <div>
+              <p className='text-xs text-gray-500'>{item.title}</p>
+              <p className='text-xl font-bold text-gray-800'>{item.value}</p>
+              <p className='text-xs text-gray-500'>{item.subtitle}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ClientDetailModal({
   client,
   isOpen,
@@ -138,7 +201,7 @@ function ClientDetailModal({
 
   return (
     <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
-      <div className='bg-white rounded-xl p-8 w-[800px] max-h-[90vh] overflow-y-auto'>
+      <div className='bg-white rounded-xl p-8 w-[1000px] max-h-[95vh] overflow-y-auto'>
         <div className='flex justify-between items-center mb-6'>
           <h2 className='text-2xl font-semibold text-gray-800 flex items-center gap-3'>
             <UserCircle2 className='h-8 w-8 text-purple-600' />
@@ -152,6 +215,7 @@ function ClientDetailModal({
           </button>
         </div>
 
+        {/* Client Basic Info */}
         <div className='grid md:grid-cols-3 gap-6 mb-6'>
           <div>
             <p className='text-xs text-gray-500 mb-1'>Email</p>
@@ -169,47 +233,63 @@ function ClientDetailModal({
           </div>
         </div>
 
-        <div className='grid md:grid-cols-3 gap-6 mb-6'>
-          <div className='bg-gray-50 p-4 rounded-lg'>
-            <h4 className='flex items-center gap-2 text-sm text-gray-600 mb-2'>
-              <FileText className='h-4 w-4 text-purple-600' />
-              Client Notes
-            </h4>
-            <ClientNotesSection clientId={client.id} />
-          </div>
+        {/* Therapist Statistics */}
+        <div className='mb-6'>
+          <TherapistStatisticsCard />
+        </div>
 
-          <div className='bg-gray-50 p-4 rounded-lg'>
-            <h4 className='flex items-center gap-2 text-sm text-gray-600 mb-2'>
-              <TrendingUp className='h-4 w-4 text-purple-600' />
-              Client Progress
-            </h4>
-            <div className='space-y-2'>
-              <div>
-                <p className='text-xs text-gray-500'>Goal Achievement</p>
-                <div className='w-full bg-gray-200 rounded-full h-2.5'>
-                  <div className='bg-purple-600 h-2.5 rounded-full' style={{ width: '72%' }} />
+        {/* Detailed Client Insights */}
+        <div className='grid md:grid-cols-2 gap-6'>
+          {/* Left Column: Notes and Progress */}
+          <div className='space-y-6'>
+            <div className='bg-gray-50 p-6 rounded-lg'>
+              <h4 className='flex items-center gap-2 text-lg text-gray-700 mb-4'>
+                <FileText className='h-6 w-6 text-purple-600' />
+                Client Notes
+              </h4>
+              <ClientNotesSection clientId={client.id} />
+            </div>
+
+            <div className='bg-gray-50 p-6 rounded-lg'>
+              <h4 className='flex items-center gap-2 text-lg text-gray-700 mb-4'>
+                <TrendingUp className='h-6 w-6 text-purple-600' />
+                Client Progress
+              </h4>
+              <div className='space-y-4'>
+                <div>
+                  <p className='text-sm text-gray-600 mb-2'>Goal Achievement</p>
+                  <div className='w-full bg-gray-200 rounded-full h-3'>
+                    <div className='bg-purple-600 h-3 rounded-full' style={{ width: '72%' }} />
+                  </div>
+                  <p className='text-xs text-gray-500 mt-1'>72% Complete</p>
                 </div>
-                <p className='text-xs text-gray-500 mt-1'>72% Complete</p>
-              </div>
-              <div>
-                <p className='text-xs text-gray-500'>Money Script Progress</p>
-                <div className='w-full bg-gray-200 rounded-full h-2.5'>
-                  <div className='bg-purple-600 h-2.5 rounded-full' style={{ width: '65%' }} />
+                <div>
+                  <p className='text-sm text-gray-600 mb-2'>Money Script Progress</p>
+                  <div className='w-full bg-gray-200 rounded-full h-3'>
+                    <div className='bg-purple-600 h-3 rounded-full' style={{ width: '65%' }} />
+                  </div>
+                  <p className='text-xs text-gray-500 mt-1'>65% Complete</p>
                 </div>
-                <p className='text-xs text-gray-500 mt-1'>65% Complete</p>
               </div>
             </div>
           </div>
 
-          <div className='bg-gray-50 p-4 rounded-lg'>
-            <h4 className='flex items-center gap-2 text-sm text-gray-600 mb-2'>
-              <Target className='h-4 w-4 text-purple-600' />
+          {/* Right Column: Financial Goals */}
+          <div className='bg-gray-50 p-6 rounded-lg'>
+            <h4 className='flex items-center gap-2 text-lg text-gray-700 mb-4'>
+              <Target className='h-6 w-6 text-purple-600' />
               Financial Goals
             </h4>
-            <div className='space-y-2'>
+            <div className='space-y-4'>
               {client.financialGoals?.map((goal, index) => (
-                <div key={index} className='bg-white p-2 rounded-lg border border-gray-100'>
-                  <p className='text-xs text-gray-800'>{goal}</p>
+                <div
+                  key={index}
+                  className='bg-white p-4 rounded-lg border border-gray-100 flex items-center justify-between'
+                >
+                  <p className='text-sm text-gray-800'>{goal}</p>
+                  <div className='w-16 bg-purple-50 text-purple-600 text-xs px-2 py-1 rounded-full text-center'>
+                    In Progress
+                  </div>
                 </div>
               ))}
             </div>
