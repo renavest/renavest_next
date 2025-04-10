@@ -10,11 +10,13 @@ import { sendBookingConfirmationEmail } from './sendBookingConfirmationEmail';
 
 // Validation schema
 const BookingSessionSchema = z.object({
+  userId: z.string(),
   therapistId: z.string(),
   sessionDate: z.string(),
   sessionStartTime: z.string(),
   userEmail: z.string().email(),
-  timezone: z.string(),
+  therapistEmail: z.string().email(),
+  timezone: z.string().optional().default('EST'),
 });
 
 // Helper function to parse and normalize time
@@ -44,10 +46,28 @@ export async function createBookingSession(rawData: unknown) {
   const result = BookingSessionSchema.safeParse(rawData);
 
   if (!result.success) {
+    // More descriptive error logging
     console.error('Validation Errors:', JSON.stringify(result.error.errors, null, 2));
-    throw new Error(
-      `Invalid booking data: ${result.error.errors.map((e) => e.message).join(', ')}`,
-    );
+
+    // Provide a more user-friendly error message
+    const errorMessages = result.error.errors.map((e) => {
+      switch (e.path[0]) {
+        case 'timezone':
+          return 'Timezone is required. Please select a valid timezone.';
+        case 'therapistId':
+          return 'Invalid therapist selection.';
+        case 'sessionDate':
+          return 'Invalid session date.';
+        case 'sessionStartTime':
+          return 'Invalid session start time.';
+        case 'userEmail':
+          return 'Invalid email address.';
+        default:
+          return e.message;
+      }
+    });
+
+    throw new Error(`Booking validation failed: ${errorMessages.join(', ')}`);
   }
 
   const { therapistId, sessionDate, sessionStartTime, userEmail, timezone } = result.data;
