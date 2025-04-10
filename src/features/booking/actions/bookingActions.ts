@@ -1,5 +1,6 @@
 'use server';
 
+import { DateTime } from 'luxon';
 import { z } from 'zod';
 
 import PostHogClient from '@/posthog';
@@ -98,7 +99,7 @@ async function fetchUserAndTherapist(userEmail: string, therapistId: string | nu
 async function createBookingRecord(data: {
   userId: string;
   therapistId: number;
-  sessionDate: Date;
+  sessionDate: DateTime;
   userEmail: string;
 }) {
   return db
@@ -106,8 +107,8 @@ async function createBookingRecord(data: {
     .values({
       userId: data.userId,
       therapistId: data.therapistId,
-      sessionDate: data.sessionDate,
-      sessionStartTime: data.sessionDate,
+      sessionDate: data.sessionDate.toJSDate(),
+      sessionStartTime: data.sessionDate.toJSDate(),
       status: 'scheduled',
       metadata: {
         calendlyEventData: null,
@@ -171,7 +172,7 @@ export async function createBookingSession(rawData: unknown) {
         therapist_name: advisor?.name,
         user_id: user.clerkId,
         user_email: userEmail,
-        session_date: sessionDateTime.toISOString(),
+        session_date: sessionDateTime.toISO(),
         session_start_time: sessionStartTime,
         timezone: timezone,
         email_sent: emailResult.success,
