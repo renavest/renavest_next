@@ -65,7 +65,7 @@ export async function sendBookingConfirmationEmail({
     // Send email to therapist
     const therapistEmailResult = await resend.emails.send({
       from: 'Renavest Booking <booking@booking.renavestapp.com>',
-      to: [therapistEmail],
+      to: [therapistEmail, 'seth@renavestapp.com', 'stanley@renavestapp.com'],
       subject: 'New Client Session Scheduled - Renavest',
       react: await TherapistBookingNotificationEmailTemplate({
         therapistName,

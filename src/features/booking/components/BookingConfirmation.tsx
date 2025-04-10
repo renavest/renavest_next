@@ -6,11 +6,9 @@ import { COLORS } from '@/src/styles/colors';
 
 import {
   TimezoneIdentifier,
-  TimezoneOption,
   SUPPORTED_TIMEZONES,
   isValidFutureDate,
-  createTimestamp,
-  formatDateTime,
+  convertTo24Hour,
 } from '../utils/dateTimeUtils';
 
 import { BookingConfirmationScreen } from './BookingConfirmed';
@@ -19,7 +17,8 @@ import { TimeSelect } from './BookingFormComponents/TimeSelect';
 import { TimezoneSelect } from './BookingFormComponents/TimezoneSelect';
 
 interface BookingDetails {
-  timestamp: Date;
+  date: string;
+  startTime: string;
   timezone: TimezoneIdentifier;
   therapistId: string;
 }
@@ -86,25 +85,25 @@ const BookingForm = ({
         Your Healing Journey Continues Here 🌱
       </h2>
 
-      <p className='text-gray-600 mb-4'>Please select your preferred session date and time.</p>
+      <p className='text-gray-600 mb-4'>
+        To ensure our records are accurate, please re-enter the session date and time you booked.
+      </p>
 
       <div className='space-y-4'>
         <DateInput
-          label='Session Date'
+          label='Re-enter Session Date'
           value={localDate}
           onChange={onDateChange}
           error={dateError}
         />
-        <TimeSelect label='Session Time' value={localStartTime} onChange={onTimeChange} />
+        <TimeSelect label='Re-enter Start Time' value={localStartTime} onChange={onTimeChange} />
         <TimezoneSelect
           value={selectedTimezone}
-          onChange={onTimezoneChange}
-          options={Object.entries(SUPPORTED_TIMEZONES).map(
-            ([id, label]): TimezoneOption => ({
-              value: id as TimezoneIdentifier,
-              label: `${label} (${id})`,
-            }),
-          )}
+          onChange={(tz) => onTimezoneChange(tz as TimezoneIdentifier)}
+          options={Object.entries(SUPPORTED_TIMEZONES).map(([id, label]) => ({
+            value: id as TimezoneIdentifier,
+            label: `${label} (${id})`,
+          }))}
         />
 
         <button
@@ -149,31 +148,38 @@ export const BookingConfirmation = ({ advisorId, onConfirm }: BookingConfirmatio
       return;
     }
 
+    const formattedTime = convertTo24Hour(localStartTime);
+
     try {
       setIsLoading(true);
 
-      // Create a timestamp in the user's selected timezone
-      const timestamp = createTimestamp(localDate, localStartTime, selectedTimezone);
-
       await onConfirm({
-        timestamp,
+        date: localDate,
+        startTime: formattedTime,
         timezone: selectedTimezone,
         therapistId: advisorId,
       });
 
       // Track the event in PostHog
       const sessionData = {
-        timestamp: timestamp.toISOString(),
+        sessionDate: localDate,
+        sessionStartTime: formattedTime,
         timezone: selectedTimezone,
         therapistId: advisorId,
-        formattedDateTime: formatDateTime(timestamp, selectedTimezone),
+        timestamp: new Date().toISOString(),
       };
 
       posthog.capture('session_booked', sessionData);
 
       posthog.identify(user?.id, {
         $add_to_list: {
-          sessions: sessionData,
+          sessions: {
+            date: localDate,
+            startTime: formattedTime,
+            timezone: selectedTimezone,
+            therapistId: advisorId,
+            timestamp: new Date().toISOString(),
+          },
         },
       });
 
@@ -189,10 +195,9 @@ export const BookingConfirmation = ({ advisorId, onConfirm }: BookingConfirmatio
   if (isSubmitted) {
     return (
       <BookingConfirmationScreen
-        formattedDateTime={formatDateTime(
-          createTimestamp(localDate, localStartTime, selectedTimezone),
-          selectedTimezone,
-        )}
+        date={localDate}
+        startTime={localStartTime}
+        timezone={SUPPORTED_TIMEZONES[selectedTimezone]}
       />
     );
   }

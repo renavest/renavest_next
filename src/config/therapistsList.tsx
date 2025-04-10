@@ -1,18 +1,36 @@
-const TherapistList = [
+interface Therapist {
+  id: string;
+  name: string;
+  email?: string;
+  title: string;
+  bookingURL: string;
+  expertise: string;
+  certifications: string;
+  song: string;
+  yoe: string;
+  clientele: string;
+  longBio: string;
+  previewBlurb: string;
+  profileUrl: string;
+  hourlyRate?: number;
+}
+
+const TherapistList: Therapist[] = [
   {
     id: '1',
     name: 'Paige Williams',
+    email: 'paigevic98@gmail.com',
     title: 'Financial Coach ',
     bookingURL: 'https://calendly.com/paigevic98/strategy-session-paige',
     expertise: 'Debt Management, Saving, Investing',
     certifications:
-      'Bachelor’s Degree in Biopsychology, Master’s Degree in Medical Sciences – Liberty University (2022), Founder of the Millennium Money Master Program, Helped over 100 clients',
+      "Bachelor's Degree in Biopsychology, Master's Degree in Medical Sciences – Liberty University (2022), Founder of the Millennium Money Master Program, Helped over 100 clients",
     song: '"Upgrade U" by Beyonce',
     yoe: '8',
     clientele:
       'Early to mid-career professional women in their mid-20s and 30s who are looking to build long-term wealth. Income Level: Annual incomes ranging from $40,000 to $100,000. Occupation: A mix of salaried professionals, entrepreneurs, and freelancers. Challenges: Struggle with balancing short-term wants and long-term goals, navigating credit, and establishing clear financial systems.',
     longBio:
-      "I'm a passionate Money Coach and Online Content Creator dedicated to empowering women to take full control of their finances and build long-term wealth. In just 5 months, I paid off $3,000 in credit card debt, saved $5,000 in an emergency fund, and invested $10,000—all while juggling grad school and part-time jobs. This transformation inspired me to create the Millennium Money Master Program, a high-impact coaching program that has helped over 100 clients achieve financial confidence through crushing debt, investing, and strategic money management. My mission is to make personal finance fun, attainable, and attractive while inspiring others to take action, no matter where they’re starting",
+      "I'm a passionate Money Coach and Online Content Creator dedicated to empowering women to take full control of their finances and build long-term wealth. In just 5 months, I paid off $3,000 in credit card debt, saved $5,000 in an emergency fund, and invested $10,000—all while juggling grad school and part-time jobs. This transformation inspired me to create the Millennium Money Master Program, a high-impact coaching program that has helped over 100 clients achieve financial confidence through crushing debt, investing, and strategic money management. My mission is to make personal finance fun, attainable, and attractive while inspiring others to take action, no matter where they're starting",
     previewBlurb:
       'Empowering women to crush debt, invest smartly, and build lasting financial confidence!',
     profileUrl: '/experts/PaigeW.jpg',
@@ -21,6 +39,7 @@ const TherapistList = [
   {
     id: '2',
     name: 'Constance McConnell',
+    email: 'constance@courage2heal.org',
     title: 'Financial Therapist',
     bookingURL: 'https://calendly.com/constance-courage2heal/30min',
     expertise: 'Major life and financial changes, Budgeting ',
@@ -30,7 +49,7 @@ const TherapistList = [
     clientele:
       "20-65 years old. Historically marginalized populations (Black, Latinx, Native American, Women, LGBTQ+ communities). Identify with the upper-middle socioeconomic class. Doesn't mind telling their story via mindful journaling.",
     longBio:
-      'Constance is a LCSW, author, business owner, financial therapist and creative who specializes in working with individuals who are experiencing major life and financial changes. She is also a certified financial social worker and helps clients who want to improve their relationship with money. Constance is the author of a guided journal called, "My Very Own Affirming Guided Journal A-Z” and launched a t-shirt line with designs that feature positive affirmations. She has practiced for 12 years and most of her clients are a part of the BIPOC and LGBTQ+ communities. Constance has been a featured professional guest on the following podcasts and media platforms: “Personal Finance with Leila”, “Budget Simple” “SocialWorkerRants” “AboutthatWallet”and “FIRE Social Worker.”',
+      'Constance is a LCSW, author, business owner, financial therapist and creative who specializes in working with individuals who are experiencing major life and financial changes. She is also a certified financial social worker and helps clients who want to improve their relationship with money. Constance is the author of a guided journal called, "My Very Own Affirming Guided Journal A-Z" and launched a t-shirt line with designs that feature positive affirmations. She has practiced for 12 years and most of her clients are a part of the BIPOC and LGBTQ+ communities. Constance has been a featured professional guest on the following podcasts and media platforms: "Personal Finance with Leila", "Budget Simple" "SocialWorkerRants" "AboutthatWallet"and "FIRE Social Worker."',
     previewBlurb:
       'A financial therapist and author, enhancing relationships with money through empowerment! ',
     profileUrl: '/experts/Constance.jpg',
@@ -39,6 +58,7 @@ const TherapistList = [
   {
     id: '3',
     name: 'Michele Paiva',
+    email: 'hello@thefinancetherapist.com',
     title: 'Financial Therapist',
     bookingURL: 'https://calendly.com/paiva/corporate-client',
     expertise: 'Business Management, Family Planning, Couples, Clinical Autism Specialist',
@@ -49,7 +69,7 @@ const TherapistList = [
     clientele:
       '21 - 55. Mid Income. Millennials enjoy that I\'ve been there, done that, and lived to tell; older clients appreciate that I\'ve already put children through college, invested in property, etc., beyond "just getting out of debt" etc.',
     longBio:
-      'Michele Paiva is a financial therapist, trauma therapist, fractional CMO, and publicist with over 30 years of experience helping individuals and businesses thrive. Millennials value her relatable, "I’ve been there" approach, while Boomers appreciate her wisdom from successfully living through life’s financial challenges. Michele’s work focuses on uncovering the emotions beneath financial struggles, resolving couples\' money conflicts, and empowering clients to showcase their value, build abundance, and create lasting change. Michele has autism and is also a certified clinical autism specialist who enjoys helping neurodivergent employees regain their feelings and finances. In 2023, she was voted top 100 publicists out of 14,000. She likes Tofu.',
+      "Michele Paiva is a financial therapist, trauma therapist, fractional CMO, and publicist with over 30 years of experience helping individuals and businesses thrive. Millennials value her relatable, 'I've been there' approach, while Boomers appreciate her wisdom from successfully living through life's financial challenges. Michele's work focuses on uncovering the emotions beneath financial struggles, resolving couples' money conflicts, and empowering clients to showcase their value, build abundance, and create lasting change. Michele has autism and is also a certified clinical autism specialist who enjoys helping neurodivergent employees regain their feelings and finances. In 2023, she was voted top 100 publicists out of 14,000. She likes Tofu.",
     previewBlurb: 'A casual approach to emotional depth and elegant living!',
     profileUrl: '/experts/Michele.jpeg',
     hourlyRate: 180,
@@ -57,6 +77,7 @@ const TherapistList = [
   {
     id: '4',
     name: 'Justin DeFoor',
+    email: 'thegamechangers4life@gmail.com',
     title: 'Financial Coach ',
     bookingURL: 'https://calendly.com/tgcfinancialgroup ',
     expertise: 'Budgeting, Savings, Growth, Credit, Tax Planning',
@@ -72,6 +93,7 @@ const TherapistList = [
   {
     id: '5',
     name: 'Aitzarelys Negrón',
+    email: 'aitza@strategiesandtea.com',
     title: 'Financial Coach ',
     bookingURL: 'https://StrategiesandTEA.as.me/?appointmentType=72189521',
     expertise:
@@ -82,7 +104,7 @@ const TherapistList = [
     yoe: '10',
     clientele: '25–45 years old. Professionals, Aspiring entrepreneurs. Income: $70,000–$150,000+.',
     longBio:
-      'Aitza is a passionate financial coach, accountant, and entrepreneur dedicated to helping professionals and aspiring business owners achieve financial clarity and time freedom. With a background as a CPA and years of experience in personal finance and business management, she empowers her clients to bridge the gap between their current reality and their ideal lifestyle. Aitza’s journey into financial coaching was inspired by her own transformational story—turning her life around in high school with the support of a mentor, she now dedicates her career to helping others see possibilities and take control of their futures. Her coaching program, moneyFLOW$™ Academy, guides high-earning professionals through mastering personal finances, reducing debt, and building sustainable businesses. In addition to coaching, Aitza specializes in bookkeeping, bookkeeping diagnostics, Profit First implementation, and financial clean-ups, ensuring business owners have the tools they need for long-term profitability. Her clients have achieved remarkable results, from saving thousands of dollars to confidently launching businesses that align with their goals and values. Aitza’s mission is to create financial confidence and economic resilience for her clients, equipping them to build wealth and lead change for themselves, their families, and their communities.',
+      "Aitza is a passionate financial coach, accountant, and entrepreneur dedicated to helping professionals and aspiring business owners achieve financial clarity and time freedom. With a background as a CPA and years of experience in personal finance and business management, she empowers her clients to bridge the gap between their current reality and their ideal lifestyle. Aitza's journey into financial coaching was inspired by her own transformational story—turning her life around in high school with the support of a mentor, she now dedicates her career to helping others see possibilities and take control of their futures. Her coaching program, moneyFLOW$™ Academy, guides high-earning professionals through mastering personal finances, reducing debt, and building sustainable businesses. In addition to coaching, Aitza specializes in bookkeeping, bookkeeping diagnostics, Profit First implementation, and financial clean-ups, ensuring business owners have the tools they need for long-term profitability. Her clients have achieved remarkable results, from saving thousands of dollars to confidently launching businesses that align with their goals and values. Aitza's mission is to create financial confidence and economic resilience for her clients, equipping them to build wealth and lead change for themselves, their families, and their communities.",
     previewBlurb: 'Transforming finances, empowering dreams, and creating lasting wealth!',
     profileUrl: '/experts/Aitzarelys.jpeg',
     hourlyRate: 222,
@@ -90,6 +112,7 @@ const TherapistList = [
   {
     id: '6',
     name: 'Maureen Kelley',
+    email: 'mk@maureenkelley.com',
     title: 'Financial Therapist',
     bookingURL: 'https://calendly.com/mk-maureenkelley ',
     expertise: 'Family, Wealth Management, Positive Psychology',
@@ -100,7 +123,7 @@ const TherapistList = [
     clientele:
       'People from all walks of life. Young adults, individuals, co-parents, couples and families. She has helped those who struggle with making ends meet, people navigating divorce issues, to multi-generational complex families of wealth.',
     longBio:
-      'Maureen Kelley has more than 30 years’ experience helping families navigate the complex intersection of economics and emotions. As a seasoned family dynamics coach and family wealth consultant, she’s dedicated to creating a safe space for you to share the ups and downs of your financial journey. Maureen works to dismantle the stigma surrounding these conversations, making hard-to-talk-about topics a lot easier. Having held senior positions at financial institutions like BOK Financial Private Wealth and Wells Fargo Private Bank, Maureen offers years of expertise in wealth management and positive psychology, helping you improve your financial life by improving your relationship with yourself and your loved ones. Working with Maureen, you’ll rewrite your “money scripts”—the narratives we develop around wealth in childhood—and better understand how your past shapes your present views on money. As the founder of a family dynamics and financial coaching practice, Maureen’s dedication to family is evident. Her services have been utilized by people of all walks of life, including young adults, co-parents, couples, and multi-generational families. Through financial therapy and coaching, you can overcome anxiety, guilt or shame surrounding money, and develop financial literacy to achieve holistic success. With less stress around money management, you can spend more time focusing on the things that really matter, like spending time with the ones you love.',
+      "Maureen Kelley has more than 30 years' experience helping families navigate the complex intersection of economics and emotions. As a seasoned family dynamics coach and family wealth consultant, she's dedicated to creating a safe space for you to share the ups and downs of your financial journey. Maureen works to dismantle the stigma surrounding these conversations, making hard-to-talk-about topics a lot easier. Having held senior positions at financial institutions like BOK Financial Private Wealth and Wells Fargo Private Bank, Maureen offers years of expertise in wealth management and positive psychology, helping you improve your financial life by improving your relationship with yourself and your loved ones. Working with Maureen, you'll rewrite your 'money scripts'—the narratives we develop around wealth in childhood—and better understand how your past shapes your present views on money. As the founder of a family dynamics and financial coaching practice, Maureen's dedication to family is evident. Her services have been utilized by people of all walks of life, including young adults, co-parents, couples, and multi-generational families. Through financial therapy and coaching, you can overcome anxiety, guilt or shame surrounding money, and develop financial literacy to achieve holistic success. With less stress around money management, you can spend more time focusing on the things that really matter, like spending time with the ones you love.",
     previewBlurb:
       'Transform your relationship with money to enhance life and strengthen family connections!',
     profileUrl: '/experts/Maureen.jpeg',
@@ -109,6 +132,7 @@ const TherapistList = [
   {
     id: '7',
     name: 'Tiffany Grant',
+    email: 'tiffany@moneytalkwitht.com',
     title: 'Financial Coach ',
     bookingURL: 'https://calendly.com/moneytalkwitht/coaching',
     expertise: 'Personal Finance, Side hustles, Business growth, Money Management',
@@ -118,7 +142,7 @@ const TherapistList = [
     clientele:
       '25-45, any gender. Income up to $150,000. Looking for help with budgeting and goal setting.',
     longBio:
-      "Tiffany Grant, AFC®, is a dedicated Accredited Financial Counselor, sought-after speaker, and founder of Money Talk With Tiff. Renowned for her ability to make personal finance approachable and relatable, Tiffany has made significant contributions as a financial educator, coach, blogger, and podcaster. Her expert advice on side hustles, business growth, and money management has been featured on platforms like Forbes, CNBC, Yahoo Finance, Business Insider, MSN, and ESSENCE. Tiffany's passion lies in empowering others to gain control over their finances through practical education and down-to-earth insights. Her engaging style and actionable guidance have helped countless individuals build financial confidence and clarity. Beyond her professional accolades, Tiffany’s academic background includes a Bachelor of Business Administration and Management from the University of North Carolina at Pembroke and a Master of Business Administration (MBA) from the University of North Carolina at Greensboro. She also holds the SHRM-CP credential and is a certified Lean Six Sigma Yellow Belt, reflecting her diverse expertise and dedication to continuous learning.",
+      "Tiffany Grant, AFC®, is a dedicated Accredited Financial Counselor, sought-after speaker, and founder of Money Talk With Tiff. Renowned for her ability to make personal finance approachable and relatable, Tiffany has made significant contributions as a financial educator, coach, blogger, and podcaster. Her expert advice on side hustles, business growth, and money management has been featured on platforms like Forbes, CNBC, Yahoo Finance, Business Insider, MSN, and ESSENCE. Tiffany's passion lies in empowering others to gain control over their finances through practical education and down-to-earth insights. Her engaging style and actionable guidance have helped countless individuals build financial confidence and clarity. Beyond her professional accolades, Tiffany's academic background includes a Bachelor of Business Administration and Management from the University of North Carolina at Pembroke and a Master of Business Administration (MBA) from the University of North Carolina at Greensboro. She also holds the SHRM-CP credential and is a certified Lean Six Sigma Yellow Belt, reflecting her diverse expertise and dedication to continuous learning.",
     previewBlurb:
       'Empowering financial freedom through practical education and relatable money management insights!',
     profileUrl: '/experts/TiffanyGrant.jpeg',
@@ -127,6 +151,7 @@ const TherapistList = [
   {
     id: '8',
     name: 'Tyana Ingram',
+    email: 'ingram.tyana@gmail.com',
     title: 'Financial Social Worker',
     bookingURL: 'https://calendly.com/tingram-xdc/financial-wellness-counsulting',
     expertise: 'Financial Healing, Mindset, Financial Wellness',
@@ -146,6 +171,7 @@ const TherapistList = [
   {
     id: '9',
     name: 'Vince Hollerman',
+    email: 'vince@iamyourmoneycoach.com',
     title: 'Financial Coach ',
     bookingURL: 'https://app.acuityscheduling.com/schedule/8d3ad975',
     expertise: 'Previously investment and life insurance licensed. (No longer holds licenses)',
@@ -164,6 +190,7 @@ const TherapistList = [
   {
     id: '10',
     name: 'Jaelyn Vickery',
+    email: 'vickeryjaelyn@gmail.com',
     title: 'Financial Therapist',
     bookingURL:
       'https://outlook.office.com/bookwithme/user/dbdc3761a936461793e506df25358b91@illinois.edu/meetingtype/_T3Sy3d-XkuptOwOzGAk-A2?bookingcode=3c26242c-7647-4395-9aea-135ffebbf651&anonymous&ep=mLinkFromTile ',
@@ -176,7 +203,7 @@ const TherapistList = [
     clientele:
       'Aged 18-45 who are navigating life transitions. Diverse genders. Diverse income levels and backgrounds.',
     longBio:
-      'Jaelyn (Jae) Vickery is a dynamic force in the world of holistic wellness and financial empowerment. As a financial therapist, entrepreneur, and creator of the acclaimed podcast Finance Fitness Finesse, Jae is dedicated to helping individuals build their wealth with wellness. Through her business, Dimensional Wealth LLC, she champions a momentum mindset—encouraging actionable steps toward abundance and longevity rather than waiting on fleeting motivation. With extensive experience researching and working in eating disorder therapy, Jae has explored the complex relationship between eating disorders and financial strain. She particularly enjoys working with individuals who seek a higher understanding of themselves and value the accountability to embrace the challenge of building and sustaining new habits. Jae is dedicated to helping individuals break free from the cycle of compulsion, consumption, and control. Jae’s straightforward compassionate accountability approach brings purpose to every conversation to help her network diversify their knowledge portfolios. She’s here to help you connect the dots between wealth and wellness and isn’t afraid to tell you why “you’re not woke, you’re broke.” In her free time, Jae embraces free movement through exercise, explores nature with her dog Bibble, and indulges her love for art. A devoted plant mom and chess enthusiast, she brings creativity and strategy to everything she does.',
+      "Jaelyn (Jae) Vickery is a dynamic force in the world of holistic wellness and financial empowerment. As a financial therapist, entrepreneur, and creator of the acclaimed podcast Finance Fitness Finesse, Jae is dedicated to helping individuals build their wealth with wellness. Through her business, Dimensional Wealth LLC, she champions a momentum mindset—encouraging actionable steps toward abundance and longevity rather than waiting on fleeting motivation. With extensive experience researching and working in eating disorder therapy, Jae has explored the complex relationship between eating disorders and financial strain. She particularly enjoys working with individuals who seek a higher understanding of themselves and value the accountability to embrace the challenge of building and sustaining new habits. Jae is dedicated to helping individuals break free from the cycle of compulsion, consumption, and control. Jae's straightforward compassionate accountability approach brings purpose to every conversation to help her network diversify their knowledge portfolios. She's here to help you connect the dots between wealth and wellness and isn't afraid to tell you why 'you're not woke, you're broke.' In her free time, Jae embraces free movement through exercise, explores nature with her dog Bibble, and indulges her love for art. A devoted plant mom and chess enthusiast, she brings creativity and strategy to everything she does.",
     previewBlurb:
       'Empowering holistic wealth and wellness through financial therapy and mindset transformation!',
     profileUrl: '/experts/jaelyn.jpg',
@@ -184,8 +211,9 @@ const TherapistList = [
   },
   {
     id: '11',
-    name: 'Shani Tené ',
-    title: 'Financial Coach ',
+    name: 'Shani Tené',
+    email: 'hello@shanitene.com',
+    title: 'Financial Coach',
     bookingURL: 'https://shanitene.com/levelup',
     expertise: 'Budgeting, Saving, Investing, Debt reduction',
     certifications: 'N/A',
@@ -201,6 +229,7 @@ const TherapistList = [
   {
     id: '12',
     name: 'BreAnna Plummer',
+    email: 'breanna.plummer18@gmail.com',
     title: 'Financial Social Worker',
     bookingURL: 'https://calendly.com/bplummerconsciouschoicestherapy/financialwellness',
     expertise: 'Money Mindset, Budgeting, Saving, Debt ',
@@ -219,6 +248,7 @@ const TherapistList = [
   {
     id: '13',
     name: 'Monica Bradshaw ',
+    email: 'monica@patriotfinancialcoaching.com',
     title: 'Financial Coach ',
     bookingURL: 'https://calendly.com/mbradshaw-2/rpcoaching',
     expertise: 'Wealth building, Retirement',
@@ -235,6 +265,7 @@ const TherapistList = [
   {
     id: '14',
     name: 'Haylie Castillo',
+    email: 'haylie@castillofinancialtherapy.com',
     title: 'Financial Therapist',
     bookingURL: 'https://calendly.com/hayliecastillo/20-minute-intital-consultation',
     expertise: 'Financial Trauma, Psychotherapy, Financial education, Coaching ',
@@ -245,7 +276,7 @@ const TherapistList = [
     clientele:
       'Women. Gender expansive individuals. Clients who feel they make "enough" money. Those who still struggle with complicated feelings about money and success.',
     longBio:
-      'Hi! I’m Haylie (she/her). My mission is to help people heal their relationship with money so that they can create the life they truly want to live. I am passionate about helping people reclaim freedom and agency over their lives, and I believe a crucial part of that is having a healthy relationship with money. As a financial therapist, I help people work through their financial trauma and shift their negative emotions around money. I support them in building a healthy relationship with money by relearning how to have a healthy relationship with themselves. Then, through personalized financial education and coaching, I will help you create a money practice that is realistic and aligned with your values and goals. My clients end their work with me feeling at ease with their finances and with the confidence and clarity to use money as a resource to nourish the life they want to live. You deserve to have a relationship with money that gives you confidence and joy. You can have a relationship with money that is peaceful, empowering, and allows you to chase your dreams. If this is you, schedule your free consultation and let’s chat!',
+      "Hi! I'm Haylie (she/her). My mission is to help people heal their relationship with money so that they can create the life they truly want to live. I am passionate about helping people reclaim freedom and agency over their lives, and I believe a crucial part of that is having a healthy relationship with money. As a financial therapist, I help people work through their financial trauma and shift their negative emotions around money. I support them in building a healthy relationship with money by relearning how to have a healthy relationship with themselves. Then, through personalized financial education and coaching, I will help you create a money practice that is realistic and aligned with your values and goals. My clients end their work with me feeling at ease with their finances and with the confidence and clarity to use money as a resource to nourish the life they want to live. You deserve to have a relationship with money that gives you confidence and joy. You can have a relationship with money that is peaceful, empowering, and allows you to chase your dreams. If this is you, schedule your free consultation and let's chat!",
     previewBlurb: 'Heal your money mindset, reclaim your freedom, and live your dreams!',
     profileUrl: '/experts/HaylieCastillo.jpeg',
     hourlyRate: 195,
@@ -253,6 +284,7 @@ const TherapistList = [
   {
     id: '15',
     name: 'Sarah Carr',
+    email: 'sarahcarrfp@gmail.com',
     title: 'Financial Therapist',
     bookingURL: 'https://sarahcarr.as.me/schedule.php',
     expertise: 'Investment education, Debt, Bubgeting, Saving ',
@@ -270,6 +302,7 @@ const TherapistList = [
   {
     id: '16',
     name: 'LaQueshia Clemons',
+    email: 'lclemons@freedomlifetherapy.com',
     title: 'Financial Therapist',
     bookingURL: 'https://calendly.com/lclemonslcsw/meeting',
     expertise: 'Financial Therapy, Social Work',
@@ -287,6 +320,7 @@ const TherapistList = [
   {
     id: '17',
     name: 'Kelly Reddy-Heffner',
+    email: 'kelly@steelcitywealthcollaborative.com',
     title: 'Financial Therapist',
     bookingURL: 'https://calendly.com/kelly-steelcitywc/hello',
     expertise:
@@ -297,7 +331,7 @@ const TherapistList = [
     clientele:
       'Trend toward early career to pre-retirement and encountering some type of life transition. There is an appreciation for an empathetic and energetic professional to provide financial guidance during a time of increased stress.',
     longBio:
-      'Kelly is a CERTIFIED FINANCIAL PLANNER(TM) professional, Certified Student Loan professional (R), a Certified Divorce Financial Analyst (R) practitioner, and Certified Financial Therapist-1(TM). She maintains those credentials with annual continuing education programs to stay up to date and would consider herself a lifelong learner. Life credentials include growing up in a home with a single mom who worked miracles with financial resources available, business ownership, college funding and student loan survival, buying and selling property and cars, military service member household with multiple PCS moves, divorced family members and friends, life’s twists and turns.',
+      "Kelly is a CERTIFIED FINANCIAL PLANNER(TM) professional, Certified Student Loan professional (R), a Certified Divorce Financial Analyst (R) practitioner, and Certified Financial Therapist-1(TM). She maintains those credentials with annual continuing education programs to stay up to date and would consider herself a lifelong learner. Life credentials include growing up in a home with a single mom who worked miracles with financial resources available, business ownership, college funding and student loan survival, buying and selling property and cars, military service member household with multiple PCS moves, divorced family members and friends, life's twists and turns.",
     previewBlurb: 'Empowering financial journeys through expertise, empathy, and life experience!',
     profileUrl: '/experts/Kelly_Reddy_Heffner.jpeg',
     hourlyRate: 175,
@@ -305,6 +339,7 @@ const TherapistList = [
   {
     id: '18',
     name: 'George Blount',
+    email: 'george.blount@nbalancefinancial.com',
     title: 'Financial Therapist',
     bookingURL: 'https://calendly.com/georgeblount',
     expertise: 'Financial Therapy (with or without financial trauma) Financial Education, Coaching',
@@ -321,6 +356,7 @@ const TherapistList = [
   {
     id: '19',
     name: 'Tamoa Danielle Smith',
+    email: 'daniellesmith54@att.net',
     title: 'Financial Therapist',
     bookingURL: 'https://api.leadconnectorhq.com/widget/booking/fQXXP7vrPawH8NQguqXR',
     expertise:
@@ -331,7 +367,7 @@ const TherapistList = [
     clientele:
       'Typically between 30 to 55 years old, focused on individuals navigating significant life transitions such as marriage, divorce, or career changes, which impact their financial stability. I predominantly serve female clients, although my services are inclusive and beneficial to all genders, with a focus on empowering women to take charge of their financial health, especially post-divorce or during major life adjustments. The clients I work with range from middle to upper-middle class, with annual incomes between $40,000 to $120,000, often in stages of rebuilding or enhancing their financial independence and security. Primarily based in suburban areas across the United States, with a significant number located in the Southeast, my clients are diverse in their careers, including sectors like healthcare, education, and small business ownership. They seek to balance professional growth with financial stability and are particularly interested in financial therapy to address and heal from financial trauma, develop healthier money management habits, and secure their financial future.',
     longBio:
-      'Tamoa Danielle leads Clarity Kollective LLC, specializing in transformative financial therapy. As CEO, she empowers clients to overcome financial challenges and achieve sustainable wellness. Tamoa’s journey includes personal recoveries from two bankruptcies and overcoming significant financial trauma, which fuels her passion for helping others transform their financial lives. As a licensed clinical mental health therapist and financial therapist, Tamoa integrates the emotional and psychological aspects into money management. Her holistic approach addresses the root causes of financial trauma, fostering a healthier relationship with money and combining practical advice with emotional support at the critical intersection of finances and mental well-being. Additionally, Tamoa serves as a personal to business development coach on the LUHV Plus platform, assisting entrepreneurs in clearing mental clutter and transforming into effective leaders with renewed mindsets for achieving their personal and business goals. Tamoa also heads Renew You Consulting LLC as a Credit Restoration Specialist. In this role, she expertly guides clients through the complexities of credit restoration, helping them rebuild their credit profiles to regain financial stability. A dedicated speaker, consultant, and advocate for financial empowerment, Tamoa is committed to renewing financial outlooks and transforming lives. Catch Tamoa Danielle on her YouTube channel, Financial Therapy to Prosperity, where she explores the intricate relationship between emotions and finances, delving into financial therapy, trauma, and the journey towards financial prosperity.',
+      "Tamoa Danielle leads Clarity Kollective LLC, specializing in transformative financial therapy. As CEO, she empowers clients to overcome financial challenges and achieve sustainable wellness. Tamoa's journey includes personal recoveries from two bankruptcies and overcoming significant financial trauma, which fuels her passion for helping others transform their financial lives. As a licensed clinical mental health therapist and financial therapist, Tamoa integrates the emotional and psychological aspects into money management. Her holistic approach addresses the root causes of financial trauma, fostering a healthier relationship with money and combining practical advice with emotional support at the critical intersection of finances and mental well-being. Additionally, Tamoa serves as a personal to business development coach on the LUHV Plus platform, assisting entrepreneurs in clearing mental clutter and transforming into effective leaders with renewed mindsets for achieving their personal and business goals. Tamoa also heads Renew You Consulting LLC as a Credit Restoration Specialist. In this role, she expertly guides clients through the complexities of credit restoration, helping them rebuild their credit profiles to regain financial stability. A dedicated speaker, consultant, and advocate for financial empowerment, Tamoa is committed to renewing financial outlooks and transforming lives. Catch Tamoa Danielle on her YouTube channel, Financial Therapy to Prosperity, where she explores the intricate relationship between emotions and finances, delving into financial therapy, trauma, and the journey towards financial prosperity.",
     previewBlurb:
       'Transforming financial trauma into empowerment through holistic healing and hope!',
     profileUrl: '/experts/TamoaDanielleSmith.jpeg',
@@ -340,6 +376,7 @@ const TherapistList = [
   {
     id: '20',
     name: 'Jennifer Calder',
+    email: 'jennifer@moneymindsetconsulting.com',
     title: 'Financial Therapist',
     bookingURL: 'https://calendly.com/jennifer-a6qh/30minute',
     expertise: 'Individual and couples Financial Psychology Coaching, Inheritance Dynamics',
@@ -350,7 +387,7 @@ const TherapistList = [
     clientele:
       'New couples, early career professionals, individuals receiving inheritance, and couples from diverse financial backgrounds seeking to navigate complex family wealth dynamics and parenting challenges.',
     longBio:
-      "I have been highlighted, featured, and interviewed in several news outlets: the Boston Globe, Women's World Daily, Seven Days, Fatherly, Vermont Edition, Healthy Love and Money. Jennifer holds a Masters degree in Sociology and Anthropology and a Masters degree in Social Work from the University of Vermont. In order to help people overcome and work through chronic financial stressors, Jennifer decided to extend her training with a graduate certificate program in Financial Psychology and Behavioral Finance from the Heider School of Business at Creighton University. From 2016-2018, as a student in the program, Jennifer was “the client” going through the process of addressing her own unconscious beliefs about money and connecting them to some of her unhelpful financial behaviors. She knows first-hand how addressing the psychology of money can improve wellbeing, relationships and financial security.",
+      "I have been highlighted, featured, and interviewed in several news outlets: the Boston Globe, Women's World Daily, Seven Days, Fatherly, Vermont Edition, Healthy Love and Money. Jennifer holds a Masters degree in Sociology and Anthropology and a Masters degree in Social Work from the University of Vermont. In order to help people overcome and work through chronic financial stressors, Jennifer decided to extend her training with a graduate certificate program in Financial Psychology and Behavioral Finance from the Heider School of Business at Creighton University. From 2016-2018, as a student in the program, Jennifer was 'the client' going through the process of addressing her own unconscious beliefs about money and connecting them to some of her unhelpful financial behaviors. She knows first-hand how addressing the psychology of money can improve wellbeing, relationships and financial security.",
     previewBlurb:
       'Transforming financial struggles into empowerment through personal healing and insight!\n',
     profileUrl: '/experts/JenniferCalder.jpeg',
@@ -358,6 +395,7 @@ const TherapistList = [
   {
     id: '21',
     name: 'Nathan Astle',
+    email: 'nate@financialtherapyclinicalinstitute.com',
     title: 'Financial Therapist',
     bookingURL: 'https://calendly.com/admin-yvmw/initial-consultation',
     expertise:

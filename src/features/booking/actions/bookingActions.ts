@@ -46,7 +46,6 @@ const BookingSessionSchema = z.object({
     console.warn(`Unsupported timezone: ${val}. Defaulting to America/New_York`);
     return 'America/New_York';
   }),
-  therapistEmail: z.string().email().optional().default('seth@renavestapp.com'),
 });
 
 // Helper to fetch user and therapist details
@@ -98,8 +97,7 @@ export async function createBookingSession(rawData: unknown) {
   try {
     const validatedData = BookingSessionSchema.parse(rawData);
     console.log('validatedData', validatedData);
-    const { therapistId, sessionDate, sessionStartTime, userEmail, timezone, therapistEmail } =
-      validatedData;
+    const { therapistId, sessionDate, sessionStartTime, userEmail, timezone } = validatedData;
 
     // Parse the date and time in the specified timezone
     const sessionDateTime = parseDateTime(sessionDate, sessionStartTime, timezone);
@@ -125,7 +123,7 @@ export async function createBookingSession(rawData: unknown) {
       clientName: `${user.firstName} ${user.lastName}`.trim(),
       clientEmail: userEmail,
       therapistName: advisor.name || 'Renavest Therapist',
-      therapistEmail: therapistEmail,
+      therapistEmail: advisor.email || 'seth@renavestapp.com',
       sessionDate: formattedDate,
       sessionTime: formattedTime,
       timezone: timezone,
