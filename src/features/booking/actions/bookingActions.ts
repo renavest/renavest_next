@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 
-import PostHogClient from '@/posthog'; // Ensure this is a server-side PostHog client
+import PostHogClient from '@/posthog';
 import { db } from '@/src/db';
 import { bookingSessions } from '@/src/db/schema';
 
@@ -15,31 +15,35 @@ const BookingSessionSchema = z.object({
   sessionDate: z.string(),
   sessionStartTime: z.string(),
   userEmail: z.string().email(),
-  timezone: z.string().optional().default('EST'),
+  timezone: z.string().optional().default('EST'), // Simplified timezone
   therapistEmail: z.string().email().optional().default('seth@renavestapp.com'),
 });
 
 // Helper function to parse and normalize time
 function normalizeDateTime(sessionTimestamp: string, _timezone: string = 'EST'): Date {
-  // Parse the input timestamp
-  const inputDate = new Date(sessionTimestamp);
+  try {
+    // Parse the input timestamp
+    const inputDate = new Date(sessionTimestamp);
 
-  // Validate the date
-  if (isNaN(inputDate.getTime())) {
-    throw new Error('Invalid date');
+    // Validate the date
+    if (isNaN(inputDate.getTime())) {
+      throw new Error('Invalid date');
+    }
+
+    // Ensure date is not in the past
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (inputDate < today) {
+      throw new Error('Booking date cannot be in the past');
+    }
+
+    return inputDate;
+  } catch (error) {
+    console.error('Error normalizing date:', error);
+    throw new Error(
+      `Failed to normalize date: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    );
   }
-
-  // Create a new date object with the same local time
-  const normalizedDate = new Date(inputDate);
-
-  // Ensure date is not in the past
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  if (normalizedDate < today) {
-    throw new Error('Booking date cannot be in the past');
-  }
-
-  return normalizedDate;
 }
 
 // Helper to validate and parse input data
@@ -118,7 +122,7 @@ export async function createBookingSession(rawData: unknown) {
     const { therapistId, sessionDate, sessionStartTime, userEmail, timezone, therapistEmail } =
       validatedData;
 
-    // Normalize date
+    // Normalize date with timezone
     const normalizedDate = normalizeDateTime(sessionDate, timezone);
 
     // Fetch user and therapist details
@@ -135,24 +139,27 @@ export async function createBookingSession(rawData: unknown) {
       userEmail,
     });
 
+    // Format date and time
+    const formattedDate = normalizedDate.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+    const formattedTime = normalizedDate.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+
     // Send confirmation emails
     const emailResult = await sendBookingConfirmationEmail({
       clientName: `${user.firstName} ${user.lastName}`.trim(),
       clientEmail: userEmail,
       therapistName: advisor.name || 'Renavest Therapist',
       therapistEmail: therapistEmail,
-      sessionDate: normalizedDate.toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      }),
-      sessionTime:
-        normalizedDate.toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true,
-        }) + ` ${timezone}`,
+      sessionDate: formattedDate,
+      sessionTime: `${formattedTime} ${timezone}`,
       timezone,
     });
 
