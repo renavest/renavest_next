@@ -49,31 +49,6 @@ const BookingSessionSchema = z.object({
   therapistEmail: z.string().email().optional().default('seth@renavestapp.com'),
 });
 
-// Helper to validate and parse input data
-// async function validateAndParseInput(rawData: unknown) {
-//   const result = BookingSessionSchema.safeParse(rawData);
-//   if (!result.success) {
-//     const errorMessages = result.error.errors.map((e) => {
-//       switch (e.path[0]) {
-//         case 'timezone':
-//           return 'Invalid timezone selection.';
-//         case 'therapistId':
-//           return 'Invalid therapist selection.';
-//         case 'sessionDate':
-//           return 'Invalid session date.';
-//         case 'sessionStartTime':
-//           return 'Invalid session start time.';
-//         case 'userEmail':
-//           return 'Invalid email address.';
-//         default:
-//           return e.message;
-//       }
-//     });
-//     throw new Error(`Booking validation failed: ${errorMessages.join(', ')}`);
-//   }
-//   return result.data;
-// }
-
 // Helper to fetch user and therapist details
 async function fetchUserAndTherapist(userEmail: string, therapistId: string | number) {
   const parsedTherapistId = typeof therapistId === 'string' ? parseInt(therapistId) : therapistId;
