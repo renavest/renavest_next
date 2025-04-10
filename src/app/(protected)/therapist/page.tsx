@@ -121,14 +121,20 @@ export default function TherapistDashboardPage() {
         <div className='md:col-span-12'>
           {/* Session Preparation */}
           <MetricsSection title='Session Preparation'>
-            <div className='grid md:grid-cols-4 gap-6'>
+            <div className='grid md:grid-cols-3 gap-6'>
               <MetricCard title='Total Clients' value={0} subtitle='All time' />
               <MetricCard title='Active Clients' value={0} subtitle='Currently engaged' />
               <MetricCard title='Completed Sessions' value={0} subtitle='Total sessions' />
-              <AppointmentCard upcomingSessions={[]} />
             </div>
-            <div className='grid md:grid-cols-4 gap-6'>
+            <div className='grid md:grid-cols-3 gap-6 mt-6'>
               <MetricCard title='Resource Library' value='24' subtitle='Custom worksheets' />
+            </div>
+            <div className='mt-6'>
+              <div className='flex items-center gap-4 mb-6'>
+                <h3 className='text-lg font-semibold text-gray-800'>Upcoming Sessions</h3>
+                <div className='h-px flex-grow bg-purple-50' />
+              </div>
+              <AppointmentCard upcomingSessions={[]} />
             </div>
           </MetricsSection>
 
