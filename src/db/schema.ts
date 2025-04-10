@@ -29,6 +29,7 @@ export const therapists = pgTable('therapists', {
   id: serial('id').primaryKey(),
   userId: integer('user_id'), // Remove direct reference for now
   name: varchar('name', { length: 255 }).notNull(),
+  email: varchar('email', { length: 255 }), // New email field
   title: varchar('title', { length: 255 }),
   bookingURL: text('booking_url'),
   expertise: text('expertise'),
