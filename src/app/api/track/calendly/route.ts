@@ -73,6 +73,9 @@ export async function trackSessionSearch(params: {
       where: (users, { eq }) => eq(users.email, params.userEmail),
     });
 
+    // Convert therapistId to integer, defaulting to 0 if invalid
+    const therapistIdInt = parseInt(params.therapistId, 10) || 0;
+
     posthogClient.capture({
       distinctId: user?.clerkId || params.userId,
       event: 'session_search_initiated',
@@ -85,7 +88,7 @@ export async function trackSessionSearch(params: {
               clerk_id: user.clerkId,
             }
           : {},
-        therapist_id: params.therapistId,
+        therapist_id: therapistIdInt, // Use converted integer
         therapist_name: params.therapistName,
         user_id: params.userId,
         user_email: params.userEmail,

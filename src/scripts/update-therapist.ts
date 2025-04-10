@@ -41,6 +41,11 @@ async function updateTherapist(nameOrId: string, updateData: TherapistUpdateFiel
     // Prepare the update object
     const updateObject: TherapistUpdateFields = { ...updateData };
 
+    // Convert hourlyRate to string if present
+    if (updateObject.hourlyRate !== undefined) {
+      updateObject.hourlyRate = Number(updateObject.hourlyRate);
+    }
+
     // Handle image upload if a new profile URL is provided
     // if (updateData.profileUrl) {
     //   const imageKey = await uploadImageToS3(updateData.profileUrl, updateData.name || nameOrId);
@@ -50,12 +55,23 @@ async function updateTherapist(nameOrId: string, updateData: TherapistUpdateFiel
     // }
 
     // Perform the update based on name or ID
-    const updateResult = isNumericId
-      ? await db
-          .update(therapists)
-          .set(updateObject)
-          .where(eq(therapists.id, Number(nameOrId)))
-      : await db.update(therapists).set(updateObject).where(eq(therapists.name, nameOrId));
+    if (isNumericId) {
+      await db
+        .update(therapists)
+        .set({
+          ...updateObject,
+          hourlyRate: updateObject.hourlyRate?.toString(),
+        })
+        .where(eq(therapists.id, Number(nameOrId)));
+    } else {
+      await db
+        .update(therapists)
+        .set({
+          ...updateObject,
+          hourlyRate: updateObject.hourlyRate?.toString(),
+        })
+        .where(eq(therapists.name, nameOrId));
+    }
 
     console.log(`Successfully updated therapist: ${nameOrId}`);
     console.log('Updated fields:', Object.keys(updateData).join(', '));
@@ -65,20 +81,43 @@ async function updateTherapist(nameOrId: string, updateData: TherapistUpdateFiel
   }
 }
 
+/**
+ * Delete a therapist from the database
+ * @param nameOrId - Name or ID of the therapist to delete
+ * @returns Promise resolving when the deletion is complete
+ */
+async function deleteTherapist(nameOrId: string): Promise<void> {
+  try {
+    // Determine if the input is a name or an ID
+    const isNumericId = !isNaN(Number(nameOrId));
+
+    let deletedCount = 0;
+    // Perform the deletion based on name or ID
+    if (isNumericId) {
+      const result = await db.delete(therapists).where(eq(therapists.id, Number(nameOrId)));
+      deletedCount = result.rowCount || 0;
+    } else {
+      const result = await db.delete(therapists).where(eq(therapists.name, nameOrId.trim()));
+      deletedCount = result.rowCount || 0;
+    }
+
+    if (deletedCount > 0) {
+      console.log(`✅ Successfully deleted therapist: ${nameOrId}`);
+      console.log(`🔢 Number of records deleted: ${deletedCount}`);
+    } else {
+      console.warn(`⚠️ No therapist found with name/ID: ${nameOrId}`);
+    }
+  } catch (error) {
+    console.error(`❌ Error deleting therapist ${nameOrId}:`, error);
+    throw error;
+  }
+}
+
 // Example usage function to demonstrate how to use the script
 async function exampleUsage() {
   try {
-    // Update booking URL for a therapist by name
-    await updateTherapist('Haylie Castillo', {
-      profileUrl: 'therapists/haylie-castillo.jpg',
-    });
-
-    // Update multiple fields for a therapist by ID
-    // await updateTherapist('1', {
-    //   title: 'Updated Financial Coach',
-    //   expertise: 'Advanced Debt Management, Strategic Investing',
-    //   profileUrl: '/path/to/new/profile/image.jpg',
-    // });
+    // Delete Monica Bradshaw
+    await deleteTherapist('Monica Bradshaw');
   } catch (error) {
     console.error('Example usage failed:', error);
   }
@@ -118,5 +157,5 @@ export async function updateTherapistHourlyRates() {
 // Uncomment to run directly
 // updateTherapistHourlyRates().catch(console.error);
 
-// Export the function so it can be imported and used in other scripts
-// export { updateTherapist };
+// Export the functions so they can be imported and used in other scripts
+export { updateTherapist, deleteTherapist };

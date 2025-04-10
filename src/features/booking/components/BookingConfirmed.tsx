@@ -1,3 +1,4 @@
+import { DateTime } from 'luxon';
 import { redirect } from 'next/navigation';
 
 import { COLORS } from '@/src/styles/colors';
@@ -17,13 +18,8 @@ export const BookingConfirmationScreen = ({
     redirect('/explore');
   };
 
-  // Format the date for better readability
-  const formattedDate = new Date(date).toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  // Format the date for better readability using Luxon
+  const formattedDate = DateTime.fromISO(date).setZone(timezone).toFormat('cccc, MMMM d, yyyy');
 
   return (
     <div
