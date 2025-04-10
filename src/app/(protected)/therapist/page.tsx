@@ -13,8 +13,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { redirect } from 'next/navigation';
-import { useState } from 'react';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 import { ALLOWED_EMAILS } from '@/src/constants';
 import ClientNotesSection from '@/src/features/therapist-dashboard/components/ClientNotesSection';
@@ -135,59 +134,6 @@ function UpcomingSessionsCard({
   );
 }
 
-function TherapistStatisticsCard() {
-  const totalSessions = UPCOMING_SESSIONS.length;
-  const totalClients = CLIENTS.length;
-  const completedSessions = CLIENTS.reduce(
-    (sum, client) => sum + (client.activeTherapySessions || 0),
-    0,
-  );
-
-  const statisticsItems = [
-    {
-      icon: <Clock className='h-5 w-5 text-purple-600' />,
-      title: 'Total Sessions',
-      value: totalSessions,
-      subtitle: 'Upcoming',
-    },
-    {
-      icon: <Users className='h-5 w-5 text-purple-600' />,
-      title: 'Total Clients',
-      value: totalClients,
-      subtitle: 'Active',
-    },
-    {
-      icon: <CheckCircle2 className='h-5 w-5 text-purple-600' />,
-      title: 'Completed Sessions',
-      value: completedSessions,
-      subtitle: 'All time',
-    },
-    {
-      icon: <BookOpen className='h-5 w-5 text-purple-600' />,
-      title: 'Resource Library',
-      value: 24,
-      subtitle: 'Worksheets',
-    },
-  ];
-
-  return (
-    <div className='bg-white rounded-xl p-6 border border-purple-100 shadow-sm'>
-      <div className='grid md:grid-cols-4 gap-4'>
-        {statisticsItems.map((item, index) => (
-          <div key={index} className='flex items-center gap-4 bg-gray-50 p-4 rounded-lg'>
-            {item.icon}
-            <div>
-              <p className='text-xs text-gray-500'>{item.title}</p>
-              <p className='text-xl font-bold text-gray-800'>{item.value}</p>
-              <p className='text-xs text-gray-500'>{item.subtitle}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function ClientDetailModal({
   client,
   isOpen,
@@ -227,15 +173,8 @@ function ClientDetailModal({
           </div>
           <div>
             <p className='text-xs text-gray-500 mb-1'>Last Session</p>
-            <p className='font-medium text-gray-800'>
-              {client.lastSessionDate?.toLocaleDateString() || 'N/A'}
-            </p>
+            <p className='font-medium text-gray-800'>{new Date().toLocaleDateString()}</p>
           </div>
-        </div>
-
-        {/* Therapist Statistics */}
-        <div className='mb-6'>
-          <TherapistStatisticsCard />
         </div>
 
         {/* Detailed Client Insights */}
@@ -300,6 +239,59 @@ function ClientDetailModal({
   );
 }
 
+function TherapistStatisticsCard() {
+  const totalSessions = UPCOMING_SESSIONS.length;
+  const totalClients = CLIENTS.length;
+  const completedSessions = CLIENTS.reduce(
+    (sum, client) => sum + (client.activeTherapySessions || 0),
+    0,
+  );
+
+  const statisticsItems = [
+    {
+      icon: <Clock className='h-5 w-5 text-purple-600' />,
+      title: 'Total Sessions',
+      value: totalSessions,
+      subtitle: 'Upcoming',
+    },
+    {
+      icon: <Users className='h-5 w-5 text-purple-600' />,
+      title: 'Total Clients',
+      value: totalClients,
+      subtitle: 'Active',
+    },
+    {
+      icon: <CheckCircle2 className='h-5 w-5 text-purple-600' />,
+      title: 'Completed Sessions',
+      value: completedSessions,
+      subtitle: 'All time',
+    },
+    {
+      icon: <BookOpen className='h-5 w-5 text-purple-600' />,
+      title: 'Resource Library',
+      value: 24,
+      subtitle: 'Worksheets',
+    },
+  ];
+
+  return (
+    <div className='bg-white rounded-xl p-6 border border-purple-100 shadow-sm'>
+      <div className='grid md:grid-cols-4 gap-4'>
+        {statisticsItems.map((item, index) => (
+          <div key={index} className='flex items-center gap-4 bg-gray-50 p-4 rounded-lg'>
+            {item.icon}
+            <div>
+              <p className='text-xs text-gray-500'>{item.title}</p>
+              <p className='text-xl font-bold text-gray-800'>{item.value}</p>
+              <p className='text-xs text-gray-500'>{item.subtitle}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function TherapistDashboardPage() {
   const { user, isLoaded } = useUser();
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -327,6 +319,11 @@ export default function TherapistDashboardPage() {
   return (
     <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24'>
       <TherapistNavbar pageTitle={user?.firstName || 'Guest'} />
+
+      {/* Therapist Statistics */}
+      <div className='mb-6'>
+        <TherapistStatisticsCard />
+      </div>
 
       <div className='grid md:grid-cols-12 gap-6'>
         <div className='md:col-span-4'>
