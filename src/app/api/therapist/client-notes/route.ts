@@ -23,7 +23,13 @@ export async function GET(request: Request) {
     // Verify the user's email is in the allowed list
     const userEmail = user.emailAddresses[0]?.emailAddress;
 
-    if (!userEmail || !ALLOWED_EMAILS.includes(userEmail)) {
+    if (!userEmail) {
+      console.error('No email address found for user');
+      return NextResponse.json({ error: 'No email address found' }, { status: 400 });
+    }
+
+    if (!ALLOWED_EMAILS.includes(userEmail)) {
+      console.warn(`Unauthorized access attempt by email: ${userEmail}`);
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
@@ -31,10 +37,11 @@ export async function GET(request: Request) {
     const therapistResult = await db
       .select({ id: therapists.id })
       .from(therapists)
-      .where(eq(therapists.userId, Number(user.id)))
+      .where(eq(therapists.email, userEmail))
       .limit(1);
 
     if (!therapistResult.length) {
+      console.error(`No therapist found for email: ${userEmail}`);
       return NextResponse.json({ error: 'Therapist not found' }, { status: 404 });
     }
 
@@ -75,7 +82,13 @@ export async function POST(request: Request) {
     // Verify the user's email is in the allowed list
     const userEmail = user.emailAddresses[0]?.emailAddress;
 
-    if (!userEmail || !ALLOWED_EMAILS.includes(userEmail)) {
+    if (!userEmail) {
+      console.error('No email address found for user');
+      return NextResponse.json({ error: 'No email address found' }, { status: 400 });
+    }
+
+    if (!ALLOWED_EMAILS.includes(userEmail)) {
+      console.warn(`Unauthorized access attempt by email: ${userEmail}`);
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
@@ -84,6 +97,7 @@ export async function POST(request: Request) {
 
     // Validate required fields
     if (!noteData.userId || !noteData.therapistId || !noteData.title) {
+      console.error('Missing required fields in note creation', { noteData });
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -91,15 +105,19 @@ export async function POST(request: Request) {
     const therapistResult = await db
       .select({ id: therapists.id })
       .from(therapists)
-      .where(eq(therapists.userId, Number(user.id)))
+      .where(eq(therapists.email, userEmail))
       .limit(1);
 
     if (!therapistResult.length) {
+      console.error(`No therapist found for email: ${userEmail}`);
       return NextResponse.json({ error: 'Therapist not found' }, { status: 404 });
     }
 
     // Ensure the therapistId matches the logged-in therapist
     if (therapistResult[0].id !== noteData.therapistId) {
+      console.warn(
+        `Therapist ID mismatch. Expected: ${therapistResult[0].id}, Received: ${noteData.therapistId}`,
+      );
       return NextResponse.json({ error: 'Unauthorized to create note' }, { status: 403 });
     }
 
