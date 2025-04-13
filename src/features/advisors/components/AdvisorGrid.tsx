@@ -94,22 +94,28 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
           {advisor.yoe} years of experience
         </div>
       </div>
+
       <div className='p-2 sm:p-4 flex-1 flex flex-col'>
         <div className='flex items-start justify-between'>
           <div>
-            <h3 className='font-semibold text-gray-900 tracking-wide text-base sm:text-lg'>
-              {advisor.name}
-            </h3>
+            <div className='flex items-center gap-2'>
+              <h3 className='font-semibold text-gray-900 tracking-wide text-base sm:text-lg'>
+                {advisor.name}
+              </h3>
+              {advisor.hourlyRate && (
+                <>
+                  <span className='text-gray-300 text-xs'>•</span>
+                  <span className='text-xs sm:text-sm font-semibold text-purple-600'>
+                    {advisor.hourlyRate}/hr
+                  </span>
+                </>
+              )}
+            </div>
             <p className='text-xs sm:text-sm text-gray-600 mt-0.5 flex items-center tracking-wide'>
               <Award className='w-3 h-3 sm:w-4 sm:h-4 mr-1' />
               {advisor.title}
             </p>
           </div>
-          {advisor.hourlyRate && (
-            <div className='bg-purple-50 text-purple-700 px-2 py-1 rounded-full text-xs font-medium'>
-              {advisor.hourlyRate}/hr
-            </div>
-          )}
         </div>
         <div className='mt-2 flex flex-wrap gap-1 sm:gap-1.5 max-h-12 sm:max-h-16 overflow-hidden'>
           {displayTags.map((exp, index) => (
