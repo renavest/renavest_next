@@ -2,13 +2,15 @@
 
 import { useUser } from '@clerk/nextjs';
 import { FileText, PlusCircle } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { ClientDetailModal } from '@/src/features/therapist-dashboard/components/ClientDetailModal';
+import { ClientNotesModal } from '@/src/features/therapist-dashboard/components/ClientNotesModal';
 import TherapistNavbar from '@/src/features/therapist-dashboard/components/TherapistNavbar';
 import { UpcomingSessionsCard } from '@/src/features/therapist-dashboard/components/UpcomingSessionsCard';
 import { useTherapistDashboardData } from '@/src/features/therapist-dashboard/hooks/useTherapistDashboardData';
-import { Client } from '@/src/features/therapist-dashboard/types';
+import { Client, TherapistStatistics } from '@/src/features/therapist-dashboard/types';
+import MetricCard from '@/src/shared/components/MetricCard';
 import { COLORS } from '@/src/styles/colors';
 
 type QuickActionButtonProps = {
@@ -145,11 +147,68 @@ const RecentNotesSection = () => (
   </div>
 );
 
+function MetricsSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className='space-y-8'>
+      <div className='flex items-center gap-4'>
+        <h2 className='text-xl md:text-2xl font-semibold text-gray-700'>{title}</h2>
+        <div className='h-px flex-grow bg-purple-50' />
+      </div>
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>{children}</div>
+    </section>
+  );
+}
+
+// Extracted loading state component
+const LoadingState = () => (
+  <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen flex items-center justify-center'>
+    <div className='text-center'>
+      <div className='animate-spin rounded-full h-16 w-16 border-t-2 border-purple-600 mx-auto mb-4'></div>
+      <p className={`${COLORS.WARM_PURPLE.DEFAULT} text-lg`}>Loading Dashboard...</p>
+    </div>
+  </div>
+);
+
+// Extracted metrics section component
+const PerformanceMetrics = ({ statistics }: { statistics: TherapistStatistics }) => (
+  <MetricsSection title='Your Performance'>
+    <MetricCard title='Total Clients' value={statistics.totalClients} subtitle='In your network' />
+    <MetricCard title='Total Sessions' value={statistics.totalSessions} subtitle='All time' />
+    <MetricCard
+      title='Completed Sessions'
+      value={statistics.completedSessions}
+      subtitle='Successfully concluded'
+    />
+  </MetricsSection>
+);
+
 export default function TherapistDashboardPage() {
   const { user } = useUser();
-  const { clients, upcomingSessions, isLoading } = useTherapistDashboardData();
+  const { clients, upcomingSessions, statistics, isLoading, error } = useTherapistDashboardData();
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isClientDetailModalOpen, setIsClientDetailModalOpen] = useState(false);
+  const [isNewNoteModalOpen, setIsNewNoteModalOpen] = useState(false);
+  const [therapistId, setTherapistId] = useState<number | null>(null);
+
+  // Fetch therapist ID when user is loaded
+  useEffect(() => {
+    const fetchTherapistId = async () => {
+      if (user) {
+        try {
+          const response = await fetch('/api/therapist/id');
+          const data = await response.json();
+
+          if (data.therapistId) {
+            setTherapistId(data.therapistId);
+          }
+        } catch (error) {
+          console.error('Failed to fetch therapist ID:', error);
+        }
+      }
+    };
+
+    fetchTherapistId();
+  }, [user]);
 
   const handleSessionClick = (clientId: string) => {
     const client = clients.find((c) => c.id === clientId);
@@ -165,24 +224,16 @@ export default function TherapistDashboardPage() {
   };
 
   const handleNewNote = () => {
-    // TODO: Implement new note creation logic
-    console.log('Create new note');
+    setIsNewNoteModalOpen(true);
   };
 
   // If still loading, show a loading state
   if (isLoading) {
-    return (
-      <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen flex items-center justify-center'>
-        <div className='text-center'>
-          <div className='animate-spin rounded-full h-16 w-16 border-t-2 border-purple-600 mx-auto mb-4'></div>
-          <p className={`${COLORS.WARM_PURPLE.DEFAULT} text-lg`}>Loading Dashboard...</p>
-        </div>
-      </div>
-    );
+    return <LoadingState />;
   }
 
   // If no clients (likely not a therapist), show the not a therapist section
-  if (clients.length === 0) {
+  if (!isLoading && (clients.length === 0 || error)) {
     return (
       <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen flex items-center justify-center'>
         <NotTherapistSection />
@@ -194,17 +245,22 @@ export default function TherapistDashboardPage() {
     <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen'>
       <TherapistNavbar pageTitle={user?.firstName || 'Guest'} />
 
-      <div className='grid md:grid-cols-12 gap-6'>
-        {/* Left Sidebar: Quick Actions & Upcoming Sessions */}
-        <div className='md:col-span-4 space-y-6'>
-          <QuickActionsSection onNewNote={handleNewNote} />
-          <UpcomingSessionsCard sessions={upcomingSessions} onSessionClick={handleSessionClick} />
-        </div>
+      <div className='space-y-6'>
+        {/* Metrics Section */}
+        <PerformanceMetrics statistics={statistics} />
 
-        {/* Right Main Content: Clients & Overview */}
-        <div className='md:col-span-8 space-y-6'>
-          <ClientsOverviewSection clients={clients} onClientClick={handleClientClick} />
-          <RecentNotesSection />
+        <div className='grid md:grid-cols-12 gap-6'>
+          {/* Left Sidebar: Quick Actions & Upcoming Sessions */}
+          <div className='md:col-span-4 space-y-6'>
+            <QuickActionsSection onNewNote={handleNewNote} />
+            <UpcomingSessionsCard sessions={upcomingSessions} onSessionClick={handleSessionClick} />
+          </div>
+
+          {/* Right Main Content: Clients & Overview */}
+          <div className='md:col-span-8 space-y-6'>
+            <ClientsOverviewSection clients={clients} onClientClick={handleClientClick} />
+            <RecentNotesSection />
+          </div>
         </div>
       </div>
 
@@ -213,6 +269,16 @@ export default function TherapistDashboardPage() {
         isOpen={isClientDetailModalOpen}
         onClose={() => setIsClientDetailModalOpen(false)}
       />
+
+      {/* New Note Modal */}
+      {isNewNoteModalOpen && therapistId && (
+        <ClientNotesModal
+          isOpen={isNewNoteModalOpen}
+          onClose={() => setIsNewNoteModalOpen(false)}
+          userId={selectedClient?.id || ''}
+          therapistId={therapistId}
+        />
+      )}
     </div>
   );
 }
