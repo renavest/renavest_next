@@ -32,8 +32,8 @@ const FeatureCard = ({
     <div className='relative z-10 flex items-center space-x-5'>
       <div
         className={`
-        ${COLORS.WARM_PURPLE.bg}
-        text-white 
+        ${COLORS.WARM_PURPLE['5']}
+        ${COLORS.WARM_PURPLE.DEFAULT}
         p-4 
         rounded-2xl 
         shadow-sm
@@ -84,12 +84,12 @@ const LoginLeftSection = () => (
     overflow-hidden
   `}
   >
-    {/* Soft Background Pattern */}
-    <div className='absolute inset-0 opacity-5 pointer-events-none'>
+    {/* Soft Warm Background Pattern */}
+    <div className='absolute inset-0 opacity-10 pointer-events-none'>
       <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 600' className='w-full h-full'>
         <defs>
           <pattern id='financial-pattern' patternUnits='userSpaceOnUse' width='100' height='100'>
-            <path d='M0 0 L50 50 L100 0 L50 100 Z' fill='#9071FF' fillOpacity='0.03' />
+            <path d='M0 0 L50 50 L100 0 L50 100 Z' fill='#9071FF' fillOpacity='0.05' />
           </pattern>
         </defs>
         <rect width='100%' height='100%' fill='url(#financial-pattern)' />
@@ -110,7 +110,10 @@ const LoginLeftSection = () => (
         >
           Renavest
         </h1>
-        <p className='text-xl text-gray-600'>Transforming Financial Wellness, Emotionally</p>
+        <p className='text-xl text-gray-600'>Financial Wellness Beyond Numbers</p>
+        <p className='text-lg text-gray-500 mt-2'>
+          Where emotional intelligence meets financial empowerment
+        </p>
       </div>
 
       {/* Feature Cards */}
@@ -131,8 +134,8 @@ const LoginLeftSection = () => (
               <path d='M12 12v5' />
             </svg>
           }
-          title='Holistic Financial Therapy'
-          description='Compassionate support tailored to your journey'
+          title='Emotional Insights into Financial Behaviors'
+          description='Understand the heart behind your financial choices'
         />
 
         <FeatureCard
@@ -151,8 +154,8 @@ const LoginLeftSection = () => (
               <line x1='12' y1='8' x2='12.01' y2='8' />
             </svg>
           }
-          title='Personalized Insights'
-          description='Unlock your unique financial potential'
+          title='Personalized Financial Therapy'
+          description='Tailored guidance that speaks to your unique story'
         />
 
         <FeatureCard
@@ -172,8 +175,8 @@ const LoginLeftSection = () => (
               <path d='M16 3.13a4 4 0 0 1 0 7.75' />
             </svg>
           }
-          title='Workplace Wellness'
-          description='Empowering teams through emotional financial health'
+          title='Holistic Approach to Financial Well-being'
+          description='Nurturing your financial and emotional health together'
         />
       </div>
 
@@ -187,7 +190,7 @@ const LoginLeftSection = () => (
           italic
         `}
         >
-          "Your finances are a reflection of your emotional well-being"
+          Transform your relationship with money
         </p>
       </div>
     </div>
