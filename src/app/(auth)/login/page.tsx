@@ -4,7 +4,6 @@ import { CheckCircle2 } from 'lucide-react';
 import React from 'react';
 
 import LoginForm from '@/src/features/auth/components/LoginForm';
-import { COLORS } from '@/src/styles/colors';
 
 const LoginFeature = ({ icon: Icon, text }: { icon: React.ElementType; text: string }) => (
   <div className='flex items-center space-x-3'>
@@ -52,7 +51,7 @@ const LoginLeftSection = () => (
   <div
     className={`
       hidden lg:flex lg:w-1/2 
-      ${COLORS.WARM_WHITE.bg} 
+      bg-gradient-to-br from-[#9071FF] via-[#6A4FD1] to-[#4F3AD1]
       p-16 
       flex-col 
       justify-center 
@@ -60,41 +59,57 @@ const LoginLeftSection = () => (
       space-y-12
       relative
       overflow-hidden
+      text-white
     `}
   >
     <GrowthVisualization />
 
     <div className='text-center relative z-10'>
       <div className='relative'>
-        <div
-          className='absolute -top-4 -right-12 text-6xl opacity-10'
-          style={{ fontFamily: 'Arial, sans-serif' }}
-        >
-          💡
+        <div className='flex items-center justify-center mb-6'>
+          <svg
+            width='120'
+            height='40'
+            viewBox='0 0 120 40'
+            fill='none'
+            xmlns='http://www.w3.org/2000/svg'
+          >
+            <text
+              x='50%'
+              y='50%'
+              textAnchor='middle'
+              fontFamily='Arial, sans-serif'
+              fontSize='24'
+              fontWeight='bold'
+              fill='white'
+            >
+              Renavest
+            </text>
+          </svg>
         </div>
-        <h2 className='text-4xl font-bold text-gray-900 mb-6'>Financial Wellness Beyond Numbers</h2>
-        <p className='text-xl text-gray-600 mb-10'>
-          Where emotional intelligence meets financial empowerment
+        <h2 className='text-4xl font-bold mb-6'>Financial Wellness, Reimagined</h2>
+        <p className='text-xl opacity-80 mb-10'>
+          Transforming Financial Stress into Emotional Empowerment
         </p>
       </div>
     </div>
 
     <div className='space-y-6 max-w-md relative z-10'>
-      <LoginFeature icon={CheckCircle2} text='Emotional Insights into Financial Behaviors' />
-      <LoginFeature icon={CheckCircle2} text='Personalized Financial Therapy' />
-      <LoginFeature icon={CheckCircle2} text='Holistic Approach to Financial Well-being' />
+      <LoginFeature icon={CheckCircle2} text='Holistic Financial Therapy' />
+      <LoginFeature icon={CheckCircle2} text='Personalized Emotional Financial Insights' />
+      <LoginFeature icon={CheckCircle2} text='Workplace Financial Well-being' />
     </div>
 
     <div className='mt-12 relative z-10'>
-      <div className='flex items-center space-x-3 bg-white/50 p-4 rounded-xl shadow-sm'>
-        <div className='w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center'>
+      <div className='flex items-center space-x-3 bg-white/20 p-4 rounded-xl backdrop-blur-sm'>
+        <div className='w-10 h-10 bg-white/30 rounded-full flex items-center justify-center'>
           <svg
             xmlns='http://www.w3.org/2000/svg'
             width='24'
             height='24'
             viewBox='0 0 24 24'
             fill='none'
-            stroke='#9071FF'
+            stroke='white'
             strokeWidth='2'
           >
             <path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' />
@@ -102,7 +117,7 @@ const LoginLeftSection = () => (
             <path d='M12 12v5' />
           </svg>
         </div>
-        <span className='text-sm text-gray-600'>Transform your relationship with money</span>
+        <span className='text-sm text-white/90'>Empowering Your Financial Journey</span>
       </div>
     </div>
   </div>
