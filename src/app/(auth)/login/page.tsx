@@ -9,14 +9,10 @@ const FeatureCard = ({
   icon,
   title,
   description,
-  bgColor,
-  textColor,
 }: {
   icon: React.ReactNode;
   title: string;
   description: string;
-  bgColor: string;
-  textColor?: string;
 }) => (
   <div
     className={`
@@ -36,20 +32,32 @@ const FeatureCard = ({
     <div className='relative z-10 flex items-center space-x-5'>
       <div
         className={`
-        ${bgColor} 
-        ${textColor || 'text-white'}
+        ${COLORS.WARM_PURPLE.bg}
+        text-white 
         p-4 
         rounded-2xl 
         shadow-sm
         transform 
         group-hover:scale-105 
         transition-transform
+        flex 
+        items-center 
+        justify-center
       `}
       >
         {icon}
       </div>
       <div>
-        <h3 className='text-lg font-semibold text-gray-800 mb-1 group-hover:text-[#6A4FD1] transition-colors'>
+        <h3
+          className={`
+          text-lg 
+          font-semibold 
+          text-gray-800 
+          mb-1 
+          group-hover:${COLORS.WARM_PURPLE.hoverText} 
+          transition-colors
+        `}
+        >
           {title}
         </h3>
         <p className='text-sm text-gray-600 group-hover:text-gray-800 transition-colors'>
@@ -102,7 +110,7 @@ const LoginLeftSection = () => (
         >
           Renavest
         </h1>
-        <p className='text-xl text-gray-600'>Nurturing Financial Wellness, One Emotion at a Time</p>
+        <p className='text-xl text-gray-600'>Transforming Financial Wellness, Emotionally</p>
       </div>
 
       {/* Feature Cards */}
@@ -124,9 +132,7 @@ const LoginLeftSection = () => (
             </svg>
           }
           title='Holistic Financial Therapy'
-          description='Compassionate support for your financial journey'
-          bgColor='bg-[#E6E6FA]'
-          textColor='text-[#6A5ACD]'
+          description='Compassionate support tailored to your journey'
         />
 
         <FeatureCard
@@ -146,9 +152,7 @@ const LoginLeftSection = () => (
             </svg>
           }
           title='Personalized Insights'
-          description='Understanding your unique financial story'
-          bgColor='bg-[#E0FFFF]'
-          textColor='text-[#4682B4]'
+          description='Unlock your unique financial potential'
         />
 
         <FeatureCard
@@ -170,8 +174,6 @@ const LoginLeftSection = () => (
           }
           title='Workplace Wellness'
           description='Empowering teams through emotional financial health'
-          bgColor='bg-[#FFF0F5]'
-          textColor='text-[#DB7093]'
         />
       </div>
 
@@ -185,7 +187,7 @@ const LoginLeftSection = () => (
           italic
         `}
         >
-          "Your finances are more than numbers – they're a reflection of your life's journey"
+          "Your finances are a reflection of your emotional well-being"
         </p>
       </div>
     </div>
