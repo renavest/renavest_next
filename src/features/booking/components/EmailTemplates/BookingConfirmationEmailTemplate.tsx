@@ -46,15 +46,15 @@ export const BookingConfirmationEmailTemplate: React.FC<
             className={`${COLORS.WARM_PURPLE.bg} text-white p-4 rounded-lg mb-6 text-center`}
           >
             <Heading as='h1' className='text-2xl font-semibold m-0'>
-              New Therapy Session Booked
+              New Session Booked
             </Heading>
           </Section>
 
           <Text className='text-gray-700 mb-4'>Hi {clientName}! 👋</Text>
 
           <Text className='text-gray-600 mb-4'>
-            Great news! Your therapy session is all set and ready to go. Here are the details to
-            help you prepare:
+            Great news! Your session is all set and ready to go. Here are the details to help you
+            prepare:
           </Text>
 
           <Section

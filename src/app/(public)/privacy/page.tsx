@@ -100,8 +100,8 @@ const ContactSection = () => (
     <p className='text-sm text-gray-500 italic'>Last Updated: {new Date().toLocaleDateString()}</p>
     <p className='mt-4 text-sm text-gray-600'>
       For any security inquiries, please contact:
-      <a href='mailto:security@renavest.com' className='ml-2 text-purple-600 hover:underline'>
-        security@renavest.com
+      <a href='mailto:hello@renavestapp.com' className='ml-2 text-purple-600 hover:underline'>
+        hello@renavestapp.com
       </a>
     </p>
   </section>

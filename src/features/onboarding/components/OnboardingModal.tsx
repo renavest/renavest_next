@@ -15,8 +15,8 @@ export default function OnboardingModal() {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string[]>>(
     () => onboardingSignal.value.answers,
   );
-  if (typeof window !== 'undefined') {
-    posthog.identify(clerkUser?.id, {
+  if (typeof window !== 'undefined' && clerkUser?.id) {
+    posthog.identify(clerkUser.id, {
       $set_once: {
         email: clerkUser?.emailAddresses[0]?.emailAddress,
       },

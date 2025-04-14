@@ -137,7 +137,7 @@ export default function TherapistDashboardHeader({
 
           {/* Dynamic Page Title */}
           <h1 className='ml-3 md:ml-4 text-xl md:text-2xl font-semibold text-gray-800 transition-all duration-300'>
-            {pageTitle}
+            Welcome, {pageTitle}
           </h1>
         </div>
 

@@ -199,6 +199,30 @@ export default function ClientNotesSection({ clientId }: { clientId: string }) {
             userId={clientId}
             therapistId={therapistId}
             onNoteCreated={handleNoteCreated}
+            onNotesRefresh={() => {
+              // Refetch notes after creating a new note
+              const fetchNotes = async () => {
+                try {
+                  setIsLoading(true);
+                  setError(null);
+                  const response = await fetch(`/api/therapist/client-notes?clientId=${clientId}`);
+                  if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to fetch client notes');
+                  }
+                  const data = await response.json();
+                  setNotes(data.notes || []);
+                } catch (error) {
+                  console.error('Error fetching client notes:', error);
+                  setError(error instanceof Error ? error.message : 'An unknown error occurred');
+                  setNotes([]);
+                } finally {
+                  setIsLoading(false);
+                }
+              };
+
+              fetchNotes();
+            }}
           />
         </div>
       )}

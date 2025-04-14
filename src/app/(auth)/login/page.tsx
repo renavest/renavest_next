@@ -1,208 +1,166 @@
 'use client';
 
+import { Heart, BarChart, Lightbulb } from 'lucide-react';
+import Image from 'next/image';
 import React from 'react';
 
 import LoginForm from '@/src/features/auth/components/LoginForm';
 import { COLORS } from '@/src/styles/colors';
 
-const FeatureCard = ({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}) => (
-  <div
-    className={`
-    ${COLORS.WARM_WHITE.bg} 
-    p-6 
-    rounded-3xl 
-    border 
-    border-gray-100 
-    shadow-soft 
-    hover:shadow-md 
-    transition-all 
-    group 
-    overflow-hidden 
-    relative
-  `}
-  >
-    <div className='relative z-10 flex items-center space-x-5'>
-      <div
-        className={`
-        ${COLORS.WARM_PURPLE['5']}
-        ${COLORS.WARM_PURPLE.DEFAULT}
-        p-4 
-        rounded-2xl 
-        shadow-sm
-        transform 
-        group-hover:scale-105 
-        transition-transform
-        flex 
-        items-center 
-        justify-center
-      `}
-      >
-        {icon}
-      </div>
-      <div>
-        <h3
+const FeatureSection = () => {
+  const features = [
+    {
+      icon: Heart,
+      title: 'Emotional Financial Intelligence',
+      description:
+        'Understand the psychological patterns behind your financial decisions and break harmful money cycles.',
+    },
+    {
+      icon: BarChart,
+      title: 'Personalized Financial Guidance',
+      description:
+        'Get tailored insights that align your financial strategies with your emotional well-being and personal goals.',
+    },
+    {
+      icon: Lightbulb,
+      title: 'Holistic Wellness Approach',
+      description:
+        'Transform your relationship with money through integrated therapy, education, and actionable strategies.',
+    },
+  ];
+
+  return (
+    <div className='space-y-4'>
+      {features.map((feature, index) => (
+        <div
+          key={index}
           className={`
-          text-lg 
-          font-semibold 
-          text-gray-800 
-          mb-1 
-          group-hover:${COLORS.WARM_PURPLE.hoverText} 
-          transition-colors
-        `}
+            flex items-start space-x-4 
+            p-4 rounded-xl 
+            bg-white/80 backdrop-blur-sm 
+            border border-purple-100
+            hover:shadow-md hover:-translate-y-0.5 
+            transition-all duration-300 ease-out
+            animate-fade-in opacity-0 
+            [animation-delay:${400 + index * 100}ms]
+          `}
         >
-          {title}
-        </h3>
-        <p className='text-sm text-gray-600 group-hover:text-gray-800 transition-colors'>
-          {description}
-        </p>
+          <feature.icon
+            className={`
+              w-8 h-8 mt-1 
+              ${COLORS.WARM_PURPLE.DEFAULT} 
+              opacity-80
+            `}
+          />
+          <div>
+            <h3 className='text-lg font-semibold text-gray-900 mb-1'>{feature.title}</h3>
+            <p className='text-sm text-gray-600'>{feature.description}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const LoginLeftSection = () => {
+  return (
+    <div
+      className={`
+      hidden 
+      lg:flex 
+      lg:w-7/12 
+      ${COLORS.WARM_WHITE.bg} 
+      p-16 
+      flex-col 
+      justify-between 
+      relative 
+      overflow-hidden
+    `}
+    >
+      {/* Enhanced gradient background with animation */}
+      <div className='absolute inset-0'>
+        <div className='absolute inset-0 bg-gradient-to-br from-purple-50 via-white to-purple-50/30' />
+        <div className='absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(144,113,255,0.1),transparent_50%)] animate-pulse-slow' />
+        <div className='absolute inset-0 bg-[radial-gradient(circle_at_70%_60%,rgba(255,229,229,0.15),transparent_50%)] animate-pulse-slower' />
+      </div>
+
+      {/* Logo and main content */}
+      <div className='relative z-10 animate-fade-in [animation-delay:200ms] opacity-0'>
+        <div className='flex items-center space-x-3 mb-8 hover:translate-x-0.5 transition-transform duration-300'>
+          <Image
+            src='/renavestlogo.png'
+            alt='Renavest'
+            width={40}
+            height={40}
+            className='w-10 h-10'
+          />
+          <h1 className={`text-2xl font-bold ${COLORS.WARM_PURPLE.DEFAULT}`}>Renavest</h1>
+        </div>
+
+        <div className='max-w-xl mb-8'>
+          <h2 className='text-4xl font-bold text-gray-900 mb-4 animate-fade-in [animation-delay:400ms] opacity-0'>
+            Where emotional intelligence meets financial empowerment
+          </h2>
+          <p className='text-xl text-gray-600 leading-relaxed mb-6 animate-fade-in [animation-delay:500ms] opacity-0'>
+            A compassionate approach to understanding your relationship with money
+          </p>
+        </div>
+      </div>
+
+      {/* Features */}
+      <div className='relative z-10'>
+        <FeatureSection />
       </div>
     </div>
-  </div>
-);
-
-const LoginLeftSection = () => (
-  <div
-    className={`
-    hidden 
-    lg:flex 
-    lg:w-1/2 
-    ${COLORS.WARM_WHITE.bg} 
-    p-16 
-    flex-col 
-    justify-center 
-    items-center 
-    space-y-12 
-    relative 
-    overflow-hidden
-  `}
-  >
-    {/* Soft Warm Background Pattern */}
-    <div className='absolute inset-0 opacity-10 pointer-events-none'>
-      <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 600' className='w-full h-full'>
-        <defs>
-          <pattern id='financial-pattern' patternUnits='userSpaceOnUse' width='100' height='100'>
-            <path d='M0 0 L50 50 L100 0 L50 100 Z' fill='#9071FF' fillOpacity='0.05' />
-          </pattern>
-        </defs>
-        <rect width='100%' height='100%' fill='url(#financial-pattern)' />
-      </svg>
-    </div>
-
-    <div className='max-w-md z-10 text-center'>
-      {/* Renavest Logo/Title */}
-      <div className='mb-12'>
-        <h1
-          className={`
-          text-5xl 
-          font-bold 
-          ${COLORS.WARM_PURPLE.DEFAULT} 
-          mb-4 
-          tracking-tight
-        `}
-        >
-          Renavest
-        </h1>
-        <p className='text-xl text-gray-600'>Financial Wellness Beyond Numbers</p>
-        <p className='text-lg text-gray-500 mt-2'>
-          Where emotional intelligence meets financial empowerment
-        </p>
-      </div>
-
-      {/* Feature Cards */}
-      <div className='space-y-6 mb-10'>
-        <FeatureCard
-          icon={
-            <svg
-              xmlns='http://www.w3.org/2000/svg'
-              width='28'
-              height='28'
-              viewBox='0 0 24 24'
-              fill='none'
-              stroke='currentColor'
-              strokeWidth='2'
-            >
-              <path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' />
-              <path d='M12 12l3-3' />
-              <path d='M12 12v5' />
-            </svg>
-          }
-          title='Emotional Insights into Financial Behaviors'
-          description='Understand the heart behind your financial choices'
-        />
-
-        <FeatureCard
-          icon={
-            <svg
-              xmlns='http://www.w3.org/2000/svg'
-              width='28'
-              height='28'
-              viewBox='0 0 24 24'
-              fill='none'
-              stroke='currentColor'
-              strokeWidth='2'
-            >
-              <circle cx='12' cy='12' r='10' />
-              <line x1='12' y1='16' x2='12' y2='12' />
-              <line x1='12' y1='8' x2='12.01' y2='8' />
-            </svg>
-          }
-          title='Personalized Financial Therapy'
-          description='Tailored guidance that speaks to your unique story'
-        />
-
-        <FeatureCard
-          icon={
-            <svg
-              xmlns='http://www.w3.org/2000/svg'
-              width='28'
-              height='28'
-              viewBox='0 0 24 24'
-              fill='none'
-              stroke='currentColor'
-              strokeWidth='2'
-            >
-              <path d='M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2' />
-              <circle cx='9' cy='7' r='4' />
-              <path d='M22 21v-2a4 4 0 0 0-3-3.87' />
-              <path d='M16 3.13a4 4 0 0 1 0 7.75' />
-            </svg>
-          }
-          title='Holistic Approach to Financial Well-being'
-          description='Nurturing your financial and emotional health together'
-        />
-      </div>
-
-      {/* Inspirational Quote */}
-      <div className='text-center'>
-        <p
-          className={`
-          text-sm 
-          ${COLORS.WARM_PURPLE.DEFAULT} 
-          opacity-70 
-          italic
-        `}
-        >
-          Transform your relationship with money
-        </p>
-      </div>
-    </div>
-  </div>
-);
+  );
+};
 
 export default function LoginPage() {
   return (
     <div className='min-h-screen flex'>
+      <style jsx global>{`
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes pulse-slow {
+          0%,
+          100% {
+            opacity: 0.1;
+          }
+          50% {
+            opacity: 0.15;
+          }
+        }
+        @keyframes pulse-slower {
+          0%,
+          100% {
+            opacity: 0.15;
+          }
+          50% {
+            opacity: 0.2;
+          }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.6s ease-out forwards;
+        }
+        .animate-pulse-slow {
+          animation: pulse-slow 4s ease-in-out infinite;
+        }
+        .animate-pulse-slower {
+          animation: pulse-slower 6s ease-in-out infinite;
+        }
+      `}</style>
       <LoginLeftSection />
-      <div className='w-full lg:w-1/2 flex items-center justify-center px-6 py-12'>
-        <div className='w-full max-w-md'>
+      <div className='w-full lg:w-5/12 flex items-center justify-center px-6 py-12 relative animate-fade-in [animation-delay:300ms] opacity-0'>
+        <div className='absolute inset-0 bg-gradient-to-b from-purple-50/50 to-transparent lg:hidden' />
+        <div className='w-full max-w-md relative z-10'>
           <LoginForm />
         </div>
       </div>

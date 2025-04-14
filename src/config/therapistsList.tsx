@@ -403,6 +403,7 @@ const TherapistList: Therapist[] = [
     certifications: 'M.S. in Couples and Family Therapy, Certified Financial Therapist',
     song: '"Sweet Emotion" by Aerosmith',
     yoe: '8',
+    hourlyRate: 95,
     clientele:
       'I work with all ages, income levels, and am LGBTQ+ affirming. My specialty is with couples, but work with individuals and families often. I believe in making services as affordable as possible which is why I offer a sliding fee option.',
     longBio:

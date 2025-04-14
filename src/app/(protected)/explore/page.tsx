@@ -1,7 +1,9 @@
+import { sql } from 'drizzle-orm';
+
 import { db } from '@/src/db';
 import { therapists } from '@/src/db/schema';
+import { Advisor } from '@/src/features/advisors/components/AdvisorGrid';
 import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
-import { Advisor } from '@/src/shared/types';
 import { COLORS } from '@/src/styles/colors';
 
 import AdvisorGrid from '../../../features/advisors/components/AdvisorGrid';
@@ -11,33 +13,46 @@ import ExploreNavbar from '../../../features/home/components/ExploreNavbar';
 // Make this a server component since we're doing DB fetching
 export default async function Home() {
   try {
-    // Fetch therapists from the database
-    const dbTherapists = await db.select().from(therapists);
+    // Fetch all therapists except Seth Morton from the database
+    const dbTherapists = await db
+      .select()
+      .from(therapists)
+      .where(sql`name != 'Seth Morton'`);
 
     // Transform the database records into the Advisor type
-    const advisors: Advisor[] = dbTherapists.map((therapist) => {
-      // Fallback to a default image if no profile URL is provided
-      const profileUrl = therapist.profileUrl
-        ? getTherapistImageUrl(therapist.profileUrl)
-        : '/experts/placeholderexp.png';
-      return {
-        id: therapist.id.toString(),
-        name: therapist.name,
-        title: therapist.title || 'Financial Therapist',
-        bookingURL: therapist.bookingURL || '',
-        expertise: therapist.expertise || '',
-        certifications: therapist.certifications || '',
-        song: therapist.song || '',
-        yoe: therapist.yoe?.toString() || 'N/A',
-        clientele: therapist.clientele || '',
-        longBio: therapist.longBio || '',
-        previewBlurb: therapist.previewBlurb || 'Experienced financial therapist',
-        profileUrl: profileUrl,
-        hourlyRate: therapist.hourlyRate
-          ? `$${Math.round(Number(therapist.hourlyRate))}`
-          : undefined,
-      };
-    });
+    const advisors: Advisor[] = dbTherapists
+      .map((therapist) => {
+        // Fallback to a default image if no profile URL is provided
+        const profileUrl = therapist.profileUrl
+          ? getTherapistImageUrl(therapist.profileUrl)
+          : '/experts/placeholderexp.png';
+        return {
+          id: therapist.id.toString(),
+          name: therapist.name,
+          title: therapist.title || 'Financial Therapist',
+          bookingURL: therapist.bookingURL || '',
+          expertise: therapist.expertise || '',
+          certifications: therapist.certifications || '',
+          song: therapist.song || '',
+          yoe: therapist.yoe?.toString() || 'N/A',
+          clientele: therapist.clientele || '',
+          longBio: therapist.longBio || '',
+          previewBlurb: therapist.previewBlurb || 'Experienced financial therapist',
+          profileUrl: profileUrl,
+          hourlyRate: therapist.hourlyRate
+            ? `$${Math.round(Number(therapist.hourlyRate))}`
+            : undefined,
+          hasProfileImage: !!therapist.profileUrl,
+        };
+      })
+      // Sort so that therapists with profile images come first
+      .sort((a, b) => {
+        // If both have or don't have profile images, maintain original order
+        if (a.hasProfileImage === b.hasProfileImage) return 0;
+
+        // Therapists with profile images go first
+        return a.hasProfileImage ? -1 : 1;
+      });
 
     return (
       <div
@@ -67,18 +82,8 @@ export default async function Home() {
   } catch (error) {
     console.error('Error fetching therapists:', error);
     return (
-      <div
-        className={`min-h-screen ${COLORS.WARM_WHITE.bg} font-[family-name:var(--font-geist-sans)]`}
-      >
-        <ExploreNavbar />
-        <section className='pt-20 pb-6 px-4 sm:px-6'>
-          <h2 className='text-2xl sm:text-3xl font-bold text-center text-gray-900'>
-            Financial Therapists
-          </h2>
-          <p className='mt-2 text-center text-sm sm:text-base text-gray-600 max-w-2xl mx-auto'>
-            Unable to load therapists at this time. Please try again later.
-          </p>
-        </section>
+      <div className='text-center text-red-500'>
+        An error occurred while fetching therapists. Please try again later.
       </div>
     );
   }
