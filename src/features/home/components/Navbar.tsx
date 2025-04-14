@@ -1,6 +1,6 @@
 'use client';
 
-import { UserButton } from '@clerk/nextjs';
+import { UserButton, useUser } from '@clerk/nextjs';
 import { Menu, Users, X, Shield, DollarSign, ChevronLeft } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -31,16 +31,22 @@ const NavigationItem = ({
     href={href}
     className={cn(
       'flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors',
+      'group hover:text-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500',
       isMobile && 'w-full py-3 hover:bg-gray-50',
     )}
   >
-    <Icon className={isMobile ? 'h-5 w-5' : 'h-4 w-4'} />
+    <Icon
+      className={cn(
+        isMobile ? 'h-5 w-5' : 'h-4 w-4',
+        'text-gray-500 group-hover:text-primary-600 transition-colors',
+      )}
+    />
     <span className={isMobile ? 'text-base' : 'text-sm font-medium'}>{label}</span>
   </Link>
 );
 
 // Mobile Navigation Component
-const MobileNavigation = () => (
+const MobileNavigation = ({ isSignedIn }: { isSignedIn: boolean }) => (
   <div
     className={`
       md:hidden fixed inset-x-0 top-[57px] bg-white border-t border-gray-100
@@ -52,32 +58,42 @@ const MobileNavigation = () => (
       <NavigationItem href='/explore' icon={Users} label='Find Therapists' isMobile />
       <NavigationItem href='/pricing' icon={DollarSign} label='Pricing' isMobile />
       <NavigationItem href='/privacy' icon={Shield} label='Privacy & Security' isMobile />
-      <div className='px-4 py-3 border-t border-gray-100 mt-3'>
-        <LogoutButton
-          className='w-full flex items-center justify-center space-x-2 text-red-600 hover:bg-red-50 p-2 rounded-md'
-          iconClassName='h-5 w-5'
-          textClassName='font-medium'
-        />
-      </div>
-      <div className='px-4 py-3 flex items-center'>
-        <span className='text-sm text-gray-500 mr-3'>Your Account</span>
-        <UserButton afterSignOutUrl='/login' />
-      </div>
+
+      {isSignedIn && (
+        <>
+          <div className='px-4 py-3 border-t border-gray-100 mt-3'>
+            <LogoutButton
+              className='w-full flex items-center justify-center space-x-2 text-red-600 hover:bg-red-50 p-2 rounded-md'
+              iconClassName='h-5 w-5'
+              textClassName='font-medium'
+            />
+          </div>
+          <div className='px-4 py-3 flex items-center'>
+            <span className='text-sm text-gray-500 mr-3'>Your Account</span>
+            <UserButton afterSignOutUrl='/login' />
+          </div>
+        </>
+      )}
     </div>
   </div>
 );
 
 // Desktop Navigation Component
-const DesktopNavigation = () => (
+const DesktopNavigation = ({ isSignedIn }: { isSignedIn: boolean }) => (
   <div className='hidden md:flex items-center gap-3 lg:gap-4'>
     <NavigationItem href='/explore' icon={Users} label='Find Therapists' />
     <NavigationItem href='/pricing' icon={DollarSign} label='Pricing' />
     <NavigationItem href='/privacy' icon={Shield} label='Privacy & Security' />
-    <div className='h-6 w-px bg-gray-200 mx-1'></div>
-    <LogoutButton />
-    <div className='ml-1 lg:ml-2'>
-      <UserButton afterSignOutUrl='/login' />
-    </div>
+
+    {isSignedIn && (
+      <>
+        <div className='h-6 w-px bg-gray-200 mx-1'></div>
+        <LogoutButton />
+        <div className='ml-1 lg:ml-2'>
+          <UserButton afterSignOutUrl='/login' />
+        </div>
+      </>
+    )}
   </div>
 );
 
@@ -90,6 +106,8 @@ export default function DashboardHeader({
   showBackButton?: boolean;
   additionalActions?: React.ReactNode;
 }) {
+  const { isSignedIn = false } = useUser();
+
   useEffect(() => {
     const handleScroll = () => {
       isHeaderScrolledSignal.value = window.scrollY > 0;
@@ -110,6 +128,7 @@ export default function DashboardHeader({
         isHeaderScrolledSignal.value ? 'border-gray-200 shadow-sm' : 'border-transparent',
         COLORS.WARM_WHITE.bg,
         'py-3 px-4 md:py-4 md:px-8 lg:px-20',
+        'transition-all duration-300 ease-in-out', // Added smooth transition
       )}
     >
       <div className='flex items-center justify-between max-w-7xl mx-auto'>
@@ -119,9 +138,9 @@ export default function DashboardHeader({
           {showBackButton && (
             <Link
               href='/dashboard'
-              className='mr-3 text-gray-600 hover:text-gray-800 transition-colors'
+              className='mr-3 text-gray-600 hover:text-gray-800 transition-colors group'
             >
-              <ChevronLeft className='h-6 w-6' />
+              <ChevronLeft className='h-6 w-6 group-hover:text-primary-600' />
             </Link>
           )}
 
@@ -132,13 +151,13 @@ export default function DashboardHeader({
               alt='Renavest Logo'
               fill
               sizes='(max-width: 768px) 40px, 48px'
-              className='object-contain'
+              className='object-contain hover:scale-105 transition-transform'
               priority
             />
           </div>
 
           {/* Dynamic Page Title */}
-          <h1 className='ml-3 md:ml-4 text-xl md:text-2xl font-semibold text-gray-800 transition-all duration-300'>
+          <h1 className='ml-3 md:ml-4 text-xl md:text-2xl font-semibold text-gray-800 transition-all duration-300 hover:text-primary-600'>
             {pageTitle}
           </h1>
         </div>
@@ -150,22 +169,22 @@ export default function DashboardHeader({
 
           <button
             onClick={toggleMobileMenu}
-            className='md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors'
+            className='md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors group'
             aria-label={isMobileMenuOpenSignal.value ? 'Close menu' : 'Open menu'}
           >
             {isMobileMenuOpenSignal.value ? (
-              <X className='h-6 w-6' />
+              <X className='h-6 w-6 group-hover:text-primary-600' />
             ) : (
-              <Menu className='h-6 w-6' />
+              <Menu className='h-6 w-6 group-hover:text-primary-600' />
             )}
           </button>
         </div>
 
         {/* Desktop Navigation */}
-        <DesktopNavigation />
+        <DesktopNavigation isSignedIn={isSignedIn} />
 
         {/* Mobile Navigation */}
-        <MobileNavigation />
+        <MobileNavigation isSignedIn={isSignedIn} />
       </div>
     </header>
   );
