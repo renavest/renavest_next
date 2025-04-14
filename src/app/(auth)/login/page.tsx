@@ -10,56 +10,46 @@ const FeatureCard = ({
   title,
   description,
   bgColor,
+  textColor,
 }: {
   icon: React.ReactNode;
   title: string;
   description: string;
   bgColor: string;
+  textColor?: string;
 }) => (
   <div
     className={`
     ${COLORS.WARM_WHITE.bg} 
     p-6 
-    rounded-2xl 
-    shadow-lg 
-    hover:shadow-xl 
+    rounded-3xl 
+    border 
+    border-gray-100 
+    shadow-soft 
+    hover:shadow-md 
     transition-all 
     group 
     overflow-hidden 
     relative
   `}
   >
-    <div
-      className={`
-      absolute 
-      -top-1/2 
-      -right-1/2 
-      w-full 
-      h-full 
-      ${bgColor} 
-      opacity-10 
-      group-hover:opacity-20 
-      transition-opacity 
-      rounded-full
-    `}
-    ></div>
-
-    <div className='relative z-10 flex items-center space-x-4'>
+    <div className='relative z-10 flex items-center space-x-5'>
       <div
         className={`
         ${bgColor} 
-        text-white 
-        p-3 
-        rounded-full 
+        ${textColor || 'text-white'}
+        p-4 
+        rounded-2xl 
+        shadow-sm
         transform 
-        group-hover:scale-110 
+        group-hover:scale-105 
         transition-transform
       `}
       >
         {icon}
       </div>
       <div>
-        <h3 className='text-lg font-semibold text-gray-800 group-hover:text-[#9071FF] transition-colors'>
+        <h3 className='text-lg font-semibold text-gray-800 mb-1 group-hover:text-[#6A4FD1] transition-colors'>
           {title}
         </h3>
         <p className='text-sm text-gray-600 group-hover:text-gray-800 transition-colors'>
@@ -86,12 +76,12 @@ const LoginLeftSection = () => (
     overflow-hidden
   `}
   >
-    {/* Subtle Background Pattern */}
+    {/* Soft Background Pattern */}
     <div className='absolute inset-0 opacity-5 pointer-events-none'>
       <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 600' className='w-full h-full'>
         <defs>
           <pattern id='financial-pattern' patternUnits='userSpaceOnUse' width='100' height='100'>
-            <path d='M0 0 L50 50 L100 0 L50 100 Z' fill='#9071FF' fillOpacity='0.05' />
+            <path d='M0 0 L50 50 L100 0 L50 100 Z' fill='#9071FF' fillOpacity='0.03' />
           </pattern>
         </defs>
         <rect width='100%' height='100%' fill='url(#financial-pattern)' />
@@ -112,7 +102,7 @@ const LoginLeftSection = () => (
         >
           Renavest
         </h1>
-        <p className='text-xl text-gray-600'>Emotional Intelligence Meets Financial Wellness</p>
+        <p className='text-xl text-gray-600'>Nurturing Financial Wellness, One Emotion at a Time</p>
       </div>
 
       {/* Feature Cards */}
@@ -121,8 +111,8 @@ const LoginLeftSection = () => (
           icon={
             <svg
               xmlns='http://www.w3.org/2000/svg'
-              width='24'
-              height='24'
+              width='28'
+              height='28'
               viewBox='0 0 24 24'
               fill='none'
               stroke='currentColor'
@@ -134,16 +124,17 @@ const LoginLeftSection = () => (
             </svg>
           }
           title='Holistic Financial Therapy'
-          description='Bridging emotional insights with financial strategies'
-          bgColor={COLORS.WARM_PURPLE.bg}
+          description='Compassionate support for your financial journey'
+          bgColor='bg-[#E6E6FA]'
+          textColor='text-[#6A5ACD]'
         />
 
         <FeatureCard
           icon={
             <svg
               xmlns='http://www.w3.org/2000/svg'
-              width='24'
-              height='24'
+              width='28'
+              height='28'
               viewBox='0 0 24 24'
               fill='none'
               stroke='currentColor'
@@ -155,16 +146,17 @@ const LoginLeftSection = () => (
             </svg>
           }
           title='Personalized Insights'
-          description='Tailored financial guidance that understands you'
-          bgColor='bg-[#4FD1C5]'
+          description='Understanding your unique financial story'
+          bgColor='bg-[#E0FFFF]'
+          textColor='text-[#4682B4]'
         />
 
         <FeatureCard
           icon={
             <svg
               xmlns='http://www.w3.org/2000/svg'
-              width='24'
-              height='24'
+              width='28'
+              height='28'
               viewBox='0 0 24 24'
               fill='none'
               stroke='currentColor'
@@ -177,8 +169,9 @@ const LoginLeftSection = () => (
             </svg>
           }
           title='Workplace Wellness'
-          description='Empowering employees through financial well-being'
-          bgColor='bg-[#FF6B6B]'
+          description='Empowering teams through emotional financial health'
+          bgColor='bg-[#FFF0F5]'
+          textColor='text-[#DB7093]'
         />
       </div>
 
@@ -192,7 +185,7 @@ const LoginLeftSection = () => (
           italic
         `}
         >
-          "90% of financial decisions are emotionally driven"
+          "Your finances are more than numbers – they're a reflection of your life's journey"
         </p>
       </div>
     </div>
