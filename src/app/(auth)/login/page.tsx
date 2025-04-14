@@ -1,119 +1,166 @@
 'use client';
 
-import { CheckCircle2 } from 'lucide-react';
+import { Heart, BarChart, Lightbulb } from 'lucide-react';
+import Image from 'next/image';
 import React from 'react';
 
 import LoginForm from '@/src/features/auth/components/LoginForm';
 import { COLORS } from '@/src/styles/colors';
 
-const LoginFeature = ({ icon: Icon, text }: { icon: React.ElementType; text: string }) => (
-  <div className='flex items-center space-x-3'>
-    <Icon className='h-6 w-6 text-[#9071FF]' />
-    <span className='text-gray-700'>{text}</span>
-  </div>
-);
+const FeatureSection = () => {
+  const features = [
+    {
+      icon: Heart,
+      title: 'Emotional Financial Intelligence',
+      description:
+        'Understand the psychological patterns behind your financial decisions and break harmful money cycles.',
+    },
+    {
+      icon: BarChart,
+      title: 'Personalized Financial Guidance',
+      description:
+        'Get tailored insights that align your financial strategies with your emotional well-being and personal goals.',
+    },
+    {
+      icon: Lightbulb,
+      title: 'Holistic Wellness Approach',
+      description:
+        'Transform your relationship with money through integrated therapy, education, and actionable strategies.',
+    },
+  ];
 
-const GrowthVisualization = () => (
-  <div className='absolute inset-0 bg-gradient-to-br from-[#F0F4F8] via-[#E6F1FF] to-[#F5E6FF] opacity-50'>
-    <div className='absolute inset-0 pointer-events-none'>
-      <svg
-        xmlns='http://www.w3.org/2000/svg'
-        viewBox='0 0 1000 600'
-        className='w-full h-full opacity-20'
-      >
-        <defs>
-          <linearGradient id='growthGradient' x1='0%' y1='100%' x2='100%' y2='0%'>
-            <stop offset='0%' stopColor='#9071FF' stopOpacity='0.1' />
-            <stop offset='100%' stopColor='#4FD1C5' stopOpacity='0.1' />
-          </linearGradient>
-        </defs>
-        <path
-          d='M50,550 
-             Q200,450 300,500 
-             Q400,550 500,450 
-             Q600,350 700,400 
-             Q800,450 950,350'
-          fill='none'
-          stroke='url(#growthGradient)'
-          strokeWidth='3'
-          strokeDasharray='10 10'
-        />
-        <circle cx='50' cy='550' r='10' fill='#9071FF' opacity='0.5' />
-        <circle cx='300' cy='500' r='10' fill='#4FD1C5' opacity='0.5' />
-        <circle cx='500' cy='450' r='10' fill='#9071FF' opacity='0.5' />
-        <circle cx='700' cy='400' r='10' fill='#4FD1C5' opacity='0.5' />
-        <circle cx='950' cy='350' r='10' fill='#9071FF' opacity='0.5' />
-      </svg>
+  return (
+    <div className='space-y-4'>
+      {features.map((feature, index) => (
+        <div
+          key={index}
+          className={`
+            flex items-start space-x-4 
+            p-4 rounded-xl 
+            bg-white/80 backdrop-blur-sm 
+            border border-purple-100
+            hover:shadow-md hover:-translate-y-0.5 
+            transition-all duration-300 ease-out
+            animate-fade-in opacity-0 
+            [animation-delay:${400 + index * 100}ms]
+          `}
+        >
+          <feature.icon
+            className={`
+              w-8 h-8 mt-1 
+              ${COLORS.WARM_PURPLE.DEFAULT} 
+              opacity-80
+            `}
+          />
+          <div>
+            <h3 className='text-lg font-semibold text-gray-900 mb-1'>{feature.title}</h3>
+            <p className='text-sm text-gray-600'>{feature.description}</p>
+          </div>
+        </div>
+      ))}
     </div>
-  </div>
-);
+  );
+};
 
-const LoginLeftSection = () => (
-  <div
-    className={`
-      hidden lg:flex lg:w-1/2 
+const LoginLeftSection = () => {
+  return (
+    <div
+      className={`
+      hidden 
+      lg:flex 
+      lg:w-7/12 
       ${COLORS.WARM_WHITE.bg} 
       p-16 
       flex-col 
-      justify-center 
-      items-center 
-      space-y-12
-      relative
+      justify-between 
+      relative 
       overflow-hidden
     `}
-  >
-    <GrowthVisualization />
+    >
+      {/* Enhanced gradient background with animation */}
+      <div className='absolute inset-0'>
+        <div className='absolute inset-0 bg-gradient-to-br from-purple-50 via-white to-purple-50/30' />
+        <div className='absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(144,113,255,0.1),transparent_50%)] animate-pulse-slow' />
+        <div className='absolute inset-0 bg-[radial-gradient(circle_at_70%_60%,rgba(255,229,229,0.15),transparent_50%)] animate-pulse-slower' />
+      </div>
 
-    <div className='text-center relative z-10'>
-      <div className='relative'>
-        <div
-          className='absolute -top-4 -right-12 text-6xl opacity-10'
-          style={{ fontFamily: 'Arial, sans-serif' }}
-        >
-          💡
+      {/* Logo and main content */}
+      <div className='relative z-10 animate-fade-in [animation-delay:200ms] opacity-0'>
+        <div className='flex items-center space-x-3 mb-8 hover:translate-x-0.5 transition-transform duration-300'>
+          <Image
+            src='/renavestlogo.png'
+            alt='Renavest'
+            width={40}
+            height={40}
+            className='w-10 h-10'
+          />
+          <h1 className={`text-2xl font-bold ${COLORS.WARM_PURPLE.DEFAULT}`}>Renavest</h1>
         </div>
-        <h2 className='text-4xl font-bold text-gray-900 mb-6'>Financial Wellness Beyond Numbers</h2>
-        <p className='text-xl text-gray-600 mb-10'>
-          Where emotional intelligence meets financial empowerment
-        </p>
+
+        <div className='max-w-xl mb-8'>
+          <h2 className='text-4xl font-bold text-gray-900 mb-4 animate-fade-in [animation-delay:400ms] opacity-0'>
+            Where emotional intelligence meets financial empowerment
+          </h2>
+          <p className='text-xl text-gray-600 leading-relaxed mb-6 animate-fade-in [animation-delay:500ms] opacity-0'>
+            A compassionate approach to understanding your relationship with money
+          </p>
+        </div>
+      </div>
+
+      {/* Features */}
+      <div className='relative z-10'>
+        <FeatureSection />
       </div>
     </div>
-
-    <div className='space-y-6 max-w-md relative z-10'>
-      <LoginFeature icon={CheckCircle2} text='Emotional Insights into Financial Behaviors' />
-      <LoginFeature icon={CheckCircle2} text='Personalized Financial Therapy' />
-      <LoginFeature icon={CheckCircle2} text='Holistic Approach to Financial Well-being' />
-    </div>
-
-    <div className='mt-12 relative z-10'>
-      <div className='flex items-center space-x-3 bg-white/50 p-4 rounded-xl shadow-sm'>
-        <div className='w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center'>
-          <svg
-            xmlns='http://www.w3.org/2000/svg'
-            width='24'
-            height='24'
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='#9071FF'
-            strokeWidth='2'
-          >
-            <path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' />
-            <path d='M12 12l3-3' />
-            <path d='M12 12v5' />
-          </svg>
-        </div>
-        <span className='text-sm text-gray-600'>Transform your relationship with money</span>
-      </div>
-    </div>
-  </div>
-);
+  );
+};
 
 export default function LoginPage() {
   return (
     <div className='min-h-screen flex'>
+      <style jsx global>{`
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes pulse-slow {
+          0%,
+          100% {
+            opacity: 0.1;
+          }
+          50% {
+            opacity: 0.15;
+          }
+        }
+        @keyframes pulse-slower {
+          0%,
+          100% {
+            opacity: 0.15;
+          }
+          50% {
+            opacity: 0.2;
+          }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.6s ease-out forwards;
+        }
+        .animate-pulse-slow {
+          animation: pulse-slow 4s ease-in-out infinite;
+        }
+        .animate-pulse-slower {
+          animation: pulse-slower 6s ease-in-out infinite;
+        }
+      `}</style>
       <LoginLeftSection />
-      <div className='w-full lg:w-1/2 flex items-center justify-center px-6 py-12'>
-        <div className='w-full max-w-md'>
+      <div className='w-full lg:w-5/12 flex items-center justify-center px-6 py-12 relative animate-fade-in [animation-delay:300ms] opacity-0'>
+        <div className='absolute inset-0 bg-gradient-to-b from-purple-50/50 to-transparent lg:hidden' />
+        <div className='w-full max-w-md relative z-10'>
           <LoginForm />
         </div>
       </div>

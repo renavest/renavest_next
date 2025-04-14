@@ -2,7 +2,10 @@
 
 import { useUser } from '@clerk/nextjs';
 import { computed } from '@preact-signals/safe-react';
+import { Suspense } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 
+import { MetricsErrorFallback } from '@/src/components/shared/MetricsErrorFallback';
 import OnboardingModal from '@/src/features/onboarding/components/OnboardingModal';
 import { COLORS } from '@/src/styles/colors';
 
@@ -15,6 +18,8 @@ import ProgressComparisonChart from './insights/ProgressComparisonChart';
 import TherapistConnectionSummary from './insights/TherapistConnectionSummary';
 import TherapistRecommendations from './insights/TherapistRecommendations';
 import WeeklyFinancialReport from './insights/WeeklyFinancialReport';
+// import { MetricsSection } from './sections/MetricsSection';
+import { UpcomingSessionsSection } from './UpcomingSessionsSection';
 
 // Create a computed signal for showing onboarding
 const showOnboardingSignal = computed(() => {
@@ -101,6 +106,40 @@ export default function DashboardClient() {
             </section>
           </div>
         </div>
+
+        {/* Additional Sections */}
+        <section className='mt-12 md:mt-16'>
+          <h2 className='text-xl md:text-2xl font-semibold text-gray-800 mb-6'>
+            Your Dashboard Overview
+          </h2>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
+            <ErrorBoundary FallbackComponent={MetricsErrorFallback}>
+              <Suspense
+                fallback={
+                  <div className='bg-white rounded-lg shadow-sm p-4'>Loading metrics...</div>
+                }
+              >
+                {/* Placeholder for MetricsSection */}
+                <div className='bg-white rounded-lg shadow-sm p-4'>
+                  <h3 className='text-lg font-semibold mb-4'>Financial Metrics</h3>
+                  <p className='text-gray-500'>Metrics coming soon</p>
+                </div>
+              </Suspense>
+            </ErrorBoundary>
+
+            <ErrorBoundary FallbackComponent={MetricsErrorFallback}>
+              <Suspense
+                fallback={
+                  <div className='bg-white rounded-lg shadow-sm p-4'>
+                    Loading upcoming sessions...
+                  </div>
+                }
+              >
+                <UpcomingSessionsSection />
+              </Suspense>
+            </ErrorBoundary>
+          </div>
+        </section>
       </main>
 
       {/* Onboarding Modal */}

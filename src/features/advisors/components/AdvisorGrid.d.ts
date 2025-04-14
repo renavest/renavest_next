@@ -2,7 +2,9 @@ import { InferSelectModel } from 'drizzle-orm';
 
 import { therapists } from '../../../db/schema';
 
-export type Advisor = InferSelectModel<typeof therapists>;
+export interface Advisor extends InferSelectModel<typeof therapists> {
+  hasProfileImage?: boolean;
+}
 
 export interface AdvisorGridProps {
   advisors: Advisor[];

@@ -87,11 +87,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No email address found' }, { status: 400 });
     }
 
-    if (!ALLOWED_EMAILS.includes(userEmail)) {
-      console.warn(`Unauthorized access attempt by email: ${userEmail}`);
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-    }
-
     // Parse the request body
     const noteData = await request.json();
 

@@ -108,4 +108,4 @@ async function migrateTherapists() {
 }
 
 // Run migration
-migrateTherapists().catch(console.error);
+// migrateTherapists().catch(console.error);

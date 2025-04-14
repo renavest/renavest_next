@@ -40,13 +40,41 @@ const useImageLoadState = () => {
   return { imageLoadState, handleImageLoad, handleImageError };
 };
 
+const renderExpertiseTags = (expertiseTags: string[]) => {
+  return (
+    <div className='mt-2 flex items-start flex-wrap gap-1 sm:gap-1.5 min-h-[1.5rem] sm:min-h-[2rem] overflow-hidden'>
+      {expertiseTags.slice(0, 3).map((exp, index) => (
+        <span
+          key={index}
+          className={cn(
+            'px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs tracking-wide',
+            COLORS.WARM_PURPLE['10'],
+            'text-purple-700',
+          )}
+        >
+          {exp.trim()}
+        </span>
+      ))}
+      {expertiseTags.length > 3 && (
+        <span
+          className={cn(
+            'px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs tracking-wide',
+            COLORS.WARM_PURPLE['10'],
+            'text-purple-700',
+          )}
+        >
+          +{expertiseTags.length - 3}
+        </span>
+      )}
+    </div>
+  );
+};
+
 const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
   const { imageLoadState, handleImageLoad, handleImageError } = useImageLoadState();
 
   // Limit expertise tags and add ellipsis if more exist
   const expertiseTags = advisor.expertise?.split(',') || [];
-  const displayTags = expertiseTags.slice(0, 3);
-  const hasMoreTags = expertiseTags.length > 3;
 
   return (
     <div
@@ -117,31 +145,7 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
             </p>
           </div>
         </div>
-        <div className='mt-2 flex flex-wrap gap-1 sm:gap-1.5 max-h-12 sm:max-h-16 overflow-hidden'>
-          {displayTags.map((exp, index) => (
-            <span
-              key={index}
-              className={cn(
-                'px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs tracking-wide',
-                COLORS.WARM_PURPLE['10'],
-                'text-purple-700',
-              )}
-            >
-              {exp.trim()}
-            </span>
-          ))}
-          {hasMoreTags && (
-            <span
-              className={cn(
-                'px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs tracking-wide',
-                COLORS.WARM_PURPLE['10'],
-                'text-purple-700',
-              )}
-            >
-              +{expertiseTags.length - 3}
-            </span>
-          )}
-        </div>
+        {renderExpertiseTags(expertiseTags)}
         <p className='mt-2 sm:mt-3 text-xs sm:text-sm text-gray-600 tracking-wide line-clamp-2 sm:line-clamp-3'>
           {advisor.previewBlurb || advisor.introduction}
         </p>

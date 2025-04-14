@@ -170,7 +170,7 @@ export const BookingConfirmation = ({ advisorId, onConfirm }: BookingConfirmatio
       };
 
       posthog.capture('session_booked', sessionData);
-
+      
       posthog.identify(user?.id, {
         $add_to_list: {
           sessions: {

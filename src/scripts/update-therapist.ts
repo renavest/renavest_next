@@ -5,7 +5,7 @@ import TherapistList from '@/src/config/therapistsList';
 import { db } from '@/src/db';
 import { therapists } from '@/src/db/schema';
 
-// import { uploadImageToS3 } from './migrate-therapists';
+import { uploadImageToS3 } from './migrate-therapists';
 
 // Load environment variables
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local';
@@ -25,6 +25,7 @@ type TherapistUpdateFields = Partial<{
   previewBlurb: string;
   profileUrl: string;
   hourlyRate: number;
+  email: string;
 }>;
 
 /**
@@ -47,12 +48,12 @@ async function updateTherapist(nameOrId: string, updateData: TherapistUpdateFiel
     }
 
     // Handle image upload if a new profile URL is provided
-    // if (updateData.profileUrl) {
-    //   const imageKey = await uploadImageToS3(updateData.profileUrl, updateData.name || nameOrId);
-    //   if (imageKey) {
-    //     updateObject.profileUrl = imageKey;
-    //   }
-    // }
+    if (updateData.profileUrl) {
+      const imageKey = await uploadImageToS3(updateData.profileUrl, updateData.name || nameOrId);
+      if (imageKey) {
+        updateObject.profileUrl = imageKey;
+      }
+    }
 
     // Perform the update based on name or ID
     if (isNumericId) {
@@ -112,19 +113,6 @@ async function deleteTherapist(nameOrId: string): Promise<void> {
     throw error;
   }
 }
-
-// Example usage function to demonstrate how to use the script
-async function exampleUsage() {
-  try {
-    // Delete Monica Bradshaw
-    await deleteTherapist('Monica Bradshaw');
-  } catch (error) {
-    console.error('Example usage failed:', error);
-  }
-}
-
-// Uncomment the line below to run the example usage
-exampleUsage().catch(console.error);
 
 /**
  * Bulk update therapist hourly rates from the therapist list
