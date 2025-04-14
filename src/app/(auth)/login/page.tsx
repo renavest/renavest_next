@@ -1,48 +1,71 @@
 'use client';
 
-import { CheckCircle2 } from 'lucide-react';
 import React from 'react';
 
 import LoginForm from '@/src/features/auth/components/LoginForm';
+import { COLORS } from '@/src/styles/colors';
 
-const LoginFeature = ({ icon: Icon, text }: { icon: React.ElementType; text: string }) => (
-  <div className='flex items-center space-x-3'>
-    <Icon className='h-6 w-6 text-[#9071FF]' />
-    <span className='text-gray-700'>{text}</span>
-  </div>
-);
+const FeatureCard = ({
+  icon,
+  title,
+  description,
+  bgColor,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  bgColor: string;
+}) => (
+  <div
+    className={`
+    ${COLORS.WARM_WHITE.bg} 
+    p-6 
+    rounded-2xl 
+    shadow-lg 
+    hover:shadow-xl 
+    transition-all 
+    group 
+    overflow-hidden 
+    relative
+  `}
+  >
+    <div
+      className={`
+      absolute 
+      -top-1/2 
+      -right-1/2 
+      w-full 
+      h-full 
+      ${bgColor} 
+      opacity-10 
+      group-hover:opacity-20 
+      transition-opacity 
+      rounded-full
+    `}
+    ></div>
 
-const GrowthVisualization = () => (
-  <div className='absolute inset-0 bg-gradient-to-br from-[#F0F4F8] via-[#E6F1FF] to-[#F5E6FF] opacity-50'>
-    <div className='absolute inset-0 pointer-events-none'>
-      <svg
-        xmlns='http://www.w3.org/2000/svg'
-        viewBox='0 0 1000 600'
-        className='w-full h-full opacity-20'
+    <div className='relative z-10 flex items-center space-x-4'>
+      <div
+        className={`
+        ${bgColor} 
+        text-white 
+        p-3 
+        rounded-full 
+        transform 
+        group-hover:scale-110 
+        transition-transform
+      `}
       >
-        <defs>
-          <linearGradient id='growthGradient' x1='0%' y1='100%' x2='100%' y2='0%'>
-            <stop offset='0%' stopColor='#9071FF' stopOpacity='0.1' />
-            <stop offset='100%' stopColor='#4FD1C5' stopOpacity='0.1' />
-          </linearGradient>
-        </defs>
-        <path
-          d='M50,550 
-             Q200,450 300,500 
-             Q400,550 500,450 
-             Q600,350 700,400 
-             Q800,450 950,350'
-          fill='none'
-          stroke='url(#growthGradient)'
-          strokeWidth='3'
-          strokeDasharray='10 10'
-        />
-        <circle cx='50' cy='550' r='10' fill='#9071FF' opacity='0.5' />
-        <circle cx='300' cy='500' r='10' fill='#4FD1C5' opacity='0.5' />
-        <circle cx='500' cy='450' r='10' fill='#9071FF' opacity='0.5' />
-        <circle cx='700' cy='400' r='10' fill='#4FD1C5' opacity='0.5' />
-        <circle cx='950' cy='350' r='10' fill='#9071FF' opacity='0.5' />
-      </svg>
+        {icon}
+      </div>
+      <div>
+        <h3 className='text-lg font-semibold text-gray-800 group-hover:text-[#9071FF] transition-colors'>
+          {title}
+        </h3>
+        <p className='text-sm text-gray-600 group-hover:text-gray-800 transition-colors'>
+          {description}
+        </p>
+      </div>
     </div>
   </div>
 );
@@ -50,74 +73,127 @@ const GrowthVisualization = () => (
 const LoginLeftSection = () => (
   <div
     className={`
-      hidden lg:flex lg:w-1/2 
-      bg-gradient-to-br from-[#9071FF] via-[#6A4FD1] to-[#4F3AD1]
-      p-16 
-      flex-col 
-      justify-center 
-      items-center 
-      space-y-12
-      relative
-      overflow-hidden
-      text-white
-    `}
+    hidden 
+    lg:flex 
+    lg:w-1/2 
+    ${COLORS.WARM_WHITE.bg} 
+    p-16 
+    flex-col 
+    justify-center 
+    items-center 
+    space-y-12 
+    relative 
+    overflow-hidden
+  `}
   >
-    <GrowthVisualization />
+    {/* Subtle Background Pattern */}
+    <div className='absolute inset-0 opacity-5 pointer-events-none'>
+      <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 600' className='w-full h-full'>
+        <defs>
+          <pattern id='financial-pattern' patternUnits='userSpaceOnUse' width='100' height='100'>
+            <path d='M0 0 L50 50 L100 0 L50 100 Z' fill='#9071FF' fillOpacity='0.05' />
+          </pattern>
+        </defs>
+        <rect width='100%' height='100%' fill='url(#financial-pattern)' />
+      </svg>
+    </div>
 
-    <div className='text-center relative z-10'>
-      <div className='relative'>
-        <div className='flex items-center justify-center mb-6'>
-          <svg
-            width='120'
-            height='40'
-            viewBox='0 0 120 40'
-            fill='none'
-            xmlns='http://www.w3.org/2000/svg'
-          >
-            <text
-              x='50%'
-              y='50%'
-              textAnchor='middle'
-              fontFamily='Arial, sans-serif'
-              fontSize='24'
-              fontWeight='bold'
-              fill='white'
-            >
-              Renavest
-            </text>
-          </svg>
-        </div>
-        <h2 className='text-4xl font-bold mb-6'>Financial Wellness, Reimagined</h2>
-        <p className='text-xl opacity-80 mb-10'>
-          Transforming Financial Stress into Emotional Empowerment
-        </p>
+    <div className='max-w-md z-10 text-center'>
+      {/* Renavest Logo/Title */}
+      <div className='mb-12'>
+        <h1
+          className={`
+          text-5xl 
+          font-bold 
+          ${COLORS.WARM_PURPLE.DEFAULT} 
+          mb-4 
+          tracking-tight
+        `}
+        >
+          Renavest
+        </h1>
+        <p className='text-xl text-gray-600'>Emotional Intelligence Meets Financial Wellness</p>
       </div>
-    </div>
 
-    <div className='space-y-6 max-w-md relative z-10'>
-      <LoginFeature icon={CheckCircle2} text='Holistic Financial Therapy' />
-      <LoginFeature icon={CheckCircle2} text='Personalized Emotional Financial Insights' />
-      <LoginFeature icon={CheckCircle2} text='Workplace Financial Well-being' />
-    </div>
+      {/* Feature Cards */}
+      <div className='space-y-6 mb-10'>
+        <FeatureCard
+          icon={
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              width='24'
+              height='24'
+              viewBox='0 0 24 24'
+              fill='none'
+              stroke='currentColor'
+              strokeWidth='2'
+            >
+              <path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' />
+              <path d='M12 12l3-3' />
+              <path d='M12 12v5' />
+            </svg>
+          }
+          title='Holistic Financial Therapy'
+          description='Bridging emotional insights with financial strategies'
+          bgColor={COLORS.WARM_PURPLE.bg}
+        />
 
-    <div className='mt-12 relative z-10'>
-      <div className='flex items-center space-x-3 bg-white/20 p-4 rounded-xl backdrop-blur-sm'>
-        <div className='w-10 h-10 bg-white/30 rounded-full flex items-center justify-center'>
-          <svg
-            xmlns='http://www.w3.org/2000/svg'
-            width='24'
-            height='24'
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='white'
-            strokeWidth='2'
-          >
-            <path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' />
-            <path d='M12 12l3-3' />
-            <path d='M12 12v5' />
-          </svg>
-        </div>
-        <span className='text-sm text-white/90'>Empowering Your Financial Journey</span>
+        <FeatureCard
+          icon={
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              width='24'
+              height='24'
+              viewBox='0 0 24 24'
+              fill='none'
+              stroke='currentColor'
+              strokeWidth='2'
+            >
+              <circle cx='12' cy='12' r='10' />
+              <line x1='12' y1='16' x2='12' y2='12' />
+              <line x1='12' y1='8' x2='12.01' y2='8' />
+            </svg>
+          }
+          title='Personalized Insights'
+          description='Tailored financial guidance that understands you'
+          bgColor='bg-[#4FD1C5]'
+        />
+
+        <FeatureCard
+          icon={
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              width='24'
+              height='24'
+              viewBox='0 0 24 24'
+              fill='none'
+              stroke='currentColor'
+              strokeWidth='2'
+            >
+              <path d='M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2' />
+              <circle cx='9' cy='7' r='4' />
+              <path d='M22 21v-2a4 4 0 0 0-3-3.87' />
+              <path d='M16 3.13a4 4 0 0 1 0 7.75' />
+            </svg>
+          }
+          title='Workplace Wellness'
+          description='Empowering employees through financial well-being'
+          bgColor='bg-[#FF6B6B]'
+        />
+      </div>
+
+      {/* Inspirational Quote */}
+      <div className='text-center'>
+        <p
+          className={`
+          text-sm 
+          ${COLORS.WARM_PURPLE.DEFAULT} 
+          opacity-70 
+          italic
+        `}
+        >
+          "90% of financial decisions are emotionally driven"
+        </p>
       </div>
     </div>
   </div>
