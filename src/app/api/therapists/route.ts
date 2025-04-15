@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
 import { therapists } from '@/src/db/schema';
+import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
 
 export async function GET(request: Request) {
   try {
@@ -23,7 +24,13 @@ export async function GET(request: Request) {
       .from(therapists)
       .limit(limit);
 
-    return NextResponse.json({ therapists: results });
+    // Map results to use the correct image URL
+    const therapistsWithImageUrl = results.map((therapist) => ({
+      ...therapist,
+      profileUrl: getTherapistImageUrl(therapist.profileUrl),
+    }));
+
+    return NextResponse.json({ therapists: therapistsWithImageUrl });
   } catch (error) {
     console.error('Error fetching therapists:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
