@@ -1,3 +1,4 @@
+import { currentUser } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
@@ -5,6 +6,10 @@ import { therapists } from '@/src/db/schema';
 
 export async function GET(request: Request) {
   try {
+    const user = await currentUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '2', 10);
     const results = await db
