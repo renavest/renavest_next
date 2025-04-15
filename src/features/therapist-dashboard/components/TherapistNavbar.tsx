@@ -1,7 +1,7 @@
 'use client';
 
 import { UserButton } from '@clerk/nextjs';
-import { Menu, FileText, Calendar, X, ChevronLeft } from 'lucide-react';
+import { Menu, X, ChevronLeft } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect } from 'react';
@@ -49,8 +49,6 @@ const MobileNavigation = () => (
     `}
   >
     <div className='p-4 space-y-2'>
-      <NavigationItem href='/therapist/sessions' icon={Calendar} label='My Sessions' isMobile />
-      <NavigationItem href='/therapist/notes' icon={FileText} label='Client Notes' isMobile />
       <div className='px-4 py-3 border-t border-gray-100 mt-3'>
         <LogoutButton
           className='w-full flex items-center justify-center space-x-2 text-red-600 hover:bg-red-50 p-2 rounded-md'
@@ -69,8 +67,6 @@ const MobileNavigation = () => (
 // Desktop Navigation Component
 const DesktopNavigation = () => (
   <div className='hidden md:flex items-center gap-3 lg:gap-4'>
-    <NavigationItem href='/therapist/sessions' icon={Calendar} label='My Sessions' />
-    <NavigationItem href='/therapist/notes' icon={FileText} label='Client Notes' />
     <div className='h-6 w-px bg-gray-200 mx-1'></div>
     <LogoutButton />
     <div className='ml-1 lg:ml-2'>

@@ -4,6 +4,7 @@ import { Save } from 'lucide-react';
 import { useState } from 'react';
 
 import { CreateClientNoteInput } from '../types';
+import { noteFormTracking } from '../utils/noteFormTracking';
 
 // Actual client note creation logic
 const createClientNote = async (noteData: CreateClientNoteInput) => {
@@ -91,21 +92,13 @@ const ErrorDisplay = ({ error }: { error: string | null }) =>
     <div className='bg-red-50 border border-red-200 text-red-800 p-3 rounded-md'>{error}</div>
   ) : null;
 
-export function ClientNotesForm({
-  userId,
-  therapistId,
-  sessionId,
-  onNoteCreated,
-  onNotesRefresh,
-  className = '',
-}: {
-  userId: string;
-  therapistId: number;
-  sessionId?: number;
-  onNoteCreated?: () => void;
-  onNotesRefresh?: () => void;
-  className?: string;
-}) {
+const useClientNoteForm = (
+  userId: string,
+  therapistId: number,
+  sessionId: number | undefined,
+  onNoteCreated?: () => void,
+  onNotesRefresh?: () => void,
+) => {
   const [formState, setFormState] = useState({
     title: '',
     keyObservations: '',
@@ -119,13 +112,34 @@ export function ClientNotesForm({
   const [error, setError] = useState<string | null>(null);
 
   const updateFormState = (field: string, value: string | boolean) => {
+    noteFormTracking.fieldInteraction(userId, field, value);
     setFormState((prev) => ({ ...prev, [field]: value }));
   };
 
+  const resetForm = () => {
+    setFormState({
+      title: '',
+      keyObservations: '',
+      progressNotes: '',
+      actionItems: '',
+      emotionalState: '',
+      additionalContext: '',
+      isConfidential: false,
+    });
+  };
+
   const handleSubmit = async () => {
+    noteFormTracking.creationAttempt({
+      userId,
+      therapistId,
+      sessionId,
+      formState,
+    });
+
     if (!formState.title) {
       setError('Title is required');
-      return;
+      noteFormTracking.validationError(userId);
+      return false;
     }
 
     setIsSubmitting(true);
@@ -147,26 +161,66 @@ export function ClientNotesForm({
     };
 
     try {
-      await createClientNote(noteData);
+      const result = await createClientNote(noteData);
+
+      noteFormTracking.creationSuccess({
+        userId,
+        therapistId,
+        sessionId,
+        result,
+        noteData,
+        isConfidential: formState.isConfidential,
+      });
+
       onNoteCreated?.();
       onNotesRefresh?.();
-
-      // Reset form
-      setFormState({
-        title: '',
-        keyObservations: '',
-        progressNotes: '',
-        actionItems: '',
-        emotionalState: '',
-        additionalContext: '',
-        isConfidential: false,
-      });
+      resetForm();
+      return true;
     } catch (error) {
+      noteFormTracking.creationError({
+        userId,
+        therapistId,
+        sessionId,
+        error,
+      });
       setError(error instanceof Error ? error.message : 'Failed to create client note');
+      return false;
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  return {
+    formState,
+    updateFormState,
+    handleSubmit,
+    isSubmitting,
+    error,
+  };
+};
+
+export function ClientNotesForm({
+  userId,
+  therapistId,
+  sessionId,
+  onNoteCreated,
+  onNotesRefresh,
+  className = '',
+}: {
+  userId: string;
+  therapistId: number;
+  sessionId?: number;
+  onNoteCreated?: () => void;
+  onNotesRefresh?: () => void;
+  className?: string;
+}) {
+  const { formState, updateFormState, handleSubmit, isSubmitting, error } = useClientNoteForm(
+    userId,
+    therapistId,
+    sessionId,
+    onNoteCreated,
+    onNotesRefresh,
+  );
 
   return (
     <div className={`space-y-4 ${className}`}>

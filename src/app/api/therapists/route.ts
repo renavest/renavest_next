@@ -1,4 +1,5 @@
 import { currentUser } from '@clerk/nextjs/server';
+import { isNotNull, sql, and } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
@@ -22,6 +23,7 @@ export async function GET(request: Request) {
         previewBlurb: therapists.previewBlurb,
       })
       .from(therapists)
+      .where(and(isNotNull(therapists.profileUrl), sql`${therapists.profileUrl} != ''`))
       .limit(limit);
 
     // Map results to use the correct image URL

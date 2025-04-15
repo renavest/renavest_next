@@ -20,14 +20,14 @@ export const users = pgTable('users', {
   lastName: text('last_name'),
   imageUrl: text('image_url'),
   isActive: boolean('is_active').default(true).notNull(),
-  therapistId: integer('therapist_id'), // Remove direct reference for now
+  therapistId: integer('therapist_id'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 export const therapists = pgTable('therapists', {
   id: serial('id').primaryKey(),
-  userId: integer('user_id'), // Remove direct reference for now
+  userId: integer('user_id'),
   name: varchar('name', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }), // New email field
   title: varchar('title', { length: 255 }),
@@ -47,17 +47,22 @@ export const therapists = pgTable('therapists', {
 
 // Relationships defined separately to avoid circular references
 export const usersRelations = relations(users, ({ one }) => ({
+  /**
+   * Establishes a many-to-one relationship between a user and their assigned therapist
+   * Each user belongs to one therapist
+   */
   therapist: one(therapists, {
     fields: [users.therapistId],
     references: [therapists.id],
   }),
 }));
 
-export const therapistsRelations = relations(therapists, ({ one }) => ({
-  user: one(users, {
-    fields: [therapists.userId],
-    references: [users.id],
-  }),
+export const therapistsRelations = relations(therapists, ({ many }) => ({
+  /**
+   * Establishes a one-to-many relationship between a therapist and their clients
+   * A therapist can have multiple users/clients
+   */
+  clients: many(users),
 }));
 
 // Onboarding table with flexible JSON storage

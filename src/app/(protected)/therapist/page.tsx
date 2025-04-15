@@ -1,9 +1,10 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { FileText, UserCircle2 } from 'lucide-react';
+import { FileText, UserCircle2, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
+import { AddNewClientSection } from '@/src/features/therapist-dashboard/components/AddNewClientSection';
 import ClientNotesSection from '@/src/features/therapist-dashboard/components/ClientNotesSection';
 import TherapistNavbar from '@/src/features/therapist-dashboard/components/TherapistNavbar';
 import { TherapistStatisticsCard } from '@/src/features/therapist-dashboard/components/TherapistStatisticsCard';
@@ -16,35 +17,57 @@ const ClientSidebar = ({
   clients,
   selectedClient,
   onClientSelect,
+  onAddClientClick,
 }: {
   clients: Client[];
   selectedClient: Client | null;
   onClientSelect: (client: Client) => void;
+  onAddClientClick: () => void;
 }) => (
-  <div className='bg-white border-r border-gray-100 p-4 space-y-2 h-full overflow-y-auto'>
+  <div className='bg-white border-r border-gray-100 p-4 space-y-2 h-full overflow-y-auto flex flex-col'>
     <h3 className='text-lg font-semibold text-gray-800 mb-4'>Your Clients</h3>
     {clients.map((client) => (
       <div
         key={client.id}
         onClick={() => onClientSelect(client)}
         className={`
-          flex items-center p-3 rounded-lg cursor-pointer transition-colors 
-          ${
-            selectedClient?.id === client.id
-              ? 'bg-purple-50 border border-purple-100'
-              : 'hover:bg-gray-50'
-          }
+          flex items-center justify-between p-4 rounded-xl cursor-pointer transition-all
+          border-2
+          ${selectedClient?.id === client.id ? 'border-purple-500 bg-purple-50 shadow-md' : 'border-gray-200 bg-white hover:bg-purple-50 hover:border-purple-300 shadow-sm'}
+          group
         `}
+        tabIndex={0}
+        role='button'
+        aria-pressed={selectedClient?.id === client.id}
       >
-        <UserCircle2 className='h-8 w-8 mr-3 text-purple-600' />
-        <div>
-          <p className='font-medium text-gray-800'>
-            {client.firstName} {client.lastName || ''}
-          </p>
-          <p className='text-xs text-gray-500'>{client.email}</p>
+        <div className='flex items-center'>
+          <UserCircle2 className='h-8 w-8 mr-3 text-purple-600' />
+          <div>
+            <p className='font-medium text-gray-800'>
+              {client.firstName} {client.lastName || ''}
+            </p>
+            <p className='text-xs text-gray-500'>{client.email}</p>
+          </div>
         </div>
+        <ChevronRight className='h-5 w-5 text-purple-400 group-hover:text-purple-600 transition-colors' />
       </div>
     ))}
+    <button
+      onClick={onAddClientClick}
+      className='mt-4 w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg shadow p-3 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2'
+      aria-label='Add New Client'
+    >
+      <svg
+        className='w-5 h-5'
+        fill='none'
+        stroke='currentColor'
+        strokeWidth={2}
+        viewBox='0 0 24 24'
+      >
+        <path strokeLinecap='round' strokeLinejoin='round' d='M12 4v16m8-8H4' />
+      </svg>
+      <span className='font-medium'>Add Client</span>
+    </button>
   </div>
 );
 
@@ -139,8 +162,7 @@ export default function TherapistDashboardPage() {
   const { clients, upcomingSessions, statistics, isLoading, error } = useTherapistDashboardData();
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [therapistId, setTherapistId] = useState<number | null>(null);
-
-  // Log upcoming sessions
+  const [isAddClientOpen, setIsAddClientOpen] = useState(false);
 
   // Fetch therapist ID when user is loaded
   useEffect(() => {
@@ -174,32 +196,19 @@ export default function TherapistDashboardPage() {
     );
   }
 
-  // If no clients (likely not a therapist), show the not a therapist section
+  // If no clients (likely not a therapist), show the add client section
   if (!isLoading && (clients.length === 0 || error)) {
     return (
       <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen flex items-center justify-center'>
-        <div className='bg-white rounded-xl p-8 border border-red-100 shadow-sm text-center'>
-          <h2 className={`text-xl font-bold ${COLORS.WARM_PURPLE.DEFAULT} mb-4`}>
-            Not a Therapist Yet?
-          </h2>
-          <p className='text-gray-600 mb-6'>
-            It looks like you haven&apos;t been registered as a therapist with Renavest.
-          </p>
-          <div className='flex justify-center space-x-4'>
-            <a
-              href='/contact'
-              className={`px-6 py-3 rounded-lg ${COLORS.WARM_PURPLE.bg} text-white hover:${COLORS.WARM_PURPLE['80']} transition-colors`}
-            >
-              Email Us to Become a Therapist
-            </a>
-          </div>
+        <div className='w-full max-w-md'>
+          <AddNewClientSection />
         </div>
       </div>
     );
   }
 
   return (
-    <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen'>
+    <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen relative'>
       <TherapistNavbar pageTitle={user?.firstName || 'Guest'} />
 
       <div className='mt-6'>
@@ -212,6 +221,7 @@ export default function TherapistDashboardPage() {
             clients={clients}
             selectedClient={selectedClient}
             onClientSelect={setSelectedClient}
+            onAddClientClick={() => setIsAddClientOpen(true)}
           />
         </div>
         <div className='col-span-8 bg-white rounded-xl border border-gray-100 shadow-sm'>
@@ -222,6 +232,39 @@ export default function TherapistDashboardPage() {
           />
         </div>
       </div>
+
+      {/* Add Client Modal */}
+      {isAddClientOpen && (
+        <div className='fixed inset-0 z-50 flex items-center justify-center'>
+          {/* Backdrop */}
+          <div
+            className='fixed inset-0 bg-black/25 backdrop-blur-sm'
+            onClick={() => setIsAddClientOpen(false)}
+          />
+          {/* Modal */}
+          <div className='relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6 animate-in fade-in zoom-in duration-200'>
+            {/* Header */}
+            <div className='mb-6 flex justify-between items-center'>
+              <h2 className='text-2xl font-semibold text-gray-900'>Add New Client</h2>
+              <button
+                onClick={() => setIsAddClientOpen(false)}
+                className='text-gray-400 hover:text-gray-600 p-2 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-400'
+                aria-label='Close Add Client Modal'
+              >
+                <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M6 18L18 6M6 6l12 12'
+                  />
+                </svg>
+              </button>
+            </div>
+            <AddNewClientSection />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

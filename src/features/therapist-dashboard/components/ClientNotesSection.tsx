@@ -1,6 +1,7 @@
 'use client';
 
 import { FileText, Plus, ChevronDown, ChevronUp } from 'lucide-react';
+import posthog from 'posthog-js';
 import { useState, useEffect } from 'react';
 
 import { ClientNotesForm } from './ClientNotesForm';
@@ -167,10 +168,22 @@ export default function ClientNotesSection({ clientId }: { clientId: string }) {
         }
         const data = await response.json();
         setNotes(data.notes || []);
+
+        // Track notes fetch
+        posthog.capture('therapist_client_notes_fetched', {
+          clientId,
+          notesCount: data.notes?.length || 0,
+        });
       } catch (error) {
         console.error('Error fetching client notes:', error);
         setError(error instanceof Error ? error.message : 'An unknown error occurred');
         setNotes([]);
+
+        // Track notes fetch error
+        posthog.capture('therapist_client_notes_fetch_error', {
+          clientId,
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        });
       } finally {
         setIsLoading(false);
       }
@@ -183,15 +196,38 @@ export default function ClientNotesSection({ clientId }: { clientId: string }) {
 
   const handleNoteCreated = () => {
     setIsNotesFormOpen(false);
+
+    // Track notes form closure
+    posthog.capture('therapist_client_notes_form_closed', {
+      clientId,
+    });
   };
 
   const toggleNoteExpansion = (noteId: number) => {
+    const isExpanding = expandedNoteId !== noteId;
     setExpandedNoteId((prevId) => (prevId === noteId ? null : noteId));
+
+    // Track note expansion/collapse
+    posthog.capture('therapist_client_note_toggle', {
+      clientId,
+      noteId,
+      isExpanding,
+    });
+  };
+
+  const handleNotesFormOpen = (isOpen: boolean) => {
+    setIsNotesFormOpen(isOpen);
+
+    // Track notes form open/close
+    posthog.capture('therapist_client_notes_form_toggle', {
+      clientId,
+      isOpen,
+    });
   };
 
   return (
     <div className='bg-white rounded-xl p-4 md:p-6 border border-purple-100 shadow-sm'>
-      <NotesHeader isNotesFormOpen={isNotesFormOpen} setIsNotesFormOpen={setIsNotesFormOpen} />
+      <NotesHeader isNotesFormOpen={isNotesFormOpen} setIsNotesFormOpen={handleNotesFormOpen} />
 
       {isNotesFormOpen && therapistId && (
         <div className='mb-4'>
@@ -212,10 +248,22 @@ export default function ClientNotesSection({ clientId }: { clientId: string }) {
                   }
                   const data = await response.json();
                   setNotes(data.notes || []);
+
+                  // Track notes refresh
+                  posthog.capture('therapist_client_notes_refreshed', {
+                    clientId,
+                    notesCount: data.notes?.length || 0,
+                  });
                 } catch (error) {
                   console.error('Error fetching client notes:', error);
                   setError(error instanceof Error ? error.message : 'An unknown error occurred');
                   setNotes([]);
+
+                  // Track notes refresh error
+                  posthog.capture('therapist_client_notes_refresh_error', {
+                    clientId,
+                    errorMessage: error instanceof Error ? error.message : 'Unknown error',
+                  });
                 } finally {
                   setIsLoading(false);
                 }

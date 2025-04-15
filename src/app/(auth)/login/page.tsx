@@ -11,21 +11,21 @@ const FeatureSection = () => {
   const features = [
     {
       icon: Heart,
-      title: 'Emotional Financial Intelligence',
+      title: 'Employee Empowerment',
       description:
-        'Understand the psychological patterns behind your financial decisions and break harmful money cycles.',
+        'Personalized financial therapy that transforms individual money mindsets and supports holistic financial well-being.',
     },
     {
       icon: BarChart,
-      title: 'Personalized Financial Guidance',
+      title: 'Employer Insights',
       description:
-        'Get tailored insights that align your financial strategies with your emotional well-being and personal goals.',
+        'Aggregate, anonymized analytics that help organizations understand workforce financial health and support strategies.',
     },
     {
       icon: Lightbulb,
-      title: 'Holistic Wellness Approach',
+      title: 'Therapist Collaboration',
       description:
-        'Transform your relationship with money through integrated therapy, education, and actionable strategies.',
+        'A comprehensive platform for financial therapists to manage clients, track progress, and deliver targeted financial wellness support.',
     },
   ];
 
