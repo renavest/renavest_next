@@ -2,10 +2,8 @@
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 
-import { ALLOWED_EMAILS } from '@/src/constants';
 import DashboardClient from '@/src/features/employee-dashboard/components/DashboardClient';
-import TherapistRecommendations from '@/src/features/employee-dashboard/components/insights/TherapistRecommendations';
-import { UpcomingSessionsSection } from '@/src/features/employee-dashboard/components/UpcomingSessionsSection';
+import LimitedDashboardClient from '@/src/features/employee-dashboard/components/LimitedDashboardClient';
 import { clearOnboardingState } from '@/src/features/onboarding/state/onboardingState';
 
 export default async function DashboardPage() {
@@ -26,13 +24,6 @@ export default async function DashboardPage() {
   if (email === 'stanley@renavestapp.com') {
     return <DashboardClient />;
   } else {
-    return (
-      <div className='min-h-screen bg-gray-50 font-sans pt-24 pb-8 px-4 md:px-0'>
-        <main className='max-w-2xl mx-auto space-y-8'>
-          <UpcomingSessionsSection />
-          <TherapistRecommendations />
-        </main>
-      </div>
-    );
+    return <LimitedDashboardClient />;
   }
 }
