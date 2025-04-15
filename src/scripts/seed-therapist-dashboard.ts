@@ -41,31 +41,31 @@ async function seedTherapistDashboard() {
     //   })
     //   .returning();
 
-    // Find the existing test user
-    const [testUser] = await db
+    // Find the existing client user (now Seth)
+    const [clientUser] = await db
       .select()
       .from(users)
-      .where(eq(users.email, 'stanley@renavestapp.com'))
+      .where(eq(users.email, 'seth@renavestapp.com'))
       .limit(1);
     const [insertedOrUpdatedTherapist] = await db
       .select()
       .from(therapists)
-      .where(eq(therapists.email, 'sethmorton05@gmail.com'))
+      .where(eq(therapists.email, 'stanley@renavestapp.com'))
       .limit(1);
-    if (!testUser) {
-      throw new Error('Test user not found');
+    if (!clientUser) {
+      throw new Error('Client user not found');
     }
 
-    // Update the test user with the therapist ID
+    // Update the client user with the therapist ID
     await db
       .update(users)
       .set({ therapistId: insertedOrUpdatedTherapist.id })
-      .where(eq(users.email, 'stanley@renavestapp.com'));
+      .where(eq(users.email, 'seth@renavestapp.com'));
 
     // Upsert booking sessions
     const bookingSessionsData = [
       {
-        userId: testUser.clerkId,
+        userId: clientUser.clerkId,
         therapistId: insertedOrUpdatedTherapist.id,
         sessionDate: new Date('2025-04-09T10:00:00Z'),
         sessionStartTime: new Date('2025-04-09T10:00:00Z'),
@@ -76,7 +76,7 @@ async function seedTherapistDashboard() {
         },
       },
       {
-        userId: testUser.clerkId,
+        userId: clientUser.clerkId,
         therapistId: insertedOrUpdatedTherapist.id,
         sessionDate: new Date('2025-05-15T14:30:00Z'),
         sessionStartTime: new Date('2025-05-15T14:30:00Z'),
@@ -96,7 +96,7 @@ async function seedTherapistDashboard() {
 
     // Upsert client notes
     const clientNotesData = insertedBookingSessions.map((session, index) => ({
-      userId: testUser.clerkId,
+      userId: clientUser.clerkId,
       therapistId: insertedOrUpdatedTherapist.id,
       sessionId: session.id,
       title: `Session Notes ${index + 1}`,
@@ -123,8 +123,8 @@ async function seedTherapistDashboard() {
 
     console.log('✅ Successfully seeded/updated therapist dashboard with test data');
     console.log('🔍 Details:');
-    console.log('   - Therapist added/updated: Seth Morton');
-    console.log('   - Test User Email: stanley@renavestapp');
+    console.log('   - Therapist added/updated: Stanley (stanley@renavestapp.com)');
+    console.log('   - Client User Email: seth@renavestapp.com');
     console.log(`   - Booking Sessions: ${insertedBookingSessions.length}`);
     console.log(`   - Client Notes: ${clientNotesData.length}`);
   } catch (error) {
