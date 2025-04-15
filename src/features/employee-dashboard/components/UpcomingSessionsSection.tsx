@@ -28,7 +28,7 @@ export function UpcomingSessionsSection() {
         if (!response.ok) {
           throw new Error('Failed to fetch upcoming sessions');
         }
-
+        
         const data = await response.json();
         setUpcomingSessions(data.upcomingSessions);
       } catch (err) {

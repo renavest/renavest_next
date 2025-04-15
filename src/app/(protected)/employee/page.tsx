@@ -2,8 +2,8 @@
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 
-import { ALLOWED_EMAILS } from '@/src/constants';
 import DashboardClient from '@/src/features/employee-dashboard/components/DashboardClient';
+import LimitedDashboardClient from '@/src/features/employee-dashboard/components/LimitedDashboardClient';
 import { clearOnboardingState } from '@/src/features/onboarding/state/onboardingState';
 
 export default async function DashboardPage() {
@@ -12,12 +12,18 @@ export default async function DashboardPage() {
   const user = await clerk.users.getUser(userId ?? '');
   const email = user.emailAddresses[0]?.emailAddress;
 
-  // Redirect to explore if email not in allowed list
-  if (!email || !ALLOWED_EMAILS.includes(email)) {
+  // Redirect to explore if no email
+  if (!email) {
     redirect('/explore');
-  } else {
-    clearOnboardingState();
   }
 
-  return <DashboardClient />;
+  // Clear onboarding state if needed
+  clearOnboardingState();
+
+  // Render specific view based on email
+  if (email === 'stanley@renavestapp.com') {
+    return <DashboardClient />;
+  } else {
+    return <LimitedDashboardClient />;
+  }
 }
