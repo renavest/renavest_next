@@ -1,6 +1,5 @@
 import * as dotenv from 'dotenv';
 import { eq } from 'drizzle-orm';
-import { sql } from 'drizzle-orm';
 
 import { db } from '@/src/db';
 import { therapists, users, bookingSessions, clientNotes } from '@/src/db/schema';
@@ -45,7 +44,7 @@ async function seedTherapistDashboard() {
     const [clientUser] = await db
       .select()
       .from(users)
-      .where(eq(users.email, 'seth@renavestapp.com'))
+      .where(eq(users.email, 'sethmorton05@gmail.com'))
       .limit(1);
     const [insertedOrUpdatedTherapist] = await db
       .select()
@@ -60,7 +59,7 @@ async function seedTherapistDashboard() {
     await db
       .update(users)
       .set({ therapistId: insertedOrUpdatedTherapist.id })
-      .where(eq(users.email, 'seth@renavestapp.com'));
+      .where(eq(users.email, 'sethmorton05@gmail.com'));
 
     // Upsert booking sessions
     const bookingSessionsData = [

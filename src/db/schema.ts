@@ -41,6 +41,15 @@ export const therapists = pgTable('therapists', {
   previewBlurb: text('preview_blurb'),
   profileUrl: text('profile_image_url'),
   hourlyRate: numeric('hourly_rate', { precision: 10, scale: 2 }),
+  // New fields for Google Calendar integration
+  googleCalendarAccessToken: text('google_calendar_access_token'),
+  googleCalendarRefreshToken: text('google_calendar_refresh_token'),
+  googleCalendarEmail: text('google_calendar_email'),
+  googleCalendarIntegrationStatus: varchar('google_calendar_integration_status', {
+    length: 50,
+    enum: ['not_connected', 'connected', 'error'],
+  }).default('not_connected'),
+  googleCalendarIntegrationDate: timestamp('google_calendar_integration_date'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -77,7 +86,34 @@ export const userOnboarding = pgTable('user_onboarding', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
-// Add this after the existing tables
+// Add before the bookingSessions table
+export const therapistAvailability = pgTable('therapist_availability', {
+  id: serial('id').primaryKey(),
+  therapistId: integer('therapist_id')
+    .references(() => therapists.id)
+    .notNull(),
+  dayOfWeek: integer('day_of_week').notNull(), // 0-6 for Sunday-Saturday
+  startTime: varchar('start_time', { length: 5 }).notNull(), // Format: "HH:mm"
+  endTime: varchar('end_time', { length: 5 }).notNull(), // Format: "HH:mm"
+  isRecurring: boolean('is_recurring').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const therapistBlockedTimes = pgTable('therapist_blocked_times', {
+  id: serial('id').primaryKey(),
+  therapistId: integer('therapist_id')
+    .references(() => therapists.id)
+    .notNull(),
+  startTime: timestamp('start_time').notNull(),
+  endTime: timestamp('end_time').notNull(),
+  reason: text('reason'),
+  googleEventId: text('google_event_id'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Enhance the bookingSessions table
 export const bookingSessions = pgTable('booking_sessions', {
   id: serial('id').primaryKey(),
   userId: text('user_id')
@@ -88,12 +124,15 @@ export const bookingSessions = pgTable('booking_sessions', {
     .notNull(),
   sessionDate: timestamp('session_date').notNull(),
   sessionStartTime: timestamp('session_start_time').notNull(),
+  sessionEndTime: timestamp('session_end_time').notNull(),
   status: varchar('status', {
     length: 50,
-    enum: ['scheduled', 'completed', 'cancelled', 'rescheduled'],
+    enum: ['pending', 'confirmed', 'scheduled', 'completed', 'cancelled', 'rescheduled'],
   })
     .notNull()
-    .default('scheduled'),
+    .default('pending'),
+  googleEventId: text('google_event_id'),
+  cancellationReason: text('cancellation_reason'),
   metadata: jsonb('metadata'), // Flexible JSON field for additional data
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -130,5 +169,20 @@ export const clientNotesRelations = relations(clientNotes, ({ one }) => ({
   session: one(bookingSessions, {
     fields: [clientNotes.sessionId],
     references: [bookingSessions.id],
+  }),
+}));
+
+// Add relations for the new tables
+export const therapistAvailabilityRelations = relations(therapistAvailability, ({ one }) => ({
+  therapist: one(therapists, {
+    fields: [therapistAvailability.therapistId],
+    references: [therapists.id],
+  }),
+}));
+
+export const therapistBlockedTimesRelations = relations(therapistBlockedTimes, ({ one }) => ({
+  therapist: one(therapists, {
+    fields: [therapistBlockedTimes.therapistId],
+    references: [therapists.id],
   }),
 }));
