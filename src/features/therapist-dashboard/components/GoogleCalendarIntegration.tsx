@@ -10,7 +10,7 @@ import {
   initiateGoogleCalendarConnection,
   disconnectGoogleCalendar,
   fetchTherapistId,
-} from './googleCalendarIntegrationHelpers';
+} from '../../google-calendar/components/googleCalendarIntegrationHelpers';
 
 export function GoogleCalendarIntegration() {
   const { user } = useUser();
