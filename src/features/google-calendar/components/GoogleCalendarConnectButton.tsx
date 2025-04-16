@@ -1,10 +1,6 @@
 import React from 'react';
-import { Button } from '@/src/components/ui/button';
-import { useRouter } from 'next/navigation';
 
 export function GoogleCalendarConnectButton() {
-  const router = useRouter();
-
   const handleGoogleCalendarConnect = async () => {
     try {
       const response = await fetch('/api/google-calendar');
@@ -19,8 +15,12 @@ export function GoogleCalendarConnectButton() {
   };
 
   return (
-    <Button onClick={handleGoogleCalendarConnect} variant='outline' className='w-full'>
+    <button
+      type='button'
+      onClick={handleGoogleCalendarConnect}
+      className='w-full px-4 py-2 rounded-md bg-purple-600 text-white font-medium shadow hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition'
+    >
       Connect Google Calendar
-    </Button>
+    </button>
   );
 }
