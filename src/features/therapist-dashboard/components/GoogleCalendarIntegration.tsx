@@ -5,56 +5,12 @@ import { Calendar, Unlink } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
-// Separate function for checking Google Calendar status
-async function fetchGoogleCalendarStatus(userId: string) {
-  try {
-    const response = await fetch(`/api/google-calendar/google-calendar-status?userId=${userId}`);
-    return await response.json();
-  } catch (error) {
-    console.error('Error checking Google Calendar status:', error);
-    toast.error('Failed to check Google Calendar status');
-    return { success: false };
-  }
-}
-
-// Separate function for initiating Google Calendar connection
-async function initiateGoogleCalendarConnection() {
-  try {
-    const authResponse = await fetch('/api/google-calendar', { method: 'GET' });
-    const { authUrl } = await authResponse.json();
-    window.location.href = authUrl;
-  } catch (error) {
-    console.error('Error initiating Google Calendar connection:', error);
-    toast.error('Failed to connect Google Calendar');
-  }
-}
-
-// Separate function for disconnecting Google Calendar
-async function disconnectGoogleCalendar(therapistId: number) {
-  try {
-    const response = await fetch('/api/google-calendar/disconnect', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ therapistId }),
-    });
-
-    const data = await response.json();
-
-    if (data.success) {
-      toast.success('Google Calendar disconnected successfully');
-      return true;
-    } else {
-      toast.error(data.message || 'Failed to disconnect Google Calendar');
-      return false;
-    }
-  } catch (error) {
-    console.error('Error disconnecting Google Calendar:', error);
-    toast.error('Failed to disconnect Google Calendar');
-    return false;
-  }
-}
+import {
+  fetchGoogleCalendarStatus,
+  initiateGoogleCalendarConnection,
+  disconnectGoogleCalendar,
+  fetchTherapistId,
+} from './googleCalendarIntegrationHelpers';
 
 export function GoogleCalendarIntegration() {
   const { user } = useUser();
@@ -69,7 +25,7 @@ export function GoogleCalendarIntegration() {
 
       setIsLoading(true);
       try {
-        const data = await fetchGoogleCalendarStatus(user.id);
+        const data = await fetchGoogleCalendarStatus();
 
         if (data.success) {
           setIsConnected(data.isConnected);
@@ -115,20 +71,6 @@ export function GoogleCalendarIntegration() {
       setIsLoading(false);
     }
   };
-
-  // Helper function to fetch therapist ID
-  async function fetchTherapistId(userId?: string): Promise<number | null> {
-    if (!userId) return null;
-
-    try {
-      const response = await fetch('/api/therapist/id');
-      const data = await response.json();
-      return data.therapistId || null;
-    } catch (error) {
-      console.error('Failed to fetch therapist ID:', error);
-      return null;
-    }
-  }
 
   return (
     <div className='w-full max-w-md mx-auto bg-white shadow-md rounded-lg overflow-hidden'>
