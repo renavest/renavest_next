@@ -1,62 +1,68 @@
-import { auth } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm';
+import { currentUser } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
+
 import { db } from '@/src/db';
-import { therapists } from '@/src/db/schema';
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const { userId } = await auth();
+    console.log('Google Calendar status check initiated');
+    const user = await currentUser();
+    const url = new URL(req.url);
+    const therapistId = url.searchParams.get('therapistId');
 
-    let therapist;
+    console.log('Request params:', {
+      therapistId,
+      hasUser: !!user,
+    });
 
-    if (userId) {
-      // First try to find by Clerk userId
-      therapist = await db.query.therapists.findFirst({
-        where: (therapists, { eq }) => eq(therapists.userId, userId),
-        columns: {
-          id: true,
-          email: true,
-          googleCalendarEmail: true,
-          googleCalendarIntegrationStatus: true,
-        },
-      });
+    if (!user) {
+      console.log('No user found, returning 401');
+      return NextResponse.json({ success: false, message: 'User not found' }, { status: 401 });
     }
 
-    if (!therapist) {
-      // If no therapist found by userId, try to find by email from Clerk session
-      const { emailAddresses } = await auth().getUser(userId);
-      const userEmail = emailAddresses[0]?.emailAddress;
-
-      if (userEmail) {
-        therapist = await db.query.therapists.findFirst({
-          where: (therapists, { eq }) => eq(therapists.email, userEmail),
-          columns: {
-            id: true,
-            email: true,
-            googleCalendarEmail: true,
-            googleCalendarIntegrationStatus: true,
-          },
-        });
-      }
+    if (!therapistId) {
+      console.log('No therapist ID provided, returning 400');
+      return NextResponse.json(
+        { success: false, message: 'Missing therapist ID' },
+        { status: 400 },
+      );
     }
 
+    // Find therapist by ID
+    console.log('Finding therapist with ID:', therapistId);
+    const therapist = await db.query.therapists.findFirst({
+      where: (therapists, { eq }) => eq(therapists.id, parseInt(therapistId)),
+      columns: {
+        id: true,
+        email: true,
+        googleCalendarEmail: true,
+        googleCalendarIntegrationStatus: true,
+      },
+    });
+
+    console.log('Therapist query result:', {
+      found: !!therapist,
+      integrationStatus: therapist?.googleCalendarIntegrationStatus,
+      hasCalendarEmail: !!therapist?.googleCalendarEmail,
+    });
+
     if (!therapist) {
+      console.log('Therapist not found, returning 404');
       return NextResponse.json({ success: false, message: 'Therapist not found' }, { status: 404 });
     }
 
-    return NextResponse.json({
+    const response = {
       success: true,
       therapistId: therapist.id,
       email: therapist.email,
       isConnected: therapist.googleCalendarIntegrationStatus === 'connected',
       calendarEmail: therapist.googleCalendarEmail || null,
-    });
+    };
+
+    console.log('Returning successful response:', response);
+    return NextResponse.json(response);
   } catch (error) {
     console.error('Error checking Google Calendar status:', error);
-    return NextResponse.json(
-      { success: false, message: 'Failed to check calendar status' },
-      { status: 500 },
-    );
+    return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
   }
 }

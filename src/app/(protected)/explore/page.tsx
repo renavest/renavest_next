@@ -2,8 +2,8 @@ import { sql } from 'drizzle-orm';
 
 import { db } from '@/src/db';
 import { therapists } from '@/src/db/schema';
-import { Advisor } from '@/src/features/advisors/components/AdvisorGrid';
 import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
+import { Advisor } from '@/src/shared/types';
 import { COLORS } from '@/src/styles/colors';
 
 import AdvisorGrid from '../../../features/advisors/components/AdvisorGrid';
@@ -14,10 +14,7 @@ import ExploreNavbar from '../../../features/home/components/ExploreNavbar';
 export default async function Home() {
   try {
     // Fetch all therapists except Seth Morton from the database
-    const dbTherapists = await db
-      .select()
-      .from(therapists)
-      .where(sql`name != 'Seth Morton'`);
+    const dbTherapists = await db.select().from(therapists);
 
     // Transform the database records into the Advisor type
     const advisors: Advisor[] = dbTherapists

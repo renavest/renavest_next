@@ -2,11 +2,12 @@
 
 import { redirect } from 'next/navigation';
 import { useState } from 'react';
-import { InlineWidget, EventScheduledEvent } from 'react-calendly';
+import { InlineWidget } from 'react-calendly';
 import { useCalendlyEventListener } from 'react-calendly';
 
 import { createBookingSession } from '@/src/features/booking/actions/bookingActions';
 import { BookingConfirmation } from '@/src/features/booking/components/BookingConfirmation';
+import { TherapistAvailability } from '@/src/features/booking/components/TherapistAvailability';
 
 interface TherapistCalendlyClientProps {
   advisor: {
@@ -24,16 +25,14 @@ export default function TherapistCalendlyClient({
   userEmail,
 }: TherapistCalendlyClientProps) {
   const [isBookingConfirmed, setIsBookingConfirmed] = useState(false);
+  const [isUsingCalendly, setIsUsingCalendly] = useState(false);
 
   // Redirect if no advisor is found
-  if (!advisor?.id || !advisor?.bookingURL) {
+  if (!advisor?.id) {
     redirect('/explore');
   }
 
-  const trackCalendlyEvent = async (
-    eventType: string,
-    eventData?: EventScheduledEvent | Record<string, unknown>,
-  ) => {
+  const trackCalendlyEvent = async (eventType: string, eventData?: Record<string, unknown>) => {
     try {
       await fetch('/api/track/calendly', {
         method: 'POST',
@@ -44,7 +43,7 @@ export default function TherapistCalendlyClient({
           eventType,
           therapistId: advisor.id,
           therapistName: advisor.name,
-          eventData: eventData ? JSON.parse(JSON.stringify(eventData)) : undefined,
+          eventData,
         }),
       });
     } catch (error) {
@@ -80,38 +79,52 @@ export default function TherapistCalendlyClient({
       console.log('Booking session saved successfully');
     } catch (error) {
       console.error('Error saving booking session:', error);
+      throw error;
     }
   };
 
   useCalendlyEventListener({
-    onEventScheduled: (e) => {
+    onEventScheduled: () => {
       setIsBookingConfirmed(true);
-      trackCalendlyEvent('calendly_event_scheduled', e);
+      trackCalendlyEvent('calendly_event_scheduled');
     },
   });
 
   if (isBookingConfirmed) {
+    return <BookingConfirmation advisorId={advisor.id} onConfirm={handleBookingConfirmation} />;
+  }
+
+  if (isUsingCalendly) {
     return (
-      <BookingConfirmation
-        advisorId={advisor.id}
-        onConfirm={(details) =>
-          handleBookingConfirmation({
-            ...details,
-            timezone: 'EST', // Default timezone, can be made dynamic if needed
-          })
-        }
+      <InlineWidget
+        url={advisor.bookingURL}
+        styles={{
+          height: '100%',
+          width: '100%',
+          minHeight: '100vh',
+        }}
       />
     );
   }
 
   return (
-    <InlineWidget
-      url={advisor.bookingURL}
-      styles={{
-        height: '100%',
-        width: '100%',
-        minHeight: '100vh',
-      }}
-    />
+    <div className='space-y-8'>
+      <div>
+        <h2 className='text-2xl font-semibold text-gray-900 mb-2'>
+          Book a Session with {advisor.name}
+        </h2>
+        <p className='text-gray-600'>Select an available time slot that works best for you.</p>
+      </div>
+
+      <TherapistAvailability
+        therapistId={parseInt(advisor.id)}
+        onSlotSelect={() => setIsBookingConfirmed(true)}
+        onGoogleCalendarNotAvailable={() => {
+          if (advisor.bookingURL) {
+            setIsUsingCalendly(true);
+          }
+        }}
+      />
+    </div>
   );
 }

@@ -17,6 +17,7 @@ interface AdvisorCardProps {
   onClick: () => void;
 }
 
+
 const useImageLoadState = () => {
   const [imageLoadState, setImageLoadState] = useState({
     isLoaded: false,

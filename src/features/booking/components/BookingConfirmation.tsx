@@ -7,11 +7,13 @@ import { toast } from 'sonner';
 import { TherapistAvailability } from './TherapistAvailability';
 
 interface BookingConfirmationProps {
-  therapistId: number;
-  therapistName: string;
-  _therapistEmail: string;
-  _userEmail: string;
-  _userName: string;
+  advisorId: string;
+  onConfirm: (details: {
+    date: string;
+    startTime: string;
+    therapistId: string;
+    timezone: string;
+  }) => Promise<{ sessionId: number; success: boolean; message: string; emailSent: boolean }>;
 }
 
 interface TimeSlot {
@@ -19,13 +21,7 @@ interface TimeSlot {
   end: string;
 }
 
-export function BookingConfirmation({
-  therapistId,
-  therapistName,
-  _therapistEmail,
-  _userEmail,
-  _userName,
-}: BookingConfirmationProps) {
+export function BookingConfirmation({ advisorId, onConfirm }: BookingConfirmationProps) {
   const router = useRouter();
   const [isBooking, setIsBooking] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
@@ -39,31 +35,20 @@ export function BookingConfirmation({
 
     setIsBooking(true);
     try {
-      const response = await fetch('/api/bookings/sessions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          therapistId,
-          sessionStartTime: selectedSlot.start,
-          sessionEndTime: selectedSlot.end,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        }),
+      // Convert slot to expected format
+      const date = new Date(selectedSlot.start).toISOString().split('T')[0];
+      const startTime = new Date(selectedSlot.start).toTimeString().split(' ')[0];
+
+      const result = await onConfirm({
+        date,
+        startTime,
+        therapistId: advisorId,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to book session');
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        toast.success('Session booked successfully!');
-        router.push('/dashboard');
-      } else {
-        throw new Error(data.message || 'Failed to book session');
-      }
+      toast.success('Session booked successfully!');
+      // Redirect to the confirmation page with the booking ID
+      router.push(`/booking/confirmation?bookingId=${result.sessionId}`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to book session');
     } finally {
@@ -74,13 +59,11 @@ export function BookingConfirmation({
   return (
     <div className='space-y-8'>
       <div>
-        <h2 className='text-2xl font-semibold text-gray-900 mb-2'>
-          Book a Session with {therapistName}
-        </h2>
+        <h2 className='text-2xl font-semibold text-gray-900 mb-2'>Book a Session</h2>
         <p className='text-gray-600'>Select an available time slot that works best for you.</p>
       </div>
 
-      <TherapistAvailability therapistId={therapistId} onSlotSelect={handleSlotSelect} />
+      <TherapistAvailability therapistId={parseInt(advisorId)} onSlotSelect={handleSlotSelect} />
 
       {selectedSlot && (
         <div className='mt-6'>

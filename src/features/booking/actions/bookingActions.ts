@@ -78,7 +78,7 @@ async function createBookingRecord(data: {
 }) {
   // Calculate end time (1 hour after start time)
   const sessionEndTime = data.sessionDate.plus({ hours: 1 });
-
+  
   return db
     .insert(bookingSessions)
     .values({
