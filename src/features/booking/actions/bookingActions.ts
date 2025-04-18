@@ -76,6 +76,9 @@ async function createBookingRecord(data: {
   sessionDate: DateTime;
   userEmail: string;
 }) {
+  // Calculate end time (1 hour after start time)
+  const sessionEndTime = data.sessionDate.plus({ hours: 1 });
+
   return db
     .insert(bookingSessions)
     .values({
@@ -83,6 +86,7 @@ async function createBookingRecord(data: {
       therapistId: data.therapistId,
       sessionDate: data.sessionDate.toJSDate(),
       sessionStartTime: data.sessionDate.toJSDate(),
+      sessionEndTime: sessionEndTime.toJSDate(),
       status: 'scheduled',
       metadata: {
         calendlyEventData: null,
