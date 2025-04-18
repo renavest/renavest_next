@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
     'https://www.googleapis.com/auth/calendar.events',
     'https://www.googleapis.com/auth/userinfo.email',
     'https://www.googleapis.com/auth/calendar.settings.readonly',
+    'https://www.googleapis.com/auth/calendar.readonly',
   ];
 
   // Add state if therapistId is present
