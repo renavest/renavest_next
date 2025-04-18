@@ -4,9 +4,9 @@ import { useUser } from '@clerk/nextjs';
 import { FileText, UserCircle2, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
+import { GoogleCalendarIntegration } from '@/src/features/google-calendar/components/GoogleCalendarIntegration';
 import { AddNewClientSection } from '@/src/features/therapist-dashboard/components/AddNewClientSection';
 import ClientNotesSection from '@/src/features/therapist-dashboard/components/ClientNotesSection';
-import { GoogleCalendarIntegration } from '@/src/features/therapist-dashboard/components/GoogleCalendarIntegration';
 import TherapistNavbar from '@/src/features/therapist-dashboard/components/TherapistNavbar';
 import { TherapistStatisticsCard } from '@/src/features/therapist-dashboard/components/TherapistStatisticsCard';
 import { UpcomingSessionsCard } from '@/src/features/therapist-dashboard/components/UpcomingSessionsCard';

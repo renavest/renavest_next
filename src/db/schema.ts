@@ -27,7 +27,7 @@ export const users = pgTable('users', {
 
 export const therapists = pgTable('therapists', {
   id: serial('id').primaryKey(),
-  userId: integer('user_id'),
+  userId: varchar('user_id', { length: 255 }),
   name: varchar('name', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }), // New email field
   title: varchar('title', { length: 255 }),

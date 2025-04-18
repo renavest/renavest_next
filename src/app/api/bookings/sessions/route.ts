@@ -1,11 +1,13 @@
 import { auth } from '@clerk/nextjs/server';
-import { and, eq } from 'drizzle-orm';
-import { google } from 'googleapis';
+import { eq } from 'drizzle-orm';
+import { calendar_v3, google } from 'googleapis';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { db } from '@/src/db';
-import { bookingSessions, therapists, users } from '@/src/db/schema';
+import { bookingSessions } from '@/src/db/schema';
+
+import { UserType, TherapistType } from './types';
 
 // OAuth2 client configuration
 const oauth2Client = new google.auth.OAuth2(
@@ -20,6 +22,7 @@ const CreateBookingSchema = z.object({
   sessionDate: z.string(),
   sessionStartTime: z.string(),
   sessionEndTime: z.string(),
+  timezone: z.string(), // Client's timezone
 });
 
 const UpdateBookingSchema = z.object({
@@ -27,6 +30,104 @@ const UpdateBookingSchema = z.object({
   status: z.enum(['confirmed', 'cancelled', 'rescheduled']),
   cancellationReason: z.string().optional(),
 });
+
+// Helper function to get user and therapist details
+async function getUserAndTherapist(
+  userId: string,
+  therapistId: number,
+): Promise<[UserType | null, TherapistType | null]> {
+  const [user, therapist] = await Promise.all([
+    db.query.users.findFirst({
+      where: (users, { eq }) => eq(users.clerkId, userId),
+    }) as Promise<UserType | null>,
+    db.query.therapists.findFirst({
+      where: (therapists, { eq }) => eq(therapists.id, therapistId),
+    }) as Promise<TherapistType | null>,
+  ]);
+
+  return [user, therapist];
+}
+
+// Helper function to get therapist's timezone
+async function getTherapistTimezone(calendar: calendar_v3.Calendar) {
+  const calendarSettings = await calendar.settings.get({
+    setting: 'timezone',
+  });
+  return calendarSettings.data.value || 'UTC';
+}
+
+// Helper function to convert times between timezones
+function convertTimezone(time: Date, timezone: string) {
+  return new Date(
+    time.toLocaleString('en-US', {
+      timeZone: timezone,
+    }),
+  );
+}
+
+// Helper function to check slot availability
+async function checkSlotAvailability(
+  calendar: calendar_v3.Calendar,
+  startTime: Date,
+  endTime: Date,
+  therapistTimezone: string,
+) {
+  const freeBusyResponse = await calendar.freebusy.query({
+    requestBody: {
+      timeMin: startTime.toISOString(),
+      timeMax: endTime.toISOString(),
+      timeZone: therapistTimezone,
+      items: [{ id: 'primary' }],
+    },
+  });
+
+  const busySlots = freeBusyResponse.data.calendars?.primary?.busy || [];
+  return busySlots.length === 0;
+}
+
+// Helper function to create Google Calendar event
+async function createGoogleCalendarEvent(
+  calendar: calendar_v3.Calendar,
+  user: UserType,
+  therapist: TherapistType,
+  startTime: Date,
+  endTime: Date,
+  therapistTimezone: string,
+) {
+  return calendar.events.insert({
+    calendarId: 'primary',
+    requestBody: {
+      summary: `Therapy Session with ${user.firstName} ${user.lastName}`,
+      description: 'Therapy session booked through Renavest',
+      start: {
+        dateTime: startTime.toISOString(),
+        timeZone: therapistTimezone,
+      },
+      end: {
+        dateTime: endTime.toISOString(),
+        timeZone: therapistTimezone,
+      },
+      attendees: [
+        {
+          email: user.email || '',
+          responseStatus: 'accepted',
+        },
+        {
+          email: therapist.googleCalendarEmail || '',
+          responseStatus: 'accepted',
+        },
+      ],
+      guestsCanModify: false,
+      reminders: {
+        useDefault: false,
+        overrides: [
+          { method: 'email', minutes: 24 * 60 }, // 24 hours before
+          { method: 'popup', minutes: 30 }, // 30 minutes before
+        ],
+      },
+    },
+  });
+}
 
 // Create a new booking
 export async function POST(req: NextRequest) {
@@ -40,53 +141,72 @@ export async function POST(req: NextRequest) {
     const validatedData = CreateBookingSchema.parse(body);
 
     // Get user and therapist details
-    const [user, therapist] = await Promise.all([
-      db.query.users.findFirst({
-        where: (users, { eq }) => eq(users.clerkId, userId),
-      }),
-      db.query.therapists.findFirst({
-        where: (therapists, { eq }) => eq(therapists.id, validatedData.therapistId),
-      }),
-    ]);
-
+    const [user, therapist] = await getUserAndTherapist(userId, validatedData.therapistId);
     if (!user || !therapist) {
       return NextResponse.json({ error: 'User or therapist not found' }, { status: 404 });
     }
 
-    // Create booking session
-    const booking = await db.insert(bookingSessions).values({
-      userId: user.clerkId,
-      therapistId: therapist.id,
-      sessionDate: new Date(validatedData.sessionDate),
-      sessionStartTime: new Date(validatedData.sessionStartTime),
-      sessionEndTime: new Date(validatedData.sessionEndTime),
-      status: 'pending',
+    // Set up Google Calendar client
+    oauth2Client.setCredentials({
+      access_token: therapist.googleCalendarAccessToken,
+      refresh_token: therapist.googleCalendarRefreshToken,
     });
 
-    // If therapist has Google Calendar connected, create calendar event
-    if (therapist.googleCalendarAccessToken) {
-      oauth2Client.setCredentials({
-        access_token: therapist.googleCalendarAccessToken,
-        refresh_token: therapist.googleCalendarRefreshToken,
-      });
+    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
-      const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
-      const event = await calendar.events.insert({
-        calendarId: 'primary',
-        requestBody: {
-          summary: `Therapy Session with ${user.firstName} ${user.lastName}`,
-          description: 'Therapy session booked through Renavest',
-          start: {
-            dateTime: new Date(validatedData.sessionStartTime).toISOString(),
-            timeZone: 'UTC',
-          },
-          end: {
-            dateTime: new Date(validatedData.sessionEndTime).toISOString(),
-            timeZone: 'UTC',
-          },
-          attendees: [{ email: user.email }, { email: therapist.googleCalendarEmail }],
+    // Get therapist's timezone
+    const therapistTimezone = await getTherapistTimezone(calendar);
+
+    // Convert session times from client timezone to therapist timezone
+    const clientStartTime = new Date(validatedData.sessionStartTime);
+    const clientEndTime = new Date(validatedData.sessionEndTime);
+
+    const therapistStartTime = convertTimezone(clientStartTime, therapistTimezone);
+    const therapistEndTime = convertTimezone(clientEndTime, therapistTimezone);
+
+    // Verify the slot is still available
+    const isSlotAvailable = await checkSlotAvailability(
+      calendar,
+      therapistStartTime,
+      therapistEndTime,
+      therapistTimezone,
+    );
+
+    if (!isSlotAvailable) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'The selected time slot is no longer available',
         },
-      });
+        { status: 409 },
+      );
+    }
+
+    // Create booking session
+    const bookingResult = await db
+      .insert(bookingSessions)
+      .values({
+        userId: user.clerkId,
+        therapistId: therapist.id,
+        sessionDate: therapistStartTime,
+        sessionStartTime: therapistStartTime,
+        sessionEndTime: therapistEndTime,
+        status: 'pending',
+      })
+      .returning();
+
+    const booking = bookingResult[0];
+
+    // Create Google Calendar event
+    if (therapist.googleCalendarAccessToken) {
+      const event = await createGoogleCalendarEvent(
+        calendar,
+        user,
+        therapist,
+        therapistStartTime,
+        therapistEndTime,
+        therapistTimezone,
+      );
 
       // Update booking with Google Calendar event ID
       await db
@@ -95,14 +215,18 @@ export async function POST(req: NextRequest) {
           googleEventId: event.data.id,
           status: 'confirmed',
         })
-        .where(eq(bookingSessions.id, booking.insertId));
+        .where(eq(bookingSessions.id, booking.id));
     }
 
-    // TODO: Send email notifications to both user and therapist
+    // TODO: Send email notifications to both user and therapist with timezone-aware times
 
     return NextResponse.json({
       success: true,
-      booking,
+      booking: {
+        ...booking,
+        clientTimezone: validatedData.timezone,
+        therapistTimezone,
+      },
     });
   } catch (error) {
     console.error('Error creating booking:', error);

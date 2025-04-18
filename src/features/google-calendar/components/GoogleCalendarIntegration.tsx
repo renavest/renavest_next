@@ -10,7 +10,7 @@ import {
   initiateGoogleCalendarConnection,
   disconnectGoogleCalendar,
   fetchTherapistId,
-} from '../../google-calendar/components/googleCalendarIntegrationHelpers';
+} from '../utils/googleCalendarIntegrationHelpers';
 
 export function GoogleCalendarIntegration() {
   const { user } = useUser();
@@ -43,7 +43,13 @@ export function GoogleCalendarIntegration() {
   const handleConnectCalendar = async () => {
     setIsLoading(true);
     try {
-      await initiateGoogleCalendarConnection();
+      // Fetch therapist ID if not available in publicMetadata
+      const therapistId = user?.publicMetadata?.therapistId || (await fetchTherapistId(user?.id));
+      if (!therapistId) {
+        toast.error('Unable to find therapist ID');
+        return;
+      }
+      await initiateGoogleCalendarConnection(Number(therapistId));
     } finally {
       setIsLoading(false);
     }

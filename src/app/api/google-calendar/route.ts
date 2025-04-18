@@ -19,17 +19,23 @@ const GoogleCalendarAuthSchema = z.object({
   code: z.string(),
 });
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  // Get therapistId from query string
+  const { searchParams } = new URL(req.url);
+  const therapistId = searchParams.get('therapistId');
+
   // Generate authorization URL
   const scopes = [
     'https://www.googleapis.com/auth/calendar.events',
     'https://www.googleapis.com/auth/userinfo.email',
   ];
 
+  // Add state if therapistId is present
   const url = oauth2Client.generateAuthUrl({
     access_type: 'offline', // Enables refresh token
     scope: scopes,
     prompt: 'consent', // Always ask for consent to get refresh token
+    state: therapistId ? JSON.stringify({ therapistId }) : undefined,
   });
 
   return NextResponse.json({ authUrl: url });

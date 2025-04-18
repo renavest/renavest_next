@@ -1,16 +1,9 @@
-import { auth } from '@clerk/nextjs/server';
-import { and, eq, gte, lte } from 'drizzle-orm';
 import { google } from 'googleapis';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { db } from '@/src/db';
-import {
-  therapistAvailability,
-  therapistBlockedTimes,
-  therapists,
-  bookingSessions,
-} from '@/src/db/schema';
+import { bookingSessions } from '@/src/db/schema';
 
 // OAuth2 client configuration
 const oauth2Client = new google.auth.OAuth2(
@@ -24,13 +17,7 @@ const GetAvailabilitySchema = z.object({
   therapistId: z.string(),
   startDate: z.string(),
   endDate: z.string(),
-});
-
-const SetAvailabilitySchema = z.object({
-  dayOfWeek: z.number().min(0).max(6),
-  startTime: z.string().regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/),
-  endTime: z.string().regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/),
-  isRecurring: z.boolean().default(true),
+  timezone: z.string(), // Client's timezone
 });
 
 // Get available time slots
@@ -41,72 +28,92 @@ export async function GET(req: NextRequest) {
       therapistId: searchParams.get('therapistId'),
       startDate: searchParams.get('startDate'),
       endDate: searchParams.get('endDate'),
+      timezone: searchParams.get('timezone') || 'UTC',
     });
 
-    const startDate = new Date(validatedData.startDate);
-    const endDate = new Date(validatedData.endDate);
-
-    // Get therapist's recurring availability
-    const availability = await db.query.therapistAvailability.findMany({
-      where: (availability, { eq }) =>
-        eq(availability.therapistId, parseInt(validatedData.therapistId)),
+    // Get therapist details
+    const therapist = await db.query.therapists.findFirst({
+      where: (therapists, { eq }) => eq(therapists.id, parseInt(validatedData.therapistId)),
     });
 
-    // Get blocked times
-    const blockedTimes = await db.query.therapistBlockedTimes.findMany({
-      where: (blockedTimes, { and, eq, gte, lte }) =>
-        and(
-          eq(blockedTimes.therapistId, parseInt(validatedData.therapistId)),
-          gte(blockedTimes.startTime, startDate),
-          lte(blockedTimes.endTime, endDate),
-        ),
+    if (!therapist || !therapist.googleCalendarAccessToken) {
+      return NextResponse.json(
+        { error: 'Therapist not found or Google Calendar not connected' },
+        { status: 404 },
+      );
+    }
+
+    // Set up Google Calendar client
+    oauth2Client.setCredentials({
+      access_token: therapist.googleCalendarAccessToken,
+      refresh_token: therapist.googleCalendarRefreshToken,
     });
+
+    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+
+    // Get therapist's calendar settings for their timezone
+    const calendarSettings = await calendar.settings.get({
+      setting: 'timezone',
+    });
+    const therapistTimezone = calendarSettings.data.value || 'UTC';
+
+    // Get therapist's busy times from Google Calendar
+    const freeBusyResponse = await calendar.freebusy.query({
+      requestBody: {
+        timeMin: new Date(validatedData.startDate).toISOString(),
+        timeMax: new Date(validatedData.endDate).toISOString(),
+        timeZone: therapistTimezone,
+        items: [{ id: 'primary' }],
+      },
+    });
+
+    const busySlots = freeBusyResponse.data.calendars?.primary?.busy || [];
+
+    // Get working hours from Google Calendar
+    const calendarResponse = await calendar.calendars.get({
+      calendarId: 'primary',
+    });
+
+    const workingHours = calendarResponse.data.timeZone
+      ? {
+          timezone: calendarResponse.data.timeZone,
+          // Default working hours if not set in Google Calendar
+          hours: [
+            {
+              daysOfWeek: [1, 2, 3, 4, 5], // Monday to Friday
+              start: '09:00',
+              end: '17:00',
+            },
+          ],
+        }
+      : null;
 
     // Get existing bookings
     const existingBookings = await db.query.bookingSessions.findMany({
       where: (bookings, { and, eq, gte, lte }) =>
         and(
           eq(bookings.therapistId, parseInt(validatedData.therapistId)),
-          gte(bookings.sessionStartTime, startDate),
-          lte(bookings.sessionEndTime, endDate),
+          gte(bookings.sessionStartTime, new Date(validatedData.startDate)),
+          lte(bookings.sessionEndTime, new Date(validatedData.endDate)),
         ),
     });
 
-    // Get therapist's Google Calendar events if connected
-    const therapist = await db.query.therapists.findFirst({
-      where: (therapists, { eq }) => eq(therapists.id, parseInt(validatedData.therapistId)),
-    });
-
-    let googleEvents: any[] = [];
-    if (therapist?.googleCalendarAccessToken) {
-      oauth2Client.setCredentials({
-        access_token: therapist.googleCalendarAccessToken,
-        refresh_token: therapist.googleCalendarRefreshToken,
-      });
-
-      const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
-      const response = await calendar.events.list({
-        calendarId: 'primary',
-        timeMin: startDate.toISOString(),
-        timeMax: endDate.toISOString(),
-        singleEvents: true,
-        orderBy: 'startTime',
-      });
-
-      googleEvents = response.data.items || [];
-    }
-
     // Process and return available time slots
     const availableSlots = processAvailability(
-      availability,
-      blockedTimes,
+      busySlots,
+      workingHours,
       existingBookings,
-      googleEvents,
-      startDate,
-      endDate,
+      new Date(validatedData.startDate),
+      new Date(validatedData.endDate),
+      therapistTimezone,
+      validatedData.timezone,
     );
 
-    return NextResponse.json({ slots: availableSlots });
+    return NextResponse.json({
+      slots: availableSlots,
+      therapistTimezone,
+      workingHours,
+    });
   } catch (error) {
     console.error('Error fetching availability:', error);
     return NextResponse.json(
@@ -120,69 +127,85 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// Set therapist availability
-export async function POST(req: NextRequest) {
-  try {
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const body = await req.json();
-    const validatedData = SetAvailabilitySchema.parse(body);
-
-    // Get therapist ID from authenticated user
-    const therapist = await db.query.therapists.findFirst({
-      where: (therapists, { eq }) => eq(therapists.userId, parseInt(userId)),
-    });
-
-    if (!therapist) {
-      return NextResponse.json({ error: 'Therapist not found' }, { status: 404 });
-    }
-
-    // Create availability record
-    const newAvailability = await db.insert(therapistAvailability).values({
-      therapistId: therapist.id,
-      dayOfWeek: validatedData.dayOfWeek,
-      startTime: validatedData.startTime,
-      endTime: validatedData.endTime,
-      isRecurring: validatedData.isRecurring,
-    });
-
-    return NextResponse.json({
-      success: true,
-      availability: newAvailability,
-    });
-  } catch (error) {
-    console.error('Error setting availability:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        message: 'Failed to set availability',
-        error: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 },
-    );
-  }
+interface TimeSlot {
+  start: string; // ISO string
+  end: string; // ISO string
 }
 
 // Helper function to process availability and return available time slots
 function processAvailability(
-  availability: (typeof therapistAvailability.$inferSelect)[],
-  blockedTimes: (typeof therapistBlockedTimes.$inferSelect)[],
+  busySlots: TimeSlot[],
+  workingHours: {
+    timezone: string;
+    hours: Array<{
+      daysOfWeek: number[];
+      start: string;
+      end: string;
+    }>;
+  } | null,
   existingBookings: (typeof bookingSessions.$inferSelect)[],
-  googleEvents: any[],
   startDate: Date,
   endDate: Date,
+  therapistTimezone: string,
+  clientTimezone: string,
 ) {
-  // Implementation of availability processing logic
-  // This would include:
-  // 1. Converting recurring availability to specific time slots
-  // 2. Removing blocked times
-  // 3. Removing existing bookings
-  // 4. Removing Google Calendar events
-  // 5. Returning available time slots in 30/60 minute increments
+  const availableSlots: TimeSlot[] = [];
+  const slotDuration = 60; // minutes
+  const currentDate = new Date(startDate);
 
-  // For now, return a placeholder implementation
-  return [];
+  while (currentDate < endDate) {
+    const dayOfWeek = currentDate.getDay();
+    const workingHoursForDay = workingHours?.hours.find((h) => h.daysOfWeek.includes(dayOfWeek));
+
+    if (workingHoursForDay) {
+      // Convert working hours to therapist's timezone
+      const dayStart = new Date(
+        `${currentDate.toISOString().split('T')[0]}T${workingHoursForDay.start}:00`,
+      );
+      const dayEnd = new Date(
+        `${currentDate.toISOString().split('T')[0]}T${workingHoursForDay.end}:00`,
+      );
+
+      let slotStart = dayStart;
+      while (slotStart < dayEnd) {
+        const slotEnd = new Date(slotStart.getTime() + slotDuration * 60 * 1000);
+
+        // Check if slot is available
+        const isSlotBusy =
+          busySlots.some(
+            (busy) => new Date(busy.start) < slotEnd && new Date(busy.end) > slotStart,
+          ) ||
+          existingBookings.some(
+            (booking) => booking.sessionStartTime < slotEnd && booking.sessionEndTime > slotStart,
+          );
+
+        if (!isSlotBusy) {
+          // Convert slot times to client's timezone
+          const clientSlotStart = new Date(
+            slotStart.toLocaleString('en-US', {
+              timeZone: clientTimezone,
+            }),
+          );
+          const clientSlotEnd = new Date(
+            slotEnd.toLocaleString('en-US', {
+              timeZone: clientTimezone,
+            }),
+          );
+
+          availableSlots.push({
+            start: clientSlotStart.toISOString(),
+            end: clientSlotEnd.toISOString(),
+          });
+        }
+
+        slotStart = slotEnd;
+      }
+    }
+
+    // Move to next day
+    currentDate.setDate(currentDate.getDate() + 1);
+    currentDate.setHours(0, 0, 0, 0);
+  }
+
+  return availableSlots;
 }

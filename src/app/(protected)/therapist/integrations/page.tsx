@@ -1,6 +1,6 @@
 'use client';
 
-import { GoogleCalendarIntegration } from '@/src/features/therapist-dashboard/components/GoogleCalendarIntegration';
+import { GoogleCalendarIntegration } from '@/src/features/google-calendar/components/GoogleCalendarIntegration';
 import TherapistNavbar from '@/src/features/therapist-dashboard/components/TherapistNavbar';
 
 export default function IntegrationsPage() {

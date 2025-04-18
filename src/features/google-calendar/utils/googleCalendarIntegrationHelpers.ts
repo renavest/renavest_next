@@ -11,9 +11,11 @@ export async function fetchGoogleCalendarStatus() {
   }
 }
 
-export async function initiateGoogleCalendarConnection() {
+export async function initiateGoogleCalendarConnection(therapistId: number) {
   try {
-    const authResponse = await fetch('/api/google-calendar', { method: 'GET' });
+    const authResponse = await fetch(`/api/google-calendar?therapistId=${therapistId}`, {
+      method: 'GET',
+    });
     const { authUrl } = await authResponse.json();
     window.location.href = authUrl;
   } catch (error) {
