@@ -2,7 +2,6 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
-import { bookingSessions } from '@/src/db/schema';
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,16 +17,39 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Booking ID is required' }, { status: 400 });
     }
 
+    console.log('Fetching booking with:', {
+      bookingId: parseInt(bookingId),
+      userId,
+    });
+
     const booking = await db.query.bookingSessions.findFirst({
-      where: (bookings, { eq, and }) =>
-        and(eq(bookings.id, parseInt(bookingId)), eq(bookings.userId, userId)),
+      where: (bookings, { eq }) => eq(bookings.id, parseInt(bookingId)),
       with: {
-        therapist: true,
+        therapist: {
+          columns: {
+            name: true,
+            email: true,
+          },
+        },
+        user: {
+          columns: {
+            clerkId: true,
+            email: true,
+          },
+        },
       },
     });
 
+    console.log('Booking found:', booking ? 'Yes' : 'No');
+    console.log('Booking user:', booking?.user?.clerkId);
+
     if (!booking) {
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
+    }
+
+    if (booking.userId !== userId) {
+      console.warn('Booking does not belong to the current user');
+      return NextResponse.json({ error: 'Unauthorized access to booking' }, { status: 403 });
     }
 
     return NextResponse.json({
