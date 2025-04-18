@@ -1,9 +1,9 @@
 'use client';
 
+import { signal, computed } from '@preact-signals/safe-react';
 import { Clock } from 'lucide-react';
 import { DateTime } from 'luxon';
-import { useEffect, useState } from 'react';
-import { InlineWidget } from 'react-calendly';
+import { useEffect } from 'react';
 
 import { TimezoneIdentifier } from '../utils/dateTimeUtils';
 
@@ -16,120 +16,85 @@ interface TimeSlot {
 
 interface TherapistAvailabilityProps {
   therapistId: number;
-  bookingURL?: string;
   onSlotSelect: (slot: TimeSlot) => void;
+  onGoogleCalendarNotAvailable?: () => void;
 }
 
-// Custom hook for fetching availability
-function useAvailability(
+// State Signals
+const selectedDateSignal = signal<DateTime>(DateTime.now());
+const timezoneSignal = signal<TimezoneIdentifier>('America/New_York');
+const availableSlotsSignal = signal<TimeSlot[]>([]);
+const loadingSignal = signal(true);
+const errorSignal = signal<string | null>(null);
+const isGoogleCalendarIntegratedSignal = signal(false);
+const isCheckingIntegrationSignal = signal(true);
+
+// Computed Signals
+const hasAvailableSlotsSignal = computed(() => availableSlotsSignal.value.length > 0);
+
+// Async function to check Google Calendar integration
+async function checkGoogleCalendarIntegration(therapistId: number) {
+  try {
+    const response = await fetch(`/api/google-calendar/status?therapistId=${therapistId}`, {
+      credentials: 'include',
+    });
+
+    if (response.status === 401) {
+      isGoogleCalendarIntegratedSignal.value = false;
+      return;
+    }
+
+    const data = await response.json();
+    isGoogleCalendarIntegratedSignal.value = data.success && data.isConnected;
+  } catch (err) {
+    console.error('Failed to check Google Calendar integration', err);
+    isGoogleCalendarIntegratedSignal.value = false;
+  } finally {
+    isCheckingIntegrationSignal.value = false;
+  }
+}
+
+// Async function to fetch availability
+async function fetchAvailability(
   therapistId: number,
   selectedDate: DateTime,
   timezone: TimezoneIdentifier,
 ) {
-  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isGoogleCalendarIntegrated, setIsGoogleCalendarIntegrated] = useState(false);
-  const [isCheckingIntegration, setIsCheckingIntegration] = useState(true);
+  if (!isGoogleCalendarIntegratedSignal.value) {
+    loadingSignal.value = false;
+    return;
+  }
 
-  useEffect(() => {
-    console.log('Checking Google Calendar integration for therapist:', therapistId);
+  loadingSignal.value = true;
+  errorSignal.value = null;
 
-    async function checkGoogleCalendarIntegration() {
-      try {
-        console.log('Making request to /api/google-calendar/status');
-        const response = await fetch(`/api/google-calendar/status?therapistId=${therapistId}`, {
-          credentials: 'include', // Include cookies for authentication
-        });
-        console.log('Response status:', response.status);
+  try {
+    const startDate = selectedDate.startOf('day');
+    const endDate = selectedDate.endOf('day');
 
-        if (response.status === 401) {
-          console.log('User not authenticated');
-          setIsGoogleCalendarIntegrated(false);
-          return;
-        }
-
-        const data = await response.json();
-        console.log('Response data:', data);
-
-        if (!data.success) {
-          console.log('Integration check failed:', data.message);
-          setIsGoogleCalendarIntegrated(false);
-          return;
-        }
-
-        setIsGoogleCalendarIntegrated(data.isConnected);
-        console.log('Set isGoogleCalendarIntegrated to:', data.isConnected);
-      } catch (err) {
-        console.error('Failed to check Google Calendar integration', err);
-        setIsGoogleCalendarIntegrated(false);
-      } finally {
-        setIsCheckingIntegration(false);
-      }
-    }
-
-    checkGoogleCalendarIntegration();
-  }, [therapistId]);
-
-  useEffect(() => {
-    if (isCheckingIntegration) {
-      return; // Wait for integration check to complete
-    }
-
-    console.log(
-      'Availability effect triggered. isGoogleCalendarIntegrated:',
-      isGoogleCalendarIntegrated,
+    const response = await fetch(
+      `/api/bookings/availability?` +
+        `therapistId=${therapistId}&` +
+        `startDate=${startDate.toISO()}&` +
+        `endDate=${endDate.toISO()}&` +
+        `timezone=${timezone}`,
+      {
+        credentials: 'include',
+      },
     );
-    if (!isGoogleCalendarIntegrated) {
-      console.log('No Google Calendar integration, skipping availability fetch');
-      setLoading(false);
-      return;
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch availability');
     }
 
-    async function fetchAvailability() {
-      setLoading(true);
-      setError(null);
-      try {
-        const startDate = selectedDate.startOf('day');
-        const endDate = selectedDate.endOf('day');
-
-        console.log('Fetching availability for:', {
-          therapistId,
-          startDate: startDate.toISO(),
-          endDate: endDate.toISO(),
-          timezone,
-        });
-
-        const response = await fetch(
-          `/api/bookings/availability?` +
-            `therapistId=${therapistId}&` +
-            `startDate=${startDate.toISO()}&` +
-            `endDate=${endDate.toISO()}&` +
-            `timezone=${timezone}`,
-          {
-            credentials: 'include', // Include cookies for authentication
-          },
-        );
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch availability');
-        }
-
-        const data = await response.json();
-        console.log('Availability response:', data);
-        setAvailableSlots(data.slots || []);
-      } catch (err) {
-        console.error('Error fetching availability:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch availability');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchAvailability();
-  }, [therapistId, selectedDate, timezone, isGoogleCalendarIntegrated, isCheckingIntegration]);
-
-  return { availableSlots, loading, error, isGoogleCalendarIntegrated, isCheckingIntegration };
+    const data = await response.json();
+    availableSlotsSignal.value = data.slots || [];
+  } catch (err) {
+    console.error('Error fetching availability:', err);
+    errorSignal.value = err instanceof Error ? err.message : 'Failed to fetch availability';
+  } finally {
+    loadingSignal.value = false;
+  }
 }
 
 // Component for displaying available time slots
@@ -195,26 +160,30 @@ function DateTimeSelector({
 
 export function TherapistAvailability({
   therapistId,
-  bookingURL,
   onSlotSelect,
+  onGoogleCalendarNotAvailable,
 }: TherapistAvailabilityProps) {
-  const [selectedDate, setSelectedDate] = useState<DateTime>(DateTime.now());
-  const [timezone, setTimezone] = useState<TimezoneIdentifier>('America/New_York');
+  // Initial integration check
+  useEffect(() => {
+    if (isCheckingIntegrationSignal.value) {
+      checkGoogleCalendarIntegration(therapistId);
+    }
+    // Only run on therapistId change
+  }, [therapistId]);
 
-  const { availableSlots, loading, error, isGoogleCalendarIntegrated, isCheckingIntegration } =
-    useAvailability(therapistId, selectedDate, timezone);
-
-  const handleDateChange = (dateString: string) => {
-    const newDate = DateTime.fromFormat(dateString, 'yyyy-MM-dd');
-    setSelectedDate(newDate);
-  };
-
-  const handleTimezoneChange = (newTimezone: TimezoneIdentifier) => {
-    setTimezone(newTimezone);
-  };
+  // Fetch availability when dependencies change
+  useEffect(() => {
+    fetchAvailability(therapistId, selectedDateSignal.value, timezoneSignal.value);
+    // Only run when these values change
+  }, [
+    therapistId,
+    selectedDateSignal.value,
+    timezoneSignal.value,
+    isGoogleCalendarIntegratedSignal.value,
+  ]);
 
   // Show loading state while checking integration
-  if (isCheckingIntegration) {
+  if (isCheckingIntegrationSignal.value) {
     return (
       <div className='flex items-center justify-center py-8'>
         <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-purple-700'></div>
@@ -222,50 +191,44 @@ export function TherapistAvailability({
     );
   }
 
-  // Fallback to Calendly if no Google Calendar integration
-  if (!isGoogleCalendarIntegrated && bookingURL) {
+  // Notify parent if Google Calendar is not available
+  if (!isGoogleCalendarIntegratedSignal.value) {
+    onGoogleCalendarNotAvailable?.();
     return (
-      <div className='space-y-6'>
-        <div className='text-center space-y-4'>
-          <p className='text-gray-600'>
-            This therapist uses Calendly for scheduling. Click below to book your session.
-          </p>
-        </div>
-        <div className='h-[600px] w-full'>
-          <InlineWidget
-            url={bookingURL}
-            styles={{
-              height: '100%',
-              width: '100%',
-              minHeight: '600px',
-            }}
-          />
-        </div>
+      <div className='text-center space-y-4'>
+        <p className='text-gray-600'>
+          This therapist is not available through Google Calendar. You will be redirected to their
+          booking system.
+        </p>
       </div>
     );
   }
 
-  if (error) {
-    return <div className='p-4 bg-red-50 text-red-700 rounded-md'>{error}</div>;
+  if (errorSignal.value) {
+    return <div className='p-4 bg-red-50 text-red-700 rounded-md'>{errorSignal.value}</div>;
   }
 
   return (
     <div className='space-y-6'>
       <DateTimeSelector
-        selectedDate={selectedDate}
-        timezone={timezone}
-        onDateChange={handleDateChange}
-        onTimezoneChange={handleTimezoneChange}
+        selectedDate={selectedDateSignal.value}
+        timezone={timezoneSignal.value}
+        onDateChange={(dateString) => {
+          selectedDateSignal.value = DateTime.fromFormat(dateString, 'yyyy-MM-dd');
+        }}
+        onTimezoneChange={(newTimezone) => {
+          timezoneSignal.value = newTimezone;
+        }}
       />
 
-      {loading ? (
+      {loadingSignal.value ? (
         <div className='flex items-center justify-center py-8'>
           <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-purple-700'></div>
         </div>
-      ) : availableSlots.length === 0 ? (
+      ) : !hasAvailableSlotsSignal.value ? (
         <div className='text-center py-8 text-gray-500'>No available slots for this date</div>
       ) : (
-        <AvailableSlots slots={availableSlots} onSlotSelect={onSlotSelect} />
+        <AvailableSlots slots={availableSlotsSignal.value} onSlotSelect={onSlotSelect} />
       )}
     </div>
   );
