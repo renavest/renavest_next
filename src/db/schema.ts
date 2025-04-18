@@ -186,3 +186,14 @@ export const therapistBlockedTimesRelations = relations(therapistBlockedTimes, (
     references: [therapists.id],
   }),
 }));
+
+export const bookingSessionsRelations = relations(bookingSessions, ({ one }) => ({
+  therapist: one(therapists, {
+    fields: [bookingSessions.therapistId],
+    references: [therapists.id],
+  }),
+  user: one(users, {
+    fields: [bookingSessions.userId],
+    references: [users.clerkId],
+  }),
+}));
