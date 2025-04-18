@@ -1,5 +1,3 @@
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { ArrowLeft, Calendar } from 'lucide-react';
 import Link from 'next/link';
 
@@ -28,7 +26,7 @@ export default function GoogleCalendarErrorPage({
 
   return (
     <div className='container mx-auto max-w-2xl py-8'>
-      <Card className='p-6'>
+      <div className='bg-white shadow rounded-lg p-6'>
         <div className='flex flex-col items-center space-y-6 text-center'>
           <div className='rounded-full bg-red-100 p-3'>
             <Calendar className='h-6 w-6 text-red-600' />
@@ -36,26 +34,32 @@ export default function GoogleCalendarErrorPage({
 
           <div className='space-y-2'>
             <h1 className='text-2xl font-bold tracking-tight'>{title}</h1>
-            <p className='text-muted-foreground'>{description}</p>
+            <p className='text-gray-500'>{description}</p>
           </div>
 
-          <div className='flex flex-col gap-4'>
+          <div className='flex flex-col gap-4 w-full'>
             <Link href='/settings/calendar' className='w-full'>
-              <Button className='w-full'>
+              <button
+                className='flex items-center justify-center w-full px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2'
+                type='button'
+              >
                 <Calendar className='mr-2 h-4 w-4' />
                 Reconnect Google Calendar
-              </Button>
+              </button>
             </Link>
 
             <Link href='/settings' className='w-full'>
-              <Button variant='outline' className='w-full'>
+              <button
+                className='flex items-center justify-center w-full px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2'
+                type='button'
+              >
                 <ArrowLeft className='mr-2 h-4 w-4' />
                 Back to Settings
-              </Button>
+              </button>
             </Link>
           </div>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }
