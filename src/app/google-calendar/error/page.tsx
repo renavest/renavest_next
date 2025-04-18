@@ -38,7 +38,7 @@ export default function GoogleCalendarErrorPage({
           </div>
 
           <div className='flex flex-col gap-4 w-full'>
-            <Link href='/settings/calendar' className='w-full'>
+            <Link href='/therapist/integations' className='w-full'>
               <button
                 className='flex items-center justify-center w-full px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2'
                 type='button'

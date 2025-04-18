@@ -1,218 +1,98 @@
-import { useUser } from '@clerk/nextjs';
-import posthog from 'posthog-js';
+'use client';
+
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
-import { COLORS } from '@/src/styles/colors';
-
-import {
-  TimezoneIdentifier,
-  SUPPORTED_TIMEZONES,
-  isValidFutureDate,
-  convertTo24Hour,
-} from '../utils/dateTimeUtils';
-
-import { BookingConfirmationScreen } from './BookingConfirmed';
-import { DateInput } from './BookingFormComponents/DateInput';
-import { TimeSelect } from './BookingFormComponents/TimeSelect';
-import { TimezoneSelect } from './BookingFormComponents/TimezoneSelect';
-
-interface BookingDetails {
-  date: string;
-  startTime: string;
-  timezone: TimezoneIdentifier;
-  therapistId: string;
-}
+import { TherapistAvailability } from './TherapistAvailability';
 
 interface BookingConfirmationProps {
-  advisorId: string;
-  onConfirm: (details: BookingDetails) => Promise<void>;
+  therapistId: number;
+  therapistName: string;
+  _therapistEmail: string;
+  _userEmail: string;
+  _userName: string;
 }
 
-interface BookingFormProps {
-  localDate: string;
-  localStartTime: string;
-  selectedTimezone: TimezoneIdentifier;
-  dateError: string;
-  isLoading: boolean;
-  onDateChange: (value: string) => void;
-  onTimeChange: (value: string) => void;
-  onTimezoneChange: (value: TimezoneIdentifier) => void;
-  onSubmit: () => void;
+interface TimeSlot {
+  start: string;
+  end: string;
 }
 
-const LoadingSpinner = () => (
-  <div className='flex items-center justify-center'>
-    <svg
-      className='animate-spin h-5 w-5 mr-3'
-      xmlns='http://www.w3.org/2000/svg'
-      fill='none'
-      viewBox='0 0 24 24'
-    >
-      <circle
-        className='opacity-25'
-        cx='12'
-        cy='12'
-        r='10'
-        stroke='currentColor'
-        strokeWidth='4'
-      ></circle>
-      <path
-        className='opacity-75'
-        fill='currentColor'
-        d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
-      ></path>
-    </svg>
-    Submitting...
-  </div>
-);
+export function BookingConfirmation({
+  therapistId,
+  therapistName,
+  _therapistEmail,
+  _userEmail,
+  _userName,
+}: BookingConfirmationProps) {
+  const router = useRouter();
+  const [isBooking, setIsBooking] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
 
-const BookingForm = ({
-  localDate,
-  localStartTime,
-  selectedTimezone,
-  dateError,
-  isLoading,
-  onDateChange,
-  onTimeChange,
-  onTimezoneChange,
-  onSubmit,
-}: BookingFormProps) => (
-  <div
-    className={`fixed inset-0 z-50 flex flex-col items-center justify-center min-h-screen p-4 ${COLORS.WARM_PURPLE[5]}`}
-  >
-    <div className={`${COLORS.WARM_WHITE.bg} p-8 rounded-xl shadow-lg max-w-md w-full text-center`}>
-      <h2 className={`text-2xl font-bold ${COLORS.WARM_PURPLE.DEFAULT} mb-4`}>
-        Your Healing Journey Continues Here 🌱
-      </h2>
-
-      <p className='text-gray-600 mb-4'>
-        To ensure our records are accurate, please re-enter the session date and time you booked.
-      </p>
-
-      <div className='space-y-4'>
-        <DateInput
-          label='Re-enter Session Date'
-          value={localDate}
-          onChange={onDateChange}
-          error={dateError}
-        />
-        <TimeSelect label='Re-enter Start Time' value={localStartTime} onChange={onTimeChange} />
-        <TimezoneSelect
-          value={selectedTimezone}
-          onChange={(tz) => onTimezoneChange(tz as TimezoneIdentifier)}
-          options={Object.entries(SUPPORTED_TIMEZONES).map(([id, label]) => ({
-            value: id as TimezoneIdentifier,
-            label: `${label} (${id})`,
-          }))}
-        />
-
-        <button
-          onClick={onSubmit}
-          disabled={!localDate || !localStartTime || isLoading}
-          className={`w-full ${COLORS.WARM_PURPLE.bg} text-white py-3 rounded-lg ${COLORS.WARM_PURPLE.hover} transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
-        >
-          {isLoading ? <LoadingSpinner /> : 'Submit Session Details'}
-        </button>
-      </div>
-
-      <p className='text-xs text-gray-500 mt-4'>
-        A confirmation email will be sent to your registered email address.
-      </p>
-    </div>
-  </div>
-);
-
-export const BookingConfirmation = ({ advisorId, onConfirm }: BookingConfirmationProps) => {
-  const { user } = useUser();
-  const [localDate, setLocalDate] = useState('');
-  const [localStartTime, setLocalStartTime] = useState('');
-  const [selectedTimezone, setSelectedTimezone] = useState<TimezoneIdentifier>('America/New_York');
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [dateError, setDateError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleDateChange = (value: string) => {
-    setLocalDate(value);
-    if (value && !isValidFutureDate(value)) {
-      setDateError('Please select a future date');
-    } else {
-      setDateError('');
-    }
+  const handleSlotSelect = (slot: TimeSlot) => {
+    setSelectedSlot(slot);
   };
 
-  const handleConfirm = async () => {
-    if (!localDate || !localStartTime) return;
+  const handleConfirmBooking = async () => {
+    if (!selectedSlot) return;
 
-    if (!isValidFutureDate(localDate)) {
-      setDateError('Please select a future date');
-      return;
-    }
-
-    const formattedTime = convertTo24Hour(localStartTime);
-
+    setIsBooking(true);
     try {
-      setIsLoading(true);
-
-      await onConfirm({
-        date: localDate,
-        startTime: formattedTime,
-        timezone: selectedTimezone,
-        therapistId: advisorId,
-      });
-
-      // Track the event in PostHog
-      const sessionData = {
-        sessionDate: localDate,
-        sessionStartTime: formattedTime,
-        timezone: selectedTimezone,
-        therapistId: advisorId,
-        timestamp: new Date().toISOString(),
-      };
-
-      posthog.capture('session_booked', sessionData);
-      
-      posthog.identify(user?.id, {
-        $add_to_list: {
-          sessions: {
-            date: localDate,
-            startTime: formattedTime,
-            timezone: selectedTimezone,
-            therapistId: advisorId,
-            timestamp: new Date().toISOString(),
-          },
+      const response = await fetch('/api/bookings/sessions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          therapistId,
+          sessionStartTime: selectedSlot.start,
+          sessionEndTime: selectedSlot.end,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        }),
       });
 
-      setIsSubmitted(true);
+      if (!response.ok) {
+        throw new Error('Failed to book session');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success('Session booked successfully!');
+        router.push('/dashboard');
+      } else {
+        throw new Error(data.message || 'Failed to book session');
+      }
     } catch (error) {
-      console.error('Booking confirmation error:', error);
-      // Add error handling UI here
+      toast.error(error instanceof Error ? error.message : 'Failed to book session');
     } finally {
-      setIsLoading(false);
+      setIsBooking(false);
     }
   };
-
-  if (isSubmitted) {
-    return (
-      <BookingConfirmationScreen
-        date={localDate}
-        startTime={localStartTime}
-        timezone={SUPPORTED_TIMEZONES[selectedTimezone]}
-      />
-    );
-  }
 
   return (
-    <BookingForm
-      localDate={localDate}
-      localStartTime={localStartTime}
-      selectedTimezone={selectedTimezone}
-      dateError={dateError}
-      isLoading={isLoading}
-      onDateChange={handleDateChange}
-      onTimeChange={setLocalStartTime}
-      onTimezoneChange={setSelectedTimezone}
-      onSubmit={handleConfirm}
-    />
+    <div className='space-y-8'>
+      <div>
+        <h2 className='text-2xl font-semibold text-gray-900 mb-2'>
+          Book a Session with {therapistName}
+        </h2>
+        <p className='text-gray-600'>Select an available time slot that works best for you.</p>
+      </div>
+
+      <TherapistAvailability therapistId={therapistId} onSlotSelect={handleSlotSelect} />
+
+      {selectedSlot && (
+        <div className='mt-6'>
+          <button
+            onClick={handleConfirmBooking}
+            disabled={isBooking}
+            className='w-full px-4 py-2 bg-purple-600 text-white rounded-md font-medium shadow hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition'
+          >
+            {isBooking ? 'Booking...' : 'Confirm Booking'}
+          </button>
+        </div>
+      )}
+    </div>
   );
-};
+}
