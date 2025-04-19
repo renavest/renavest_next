@@ -3,19 +3,14 @@ import { eq } from 'drizzle-orm';
 import fetch from 'node-fetch';
 
 import { db } from '@/src/db';
-import { therapists, users } from '@/src/db/schema';
-
-interface Therapist {
-  id: number;
-  userId: string | null;
-  name: string;
-  email: string | null;
-}
+import { users } from '@/src/db/schema';
 
 interface User {
   id: number;
   email: string;
   clerkId: string;
+  firstName?: string | null;
+  lastName?: string | null;
 }
 
 interface ClerkUser {
@@ -44,7 +39,8 @@ async function getClerkUserByEmail(
 
 async function createClerkUser(
   email: string,
-  name: string,
+  firstName: string | null | undefined,
+  lastName: string | null | undefined,
   clerkSecretKey: string,
 ): Promise<string> {
   const res = await fetch('https://api.clerk.com/v1/users', {
@@ -55,8 +51,8 @@ async function createClerkUser(
     },
     body: JSON.stringify({
       email_address: [email],
-      first_name: name.split(' ')[0],
-      last_name: name.split(' ').slice(1).join(' '),
+      first_name: firstName || email.split('@')[0],
+      last_name: lastName || '',
       skip_password_checks: true,
       skip_password_requirement: true,
     }),
@@ -69,7 +65,7 @@ async function createClerkUser(
   return data.id;
 }
 
-async function syncTherapists(env: 'production' | 'development') {
+async function syncUsers(env: 'production' | 'development') {
   dotenv.config({ path: env === 'production' ? '.env.production' : '.env.local' });
   const clerkSecretKey = process.env.CLERK_SECRET_KEY;
   const dbUser = process.env.DB_USER;
@@ -86,39 +82,30 @@ async function syncTherapists(env: 'production' | 'development') {
   }
   process.env.DATABASE_URL = dbUrl;
 
-  // Fetch all therapists
-  const allTherapists: Therapist[] = await db
+  // Fetch all users
+  const allUsers: User[] = await db
     .select({
-      id: therapists.id,
-      userId: therapists.userId,
-      name: therapists.name,
-      email: therapists.email,
+      id: users.id,
+      email: users.email,
+      clerkId: users.clerkId,
+      firstName: users.firstName,
+      lastName: users.lastName,
     })
-    .from(therapists);
+    .from(users);
 
   let updated = 0;
   let created = 0;
-  for (const therapist of allTherapists) {
-    if (!therapist.email || !therapist.userId) continue;
-    // Find the associated user
-    const userArr: User[] = await db
-      .select({
-        id: users.id,
-        email: users.email,
-        clerkId: users.clerkId,
-      })
-      .from(users)
-      .where(eq(users.id, Number(therapist.userId)));
-    if (userArr.length === 0) {
-      console.warn(`[${env}] No user found for therapist ${therapist.name} (${therapist.email})`);
-      continue;
-    }
-    const user = userArr[0];
+  for (const user of allUsers) {
+    if (!user.email) continue;
     let clerkUser = await getClerkUserByEmail(user.email, clerkSecretKey);
     if (!clerkUser) {
       // Create Clerk user
-      const name = therapist.name || user.email.split('@')[0];
-      const clerkId = await createClerkUser(user.email, name, clerkSecretKey);
+      const clerkId = await createClerkUser(
+        user.email,
+        user.firstName,
+        user.lastName,
+        clerkSecretKey,
+      );
       clerkUser = { id: clerkId };
       created++;
       console.log(`[${env}] Created Clerk user for ${user.email}`);
@@ -133,8 +120,8 @@ async function syncTherapists(env: 'production' | 'development') {
 }
 
 async function main() {
-  await syncTherapists('production');
-  await syncTherapists('development');
+  await syncUsers('production');
+  await syncUsers('development');
 }
 
 main().catch((err) => {
