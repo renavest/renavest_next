@@ -4,9 +4,9 @@
 
 import readline from 'readline';
 
-import { Clerk } from '@clerk/backend';
 import dotenv from 'dotenv';
 import { eq } from 'drizzle-orm';
+import fetch from 'node-fetch';
 
 import { db } from '../db/index.js';
 import { users } from '../db/schema.js';
@@ -19,16 +19,46 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
-async function deleteUserFromClerk(email: string, clerkSecretKey: string, envLabel: string): Promise<boolean> {
+async function deleteUserFromClerk(
+  email: string,
+  clerkSecretKey: string,
+  envLabel: string,
+): Promise<boolean> {
   console.log(`Attempting to delete user ${email} from Clerk (${envLabel})...`);
   try {
-    const clerk = Clerk({ secretKey: clerkSecretKey });
-    const usersList = await clerk.users.getUserList({ email });
-    if (usersList.length > 0) {
+    // 1. Get user by email
+    const getUserRes = await fetch(
+      `https://api.clerk.com/v1/users?email_address=${encodeURIComponent(email)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${clerkSecretKey}`,
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+    if (!getUserRes.ok) {
+      const error = await getUserRes.text();
+      throw new Error(`Failed to fetch Clerk user: ${error}`);
+    }
+    const usersList = await getUserRes.json();
+    if (Array.isArray(usersList) && usersList.length > 0) {
       const userId = usersList[0].id;
       console.log(`Found Clerk user with ID: ${userId}. Deleting...`);
-      await clerk.users.deleteUser(userId);
-      console.log(`Successfully deleted user ${email} (Clerk ID: ${userId}) from Clerk (${envLabel}).`);
+      // 2. Delete user by ID
+      const deleteRes = await fetch(`https://api.clerk.com/v1/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${clerkSecretKey}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!deleteRes.ok) {
+        const error = await deleteRes.text();
+        throw new Error(`Failed to delete Clerk user: ${error}`);
+      }
+      console.log(
+        `Successfully deleted user ${email} (Clerk ID: ${userId}) from Clerk (${envLabel}).`,
+      );
       return true;
     } else {
       console.log(`User with email ${email} not found in Clerk (${envLabel}).`);
@@ -40,7 +70,11 @@ async function deleteUserFromClerk(email: string, clerkSecretKey: string, envLab
   }
 }
 
-async function deleteUserFromDatabase(email: string, dbConnectionString: string, envLabel: string): Promise<boolean> {
+async function deleteUserFromDatabase(
+  email: string,
+  dbConnectionString: string,
+  envLabel: string,
+): Promise<boolean> {
   console.log(`Attempting to delete user ${email} from database (${envLabel})...`);
   const originalDatabaseUrl = process.env.DATABASE_URL;
   try {
@@ -71,9 +105,10 @@ async function main(): Promise<void> {
   const devDbHost = process.env.DB_HOST;
   const devDbPort = process.env.DB_PORT;
   const devDbName = process.env.DB_DATABASE;
-  const devDatabaseUrl = devDbUser && devDbPassword && devDbHost && devDbPort && devDbName
-    ? `postgres://${devDbUser}:${devDbPassword}@${devDbHost}:${devDbPort}/${devDbName}`
-    : undefined;
+  const devDatabaseUrl =
+    devDbUser && devDbPassword && devDbHost && devDbPort && devDbName
+      ? `postgres://${devDbUser}:${devDbPassword}@${devDbHost}:${devDbPort}/${devDbName}`
+      : undefined;
 
   // Load prod env
   dotenv.config({ path: '.env.production' });
@@ -83,11 +118,14 @@ async function main(): Promise<void> {
   const prodDbHost = process.env.DB_HOST;
   const prodDbPort = process.env.DB_PORT;
   const prodDbName = process.env.DB_DATABASE;
-  const prodDatabaseUrl = prodDbUser && prodDbPassword && prodDbHost && prodDbPort && prodDbName
-    ? `postgres://${prodDbUser}:${prodDbPassword}@${prodDbHost}:${prodDbPort}/${prodDbName}`
-    : undefined;
+  const prodDatabaseUrl =
+    prodDbUser && prodDbPassword && prodDbHost && prodDbPort && prodDbName
+      ? `postgres://${prodDbUser}:${prodDbPassword}@${prodDbHost}:${prodDbPort}/${prodDbName}`
+      : undefined;
 
-  console.log(`\nWARNING: This will attempt to permanently delete user ${emailToDelete} from:\n- Clerk (Development)\n- Clerk (Production)\n- Database (renavest_dev)\n- Database (renavest_prod)\n`);
+  console.log(
+    `\nWARNING: This will attempt to permanently delete user ${emailToDelete} from:\n- Clerk (Development)\n- Clerk (Production)\n- Database (renavest_dev)\n- Database (renavest_prod)\n`,
+  );
 
   rl.question('Are you sure you want to proceed? (y/n): ', async (answer: string) => {
     if (answer.toLowerCase() !== 'y') {
@@ -132,4 +170,4 @@ async function main(): Promise<void> {
 main().catch((err) => {
   console.error(err);
   process.exit(1);
-}); 
+});
