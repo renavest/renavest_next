@@ -1,0 +1,108 @@
+import dotenv from 'dotenv';
+import fetch from 'node-fetch';
+import { eq } from 'drizzle-orm';
+import { db } from '@/src/db';
+import { therapists } from '@/src/db/schema';
+
+interface Therapist {
+  id: string;
+  email: string;
+  clerkId: string | null;
+  name?: string;
+}
+
+async function getClerkUserByEmail(email: string, clerkSecretKey: string): Promise<any | null> {
+  const res = await fetch(
+    `https://api.clerk.com/v1/users?email_address=${encodeURIComponent(email)}`,
+    {
+      headers: {
+        Authorization: `Bearer ${clerkSecretKey}`,
+        'Content-Type': 'application/json',
+      },
+    },
+  );
+  if (!res.ok) return null;
+  const users = await res.json();
+  return Array.isArray(users) && users.length > 0 ? users[0] : null;
+}
+
+async function createClerkUser(
+  email: string,
+  name: string,
+  clerkSecretKey: string,
+): Promise<string> {
+  const res = await fetch('https://api.clerk.com/v1/users', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${clerkSecretKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      email_address: [email],
+      first_name: name.split(' ')[0],
+      last_name: name.split(' ').slice(1).join(' '),
+      skip_password_checks: true,
+      skip_password_requirement: true,
+    }),
+  });
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(`Failed to create Clerk user: ${error}`);
+  }
+  const data = await res.json();
+  return data.id;
+}
+
+async function syncTherapists(env: 'production' | 'development') {
+  dotenv.config({ path: env === 'production' ? '.env.production' : '.env.local' });
+  const clerkSecretKey = process.env.CLERK_SECRET_KEY;
+  const dbUser = process.env.DB_USER;
+  const dbPassword = process.env.DB_PASSWORD;
+  const dbHost = process.env.DB_HOST;
+  const dbPort = process.env.DB_PORT;
+  const dbName = process.env.DB_DATABASE;
+  const dbUrl =
+    dbUser && dbPassword && dbHost && dbPort && dbName
+      ? `postgres://${dbUser}:${dbPassword}@${dbHost}:${dbPort}/${dbName}`
+      : undefined;
+  if (!clerkSecretKey || !dbUrl) {
+    throw new Error(`Missing env vars for ${env}`);
+  }
+  process.env.DATABASE_URL = dbUrl;
+
+  // Fetch all therapists
+  const allTherapists: Therapist[] = await db.select().from(therapists);
+  let updated = 0;
+  let created = 0;
+  for (const therapist of allTherapists) {
+    if (!therapist.email) continue;
+    let clerkUser = await getClerkUserByEmail(therapist.email, clerkSecretKey);
+    if (!clerkUser) {
+      // Create Clerk user
+      const name = therapist.name || therapist.email.split('@')[0];
+      const clerkId = await createClerkUser(therapist.email, name, clerkSecretKey);
+      clerkUser = { id: clerkId };
+      created++;
+      console.log(`[${env}] Created Clerk user for ${therapist.email}`);
+    }
+    if (therapist.clerkId !== clerkUser.id) {
+      await db
+        .update(therapists)
+        .set({ clerkId: clerkUser.id })
+        .where(eq(therapists.id, therapist.id));
+      updated++;
+      console.log(`[${env}] Updated therapist ${therapist.email} clerkId to ${clerkUser.id}`);
+    }
+  }
+  console.log(`[${env}] Done. Created: ${created}, Updated: ${updated}`);
+}
+
+async function main() {
+  await syncTherapists('production');
+  await syncTherapists('development');
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
