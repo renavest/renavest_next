@@ -1,17 +1,33 @@
 import dotenv from 'dotenv';
-import fetch from 'node-fetch';
 import { eq } from 'drizzle-orm';
+import fetch from 'node-fetch';
+
 import { db } from '@/src/db';
-import { therapists } from '@/src/db/schema';
+import { therapists, users } from '@/src/db/schema';
 
 interface Therapist {
-  id: string;
-  email: string;
-  clerkId: string | null;
-  name?: string;
+  id: number;
+  userId: string | null;
+  name: string;
+  email: string | null;
 }
 
-async function getClerkUserByEmail(email: string, clerkSecretKey: string): Promise<any | null> {
+interface User {
+  id: number;
+  email: string;
+  clerkId: string;
+}
+
+interface ClerkUser {
+  id: string;
+  email_addresses?: { email_address: string }[];
+  [key: string]: unknown;
+}
+
+async function getClerkUserByEmail(
+  email: string,
+  clerkSecretKey: string,
+): Promise<ClerkUser | null> {
   const res = await fetch(
     `https://api.clerk.com/v1/users?email_address=${encodeURIComponent(email)}`,
     {
@@ -22,7 +38,7 @@ async function getClerkUserByEmail(email: string, clerkSecretKey: string): Promi
     },
   );
   if (!res.ok) return null;
-  const users = await res.json();
+  const users = (await res.json()) as ClerkUser[];
   return Array.isArray(users) && users.length > 0 ? users[0] : null;
 }
 
@@ -49,7 +65,7 @@ async function createClerkUser(
     const error = await res.text();
     throw new Error(`Failed to create Clerk user: ${error}`);
   }
-  const data = await res.json();
+  const data = (await res.json()) as ClerkUser;
   return data.id;
 }
 
@@ -71,27 +87,46 @@ async function syncTherapists(env: 'production' | 'development') {
   process.env.DATABASE_URL = dbUrl;
 
   // Fetch all therapists
-  const allTherapists: Therapist[] = await db.select().from(therapists);
+  const allTherapists: Therapist[] = await db
+    .select({
+      id: therapists.id,
+      userId: therapists.userId,
+      name: therapists.name,
+      email: therapists.email,
+    })
+    .from(therapists);
+
   let updated = 0;
   let created = 0;
   for (const therapist of allTherapists) {
-    if (!therapist.email) continue;
-    let clerkUser = await getClerkUserByEmail(therapist.email, clerkSecretKey);
+    if (!therapist.email || !therapist.userId) continue;
+    // Find the associated user
+    const userArr: User[] = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        clerkId: users.clerkId,
+      })
+      .from(users)
+      .where(eq(users.id, Number(therapist.userId)));
+    if (userArr.length === 0) {
+      console.warn(`[${env}] No user found for therapist ${therapist.name} (${therapist.email})`);
+      continue;
+    }
+    const user = userArr[0];
+    let clerkUser = await getClerkUserByEmail(user.email, clerkSecretKey);
     if (!clerkUser) {
       // Create Clerk user
-      const name = therapist.name || therapist.email.split('@')[0];
-      const clerkId = await createClerkUser(therapist.email, name, clerkSecretKey);
+      const name = therapist.name || user.email.split('@')[0];
+      const clerkId = await createClerkUser(user.email, name, clerkSecretKey);
       clerkUser = { id: clerkId };
       created++;
-      console.log(`[${env}] Created Clerk user for ${therapist.email}`);
+      console.log(`[${env}] Created Clerk user for ${user.email}`);
     }
-    if (therapist.clerkId !== clerkUser.id) {
-      await db
-        .update(therapists)
-        .set({ clerkId: clerkUser.id })
-        .where(eq(therapists.id, therapist.id));
+    if (user.clerkId !== clerkUser.id) {
+      await db.update(users).set({ clerkId: clerkUser.id }).where(eq(users.id, user.id));
       updated++;
-      console.log(`[${env}] Updated therapist ${therapist.email} clerkId to ${clerkUser.id}`);
+      console.log(`[${env}] Updated user ${user.email} clerkId to ${clerkUser.id}`);
     }
   }
   console.log(`[${env}] Done. Created: ${created}, Updated: ${updated}`);
