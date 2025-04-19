@@ -11,13 +11,15 @@ import { eq } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import { users } from '../db/schema.js';
 
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local';
+dotenv.config({ path: envFile });
 
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
 });
 
-async function deleteUserFromClerk(email, clerkSecretKey, envLabel) {
+async function deleteUserFromClerk(email: string, clerkSecretKey: string, envLabel: string): Promise<boolean> {
   console.log(`Attempting to delete user ${email} from Clerk (${envLabel})...`);
   try {
     const clerk = Clerk({ secretKey: clerkSecretKey });
@@ -38,7 +40,7 @@ async function deleteUserFromClerk(email, clerkSecretKey, envLabel) {
   }
 }
 
-async function deleteUserFromDatabase(email, dbConnectionString, envLabel) {
+async function deleteUserFromDatabase(email: string, dbConnectionString: string, envLabel: string): Promise<boolean> {
   console.log(`Attempting to delete user ${email} from database (${envLabel})...`);
   const originalDatabaseUrl = process.env.DATABASE_URL;
   try {
@@ -55,45 +57,44 @@ async function deleteUserFromDatabase(email, dbConnectionString, envLabel) {
   }
 }
 
-async function runDeleteScript() {
+async function main(): Promise<void> {
   const emailToDelete = process.argv[2];
   if (!emailToDelete) {
-    console.error('Usage: node scripts/delete-user.js <email>');
-    process.exit(1);
+    throw new Error('Usage: ts-node src/scripts/delete-user.ts <email>');
   }
+
+  // Load dev env
+  dotenv.config({ path: '.env.local' });
+  const devClerkSecretKey = process.env.CLERK_SECRET_KEY;
+  const devDbUser = process.env.DB_USER;
+  const devDbPassword = process.env.DB_PASSWORD;
+  const devDbHost = process.env.DB_HOST;
+  const devDbPort = process.env.DB_PORT;
+  const devDbName = process.env.DB_DATABASE;
+  const devDatabaseUrl = devDbUser && devDbPassword && devDbHost && devDbPort && devDbName
+    ? `postgres://${devDbUser}:${devDbPassword}@${devDbHost}:${devDbPort}/${devDbName}`
+    : undefined;
+
+  // Load prod env
+  dotenv.config({ path: '.env.production' });
+  const prodClerkSecretKey = process.env.CLERK_SECRET_KEY;
+  const prodDbUser = process.env.DB_USER;
+  const prodDbPassword = process.env.DB_PASSWORD;
+  const prodDbHost = process.env.DB_HOST;
+  const prodDbPort = process.env.DB_PORT;
+  const prodDbName = process.env.DB_DATABASE;
+  const prodDatabaseUrl = prodDbUser && prodDbPassword && prodDbHost && prodDbPort && prodDbName
+    ? `postgres://${prodDbUser}:${prodDbPassword}@${prodDbHost}:${prodDbPort}/${prodDbName}`
+    : undefined;
 
   console.log(`\nWARNING: This will attempt to permanently delete user ${emailToDelete} from:\n- Clerk (Development)\n- Clerk (Production)\n- Database (renavest_dev)\n- Database (renavest_prod)\n`);
 
-  rl.question('Are you sure you want to proceed? (y/n): ', async (answer) => {
+  rl.question('Are you sure you want to proceed? (y/n): ', async (answer: string) => {
     if (answer.toLowerCase() !== 'y') {
       console.log('Deletion cancelled.');
       rl.close();
       process.exit(0);
     }
-
-    // Load .env.local (Development)
-    dotenv.config({ path: '.env.local' });
-    const devClerkSecretKey = process.env.CLERK_SECRET_KEY;
-    const devDbUser = process.env.DB_USER;
-    const devDbPassword = process.env.DB_PASSWORD;
-    const devDbHost = process.env.DB_HOST;
-    const devDbPort = process.env.DB_PORT;
-    const devDbName = process.env.DB_DATABASE;
-    const devDatabaseUrl = devDbUser && devDbPassword && devDbHost && devDbPort && devDbName
-      ? `postgres://${devDbUser}:${devDbPassword}@${devDbHost}:${devDbPort}/${devDbName}`
-      : undefined;
-
-    // Load .env.production (Production)
-    dotenv.config({ path: '.env.production' });
-    const prodClerkSecretKey = process.env.CLERK_SECRET_KEY;
-    const prodDbUser = process.env.DB_USER;
-    const prodDbPassword = process.env.DB_PASSWORD;
-    const prodDbHost = process.env.DB_HOST;
-    const prodDbPort = process.env.DB_PORT;
-    const prodDbName = process.env.DB_DATABASE;
-    const prodDatabaseUrl = prodDbUser && prodDbPassword && prodDbHost && prodDbPort && prodDbName
-      ? `postgres://${prodDbUser}:${prodDbPassword}@${prodDbHost}:${prodDbPort}/${prodDbName}`
-      : undefined;
 
     // 1. Delete from Clerk (Development)
     if (!devClerkSecretKey) {
@@ -128,4 +129,7 @@ async function runDeleteScript() {
   });
 }
 
-runDeleteScript(); 
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+}); 
