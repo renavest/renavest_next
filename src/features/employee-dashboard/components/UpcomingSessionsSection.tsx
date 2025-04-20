@@ -9,8 +9,8 @@ type UpcomingSession = {
   id: number;
   therapistName: string;
   therapistProfileUrl: string | null;
-  sessionDate: Date;
-  sessionStartTime: Date;
+  sessionDate: string;
+  sessionStartTime: string;
   status: string;
 };
 
@@ -28,7 +28,7 @@ export function UpcomingSessionsSection() {
         if (!response.ok) {
           throw new Error('Failed to fetch upcoming sessions');
         }
-        
+
         const data = await response.json();
         setUpcomingSessions(data.upcomingSessions);
       } catch (err) {
@@ -83,7 +83,7 @@ export function UpcomingSessionsSection() {
       <h2 className='text-lg font-semibold mb-4'>Upcoming Sessions</h2>
       <div className='space-y-4'>
         {upcomingSessions.map((session) => {
-          const sessionDateTime = DateTime.fromJSDate(session.sessionDate);
+          const sessionDateTime = DateTime.fromISO(session.sessionDate);
           const formattedDate = sessionDateTime.toFormat('MMMM dd, yyyy');
           const formattedTime = sessionDateTime.toFormat('h:mm a');
 
