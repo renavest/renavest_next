@@ -5,6 +5,8 @@ import { DateTime } from 'luxon';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { COLORS } from '@/src/styles/colors';
+
 interface BookingDetails {
   id: number;
   therapist: {
@@ -143,7 +145,7 @@ export function BookingSuccess({ bookingId }: { bookingId: string }) {
             <div className='mt-10 flex justify-center w-full'>
               <button
                 onClick={() => router.push('/dashboard')}
-                className='inline-flex items-center px-8 py-3 border border-transparent text-lg font-semibold rounded-full shadow-lg text-white bg-gradient-to-r from-purple-600 to-green-500 hover:from-purple-700 hover:to-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200'
+                className={`inline-flex items-center px-8 py-3 border-0 text-lg font-semibold rounded-full shadow-lg transition-all duration-200 ${COLORS.WARM_PURPLE.bg} ${COLORS.WARM_WHITE.DEFAULT} ${COLORS.WARM_PURPLE.hover} ${COLORS.WARM_PURPLE.focus}`}
               >
                 Go to Dashboard
               </button>
