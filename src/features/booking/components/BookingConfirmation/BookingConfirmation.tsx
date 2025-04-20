@@ -24,7 +24,8 @@ interface TimeSlot {
   end: string;
 }
 
-export function BookingConfirmation({
+// eslint-disable-next-line max-lines-per-function
+export function BookingForm({
   advisorId,
   onConfirm,
   advisorName,

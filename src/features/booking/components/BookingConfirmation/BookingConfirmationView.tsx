@@ -71,7 +71,7 @@ function BookingDetails({ booking }: { booking: BookingDetails }) {
   );
 }
 
-export function BookingConfirmationView({ bookingId }: { bookingId: string }) {
+export function BookingSuccess({ bookingId }: { bookingId: string }) {
   const router = useRouter();
   const [booking, setBooking] = useState<BookingDetails | null>(null);
   const [error, setError] = useState<string | null>(null);

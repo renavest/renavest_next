@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { InlineWidget } from 'react-calendly';
 import { useCalendlyEventListener } from 'react-calendly';
-import { BookingConfirmation } from '@/src/features/booking/components/BookingConfirmation/BookingConfirmation';
+
 import { createBookingSession } from '@/src/features/booking/actions/bookingActions';
+import { BookingForm } from '@/src/features/booking/components/BookingConfirmation/BookingConfirmation';
 import { getInitials } from '@/src/features/booking/utils/stringUtils';
 
 interface BookingFlowProps {
@@ -18,7 +19,7 @@ interface BookingFlowProps {
   userEmail: string;
 }
 
-export default function BookingFlow({ advisor, userId, userEmail }: BookingFlowProps) {
+export default function UnifiedBookingFlow({ advisor, userId, userEmail }: BookingFlowProps) {
   const [isGoogleCalendarConnected, setIsGoogleCalendarConnected] = useState<null | boolean>(null);
   const [isBookingConfirmed, setIsBookingConfirmed] = useState(false);
 
@@ -29,7 +30,7 @@ export default function BookingFlow({ advisor, userId, userEmail }: BookingFlowP
         const res = await fetch(`/api/google-calendar/status?therapistId=${advisor.id}`);
         const data = await res.json();
         setIsGoogleCalendarConnected(!!data.isConnected);
-      } catch (err) {
+      } catch {
         setIsGoogleCalendarConnected(false);
       }
     }
@@ -81,7 +82,8 @@ export default function BookingFlow({ advisor, userId, userEmail }: BookingFlowP
 
   // Calendly event listener
   useCalendlyEventListener({
-    onEventScheduled: (e) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onEventScheduled: (e: any) => {
       setIsBookingConfirmed(true);
       trackCalendlyEvent('calendly_event_scheduled', e);
     },
@@ -99,7 +101,7 @@ export default function BookingFlow({ advisor, userId, userEmail }: BookingFlowP
   // If Google Calendar is connected, show internal booking
   if (isGoogleCalendarConnected) {
     return (
-      <BookingConfirmation
+      <BookingForm
         advisorId={advisor.id}
         onConfirm={handleBookingConfirmation}
         advisorName={advisor.name}
@@ -112,7 +114,7 @@ export default function BookingFlow({ advisor, userId, userEmail }: BookingFlowP
   // If not connected, show Calendly widget and confirmation after booking
   if (isBookingConfirmed) {
     return (
-      <BookingConfirmation
+      <BookingForm
         advisorId={advisor.id}
         onConfirm={handleBookingConfirmation}
         advisorName={advisor.name}
