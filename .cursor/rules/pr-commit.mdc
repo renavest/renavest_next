@@ -1,4 +1,8 @@
-# Cursor Rule: PR and Commit Best Practices
+---
+description: When I'm pushing to GitHub or submitting a PR
+globs: 
+alwaysApply: false
+---
 
 ## Purpose
 Ensure all pull requests and commits follow a clear, consistent, and industry-standard structure inspired by top open source practices and xKevIsDev's PR style.
@@ -21,7 +25,7 @@ Ensure all pull requests and commits follow a clear, consistent, and industry-st
 - **Related Issues/PRs**: Link related issues or PRs.
 
 ## Commit Message Guidelines
-- Use [Conventional Commits](https://www.conventionalcommits.org/) format:
+- Use [Conventional Commits](mdc:https:/www.conventionalcommits.org) format:
   - `<type>(<scope>): <subject>`
   - Types: feat, fix, docs, style, refactor, test, chore, build, ci, perf, revert
   - Scope is optional but recommended for clarity
@@ -43,6 +47,6 @@ Ensure all pull requests and commits follow a clear, consistent, and industry-st
   - Reference related issues/PRs
 
 ## References
-- [Conventional Commits](https://www.conventionalcommits.org/)
-- [Semantic Commit Messages](https://gist.github.com/joshbuchea/6f47e86d2510bce28f8e7f42ae84c716)
-- [Git Commit Message Best Practices](https://axolo.co/blog/p/git-commit-messages-best-practices-examples) 
+- [Conventional Commits](mdc:https:/www.conventionalcommits.org)
+- [Semantic Commit Messages](mdc:https:/gist.github.com/joshbuchea/6f47e86d2510bce28f8e7f42ae84c716)
+- [Git Commit Message Best Practices](mdc:https:/axolo.co/blog/p/git-commit-messages-best-practices-examples) 

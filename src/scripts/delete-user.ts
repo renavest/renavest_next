@@ -8,8 +8,8 @@ import dotenv from 'dotenv';
 import { eq } from 'drizzle-orm';
 import fetch from 'node-fetch';
 
-import { db } from '../db/index.js';
-import { users } from '../db/schema.js';
+import { db } from '@/src/db';
+import { users } from '@/src/db/schema';
 
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local';
 dotenv.config({ path: envFile });

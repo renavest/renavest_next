@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 import TherapistList from '../config/therapistsList';
 import { db } from '../db';
 import { therapists, users } from '../db/schema';
+import { generateTherapistImageKey } from '../services/s3/assetUrls';
 
 const envFile = '.env.local';
 dotenv.config({ path: envFile });
@@ -37,6 +38,21 @@ async function createClerkUser(email: string, name: string) {
   return data.id;
 }
 
+async function getClerkUserByEmail(email: string) {
+  const response = await fetch(
+    `https://api.clerk.com/v1/users?email_address=${encodeURIComponent(email)}`,
+    {
+      headers: {
+        Authorization: `Bearer ${CLERK_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+    },
+  );
+  if (!response.ok) return null;
+  const data = await response.json();
+  return data.length > 0 ? data[0] : null;
+}
+
 async function main() {
   if (process.env.NODE_ENV === 'production') {
     throw new Error('This script should only be run in development mode!');
@@ -68,8 +84,16 @@ async function main() {
           console.log(`Deleted existing user for ${therapist.email}`);
         }
       }
-      // Create Clerk user
-      const clerkId = await createClerkUser(therapist.email, therapist.name);
+      // Check if Clerk user exists
+      let clerkId: string;
+      const existingClerkUser = await getClerkUserByEmail(therapist.email);
+      if (existingClerkUser) {
+        clerkId = existingClerkUser.id;
+        console.log(`Found existing Clerk user for ${therapist.email}`);
+      } else {
+        clerkId = await createClerkUser(therapist.email, therapist.name);
+        console.log(`Created new Clerk user for ${therapist.email}`);
+      }
       // Insert user row
       const now = new Date();
       await db.insert(users).values({
@@ -95,7 +119,7 @@ async function main() {
         clientele: therapist.clientele,
         longBio: therapist.longBio,
         previewBlurb: therapist.previewBlurb,
-        profileUrl: therapist.profileUrl,
+        profileUrl: generateTherapistImageKey(therapist.name),
         hourlyRate: therapist.hourlyRate ? therapist.hourlyRate.toString() : null,
         createdAt: now,
         updatedAt: now,

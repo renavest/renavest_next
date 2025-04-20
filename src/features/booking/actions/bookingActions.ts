@@ -78,7 +78,7 @@ async function createBookingRecord(data: {
 }) {
   // Calculate end time (1 hour after start time)
   const sessionEndTime = data.sessionDate.plus({ hours: 1 });
-  
+
   return db
     .insert(bookingSessions)
     .values({
@@ -121,7 +121,7 @@ export async function createBookingSession(rawData: unknown) {
 
     // Format the date and time for email
     const { date: formattedDate, time: formattedTime } = formatDateTime(sessionDateTime, timezone);
-
+    
     // Send confirmation emails
     const emailResult = await sendBookingConfirmationEmail({
       clientName: `${user.firstName} ${user.lastName}`.trim(),

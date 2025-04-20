@@ -1,7 +1,7 @@
 ---
-description: This rule ensures optimal URL state management, enhanced web performance, and a balanced client-server architecture for maintainable and efficient applications
+description: Writing code
 globs: 
-alwaysApply: true
+alwaysApply: false
 ---
 You are an expert in TypeScript, Node.js, Next.js App Router, React, Tailwind CSS, and Preact Safe React Signals.
 
@@ -37,20 +37,3 @@ You are an expert in TypeScript, Node.js, Next.js App Router, React, Tailwind CS
 - Use Tailwind CSS for components and styling.
 - Implement responsive design with Tailwind CSS using a mobile-first approach.
 - Leverage Preact Safe React Signals for all state management and reactive UI updates.
-
-## Performance Optimization
-- Favor React Server Components (RSC) and Next.js SSR.
-- Wrap client components in Suspense with a fallback.
-- Use dynamic loading for non-critical components.
-- Optimize images by using WebP format, including size data, and implementing lazy loading.
-
-## Key Conventions: State & Performance Best Practices
-- Use 'nuqs' for URL search parameter state management.
-- Optimize Web Vitals (LCP, CLS, FID).
-- Eliminate hooks:
-  - Use Preact Safe React Signals for all state management.
-  - Rely on server components and Next.js SSR for data fetching and heavy logic.
-  - Use client components only when necessary for direct Web API access.
-  - 
-
-Follow Next.js documentation for Data Fetching, Rendering, and Routing.

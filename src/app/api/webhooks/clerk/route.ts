@@ -35,6 +35,7 @@ type WebhookEventType =
 interface WebhookEvent {
   type: WebhookEventType;
   data: WebhookUserData;
+  object: 'event';
 }
 
 // Webhook processing error types
@@ -44,12 +45,95 @@ type WebhookError =
   | { type: 'InvalidSignature'; error: unknown }
   | { type: 'ProcessingError'; error: unknown };
 
+/**
+ * Verify webhook signature and parse event
+ */
+async function verifyWebhook(
+  req: NextRequest,
+  webhookSecret: string,
+  svixHeaders: { id: string; timestamp: string; signature: string },
+): Promise<Result<WebhookEvent, WebhookError>> {
+  try {
+    const payload = await req.clone().json();
+    const body = JSON.stringify(payload);
+
+    const webhook = new Webhook(webhookSecret);
+    const event = webhook.verify(body, {
+      'svix-id': svixHeaders.id,
+      'svix-timestamp': svixHeaders.timestamp,
+      'svix-signature': svixHeaders.signature,
+    }) as WebhookEvent;
+
+    return ok(event);
+  } catch (error) {
+    return err({ type: 'InvalidSignature', error });
+  }
+}
+
+/**
+ * Process webhook event with appropriate handler
+ */
+async function processEvent(
+  event: WebhookEvent,
+  environment: string,
+): Promise<Result<boolean, WebhookError>> {
+  try {
+    // Handle different event types with a more DRY approach
+    const eventHandlers: Record<
+      WebhookEventType,
+      (data: WebhookUserData) => Promise<Result<boolean, unknown>>
+    > = {
+      'user.created': (data) => handleUserCreateOrUpdate('user.created', data),
+      'user.updated': (data) => handleUserCreateOrUpdate('user.updated', data),
+      'user.deleted': handleUserDeletion,
+      'user.signed_in': handleUserActivity,
+      'user.signed_out': handleUserActivity,
+      'session.created': async () => ok(true),
+      'session.removed': async () => ok(true),
+      'session.ended': async () => ok(true),
+    };
+
+    const handler = eventHandlers[event.type];
+    if (handler) {
+      const result = await handler(event.data);
+      if (result.isErr()) {
+        logger.error('Event handler error', {
+          type: event.type,
+          error: result.error,
+          userId: event.data.id,
+          environment,
+        });
+        return err({ type: 'ProcessingError', error: result.error });
+      }
+      return ok(true);
+    }
+
+    logger.warn('Unhandled event type', {
+      type: event.type,
+      userId: event.data.id,
+      environment,
+    });
+    return ok(true);
+  } catch (error) {
+    logger.error('Event processing error', {
+      error,
+      environment,
+    });
+    return err({
+      type: 'ProcessingError',
+      error,
+    });
+  }
+}
+
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const startTime = Date.now();
+  const environment = process.env.NODE_ENV || 'development';
 
   // Validate webhook secret
   const webhookSecret = process.env.CLERK_WEBHOOK_SECRET;
   if (!webhookSecret) {
+    logger.error('Missing Clerk webhook secret');
     return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
   }
 
@@ -60,71 +144,54 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const svixSignature = headersList.get('svix-signature');
 
   if (!svixId || !svixTimestamp || !svixSignature) {
+    logger.error('Missing required Svix headers', {
+      svixId: !!svixId,
+      svixTimestamp: !!svixTimestamp,
+      svixSignature: !!svixSignature,
+    });
     return NextResponse.json({ error: 'Missing required headers' }, { status: 400 });
   }
 
-  // Process webhook
-  const processWebhook = async (): Promise<Result<boolean, WebhookError>> => {
-    try {
-      const payload = await req.json();
-      const body = JSON.stringify(payload);
+  // Verify webhook signature
+  const verificationResult = await verifyWebhook(req, webhookSecret, {
+    id: svixId,
+    timestamp: svixTimestamp,
+    signature: svixSignature,
+  });
 
-      const webhook = new Webhook(webhookSecret);
+  if (verificationResult.isErr()) {
+    logger.error('Webhook verification failed', {
+      error: verificationResult.error,
+      environment,
+    });
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+  }
 
-      // Verify webhook signature
-      const event = webhook.verify(body, {
-        'svix-id': svixId,
-        'svix-timestamp': svixTimestamp,
-        'svix-signature': svixSignature,
-      }) as WebhookEvent;
+  // Process event
+  const event = verificationResult.value;
+  logger.info('Processing webhook event', {
+    type: event.type,
+    environment,
+    userId: event.data.id,
+  });
 
-      logger.info('Processing webhook event', { type: event.type });
-
-      // Handle different event types with a more DRY approach
-      const eventHandlers: Record<
-        WebhookEventType,
-        (data: WebhookUserData) => Promise<Result<boolean, unknown>>
-      > = {
-        'user.created': (data) => handleUserCreateOrUpdate('user.created', data),
-        'user.updated': (data) => handleUserCreateOrUpdate('user.updated', data),
-        'user.deleted': handleUserDeletion,
-        'user.signed_in': handleUserActivity,
-        'user.signed_out': handleUserActivity,
-        'session.created': async () => ok(true),
-        'session.removed': async () => ok(true),
-        'session.ended': async () => ok(true),
-      };
-
-      const handler = eventHandlers[event.type];
-      if (handler) {
-        const result = await handler(event.data);
-        return result.isOk() ? ok(true) : err({ type: 'ProcessingError', error: result.error });
-      }
-
-      logger.warn('Unhandled event type', { type: event.type });
-      return ok(true);
-    } catch (error) {
-      return err({
-        type: 'ProcessingError',
-        error,
-      });
-    }
-  };
-
-  // Execute webhook processing
-  const result = await processWebhook();
+  const result = await processEvent(event, environment);
 
   return result.match(
     () => {
       const duration = Date.now() - startTime;
-      logger.info('Webhook processed', { duration: `${duration}ms` });
+      logger.info('Webhook processed successfully', {
+        duration: `${duration}ms`,
+        environment,
+      });
       return NextResponse.json({ success: true });
     },
     (error) => {
       const duration = Date.now() - startTime;
-      logger.error('Webhook processing error', {
+      logger.error('Webhook processing failed', {
         duration: `${duration}ms`,
         error,
+        environment,
       });
 
       // Always return 200 to prevent Clerk from retrying

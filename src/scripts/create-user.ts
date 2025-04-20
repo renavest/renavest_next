@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 import readline from 'readline';
+
 import dotenv from 'dotenv';
-import fetch from 'node-fetch';
 import { drizzle } from 'drizzle-orm/node-postgres/driver';
+import fetch from 'node-fetch';
 import { Pool } from 'pg';
-import { users } from '@/src/db/schema';
-import * as schema from '@/src/db/schema';
+
+import { users } from '../db/schema';
 
 // Helper to prompt for input
 function prompt(question: string): Promise<string> {
@@ -57,12 +58,12 @@ async function createClerkUser(
     const error = await res.text();
     throw new Error(`Failed to create Clerk user: ${error}`);
   }
-  const data = await res.json();
+  const data = (await res.json()) as Record<string, any>;
   return data.id;
 }
 
 async function createDbUser(
-  db,
+  db: any,
   user: { clerkId: string; email: string; firstName: string; lastName: string; imageUrl?: string },
 ) {
   const now = new Date();
@@ -116,7 +117,7 @@ async function main() {
     port: config.dbPort,
     ssl: config.dbCa ? { rejectUnauthorized: false, ca: config.dbCa } : undefined,
   });
-  const db = drizzle(pool, { schema });
+  const db = drizzle(pool, { schema: { users } });
 
   // Create user in DB
   console.log(`Creating user in database (${config.dbName})...`);

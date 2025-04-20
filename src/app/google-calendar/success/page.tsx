@@ -30,7 +30,9 @@ export default function GoogleCalendarSuccessPage() {
         }
 
         // Fetch calendar status
-        const statusResponse = await fetch('/api/google-calendar/status');
+        const statusResponse = await fetch(
+          `/api/google-calendar/status?therapistId=${therapistId}`,
+        );
         const statusData = await statusResponse.json();
 
         if (!statusData.success) {

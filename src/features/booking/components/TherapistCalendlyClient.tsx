@@ -6,7 +6,8 @@ import { InlineWidget, EventScheduledEvent } from 'react-calendly';
 import { useCalendlyEventListener } from 'react-calendly';
 
 import { createBookingSession } from '@/src/features/booking/actions/bookingActions';
-import { BookingConfirmation } from '@/src/features/booking/components/BookingConfirmation';
+import { BookingConfirmation } from '@/src/features/booking/components/BookingConfirmation/BookingConfirmation';
+import { getInitials } from '@/src/features/booking/utils/stringUtils';
 
 interface TherapistCalendlyClientProps {
   advisor: {
@@ -60,12 +61,17 @@ export default function TherapistCalendlyClient({
   }) => {
     if (!userId) {
       console.error('No user ID found');
-      return;
+      return {
+        sessionId: -1,
+        success: false,
+        message: 'No user ID found',
+        emailSent: false,
+      };
     }
 
     try {
       // Use server action to create booking session
-      await createBookingSession({
+      const bookingResult = await createBookingSession({
         userId,
         therapistId: details.therapistId,
         sessionDate: details.date,
@@ -77,10 +83,21 @@ export default function TherapistCalendlyClient({
       await trackCalendlyEvent('booking_details_confirmed', details);
 
       console.log('Booking session saved successfully');
+      return {
+        sessionId: bookingResult?.sessionId || -1,
+        success: true,
+        message: 'Booking session saved successfully',
+        emailSent: true, // or false if you want to be more accurate
+      };
     } catch (error) {
       console.error('Error saving booking session:', error);
       // Show error to user
-      throw error;
+      return {
+        sessionId: -1,
+        success: false,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        emailSent: false,
+      };
     }
   };
 
@@ -92,7 +109,13 @@ export default function TherapistCalendlyClient({
   });
 
   if (isBookingConfirmed) {
-    return <BookingConfirmation advisorId={advisor.id} onConfirm={handleBookingConfirmation} />;
+    return (
+      <BookingConfirmation
+        advisorId={advisor.id}
+        onConfirm={handleBookingConfirmation}
+        advisorInitials={getInitials(advisor.name)}
+      />
+    );
   }
 
   return (
