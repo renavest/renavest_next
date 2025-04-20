@@ -6,8 +6,7 @@ import { InlineWidget } from 'react-calendly';
 import { useCalendlyEventListener } from 'react-calendly';
 
 import { createBookingSession } from '@/src/features/booking/actions/bookingActions';
-import { BookingConfirmation } from '@/src/features/booking/components/BookingConfirmation';
-import { TherapistAvailability } from '@/src/features/booking/components/TherapistAvailability';
+import { BookingConfirmation } from '@/src/features/booking/components/BookingConfirmation/BookingConfirmation';
 
 interface TherapistCalendlyClientProps {
   advisor: {
@@ -24,8 +23,7 @@ export default function TherapistCalendlyClient({
   userId,
   userEmail,
 }: TherapistCalendlyClientProps) {
-  const [isBookingConfirmed, setIsBookingConfirmed] = useState(false);
-  const [isUsingCalendly, setIsUsingCalendly] = useState(false);
+  const [isUsingCalendly] = useState(false);
 
   // Redirect if no advisor is found
   if (!advisor?.id) {
@@ -58,13 +56,12 @@ export default function TherapistCalendlyClient({
     timezone: string;
   }) => {
     if (!userId) {
-      console.error('No user ID found');
-      return;
+      throw new Error('No user ID found');
     }
 
     try {
       // Use server action to create booking session
-      await createBookingSession({
+      const result = await createBookingSession({
         userId,
         therapistId: details.therapistId,
         sessionDate: details.date,
@@ -77,6 +74,7 @@ export default function TherapistCalendlyClient({
       await trackCalendlyEvent('booking_details_confirmed', details);
 
       console.log('Booking session saved successfully');
+      return result;
     } catch (error) {
       console.error('Error saving booking session:', error);
       throw error;
@@ -85,14 +83,9 @@ export default function TherapistCalendlyClient({
 
   useCalendlyEventListener({
     onEventScheduled: () => {
-      setIsBookingConfirmed(true);
       trackCalendlyEvent('calendly_event_scheduled');
     },
   });
-
-  if (isBookingConfirmed) {
-    return <BookingConfirmation advisorId={advisor.id} onConfirm={handleBookingConfirmation} />;
-  }
 
   if (isUsingCalendly) {
     return (
@@ -107,24 +100,6 @@ export default function TherapistCalendlyClient({
     );
   }
 
-  return (
-    <div className='space-y-8'>
-      <div>
-        <h2 className='text-2xl font-semibold text-gray-900 mb-2'>
-          Book a Session with {advisor.name}
-        </h2>
-        <p className='text-gray-600'>Select an available time slot that works best for you.</p>
-      </div>
-
-      <TherapistAvailability
-        therapistId={parseInt(advisor.id)}
-        onSlotSelect={() => setIsBookingConfirmed(true)}
-        onGoogleCalendarNotAvailable={() => {
-          if (advisor.bookingURL) {
-            setIsUsingCalendly(true);
-          }
-        }}
-      />
-    </div>
-  );
+  // Always render BookingConfirmation for the booking flow
+  return <BookingConfirmation advisorId={advisor.id} onConfirm={handleBookingConfirmation} />;
 }
