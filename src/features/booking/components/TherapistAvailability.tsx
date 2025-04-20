@@ -7,25 +7,6 @@ import { useEffect } from 'react';
 
 import { TimezoneIdentifier } from '../utils/dateTimeUtils';
 
-import { TimezoneSelect } from './BookingFormComponents/TimezoneSelect';
-
-interface TimeSlot {
-  start: string;
-  end: string;
-}
-
-interface TherapistAvailabilityProps {
-  therapistId: number;
-  onSlotSelect: (slot: TimeSlot) => void;
-  onGoogleCalendarNotAvailable?: () => void;
-  selectedSlot?: TimeSlot | null;
-  slotGridClass?: string;
-  slotButtonClass?: string;
-  slotSelectedClass?: string;
-  slotIconClass?: string;
-  emptyStateClass?: string;
-}
-
 // State Signals
 const selectedDateSignal = signal<DateTime>(DateTime.now());
 const timezoneSignal = signal<TimezoneIdentifier>('America/New_York');
@@ -108,21 +89,13 @@ function AvailableSlots({
   slots,
   onSlotSelect,
   selectedSlot,
-  slotButtonClass = '',
-  slotSelectedClass = '',
-  slotIconClass = '',
-  slotGridClass = '',
 }: {
   slots: TimeSlot[];
   onSlotSelect: (slot: TimeSlot) => void;
   selectedSlot?: TimeSlot | null;
-  slotButtonClass?: string;
-  slotSelectedClass?: string;
-  slotIconClass?: string;
-  slotGridClass?: string;
 }) {
   return (
-    <div className={slotGridClass || 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3'}>
+    <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3'>
       {slots.map((slot, index) => {
         const startTime = DateTime.fromISO(slot.start);
         const endTime = DateTime.fromISO(slot.end);
@@ -132,21 +105,19 @@ function AvailableSlots({
           <button
             key={index}
             onClick={() => onSlotSelect(slot)}
-            className={
-              (slotButtonClass ||
-                'flex items-center justify-center gap-2 p-3 border rounded-md transition-colors') +
-              (isSelected
-                ? ' ' + (slotSelectedClass || 'border-purple-600 bg-purple-50 shadow-md')
-                : ' border-gray-200 hover:border-purple-500 hover:bg-purple-50')
-            }
+            className={`flex items-center justify-center gap-2 px-4 py-3 border rounded-xl transition-all duration-150 text-base font-medium shadow-sm bg-white hover:bg-purple-50 hover:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-200 ${
+              isSelected
+                ? 'bg-purple-600 text-white border-purple-600 hover:bg-purple-700 hover:border-purple-700'
+                : 'border-gray-200'
+            }`}
           >
-            <span className={slotIconClass || ''}>
+            <span className='w-5 h-5 mr-1'>
               <Clock className={isSelected ? 'text-white' : 'text-purple-600'} />
             </span>
-            <span className={isSelected ? 'font-semibold text-purple-800' : ''}>
+            <span className={isSelected ? 'font-semibold text-white' : ''}>
               {startTime.toFormat('h:mm a')} - {endTime.toFormat('h:mm a')}
             </span>
-            {isSelected && <span className='ml-2 text-green-500 font-bold'>✓</span>}
+            {isSelected && <span className='ml-2 text-green-200 font-bold'>✓</span>}
           </button>
         );
       })}
@@ -159,12 +130,10 @@ function DateTimeSelector({
   selectedDate,
   timezone,
   onDateChange,
-  onTimezoneChange,
 }: {
   selectedDate: DateTime;
   timezone: TimezoneIdentifier;
   onDateChange: (date: string) => void;
-  onTimezoneChange: (timezone: TimezoneIdentifier) => void;
 }) {
   return (
     <div className='flex flex-col sm:flex-row gap-4'>
@@ -179,10 +148,24 @@ function DateTimeSelector({
       </div>
       <div className='flex-1'>
         <label className='block text-sm font-medium text-gray-700 mb-1'>Timezone</label>
-        <TimezoneSelect value={timezone} onChange={onTimezoneChange} />
+        <div className='w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700 flex items-center h-[42px]'>
+          {timezone}
+        </div>
       </div>
     </div>
   );
+}
+
+interface TimeSlot {
+  start: string;
+  end: string;
+}
+
+interface TherapistAvailabilityProps {
+  therapistId: number;
+  onSlotSelect: (slot: TimeSlot) => void;
+  onGoogleCalendarNotAvailable?: () => void;
+  selectedSlot?: TimeSlot | null;
 }
 
 export function TherapistAvailability({
@@ -190,11 +173,6 @@ export function TherapistAvailability({
   onSlotSelect,
   onGoogleCalendarNotAvailable,
   selectedSlot,
-  slotGridClass,
-  slotButtonClass,
-  slotSelectedClass,
-  slotIconClass,
-  emptyStateClass,
 }: TherapistAvailabilityProps) {
   // Initial integration check
   useEffect(() => {
@@ -249,9 +227,6 @@ export function TherapistAvailability({
         onDateChange={(dateString) => {
           selectedDateSignal.value = DateTime.fromFormat(dateString, 'yyyy-MM-dd');
         }}
-        onTimezoneChange={(newTimezone) => {
-          timezoneSignal.value = newTimezone;
-        }}
       />
 
       {loadingSignal.value ? (
@@ -259,7 +234,7 @@ export function TherapistAvailability({
           <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-purple-700'></div>
         </div>
       ) : !hasAvailableSlotsSignal.value ? (
-        <div className={emptyStateClass || 'text-center py-8 text-gray-500'}>
+        <div className='flex flex-col items-center justify-center py-8 text-gray-400'>
           <span className='block text-4xl mb-2'>📅</span>
           No available slots for this date
         </div>
@@ -268,10 +243,6 @@ export function TherapistAvailability({
           slots={availableSlotsSignal.value}
           onSlotSelect={onSlotSelect}
           selectedSlot={selectedSlot}
-          slotButtonClass={slotButtonClass}
-          slotSelectedClass={slotSelectedClass}
-          slotIconClass={slotIconClass}
-          slotGridClass={slotGridClass}
         />
       )}
     </div>

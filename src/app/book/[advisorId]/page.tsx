@@ -40,6 +40,7 @@ export default async function TherapistCalendlyPage({ params }: { params: { advi
         id: advisor.id.toString(),
         name: advisor.name,
         bookingURL: advisor.bookingURL,
+        profileUrl: advisor.profileUrl,
       }}
       userId={user.id}
       userEmail={user.emailAddresses[0]?.emailAddress || ''}

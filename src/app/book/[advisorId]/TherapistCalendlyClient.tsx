@@ -13,6 +13,7 @@ interface TherapistCalendlyClientProps {
     id: string;
     name: string;
     bookingURL: string;
+    profileUrl?: string;
   };
   userId: string;
   userEmail: string;
@@ -106,6 +107,7 @@ export default function TherapistCalendlyClient({
       advisorId={advisor.id}
       onConfirm={handleBookingConfirmation}
       advisorName={advisor.name}
+      advisorImage={advisor.profileUrl}
     />
   );
 }
