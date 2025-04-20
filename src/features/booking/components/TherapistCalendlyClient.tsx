@@ -107,7 +107,7 @@ export default function TherapistCalendlyClient({
       trackCalendlyEvent('calendly_event_scheduled', e);
     },
   });
-
+  
   if (isBookingConfirmed) {
     return (
       <BookingConfirmation
