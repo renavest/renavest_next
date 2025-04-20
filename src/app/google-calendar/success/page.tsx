@@ -145,9 +145,9 @@ export default function GoogleCalendarSuccessPage() {
         )}
 
         <div className='flex justify-center'>
-          <Link href='/dashboard'>
+          <Link href='/therapist'>
             <span className='inline-flex items-center px-6 py-2 bg-purple-600 text-white rounded-md font-medium shadow hover:bg-purple-700 transition'>
-              Return to Dashboard
+              Return to Therapist
             </span>
           </Link>
         </div>
