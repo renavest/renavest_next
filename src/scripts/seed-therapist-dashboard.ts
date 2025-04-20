@@ -4,7 +4,6 @@ import { eq } from 'drizzle-orm';
 import { db } from '@/src/db';
 import { therapists, users, bookingSessions, clientNotes } from '@/src/db/schema';
 
-// Load environment variables
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local';
 dotenv.config({ path: envFile });
 
@@ -89,7 +88,7 @@ async function seedTherapistDashboard() {
     })
     .returning();
   // Insert therapist row
-  const [therapistRow] = await db
+  const insertedTherapistRows = await db
     .insert(therapists)
     .values({
       userId: therapistClerkId,
@@ -111,6 +110,10 @@ async function seedTherapistDashboard() {
       updatedAt: now,
     })
     .returning();
+  const therapistRow = insertedTherapistRows[0];
+  if (!therapistRow) {
+    throw new Error('Failed to insert therapist row for Seth Morton');
+  }
 
   // --- 2. Find or create client user (seth@renavestapp.com) ---
   const clientEmail = 'seth@renavestapp.com';
