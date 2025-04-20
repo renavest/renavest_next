@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-import { BookingConfirmationView } from '@/src/features/booking/components/BookingConfirmation/BookingConfirmationView';
+import { BookingSuccess } from '@/src/features/booking/components/confirmation/BookingSuccess';
 
 interface PageProps {
   searchParams: { bookingId?: string };
@@ -13,5 +13,5 @@ export default async function Page({ searchParams }: PageProps) {
     redirect('/employee');
   }
 
-  return <BookingConfirmationView bookingId={bookingId} />;
+  return <BookingSuccess bookingId={bookingId} />;
 }

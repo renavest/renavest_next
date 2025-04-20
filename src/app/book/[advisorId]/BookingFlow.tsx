@@ -5,7 +5,7 @@ import { InlineWidget } from 'react-calendly';
 import { useCalendlyEventListener } from 'react-calendly';
 
 import { createBookingSession } from '@/src/features/booking/actions/bookingActions';
-import { BookingForm } from '@/src/features/booking/components/BookingConfirmation/BookingConfirmation';
+import { BookingForm } from '@/src/features/booking/components/form/BookingForm';
 import { getInitials } from '@/src/features/booking/utils/stringUtils';
 
 interface BookingFlowProps {
