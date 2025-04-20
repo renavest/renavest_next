@@ -101,5 +101,11 @@ export default function TherapistCalendlyClient({
   }
 
   // Always render BookingConfirmation for the booking flow
-  return <BookingConfirmation advisorId={advisor.id} onConfirm={handleBookingConfirmation} />;
+  return (
+    <BookingConfirmation
+      advisorId={advisor.id}
+      onConfirm={handleBookingConfirmation}
+      advisorName={advisor.name}
+    />
+  );
 }
