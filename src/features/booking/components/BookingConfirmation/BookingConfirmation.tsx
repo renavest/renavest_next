@@ -101,8 +101,21 @@ export function BookingConfirmation({
             <div className='flex items-center gap-2 mb-2'>
               <span className='font-medium text-gray-900'>Selected Slot:</span>
               <span className='text-purple-700'>
-                {new Date(selectedSlot.start).toLocaleString()} -{' '}
-                {new Date(selectedSlot.end).toLocaleTimeString()}
+                {new Date(selectedSlot.start).toLocaleDateString(undefined, {
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
+                ,
+                {new Date(selectedSlot.start).toLocaleTimeString(undefined, {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                })}{' '}
+                -{' '}
+                {new Date(selectedSlot.end).toLocaleTimeString(undefined, {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                })}
               </span>
             </div>
             <button

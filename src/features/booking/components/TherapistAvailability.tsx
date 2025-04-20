@@ -105,19 +105,22 @@ function AvailableSlots({
           <button
             key={index}
             onClick={() => onSlotSelect(slot)}
-            className={`flex items-center justify-center gap-2 px-4 py-3 border rounded-xl transition-all duration-150 text-base font-medium shadow-sm bg-white hover:bg-purple-50 hover:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-200 ${
-              isSelected
-                ? 'bg-purple-600 text-white border-purple-600 hover:bg-purple-700 hover:border-purple-700'
-                : 'border-gray-200'
-            }`}
+            className={`flex items-center justify-center gap-2 px-5 py-3 border rounded-full transition-all duration-150 text-base font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-200
+              ${isSelected ? 'bg-purple-600 text-white border-purple-600 hover:bg-purple-700' : 'bg-white border-gray-200 hover:bg-purple-50 hover:border-purple-400'}
+            `}
           >
             <span className='w-5 h-5 mr-1'>
               <Clock className={isSelected ? 'text-white' : 'text-purple-600'} />
             </span>
-            <span className={isSelected ? 'font-semibold text-white' : ''}>
-              {startTime.toFormat('h:mm a')} - {endTime.toFormat('h:mm a')}
+            <span className='flex flex-col items-start'>
+              <span className={isSelected ? 'font-bold text-white' : 'font-bold text-gray-900'}>
+                {startTime.toFormat('h:mm')} - {endTime.toFormat('h:mm')}
+              </span>
+              <span className={`text-xs ${isSelected ? 'text-purple-100' : 'text-gray-500'}`}>
+                {startTime.toFormat('a')} - {endTime.toFormat('a')}
+              </span>
             </span>
-            {isSelected && <span className='ml-2 text-green-200 font-bold'>✓</span>}
+            {isSelected && <span className='ml-2 text-white font-bold'>✓</span>}
           </button>
         );
       })}
