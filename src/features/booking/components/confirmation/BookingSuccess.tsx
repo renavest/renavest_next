@@ -1,5 +1,6 @@
 'use client';
 
+import { Calendar, Check, Clock, User } from 'lucide-react';
 import { DateTime } from 'luxon';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -38,34 +39,51 @@ function BookingDetails({ booking }: { booking: BookingDetails }) {
   const endTime = DateTime.fromISO(booking.sessionEndTime);
 
   return (
-    <dl className='grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2'>
-      <div>
-        <dt className='text-sm font-medium text-gray-500'>Therapist</dt>
-        <dd className='mt-1 text-sm text-gray-900'>{booking.therapist.name}</dd>
+    <dl className='grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2'>
+      <div className='flex items-center space-x-3'>
+        <User className='h-6 w-6 text-purple-500' />
+        <div>
+          <dt className='text-xs font-semibold text-gray-500 uppercase tracking-wide'>Therapist</dt>
+          <dd className='mt-1 text-base text-gray-900 font-medium'>{booking.therapist.name}</dd>
+        </div>
       </div>
-
-      <div>
-        <dt className='text-sm font-medium text-gray-500'>Date</dt>
-        <dd className='mt-1 text-sm text-gray-900'>{sessionDate.toFormat('MMMM d, yyyy')}</dd>
+      <div className='flex items-center space-x-3'>
+        <Calendar className='h-6 w-6 text-purple-500' />
+        <div>
+          <dt className='text-xs font-semibold text-gray-500 uppercase tracking-wide'>Date</dt>
+          <dd className='mt-1 text-base text-gray-900 font-medium'>
+            {sessionDate.toFormat('MMMM d, yyyy')}
+          </dd>
+        </div>
       </div>
-
-      <div>
-        <dt className='text-sm font-medium text-gray-500'>Start Time</dt>
-        <dd className='mt-1 text-sm text-gray-900'>{startTime.toFormat('h:mm a')}</dd>
+      <div className='flex items-center space-x-3'>
+        <Clock className='h-6 w-6 text-purple-500' />
+        <div>
+          <dt className='text-xs font-semibold text-gray-500 uppercase tracking-wide'>
+            Start Time
+          </dt>
+          <dd className='mt-1 text-base text-gray-900 font-medium'>
+            {startTime.toFormat('h:mm a')}
+          </dd>
+        </div>
       </div>
-
-      <div>
-        <dt className='text-sm font-medium text-gray-500'>End Time</dt>
-        <dd className='mt-1 text-sm text-gray-900'>{endTime.toFormat('h:mm a')}</dd>
+      <div className='flex items-center space-x-3'>
+        <Clock className='h-6 w-6 text-purple-500' />
+        <div>
+          <dt className='text-xs font-semibold text-gray-500 uppercase tracking-wide'>End Time</dt>
+          <dd className='mt-1 text-base text-gray-900 font-medium'>{endTime.toFormat('h:mm a')}</dd>
+        </div>
       </div>
-
-      <div className='sm:col-span-2'>
-        <dt className='text-sm font-medium text-gray-500'>Status</dt>
-        <dd className='mt-1 text-sm text-gray-900'>
-          <span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800'>
-            {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-          </span>
-        </dd>
+      <div className='flex items-center space-x-3 sm:col-span-2'>
+        <Check className='h-6 w-6 text-green-500' />
+        <div>
+          <dt className='text-xs font-semibold text-gray-500 uppercase tracking-wide'>Status</dt>
+          <dd className='mt-1 text-base text-green-700 font-semibold'>
+            <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100'>
+              {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+            </span>
+          </dd>
+        </div>
       </div>
     </dl>
   );
@@ -103,38 +121,29 @@ export function BookingSuccess({ bookingId }: { bookingId: string }) {
   if (!booking) return <ErrorState message='Booking not found' />;
 
   return (
-    <div className='min-h-screen bg-gray-50 py-12'>
-      <div className='max-w-3xl mx-auto px-4 sm:px-6 lg:px-8'>
-        <div className='bg-white shadow sm:rounded-lg'>
-          <div className='px-4 py-5 sm:p-6'>
-            <div className='flex items-center justify-center mb-8'>
-              <div className='rounded-full bg-green-100 p-3'>
-                <svg
-                  className='h-6 w-6 text-green-600'
-                  fill='none'
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth='2'
-                  viewBox='0 0 24 24'
-                  stroke='currentColor'
-                >
-                  <path d='M5 13l4 4L19 7' />
-                </svg>
+    <div className='min-h-screen bg-gradient-to-br from-purple-50 to-green-50 py-16 flex items-center justify-center'>
+      <div className='w-full max-w-2xl mx-auto px-4 sm:px-8'>
+        <div className='bg-white shadow-xl rounded-3xl overflow-hidden border border-gray-100'>
+          <div className='px-8 py-10 sm:p-12 flex flex-col items-center'>
+            <div className='flex items-center justify-center mb-6'>
+              <div className='mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center'>
+                <Check className='h-10 w-10 text-green-600' />
               </div>
             </div>
-
-            <h2 className='text-2xl font-bold text-center text-gray-900 mb-8'>
+            <h2 className='text-3xl sm:text-4xl font-extrabold text-center text-gray-900 mb-4 tracking-tight'>
               Booking Confirmed!
             </h2>
-
-            <div className='border-t border-gray-200 py-6'>
+            <p className='text-lg text-center text-gray-600 mb-8 max-w-md'>
+              Your session has been successfully scheduled. A confirmation email has been sent with
+              all the details. We look forward to seeing you!
+            </p>
+            <div className='w-full border-t border-gray-200 py-8'>
               <BookingDetails booking={booking} />
             </div>
-
-            <div className='mt-8 flex justify-center'>
+            <div className='mt-10 flex justify-center w-full'>
               <button
                 onClick={() => router.push('/dashboard')}
-                className='inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500'
+                className='inline-flex items-center px-8 py-3 border border-transparent text-lg font-semibold rounded-full shadow-lg text-white bg-gradient-to-r from-purple-600 to-green-500 hover:from-purple-700 hover:to-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200'
               >
                 Go to Dashboard
               </button>
