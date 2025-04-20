@@ -19,6 +19,11 @@ interface TherapistAvailabilityProps {
   onSlotSelect: (slot: TimeSlot) => void;
   onGoogleCalendarNotAvailable?: () => void;
   selectedSlot?: TimeSlot | null;
+  slotGridClass?: string;
+  slotButtonClass?: string;
+  slotSelectedClass?: string;
+  slotIconClass?: string;
+  emptyStateClass?: string;
 }
 
 // State Signals
@@ -103,13 +108,21 @@ function AvailableSlots({
   slots,
   onSlotSelect,
   selectedSlot,
+  slotButtonClass = '',
+  slotSelectedClass = '',
+  slotIconClass = '',
+  slotGridClass = '',
 }: {
   slots: TimeSlot[];
   onSlotSelect: (slot: TimeSlot) => void;
   selectedSlot?: TimeSlot | null;
+  slotButtonClass?: string;
+  slotSelectedClass?: string;
+  slotIconClass?: string;
+  slotGridClass?: string;
 }) {
   return (
-    <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3'>
+    <div className={slotGridClass || 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3'}>
       {slots.map((slot, index) => {
         const startTime = DateTime.fromISO(slot.start);
         const endTime = DateTime.fromISO(slot.end);
@@ -119,13 +132,21 @@ function AvailableSlots({
           <button
             key={index}
             onClick={() => onSlotSelect(slot)}
-            className={`flex items-center justify-center gap-2 p-3 border rounded-md transition-colors
-              ${isSelected ? 'border-purple-600 bg-purple-50 shadow-md' : 'border-gray-200 hover:border-purple-500 hover:bg-purple-50'}`}
+            className={
+              (slotButtonClass ||
+                'flex items-center justify-center gap-2 p-3 border rounded-md transition-colors') +
+              (isSelected
+                ? ' ' + (slotSelectedClass || 'border-purple-600 bg-purple-50 shadow-md')
+                : ' border-gray-200 hover:border-purple-500 hover:bg-purple-50')
+            }
           >
-            <Clock className={`w-4 h-4 ${isSelected ? 'text-purple-700' : 'text-purple-600'}`} />
+            <span className={slotIconClass || ''}>
+              <Clock className={isSelected ? 'text-white' : 'text-purple-600'} />
+            </span>
             <span className={isSelected ? 'font-semibold text-purple-800' : ''}>
               {startTime.toFormat('h:mm a')} - {endTime.toFormat('h:mm a')}
             </span>
+            {isSelected && <span className='ml-2 text-green-500 font-bold'>✓</span>}
           </button>
         );
       })}
@@ -169,6 +190,11 @@ export function TherapistAvailability({
   onSlotSelect,
   onGoogleCalendarNotAvailable,
   selectedSlot,
+  slotGridClass,
+  slotButtonClass,
+  slotSelectedClass,
+  slotIconClass,
+  emptyStateClass,
 }: TherapistAvailabilityProps) {
   // Initial integration check
   useEffect(() => {
@@ -233,12 +259,19 @@ export function TherapistAvailability({
           <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-purple-700'></div>
         </div>
       ) : !hasAvailableSlotsSignal.value ? (
-        <div className='text-center py-8 text-gray-500'>No available slots for this date</div>
+        <div className={emptyStateClass || 'text-center py-8 text-gray-500'}>
+          <span className='block text-4xl mb-2'>📅</span>
+          No available slots for this date
+        </div>
       ) : (
         <AvailableSlots
           slots={availableSlotsSignal.value}
           onSlotSelect={onSlotSelect}
           selectedSlot={selectedSlot}
+          slotButtonClass={slotButtonClass}
+          slotSelectedClass={slotSelectedClass}
+          slotIconClass={slotIconClass}
+          slotGridClass={slotGridClass}
         />
       )}
     </div>
