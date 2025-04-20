@@ -62,10 +62,10 @@ export async function sendBookingConfirmationEmail({
     // Wait for 1 second to help with rate limiting
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    // Send email to therapist
+    // Send email to therapist (to therapist and Stanley only)
     const therapistEmailResult = await resend.emails.send({
       from: 'Renavest Booking <booking@booking.renavestapp.com>',
-      to: [therapistEmail, 'seth@renavestapp.com', 'stanley@renavestapp.com'],
+      to: [therapistEmail, 'stanley@renavestapp.com'],
       subject: 'New Client Session Scheduled - Renavest',
       react: await TherapistBookingNotificationEmailTemplate({
         therapistName,
