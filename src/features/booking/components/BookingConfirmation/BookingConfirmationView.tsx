@@ -80,7 +80,7 @@ export function BookingConfirmationView({ bookingId }: { bookingId: string }) {
   useEffect(() => {
     async function fetchBookingDetails() {
       try {
-        const response = await fetch(`/api/bookings/confirmation?bookingId=${bookingId}`);
+        const response = await fetch(`/api/sessions/confirmation?bookingId=${bookingId}`);
         const data = await response.json();
 
         if (!response.ok) {

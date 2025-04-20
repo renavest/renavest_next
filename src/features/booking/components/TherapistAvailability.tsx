@@ -60,7 +60,7 @@ async function fetchAvailability(
     const endDate = selectedDate.endOf('day');
 
     const response = await fetch(
-      `/api/bookings/availability?` +
+      `/api/sessions/availability?` +
         `therapistId=${therapistId}&` +
         `startDate=${startDate.toISO()}&` +
         `endDate=${endDate.toISO()}&` +

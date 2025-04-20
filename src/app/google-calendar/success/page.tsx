@@ -49,7 +49,7 @@ export default function GoogleCalendarSuccessPage() {
         const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
         const availabilityResponse = await fetch(
-          `/api/bookings/availability?` +
+          `/api/sessions/availability?` +
             `therapistId=${therapistId}&` +
             `startDate=${now.toISOString()}&` +
             `endDate=${oneWeekFromNow.toISOString()}&` +
