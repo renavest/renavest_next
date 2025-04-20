@@ -18,6 +18,7 @@ interface TherapistAvailabilityProps {
   therapistId: number;
   onSlotSelect: (slot: TimeSlot) => void;
   onGoogleCalendarNotAvailable?: () => void;
+  selectedSlot?: TimeSlot | null;
 }
 
 // State Signals
@@ -101,23 +102,28 @@ async function fetchAvailability(
 function AvailableSlots({
   slots,
   onSlotSelect,
+  selectedSlot,
 }: {
   slots: TimeSlot[];
   onSlotSelect: (slot: TimeSlot) => void;
+  selectedSlot?: TimeSlot | null;
 }) {
   return (
     <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3'>
       {slots.map((slot, index) => {
         const startTime = DateTime.fromISO(slot.start);
         const endTime = DateTime.fromISO(slot.end);
+        const isSelected =
+          selectedSlot && selectedSlot.start === slot.start && selectedSlot.end === slot.end;
         return (
           <button
             key={index}
             onClick={() => onSlotSelect(slot)}
-            className='flex items-center justify-center gap-2 p-3 border border-gray-200 rounded-md hover:border-purple-500 hover:bg-purple-50 transition-colors'
+            className={`flex items-center justify-center gap-2 p-3 border rounded-md transition-colors
+              ${isSelected ? 'border-purple-600 bg-purple-50 shadow-md' : 'border-gray-200 hover:border-purple-500 hover:bg-purple-50'}`}
           >
-            <Clock className='w-4 h-4 text-purple-600' />
-            <span>
+            <Clock className={`w-4 h-4 ${isSelected ? 'text-purple-700' : 'text-purple-600'}`} />
+            <span className={isSelected ? 'font-semibold text-purple-800' : ''}>
               {startTime.toFormat('h:mm a')} - {endTime.toFormat('h:mm a')}
             </span>
           </button>
@@ -162,6 +168,7 @@ export function TherapistAvailability({
   therapistId,
   onSlotSelect,
   onGoogleCalendarNotAvailable,
+  selectedSlot,
 }: TherapistAvailabilityProps) {
   // Initial integration check
   useEffect(() => {
@@ -228,7 +235,11 @@ export function TherapistAvailability({
       ) : !hasAvailableSlotsSignal.value ? (
         <div className='text-center py-8 text-gray-500'>No available slots for this date</div>
       ) : (
-        <AvailableSlots slots={availableSlotsSignal.value} onSlotSelect={onSlotSelect} />
+        <AvailableSlots
+          slots={availableSlotsSignal.value}
+          onSlotSelect={onSlotSelect}
+          selectedSlot={selectedSlot}
+        />
       )}
     </div>
   );
