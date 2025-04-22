@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { and, eq, gt } from 'drizzle-orm';
+import { and, eq, gt, or } from 'drizzle-orm';
 import { DateTime } from 'luxon';
 import { NextResponse } from 'next/server';
 
@@ -24,6 +24,7 @@ export async function GET() {
         sessionDate: bookingSessions.sessionDate,
         sessionStartTime: bookingSessions.sessionStartTime,
         status: bookingSessions.status,
+        metadata: bookingSessions.metadata,
       })
       .from(bookingSessions)
       .leftJoin(therapists, eq(bookingSessions.therapistId, therapists.id))
@@ -31,16 +32,24 @@ export async function GET() {
       .where(
         and(
           eq(bookingSessions.userId, userId),
-          eq(bookingSessions.status, 'scheduled'),
+          or(eq(bookingSessions.status, 'confirmed'), eq(bookingSessions.status, 'scheduled')),
           gt(bookingSessions.sessionDate, now),
         ),
       )
       .orderBy(bookingSessions.sessionDate)
       .limit(3);
 
+    const sessionsWithMeet = upcomingSessions.map((s) => {
+      const meta = s.metadata as { googleMeetLink?: string } | undefined;
+      return {
+        ...s,
+        googleMeetLink: meta?.googleMeetLink || '',
+      };
+    });
+
     return NextResponse.json({
-      upcomingSessions,
-      totalUpcomingSessions: upcomingSessions.length,
+      upcomingSessions: sessionsWithMeet,
+      totalUpcomingSessions: sessionsWithMeet.length,
     });
   } catch (error) {
     console.error('Error fetching upcoming sessions:', error);
