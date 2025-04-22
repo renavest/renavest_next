@@ -3,7 +3,7 @@
 import { Calendar, Check, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 
 interface CalendarStatus {
   isConnected: boolean;
@@ -15,7 +15,7 @@ interface CalendarStatus {
   error?: string;
 }
 
-export default function GoogleCalendarSuccessPage() {
+function GoogleCalendarSuccessPageInner() {
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<CalendarStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -155,5 +155,13 @@ export default function GoogleCalendarSuccessPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function GoogleCalendarSuccessPage() {
+  return (
+    <Suspense>
+      <GoogleCalendarSuccessPageInner />
+    </Suspense>
   );
 }
