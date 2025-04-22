@@ -1,7 +1,5 @@
 import * as dotenv from 'dotenv';
-import path from 'path';
-import { db } from '../db';
-import { therapists } from '../db/schema';
+
 import { uploadImageToS3 } from './migrate-therapists';
 
 // Load production environment variables
@@ -10,17 +8,6 @@ dotenv.config({ path: envFile });
 
 async function main() {
   const name = 'Stanley Rameau';
-  const email = 'stanley@renavestapp.com';
-  const title = 'Financial Coach'; // Update as needed
-  const bookingURL = '';
-  const expertise = '';
-  const certifications = '';
-  const song = '';
-  const yoe = 0;
-  const clientele = '';
-  const longBio = '';
-  const previewBlurb = '';
-  const hourlyRate = null;
   const localImagePath = '/experts/stanley.jpg';
 
   // Upload image to S3
@@ -30,48 +17,8 @@ async function main() {
     process.exit(1);
   }
 
-  // Check if Stanley already exists
-  const existing = await db.select().from(therapists).where(therapists.email.eq(email));
-
-  if (existing.length > 0) {
-    // Update existing record
-    await db
-      .update(therapists)
-      .set({
-        name,
-        title,
-        bookingURL,
-        expertise,
-        certifications,
-        song,
-        yoe,
-        clientele,
-        longBio,
-        previewBlurb,
-        profileUrl: imageKey,
-        hourlyRate,
-      })
-      .where(therapists.email.eq(email));
-    console.log('Updated Stanley Rameau in the database.');
-  } else {
-    // Insert new record
-    await db.insert(therapists).values({
-      name,
-      email,
-      title,
-      bookingURL,
-      expertise,
-      certifications,
-      song,
-      yoe,
-      clientele,
-      longBio,
-      previewBlurb,
-      profileUrl: imageKey,
-      hourlyRate,
-    });
-    console.log('Inserted Stanley Rameau into the database.');
-  }
+  console.log('Stanley Rameau image uploaded to S3.');
+  console.log('Use this as the profileUrl:', imageKey);
 }
 
 main().catch((err) => {
