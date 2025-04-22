@@ -1,7 +1,7 @@
 'use client';
 
 import { UserButton } from '@clerk/nextjs';
-import { Menu, X, ChevronLeft } from 'lucide-react';
+import { Menu, X, ChevronLeft, PlugIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect } from 'react';
@@ -15,8 +15,8 @@ import {
   isMobileMenuOpenSignal,
 } from '../../employee-dashboard/state/dashboardState';
 
-// Extract common navigation items into a separate component
-const NavigationItem = ({
+// Update NavigationItem component to be exported
+export const NavigationItem = ({
   href,
   icon: Icon,
   label,
@@ -49,6 +49,14 @@ const MobileNavigation = () => (
     `}
   >
     <div className='p-4 space-y-2'>
+      {/* Add Integrations Navigation Item */}
+      <NavigationItem
+        href='/therapist/integrations'
+        icon={PlugIcon}
+        label='Integrations'
+        isMobile={true}
+      />
+
       <div className='px-4 py-3 border-t border-gray-100 mt-3'>
         <LogoutButton
           className='w-full flex items-center justify-center space-x-2 text-red-600 hover:bg-red-50 p-2 rounded-md'
@@ -67,6 +75,9 @@ const MobileNavigation = () => (
 // Desktop Navigation Component
 const DesktopNavigation = () => (
   <div className='hidden md:flex items-center gap-3 lg:gap-4'>
+    {/* Add Integrations Navigation Item */}
+    <NavigationItem href='/therapist/integrations' icon={PlugIcon} label='Integrations' />
+
     <div className='h-6 w-px bg-gray-200 mx-1'></div>
     <LogoutButton />
     <div className='ml-1 lg:ml-2'>

@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import posthog from 'posthog-js';
+import { useState } from 'react';
 
 import { cn } from '@/src/lib/utils';
 // import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
@@ -16,6 +17,7 @@ import { advisorSignal, isOpenSignal } from '../state/advisorSignals';
 const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
   const { user } = useUser();
   const router = useRouter();
+  const [hasError, setHasError] = useState(false);
 
   const handleBookSession = () => {
     // Track booking event with enhanced context
@@ -37,12 +39,13 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
         <Image
           width={350}
           height={350}
-          src={advisor.profileUrl || ''}
+          src={hasError ? '/experts/placeholderexp.png' : advisor.profileUrl || ''}
           alt={advisor.name}
           className={cn('h-full w-full object-cover', 'transition-opacity duration-300')}
           placeholder='blur'
           blurDataURL='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
           priority
+          onError={() => setHasError(true)}
           onClick={() => {
             // Track profile view event
             posthog.capture('therapist_profile_viewed', {

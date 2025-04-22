@@ -12,6 +12,10 @@ export interface WebhookUserData {
   first_name: string | null;
   last_name: string | null;
   image_url: string | null;
+  public_metadata?: Record<string, unknown>;
+  private_metadata?: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
 }
 
 // Custom error types for user handling
@@ -44,15 +48,13 @@ function getPrimaryEmail(
  */
 export async function handleUserCreateOrUpdate(
   eventType: 'user.created' | 'user.updated',
-
   data: WebhookUserData,
 ): Promise<Result<boolean, UserHandlingError>> {
   // eslint-disable-next-line @typescript-eslint/naming-convention
-  const { id, email_addresses, first_name, last_name, image_url } = data;
+  const { id, email_addresses, first_name, last_name, image_url, created_at, updated_at } = data;
 
   // Get primary email
   const emailResult = getPrimaryEmail(email_addresses);
-  // Early return if no valid email
   if (emailResult.isErr()) {
     logger.error('No valid email found for user', {
       userId: id,
@@ -76,6 +78,10 @@ export async function handleUserCreateOrUpdate(
     const existingUser = existingUserByClerkId[0];
     const userWithEmail = existingUserByEmail[0];
 
+    const now = new Date();
+    const userCreatedAt = new Date(created_at);
+    const userUpdatedAt = new Date(updated_at);
+
     if (existingUser) {
       // Update existing user
       await db
@@ -85,7 +91,7 @@ export async function handleUserCreateOrUpdate(
           firstName: first_name || null,
           lastName: last_name || null,
           imageUrl: image_url || null,
-          updatedAt: new Date(),
+          updatedAt: userUpdatedAt || now,
         })
         .where(eq(users.clerkId, id));
 
@@ -99,17 +105,18 @@ export async function handleUserCreateOrUpdate(
         await db
           .update(users)
           .set({
-            clerkId: id, // Update to new Clerk ID
+            clerkId: id,
             firstName: first_name || userWithEmail.firstName,
             lastName: last_name || userWithEmail.lastName,
             imageUrl: image_url || userWithEmail.imageUrl,
-            updatedAt: new Date(),
+            updatedAt: userUpdatedAt || now,
           })
           .where(eq(users.email, primaryEmail));
 
         logger.info('Updated user with new Clerk ID', {
           userId: id,
           eventType,
+          previousId: userWithEmail.clerkId,
         });
       } else {
         // Create new user
@@ -119,6 +126,8 @@ export async function handleUserCreateOrUpdate(
           firstName: first_name || null,
           lastName: last_name || null,
           imageUrl: image_url || null,
+          createdAt: userCreatedAt || now,
+          updatedAt: userUpdatedAt || now,
         });
 
         logger.info('Created new user', {

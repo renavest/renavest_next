@@ -1,6 +1,7 @@
 'use client';
 import { Calendar } from 'lucide-react';
 import Image from 'next/image';
+import { useState } from 'react';
 
 import { COLORS } from '@/src/styles/colors';
 
@@ -8,6 +9,7 @@ import { therapists } from '../../state/dashboardState';
 
 export default function TherapistConnection() {
   const currentTherapist = therapists.find((t) => t.name === 'Dr. Sarah Chen')!;
+  const [hasError, setHasError] = useState(false);
 
   return (
     <div className={`bg-white rounded-xl p-4 md:p-6 border ${COLORS.WARM_PURPLE['20']} shadow-sm`}>
@@ -16,11 +18,12 @@ export default function TherapistConnection() {
           className={`flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white shadow-sm flex items-center justify-center border ${COLORS.WARM_PURPLE['20']}`}
         >
           <Image
-            src={currentTherapist.imageUrl}
+            src={hasError ? '/experts/placeholderexp.png' : currentTherapist.imageUrl}
             alt={currentTherapist.name}
             width={48}
             height={48}
             className='rounded-full object-cover w-full h-full'
+            onError={() => setHasError(true)}
           />
         </div>
         <div>

@@ -117,7 +117,7 @@ const LoginLeftSection = () => {
 
 export default function LoginPage() {
   return (
-    <div className='min-h-screen flex'>
+    <div className='min-h-screen flex bg-gradient-to-br from-purple-50 via-[#f7f5ff] to-[#faf9f6]'>
       <style jsx global>{`
         @keyframes fade-in {
           from {

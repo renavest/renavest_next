@@ -1,7 +1,7 @@
 ---
 description: 
 globs: 
-alwaysApply: true
+alwaysApply: false
 ---
 # Renavest Financial Therapy Platform Guidelines
 
@@ -68,7 +68,6 @@ interface ClientDashboardProps {
 - Create privacy-preserving state patterns that limit data exposure
 
 ## Performance Optimization
-- Favor Server Components for data processing
 - Use client components only for direct user interaction
 - Implement lightweight visualizations for financial data
 - Optimize loading states for psychological safety

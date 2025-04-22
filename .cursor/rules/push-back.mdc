@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+If a proposed solution seems suboptimal, tell me that this is suboptimal and suggest a more robust architectural pattern.

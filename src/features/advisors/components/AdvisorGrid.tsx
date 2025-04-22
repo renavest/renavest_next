@@ -93,12 +93,20 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
         )}
 
         {imageLoadState.hasError ? (
-          <div
-            className='absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-500'
-            aria-label='Image failed to load'
-          >
-            No Image
-          </div>
+          <Image
+            width={350}
+            height={350}
+            src={'/experts/placeholderexp.png'}
+            alt={advisor.name}
+            className={cn(
+              'h-full w-full rounded-2xl object-cover object-center transition-transform duration-500',
+              'group-hover:scale-110',
+              'opacity-100',
+              'overflow-hidden',
+            )}
+            placeholder='blur'
+            blurDataURL='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+          />
         ) : (
           <Image
             width={350}

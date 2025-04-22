@@ -4,6 +4,7 @@ import { useUser } from '@clerk/nextjs';
 import { FileText, UserCircle2, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
+import { GoogleCalendarIntegration } from '@/src/features/google-calendar/components/GoogleCalendarIntegration';
 import { AddNewClientSection } from '@/src/features/therapist-dashboard/components/AddNewClientSection';
 import ClientNotesSection from '@/src/features/therapist-dashboard/components/ClientNotesSection';
 import TherapistNavbar from '@/src/features/therapist-dashboard/components/TherapistNavbar';
@@ -196,12 +197,13 @@ export default function TherapistDashboardPage() {
     );
   }
 
-  // If no clients (likely not a therapist), show the add client section
+  // If no clients (likely not a therapist), show the add client section with Google Calendar Integration
   if (!isLoading && (clients.length === 0 || error)) {
     return (
       <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen flex items-center justify-center'>
-        <div className='w-full max-w-md'>
+        <div className='w-full max-w-md space-y-6'>
           <AddNewClientSection />
+          <GoogleCalendarIntegration />
         </div>
       </div>
     );

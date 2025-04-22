@@ -6,7 +6,7 @@ import { trackSessionSearch } from '@/src/app/api/track/calendly/route';
 import { db } from '@/src/db';
 import { therapists } from '@/src/db/schema';
 
-import TherapistCalendlyClient from './TherapistCalendlyClient';
+import UnifiedBookingFlow from './BookingFlow';
 
 export default async function TherapistCalendlyPage({ params }: { params: { advisorId: string } }) {
   const { advisorId } = await params;
@@ -26,6 +26,7 @@ export default async function TherapistCalendlyPage({ params }: { params: { advi
   if (!user || !advisor?.id || !advisor?.bookingURL) {
     redirect('/explore');
   }
+
   // Track session search
   await trackSessionSearch({
     therapistId: advisor.id.toString(),
@@ -35,7 +36,7 @@ export default async function TherapistCalendlyPage({ params }: { params: { advi
   });
 
   return (
-    <TherapistCalendlyClient
+    <UnifiedBookingFlow
       advisor={{
         id: advisor.id.toString(),
         name: advisor.name,
