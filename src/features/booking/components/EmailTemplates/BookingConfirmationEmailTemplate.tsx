@@ -19,11 +19,12 @@ interface BookingConfirmationEmailProps {
   sessionDate: string;
   sessionTime: string;
   timezone: string;
+  googleMeetLink?: string;
 }
 
 export const BookingConfirmationEmailTemplate: React.FC<
   Readonly<BookingConfirmationEmailProps>
-> = ({ clientName, therapistName, sessionDate, sessionTime, timezone }) => (
+> = ({ clientName, therapistName, sessionDate, sessionTime, timezone, googleMeetLink }) => (
   <Html>
     <Head>
       <Preview>Your Therapy Session is Confirmed</Preview>
@@ -71,6 +72,19 @@ export const BookingConfirmationEmailTemplate: React.FC<
               <strong className={COLORS.WARM_PURPLE.DEFAULT}>Time:</strong> {sessionTime}
             </Text>
           </Section>
+
+          {googleMeetLink && (
+            <Section className='text-center mb-6'>
+              <a
+                href={googleMeetLink}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='inline-block px-6 py-2 bg-[#9071FF] text-white rounded-full text-base font-semibold shadow hover:bg-[#7a5fd6] transition-colors'
+              >
+                Join Google Meet
+              </a>
+            </Section>
+          )}
 
           <Text className='text-gray-600 mb-4'>
             We're looking forward to supporting you on your financial wellness journey! You can

@@ -12,6 +12,7 @@ type UpcomingSession = {
   sessionDate: string;
   sessionStartTime: string;
   status: string;
+  googleMeetLink?: string;
 };
 
 export function UpcomingSessionsSection() {
@@ -113,6 +114,18 @@ export function UpcomingSessionsSection() {
                   <Clock className='h-4 w-4' />
                   <span>{formattedTime}</span>
                 </div>
+                {session.googleMeetLink && (
+                  <div className='mt-2'>
+                    <a
+                      href={session.googleMeetLink}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='inline-block px-4 py-2 bg-[#9071FF] text-white rounded-full text-xs font-semibold shadow hover:bg-[#7a5fd6] transition-colors'
+                    >
+                      Join Google Meet
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
           );

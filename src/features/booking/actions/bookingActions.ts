@@ -119,9 +119,20 @@ export async function createBookingSession(rawData: unknown) {
       userEmail,
     });
 
+    // Fetch the booking session with metadata to get the Google Meet link
+    const bookingSessionId = bookingSession[0]?.id;
+    let googleMeetLink = '';
+    if (bookingSessionId) {
+      const bookingWithMeta = await db.query.bookingSessions.findFirst({
+        where: (bookings, { eq }) => eq(bookings.id, bookingSessionId),
+      });
+      const meta = bookingWithMeta?.metadata as { googleMeetLink?: string } | undefined;
+      googleMeetLink = meta?.googleMeetLink || '';
+    }
+
     // Format the date and time for email
     const { date: formattedDate, time: formattedTime } = formatDateTime(sessionDateTime, timezone);
-    
+
     // Send confirmation emails
     const emailResult = await sendBookingConfirmationEmail({
       clientName: `${user.firstName} ${user.lastName}`.trim(),
@@ -131,6 +142,7 @@ export async function createBookingSession(rawData: unknown) {
       sessionDate: formattedDate,
       sessionTime: formattedTime,
       timezone: timezone,
+      googleMeetLink,
     });
 
     // Track in PostHog
