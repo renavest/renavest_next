@@ -43,8 +43,7 @@ function GoogleCalendarSuccessPageInner() {
           });
           return;
         }
-
-        // Fetch next week's availability
+        // fetch next week
         const now = new Date();
         const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
