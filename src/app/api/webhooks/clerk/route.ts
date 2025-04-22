@@ -11,8 +11,6 @@ import { headers } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { Webhook } from 'svix';
 
-import logger from '@/src/lib/logger';
-
 import {
   WebhookUserData,
   handleUserActivity,
@@ -97,7 +95,7 @@ async function processEvent(
     if (handler) {
       const result = await handler(event.data);
       if (result.isErr()) {
-        logger.error('Event handler error', {
+        console.error('Event handler error', {
           type: event.type,
           error: result.error,
           userId: event.data.id,
@@ -108,14 +106,14 @@ async function processEvent(
       return ok(true);
     }
 
-    logger.warn('Unhandled event type', {
+    console.warn('Unhandled event type', {
       type: event.type,
       userId: event.data.id,
       environment,
     });
     return ok(true);
   } catch (error) {
-    logger.error('Event processing error', {
+    console.error('Event processing error', {
       error,
       environment,
     });
@@ -133,7 +131,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // Validate webhook secret
   const webhookSecret = process.env.CLERK_WEBHOOK_SECRET;
   if (!webhookSecret) {
-    logger.error('Missing Clerk webhook secret');
+    console.error('Missing Clerk webhook secret');
     return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
   }
 
@@ -144,7 +142,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const svixSignature = headersList.get('svix-signature');
 
   if (!svixId || !svixTimestamp || !svixSignature) {
-    logger.error('Missing required Svix headers', {
+    console.error('Missing required Svix headers', {
       svixId: !!svixId,
       svixTimestamp: !!svixTimestamp,
       svixSignature: !!svixSignature,
@@ -160,7 +158,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   });
 
   if (verificationResult.isErr()) {
-    logger.error('Webhook verification failed', {
+    console.error('Webhook verification failed', {
       error: verificationResult.error,
       environment,
     });
@@ -169,7 +167,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   // Process event
   const event = verificationResult.value;
-  logger.info('Processing webhook event', {
+  console.info('Processing webhook event', {
     type: event.type,
     environment,
     userId: event.data.id,
@@ -180,7 +178,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   return result.match(
     () => {
       const duration = Date.now() - startTime;
-      logger.info('Webhook processed successfully', {
+      console.info('Webhook processed successfully', {
         duration: `${duration}ms`,
         environment,
       });
@@ -188,7 +186,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     },
     (error) => {
       const duration = Date.now() - startTime;
-      logger.error('Webhook processing failed', {
+      console.error('Webhook processing failed', {
         duration: `${duration}ms`,
         error,
         environment,

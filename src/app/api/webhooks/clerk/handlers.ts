@@ -3,7 +3,6 @@ import { Result, ok, err } from 'neverthrow';
 
 import { db } from '@/src/db';
 import { users } from '@/src/db/schema';
-import logger from '@/src/lib/logger';
 
 // User-related webhook data
 export interface WebhookUserData {
@@ -56,7 +55,7 @@ export async function handleUserCreateOrUpdate(
   // Get primary email
   const emailResult = getPrimaryEmail(email_addresses);
   if (emailResult.isErr()) {
-    logger.error('No valid email found for user', {
+    console.error('No valid email found for user', {
       userId: id,
       eventType,
     });
@@ -95,7 +94,7 @@ export async function handleUserCreateOrUpdate(
         })
         .where(eq(users.clerkId, id));
 
-      logger.info('Updated existing user', {
+      console.info('Updated existing user', {
         userId: id,
         eventType,
       });
@@ -113,7 +112,7 @@ export async function handleUserCreateOrUpdate(
           })
           .where(eq(users.email, primaryEmail));
 
-        logger.info('Updated user with new Clerk ID', {
+        console.info('Updated user with new Clerk ID', {
           userId: id,
           eventType,
           previousId: userWithEmail.clerkId,
@@ -130,7 +129,7 @@ export async function handleUserCreateOrUpdate(
           updatedAt: userUpdatedAt || now,
         });
 
-        logger.info('Created new user', {
+        console.info('Created new user', {
           userId: id,
           eventType,
         });
@@ -145,7 +144,7 @@ export async function handleUserCreateOrUpdate(
       originalError: error,
     };
 
-    logger.error('User handling error', {
+    console.error('User handling error', {
       userId: id,
       eventType,
       error,
@@ -173,7 +172,7 @@ export async function handleUserDeletion(
       })
       .where(eq(users.clerkId, id));
 
-    logger.info('Marked user as inactive', { userId: id });
+    console.info('Marked user as inactive', { userId: id });
 
     return ok(true);
   } catch (error) {
@@ -183,7 +182,7 @@ export async function handleUserDeletion(
       originalError: error,
     };
 
-    logger.error('User deletion error', {
+    console.error('User deletion error', {
       userId: id,
       error,
     });
@@ -209,7 +208,7 @@ export async function handleUserActivity(
       })
       .where(eq(users.clerkId, id));
 
-    logger.info('Updated user activity', { userId: id });
+    console.info('Updated user activity', { userId: id });
 
     return ok(true);
   } catch (error) {
@@ -219,7 +218,7 @@ export async function handleUserActivity(
       originalError: error,
     };
 
-    logger.error('User activity update error', {
+    console.error('User activity update error', {
       userId: id,
       error,
     });
