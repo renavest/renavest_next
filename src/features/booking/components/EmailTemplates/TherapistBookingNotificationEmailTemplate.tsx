@@ -19,11 +19,12 @@ interface TherapistBookingNotificationEmailProps {
   sessionDate: string;
   sessionTime: string;
   timezone: string;
+  googleMeetLink?: string;
 }
 
 export const TherapistBookingNotificationEmailTemplate: React.FC<
   Readonly<TherapistBookingNotificationEmailProps>
-> = ({ therapistName, clientName, sessionDate, sessionTime, timezone }) => (
+> = ({ therapistName, clientName, sessionDate, sessionTime, timezone, googleMeetLink }) => (
   <Html>
     <Head>
       <Preview>New Client Session Scheduled</Preview>
@@ -69,6 +70,19 @@ export const TherapistBookingNotificationEmailTemplate: React.FC<
               <strong className={COLORS.WARM_PURPLE.DEFAULT}>Time:</strong> {sessionTime}
             </Text>
           </Section>
+
+          {googleMeetLink && (
+            <Section className='text-center mb-6'>
+              <a
+                href={googleMeetLink}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='inline-block px-6 py-2 bg-[#9071FF] text-white rounded-full text-base font-semibold shadow hover:bg-[#7a5fd6] transition-colors'
+              >
+                Join Google Meet
+              </a>
+            </Section>
+          )}
 
           <Text className='text-gray-600 mb-4'>
             Take a moment to review the client's profile and prepare for your upcoming session.

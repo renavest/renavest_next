@@ -16,6 +16,7 @@ interface BookingEmailParams {
   sessionDate: string;
   sessionTime: string;
   timezone: TimezoneIdentifier;
+  googleMeetLink?: string;
 }
 
 export async function sendBookingConfirmationEmail({
@@ -26,6 +27,7 @@ export async function sendBookingConfirmationEmail({
   sessionDate,
   sessionTime,
   timezone,
+  googleMeetLink,
 }: BookingEmailParams) {
   try {
     // Validate inputs to prevent sending if any required field is missing
@@ -56,6 +58,7 @@ export async function sendBookingConfirmationEmail({
         sessionDate,
         sessionTime: `${sessionTime} ${displayTimezone}`,
         timezone: displayTimezone,
+        googleMeetLink,
       }),
     });
 
@@ -73,6 +76,7 @@ export async function sendBookingConfirmationEmail({
         sessionDate,
         sessionTime: `${sessionTime} ${displayTimezone}`,
         timezone: displayTimezone,
+        googleMeetLink,
       }),
     });
 

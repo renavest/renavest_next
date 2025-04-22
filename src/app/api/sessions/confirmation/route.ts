@@ -52,6 +52,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized access to booking' }, { status: 403 });
     }
 
+    const meta = booking.metadata as { googleMeetLink?: string } | undefined;
+
     return NextResponse.json({
       success: true,
       booking: {
@@ -64,6 +66,7 @@ export async function GET(req: NextRequest) {
         sessionStartTime: booking.sessionStartTime,
         sessionEndTime: booking.sessionEndTime,
         status: booking.status,
+        googleMeetLink: meta?.googleMeetLink || '',
       },
     });
   } catch (error) {
