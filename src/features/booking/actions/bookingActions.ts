@@ -13,6 +13,7 @@ import {
   formatDateTime,
   SUPPORTED_TIMEZONES,
 } from '../utils/dateTimeUtils';
+import { ensureUserInDb } from '../utils/ensureUserInDb';
 
 import { sendBookingConfirmationEmail } from './sendBookingConfirmationEmail';
 
@@ -52,12 +53,8 @@ const BookingSessionSchema = z.object({
 async function fetchUserAndTherapist(userEmail: string, therapistId: string | number) {
   const parsedTherapistId = typeof therapistId === 'string' ? parseInt(therapistId) : therapistId;
 
-  const user = await db.query.users.findFirst({
-    where: (users, { eq }) => eq(users.email, userEmail),
-  });
-  if (!user) {
-    throw new Error(`User with email ${userEmail} not found`);
-  }
+  // Ensure user exists in DB (by email)
+  const user = await ensureUserInDb({ email: userEmail });
 
   const advisor = await db.query.therapists.findFirst({
     where: (therapists, { eq }) => eq(therapists.id, parsedTherapistId),
