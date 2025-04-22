@@ -1,7 +1,7 @@
+import { clerkClient } from '@clerk/nextjs/server';
+
 import { db } from '@/src/db';
 import { users } from '@/src/db/schema';
-import { clerkClient } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm';
 
 /**
  * Ensures a user exists in the DB by Clerk ID or email. If not, fetches from Clerk and inserts.
@@ -29,7 +29,7 @@ export async function ensureUserInDb({ clerkId, email }: { clerkId?: string; ema
     clerkUser = await clerk.users.getUser(clerkId);
   } else if (email) {
     const usersList = await clerk.users.getUserList({ emailAddress: [email] });
-    clerkUser = usersList[0];
+    clerkUser = usersList.data[0];
   }
   if (!clerkUser) throw new Error('User not found in Clerk');
 
