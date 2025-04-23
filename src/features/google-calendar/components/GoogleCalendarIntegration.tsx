@@ -1,9 +1,11 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
+import type { UserResource } from '@clerk/types';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 
 import {
   fetchGoogleCalendarStatus,
@@ -35,6 +37,42 @@ const GoogleIcon = (
   </svg>
 );
 
+// Extracted helper to reduce component length
+async function checkGoogleCalendarStatusHelper(
+  user: UserResource | null | undefined,
+  setIsLoading: Dispatch<SetStateAction<boolean>>,
+  setError: Dispatch<SetStateAction<string>>,
+  setIsConnected: Dispatch<SetStateAction<boolean>>,
+  setCalendarEmail: Dispatch<SetStateAction<string>>,
+  setLastSynced: Dispatch<SetStateAction<string | null>>,
+) {
+  if (!user) return;
+  setIsLoading(true);
+  setError('');
+  try {
+    const therapistId = user?.publicMetadata?.therapistId || (await fetchTherapistId(user?.id));
+    if (!therapistId) {
+      setError('Unable to find therapist ID');
+      setIsLoading(false);
+      return;
+    }
+    const data = await fetchGoogleCalendarStatus(Number(therapistId));
+    if (data && data.success && typeof data.isConnected === 'boolean') {
+      setIsConnected(data.isConnected);
+      setCalendarEmail(data.calendarEmail || '');
+      setLastSynced(data.lastSynced || null);
+    } else {
+      setIsConnected(false);
+      setCalendarEmail('');
+      setError('Could not determine Google Calendar connection status.');
+    }
+  } catch {
+    setError('Failed to fetch calendar status.');
+  } finally {
+    setIsLoading(false);
+  }
+}
+
 export function GoogleCalendarIntegration() {
   const { user } = useUser();
   const [isConnected, setIsConnected] = useState(false);
@@ -47,28 +85,14 @@ export function GoogleCalendarIntegration() {
 
   // Fetch Google Calendar integration status
   useEffect(() => {
-    async function checkGoogleCalendarStatus() {
-      if (!user) return;
-      setIsLoading(true);
-      setError('');
-      try {
-        const data = await fetchGoogleCalendarStatus();
-        if (data && data.success && typeof data.isConnected === 'boolean') {
-          setIsConnected(data.isConnected);
-          setCalendarEmail(data.calendarEmail || '');
-          setLastSynced(data.lastSynced || null);
-        } else {
-          setIsConnected(false);
-          setCalendarEmail('');
-          setError('Could not determine Google Calendar connection status.');
-        }
-      } catch {
-        setError('Failed to fetch calendar status.');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    checkGoogleCalendarStatus();
+    checkGoogleCalendarStatusHelper(
+      user,
+      setIsLoading,
+      setError,
+      setIsConnected,
+      setCalendarEmail,
+      setLastSynced,
+    );
   }, [user]);
 
   // Handler for connecting Google Calendar
