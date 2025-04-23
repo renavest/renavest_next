@@ -66,20 +66,12 @@ export default function TherapistDashboardHeader({
           </h1>
         </div>
         {/* Right: Avatar and Logout button side by side */}
-        <div className='flex items-center'>
-          <button
-            className='ml-2 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-400 transition-shadow'
-            aria-label='Account menu'
-            tabIndex={0}
-            type='button'
-          >
+        <div className='flex items-center gap-2'>
+          <LogoutButton />
+          <div className='h-6 w-px bg-gray-200 mx-1'></div>
+          <div className='ml-1 lg:ml-2'>
             <UserButton afterSignOutUrl='/login' />
-          </button>
-          <LogoutButton
-            className='ml-4 w-auto px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors'
-            iconClassName='h-5 w-5 mr-2'
-            textClassName='font-medium'
-          />
+          </div>
         </div>
       </div>
     </header>
