@@ -264,16 +264,18 @@ export function GoogleCalendarIntegration() {
               <Loader2 className='animate-spin h-6 w-6 text-purple-600' />
             </div>
           ) : isConnected ? (
-            <div className='py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 sm:py-5 flex items-center justify-between'>
-              <div className='flex items-center space-x-3'>
+            <div className='py-4 sm:px-6 flex flex-col items-center'>
+              <div className='flex items-center space-x-3 mb-2'>
                 {GoogleIcon}
                 <div>
                   <p className='text-sm font-medium text-gray-900'>Connected Calendar</p>
-                  <p className='text-sm text-gray-500'>{calendarEmail}</p>
-                  {lastSynced && <p className='text-xs text-gray-400'>Last synced: {lastSynced}</p>}
                 </div>
               </div>
-              <div className='mt-4 sm:mt-0 sm:col-span-2 flex justify-end gap-2'>
+              <p className='text-sm text-gray-500 mb-2'>{calendarEmail}</p>
+              {lastSynced && (
+                <p className='text-xs text-gray-400 mb-2'>Last synced: {lastSynced}</p>
+              )}
+              <div className='flex gap-2 mt-2'>
                 <button
                   onClick={() => setShowModal(true)}
                   className='inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500'

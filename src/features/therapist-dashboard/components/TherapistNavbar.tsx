@@ -1,12 +1,16 @@
 'use client';
 
-import { UserButton } from '@clerk/nextjs';
+import { UserButton, useUser } from '@clerk/nextjs';
 import { ChevronLeft } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { LogoutButton } from '@/src/components/shared/LogoutButton';
+import {
+  fetchGoogleCalendarStatus,
+  fetchTherapistId,
+} from '@/src/features/google-calendar/utils/googleCalendarIntegrationHelpers';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
@@ -21,6 +25,8 @@ export default function TherapistDashboardHeader({
   showBackButton?: boolean;
   backButtonHref?: string;
 }) {
+  const { user } = useUser();
+  const [isCalendarConnected, setIsCalendarConnected] = useState<boolean | null>(null);
   useEffect(() => {
     const handleScroll = () => {
       isHeaderScrolledSignal.value = window.scrollY > 0;
@@ -28,6 +34,23 @@ export default function TherapistDashboardHeader({
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    async function checkCalendar() {
+      try {
+        const therapistId = user?.publicMetadata?.therapistId || (await fetchTherapistId(user?.id));
+        if (!therapistId) {
+          setIsCalendarConnected(false);
+          return;
+        }
+        const data = await fetchGoogleCalendarStatus(Number(therapistId));
+        setIsCalendarConnected(!!data.isConnected);
+      } catch {
+        setIsCalendarConnected(false);
+      }
+    }
+    checkCalendar();
+  }, [user]);
 
   return (
     <header
@@ -67,6 +90,15 @@ export default function TherapistDashboardHeader({
         </div>
         {/* Right: Avatar and Logout button side by side */}
         <div className='flex items-center gap-2'>
+          {isCalendarConnected === false && (
+            <Link
+              href='/therapist/integrations'
+              className='text-gray-700 hover:text-gray-900 transition-colors'
+            >
+              Connect Calendar
+            </Link>
+          )}
+          <div className='h-6 w-px bg-gray-200 mx-1'></div>
           <LogoutButton />
           <div className='h-6 w-px bg-gray-200 mx-1'></div>
           <div className='ml-1 lg:ml-2'>
