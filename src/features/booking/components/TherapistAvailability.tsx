@@ -1,6 +1,6 @@
 'use client';
 
-import { signal, computed } from '@preact-signals/safe-react';
+import { signal } from '@preact-signals/safe-react';
 import { Clock } from 'lucide-react';
 import { DateTime } from 'luxon';
 import { useEffect } from 'react';
@@ -15,9 +15,6 @@ const loadingSignal = signal(true);
 const errorSignal = signal<string | null>(null);
 const isGoogleCalendarIntegratedSignal = signal(false);
 const isCheckingIntegrationSignal = signal(true);
-
-// Computed Signals
-const hasAvailableSlotsSignal = computed(() => availableSlotsSignal.value.length > 0);
 
 // Async function to check Google Calendar integration
 async function checkGoogleCalendarIntegration(therapistId: number) {
@@ -222,6 +219,12 @@ export function TherapistAvailability({
     return <div className='p-4 bg-red-50 text-red-700 rounded-md'>{errorSignal.value}</div>;
   }
 
+  // Filter out slots that start before the current time
+  const now = DateTime.now();
+  const filteredSlots = availableSlotsSignal.value.filter(
+    (slot) => DateTime.fromISO(slot.start) > now,
+  );
+
   return (
     <div className='space-y-6'>
       <DateTimeSelector
@@ -236,14 +239,14 @@ export function TherapistAvailability({
         <div className='flex items-center justify-center py-8'>
           <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-purple-700'></div>
         </div>
-      ) : !hasAvailableSlotsSignal.value ? (
+      ) : !filteredSlots.length ? (
         <div className='flex flex-col items-center justify-center py-8 text-gray-400'>
           <span className='block text-4xl mb-2'>📅</span>
           No available slots for this date
         </div>
       ) : (
         <AvailableSlots
-          slots={availableSlotsSignal.value}
+          slots={filteredSlots}
           onSlotSelect={onSlotSelect}
           selectedSlot={selectedSlot}
         />
