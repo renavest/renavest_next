@@ -84,7 +84,8 @@ export function BookingForm({
 
   return (
     <div className='min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-purple-50 to-white py-8 px-2'>
-      <div className='bg-white rounded-2xl shadow-xl max-w-lg w-full p-0 flex flex-col items-center relative'>
+      {/* Header Card */}
+      <div className='bg-white rounded-2xl shadow-xl w-full max-w-2xl flex flex-col items-center relative mb-8'>
         {/* Branding/Header */}
         <div className='w-full flex flex-col items-center pt-8 pb-4 border-b border-gray-100'>
           {advisorImage ? (
@@ -105,17 +106,21 @@ export function BookingForm({
             Select a date and time for your session below.
           </p>
         </div>
-        <div className='w-full px-6 py-6 flex flex-col gap-6'>
-          {/* Date/Timezone Pickers and Slot Grid are inside TherapistAvailability */}
+      </div>
+      {/* Main Booking Section (Calendar + Times) */}
+      <div className='w-full flex flex-col items-center'>
+        <div className='w-full max-w-5xl'>
           <TherapistAvailability
             therapistId={parseInt(advisorId)}
             onSlotSelect={handleSlotSelect}
             selectedSlot={selectedSlot}
           />
         </div>
-        {/* Sticky confirmation footer inside card */}
-        {selectedSlot && (
-          <div className='sticky bottom-0 left-0 w-full bg-white border-t border-gray-100 px-6 py-4 flex flex-col items-center z-10 rounded-b-2xl shadow-lg'>
+      </div>
+      {/* Sticky confirmation footer inside card, only if a slot is selected */}
+      {selectedSlot && (
+        <div className='fixed bottom-0 left-0 w-full flex justify-center z-30 pointer-events-none'>
+          <div className='bg-white border-t border-gray-100 px-6 py-4 flex flex-col items-center z-10 rounded-t-2xl shadow-lg max-w-2xl w-full pointer-events-auto'>
             <div className='flex items-center gap-2 mb-2'>
               <span className='font-medium text-gray-900'>Selected Slot:</span>
               <span className='text-purple-700'>
@@ -145,8 +150,8 @@ export function BookingForm({
             </button>
             {error && <div className='mt-2 text-red-600 text-sm'>{error}</div>}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
