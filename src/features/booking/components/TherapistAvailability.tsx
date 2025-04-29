@@ -421,7 +421,7 @@ export function TherapistAvailability({
                         <button
                           key={idx}
                           onClick={() => onSlotSelect(slot)}
-                          className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs transition-all duration-150 font-semibold shadow-sm focus:outline-none min-w-[56px] max-w-[80px] justify-center
+                          className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm transition-all duration-150 font-semibold shadow-sm focus:outline-none min-w-[80px] max-w-[110px] justify-center
                             ${
                               isSelected
                                 ? COLORS.WARM_PURPLE.bg + ' text-white border-transparent'

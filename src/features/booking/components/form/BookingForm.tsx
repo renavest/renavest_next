@@ -135,24 +135,27 @@ export function BookingForm({
             >
               ×
             </button>
-            <div className='mb-4 text-center'>
-              <div className='text-lg font-semibold text-gray-900 mb-2'>Confirm Your Booking</div>
-              <div className='text-purple-700 font-bold text-xl'>
-                {new Date(selectedSlot.start).toLocaleDateString(undefined, {
-                  month: 'long',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
-                ,
-                {new Date(selectedSlot.start).toLocaleTimeString(undefined, {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                })}
-                -
-                {new Date(selectedSlot.end).toLocaleTimeString(undefined, {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                })}
+            <div className='mb-6 text-center'>
+              <div className='text-lg font-semibold text-gray-900 mb-3'>Confirm Your Booking</div>
+              <div className='flex flex-col items-center'>
+                <div className='text-purple-700 font-bold text-xl mb-1'>
+                  {new Date(selectedSlot.start).toLocaleDateString(undefined, {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </div>
+                <div className='flex items-center justify-center text-lg text-gray-800 font-medium'>
+                  {new Date(selectedSlot.start).toLocaleTimeString(undefined, {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                  })}
+                  <span className='mx-2'>-</span>
+                  {new Date(selectedSlot.end).toLocaleTimeString(undefined, {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                  })}
+                </div>
               </div>
             </div>
             <button
