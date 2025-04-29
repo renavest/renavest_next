@@ -383,7 +383,7 @@ export function TherapistAvailability({
     return (
       <div className='w-full max-w-5xl mx-auto bg-white rounded-2xl shadow-xl p-6'>
         <div className='flex flex-col md:flex-row gap-8'>
-          <div className='w-full md:w-3/5'>
+          <div className='w-full md:w-4/6'>
             <CalendarGrid
               selectedDate={calendarSelectedDate || DateTime.now()}
               onDateSelect={setCalendarSelectedDate}
@@ -391,16 +391,12 @@ export function TherapistAvailability({
               timezone={timezoneSignal.value}
               currentMonth={(calendarSelectedDate || DateTime.now()).startOf('month')}
               setCurrentMonth={(d) => {
-                if (calendarSelectedDate) {
-                  setCalendarSelectedDate(d);
-                } else {
-                  setCalendarSelectedDate(d);
-                }
+                setCalendarSelectedDate(d);
               }}
             />
           </div>
 
-          <div className='w-full md:w-2/5'>
+          <div className='w-full md:w-2/6'>
             {calendarSelectedDate ? (
               <div className='flex flex-col h-full'>
                 <div className='mb-4'>
@@ -409,7 +405,7 @@ export function TherapistAvailability({
                   </div>
                   <div className='text-sm text-gray-500'>Timezone: {timezoneSignal.value}</div>
                 </div>
-                <div className='flex flex-col gap-3 flex-1'>
+                <div className='flex flex-col gap-2 flex-1'>
                   {slotsForSelectedDate.length === 0 ? (
                     <div className='text-gray-400 text-center py-8'>
                       No available slots for this date
@@ -417,7 +413,6 @@ export function TherapistAvailability({
                   ) : (
                     slotsForSelectedDate.map((slot: TimeSlot, idx: number) => {
                       const start = DateTime.fromISO(slot.start, { zone: timezoneSignal.value });
-                      const end = DateTime.fromISO(slot.end, { zone: timezoneSignal.value });
                       const isSelected =
                         selectedSlot &&
                         selectedSlot.start === slot.start &&
@@ -426,7 +421,7 @@ export function TherapistAvailability({
                         <button
                           key={idx}
                           onClick={() => onSlotSelect(slot)}
-                          className={`flex items-center gap-2 px-5 py-3 rounded-full border transition-all duration-150 font-semibold shadow-sm focus:outline-none
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs transition-all duration-150 font-semibold shadow-sm focus:outline-none min-w-[56px] max-w-[80px] justify-center
                             ${
                               isSelected
                                 ? COLORS.WARM_PURPLE.bg + ' text-white border-transparent'
@@ -437,24 +432,8 @@ export function TherapistAvailability({
                             }
                           `}
                         >
-                          <Clock
-                            className={isSelected ? 'text-white' : COLORS.WARM_PURPLE.DEFAULT}
-                          />
-                          <span className='flex flex-col items-start'>
-                            <span
-                              className={
-                                isSelected ? 'font-bold text-white' : 'font-bold text-gray-900'
-                              }
-                            >
-                              {start.toFormat('h:mm')} - {end.toFormat('h:mm')}
-                            </span>
-                            <span
-                              className={`text-xs ${isSelected ? 'text-purple-100' : 'text-gray-500'}`}
-                            >
-                              {start.toFormat('a')} - {end.toFormat('a')}
-                            </span>
-                          </span>
-                          {isSelected && <span className='ml-2 text-white font-bold'>✓</span>}
+                          <span className='font-bold'>{start.toFormat('h a')}</span>
+                          {isSelected && <span className='ml-1 text-white font-bold'>✓</span>}
                         </button>
                       );
                     })

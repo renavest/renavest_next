@@ -48,7 +48,7 @@ export default function EmployerDashboardView() {
           <div className='flex justify-between items-start'>
             <div className='max-w-2xl'>
               <h1 className='text-3xl md:text-4xl font-bold text-gray-900 mb-3'>
-                Welcome back, Employer
+                Welcome back, Stanley
               </h1>
               <p className='text-base md:text-lg text-gray-600'>
                 Each employee has <strong>400</strong> credits to book sessions.

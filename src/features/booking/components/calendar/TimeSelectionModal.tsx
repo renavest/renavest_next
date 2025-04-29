@@ -1,7 +1,8 @@
-import { ChevronLeft, Clock } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { DateTime } from 'luxon';
-import { COLORS } from '@/src/styles/colors';
 import React from 'react';
+
+import { COLORS } from '@/src/styles/colors';
 
 interface TimeSlot {
   start: string;
@@ -48,7 +49,6 @@ export function TimeSelectionModal({
           ) : (
             slots.map((slot: TimeSlot, idx: number) => {
               const start = DateTime.fromISO(slot.start, { zone: timezone });
-              const end = DateTime.fromISO(slot.end, { zone: timezone });
               const isSelected =
                 selectedSlot && selectedSlot.start === slot.start && selectedSlot.end === slot.end;
               return (
@@ -58,7 +58,7 @@ export function TimeSelectionModal({
                     onSlotSelect(slot);
                     onClose();
                   }}
-                  className={`flex items-center gap-2 px-5 py-3 rounded-full border transition-all duration-150 font-semibold shadow-sm focus:outline-none
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs transition-all duration-150 font-semibold shadow-sm focus:outline-none min-w-[56px] max-w-[80px] justify-center
                     ${
                       isSelected
                         ? COLORS.WARM_PURPLE.bg + ' text-white border-transparent'
@@ -69,18 +69,8 @@ export function TimeSelectionModal({
                     }
                   `}
                 >
-                  <Clock className={isSelected ? 'text-white' : COLORS.WARM_PURPLE.DEFAULT} />
-                  <span className='flex flex-col items-start'>
-                    <span
-                      className={isSelected ? 'font-bold text-white' : 'font-bold text-gray-900'}
-                    >
-                      {start.toFormat('h:mm')} - {end.toFormat('h:mm')}
-                    </span>
-                    <span className={`text-xs ${isSelected ? 'text-purple-100' : 'text-gray-500'}`}>
-                      {start.toFormat('a')} - {end.toFormat('a')}
-                    </span>
-                  </span>
-                  {isSelected && <span className='ml-2 text-white font-bold'>✓</span>}
+                  <span className='font-bold'>{start.toFormat('h a')}</span>
+                  {isSelected && <span className='ml-1 text-white font-bold'>✓</span>}
                 </button>
               );
             })

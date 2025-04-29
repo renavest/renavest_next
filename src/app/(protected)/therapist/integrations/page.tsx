@@ -6,7 +6,11 @@ import TherapistNavbar from '@/src/features/therapist-dashboard/components/Thera
 export default function IntegrationsPage() {
   return (
     <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen'>
-      <TherapistNavbar pageTitle='Integrations' />
+      <TherapistNavbar
+        pageTitle='Integrations'
+        showBackButton={true}
+        backButtonHref='/therapist'
+      />
       <div className='max-w-md mx-auto mt-10'>
         <h2 className='text-2xl font-semibold text-gray-900 mb-6'>Connect Your Tools</h2>
         <div className='space-y-6'>

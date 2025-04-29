@@ -1,7 +1,8 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { DateTime, Info } from 'luxon';
-import { COLORS } from '@/src/styles/colors';
 import React from 'react';
+
+import { COLORS } from '@/src/styles/colors';
 
 interface CalendarGridProps {
   selectedDate: DateTime;
@@ -20,7 +21,7 @@ export function CalendarGrid({
   currentMonth,
   setCurrentMonth,
 }: CalendarGridProps) {
-  const today = DateTime.now().setZone(timezone);
+  const today = DateTime.now().setZone(timezone).startOf('day');
   const daysInMonth = currentMonth.daysInMonth || 31;
   const firstDayOfWeek = currentMonth.startOf('month').weekday % 7; // 0=Sunday
   const days: Array<DateTime | null> = [];
@@ -28,11 +29,14 @@ export function CalendarGrid({
   for (let d = 1; d <= daysInMonth; d++) {
     days.push(currentMonth.set({ day: d }));
   }
-  // Helper: is available
-  const isAvailable = (date: DateTime) => availableDates.has(date.toISODate()!);
+  // Helper: is available and not before today
+  const isAvailable = (date: DateTime) => {
+    return availableDates.has(date.toISODate()!) && date.startOf('day') >= today;
+  };
+  const isPast = (date: DateTime) => date.startOf('day') < today;
 
   return (
-    <div className='w-full bg-white rounded-xl p-6 mb-4'>
+    <div className='w-full p-0 mb-4'>
       <div className='flex items-center justify-between mb-6'>
         <button
           className='p-2 rounded-full hover:bg-gray-100 transition'
@@ -65,6 +69,7 @@ export function CalendarGrid({
           const isToday = date.hasSame(today, 'day');
           const isSelected = date.hasSame(selectedDate, 'day');
           const available = isAvailable(date);
+          const past = isPast(date);
           return (
             <button
               key={date.toISO() || idx}
@@ -77,14 +82,14 @@ export function CalendarGrid({
                       ? 'border ' + COLORS.WARM_PURPLE.border + ' ' + COLORS.WARM_PURPLE.DEFAULT
                       : 'text-gray-800 hover:bg-gray-50'
                 }
-                ${available ? 'relative' : 'opacity-40 cursor-not-allowed'}
+                ${available && !past ? 'relative' : 'opacity-40 cursor-not-allowed'}
                 hover:' + COLORS.WARM_PURPLE.hover + ' focus:outline-none focus:' + COLORS.WARM_PURPLE.focus
               `}
-              disabled={!available}
+              disabled={!available || past}
               aria-label={date.toLocaleString(DateTime.DATE_FULL)}
             >
               {date.day}
-              {available && (
+              {available && !past && (
                 <span
                   className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${COLORS.WARM_PURPLE.bg}`}
                 ></span>
