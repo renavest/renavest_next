@@ -13,7 +13,6 @@ import { TimezoneIdentifier } from '../utils/dateTimeUtils';
 import { CalendarGrid } from './calendar/CalendarGrid';
 
 // State Signals
-const selectedDateSignal = signal<DateTime>(DateTime.now());
 const timezoneSignal = signal<TimezoneIdentifier>('America/New_York');
 const availableSlotsSignal = signal<TimeSlot[]>([]);
 const loadingSignal = signal(true);
@@ -21,11 +20,6 @@ const errorSignal = signal<string | null>(null);
 const isGoogleCalendarIntegratedSignal = signal(false);
 const isCheckingIntegrationSignal = signal(true);
 
-// Types for signals and props
-type SignalType<T> = { value: T };
-type TimeSlotSignal = SignalType<TimeSlot[]>;
-type DateTimeSignal = SignalType<DateTime>;
-type TimezoneSignalType = SignalType<TimezoneIdentifier>;
 
 // Async function to check Google Calendar integration
 async function checkGoogleCalendarIntegration(therapistId: number) {
