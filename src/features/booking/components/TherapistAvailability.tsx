@@ -1,9 +1,12 @@
 'use client';
 
 import { signal } from '@preact-signals/safe-react';
-import { Clock } from 'lucide-react';
-import { DateTime } from 'luxon';
-import { useEffect } from 'react';
+import { Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { DateTime, Info } from 'luxon';
+import { useEffect, useMemo, useState } from 'react';
+import { useMediaQuery } from 'react-responsive';
+
+import { COLORS } from '@/src/styles/colors';
 
 import { TimezoneIdentifier } from '../utils/dateTimeUtils';
 
@@ -15,6 +18,12 @@ const loadingSignal = signal(true);
 const errorSignal = signal<string | null>(null);
 const isGoogleCalendarIntegratedSignal = signal(false);
 const isCheckingIntegrationSignal = signal(true);
+
+// Types for signals and props
+type SignalType<T> = { value: T };
+type TimeSlotSignal = SignalType<TimeSlot[]>;
+type DateTimeSignal = SignalType<DateTime>;
+type TimezoneSignalType = SignalType<TimezoneIdentifier>;
 
 // Async function to check Google Calendar integration
 async function checkGoogleCalendarIntegration(therapistId: number) {
@@ -53,8 +62,9 @@ async function fetchAvailability(
   errorSignal.value = null;
 
   try {
-    const startDate = selectedDate.startOf('day');
-    const endDate = selectedDate.endOf('day');
+    // Update to fetch the entire month's availability
+    const startDate = selectedDate.startOf('month');
+    const endDate = selectedDate.endOf('month');
 
     const response = await fetch(
       `/api/sessions/availability?` +
@@ -81,76 +91,95 @@ async function fetchAvailability(
   }
 }
 
-// Component for displaying available time slots
-function AvailableSlots({
-  slots,
-  onSlotSelect,
-  selectedSlot,
-}: {
-  slots: TimeSlot[];
-  onSlotSelect: (slot: TimeSlot) => void;
-  selectedSlot?: TimeSlot | null;
-}) {
-  return (
-    <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3'>
-      {slots.map((slot, index) => {
-        const startTime = DateTime.fromISO(slot.start);
-        const endTime = DateTime.fromISO(slot.end);
-        const isSelected =
-          selectedSlot && selectedSlot.start === slot.start && selectedSlot.end === slot.end;
-        return (
-          <button
-            key={index}
-            onClick={() => onSlotSelect(slot)}
-            className={`flex items-center justify-center gap-2 px-5 py-3 border rounded-full transition-all duration-150 text-base font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-200
-              ${isSelected ? 'bg-purple-600 text-white border-purple-600 hover:bg-purple-700' : 'bg-white border-gray-200 hover:bg-purple-50 hover:border-purple-400'}
-            `}
-          >
-            <span className='w-5 h-5 mr-1'>
-              <Clock className={isSelected ? 'text-white' : 'text-purple-600'} />
-            </span>
-            <span className='flex flex-col items-start'>
-              <span className={isSelected ? 'font-bold text-white' : 'font-bold text-gray-900'}>
-                {startTime.toFormat('h:mm')} - {endTime.toFormat('h:mm')}
-              </span>
-              <span className={`text-xs ${isSelected ? 'text-purple-100' : 'text-gray-500'}`}>
-                {startTime.toFormat('a')} - {endTime.toFormat('a')}
-              </span>
-            </span>
-            {isSelected && <span className='ml-2 text-white font-bold'>✓</span>}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-// Component for date and timezone selection
-function DateTimeSelector({
+// Calendar grid component
+function CalendarGrid({
   selectedDate,
+  onDateSelect,
+  availableDates,
   timezone,
-  onDateChange,
+  currentMonth,
+  setCurrentMonth,
 }: {
   selectedDate: DateTime;
-  timezone: TimezoneIdentifier;
-  onDateChange: (date: string) => void;
+  onDateSelect: (date: DateTime) => void;
+  availableDates: Set<string>; // ISO date strings
+  timezone: string;
+  currentMonth: DateTime;
+  setCurrentMonth: (date: DateTime) => void;
 }) {
+  const today = DateTime.now().setZone(timezone);
+  const daysInMonth = currentMonth.daysInMonth || 31;
+  const firstDayOfWeek = currentMonth.startOf('month').weekday % 7; // 0=Sunday
+  const days: Array<DateTime | null> = [];
+  for (let i = 0; i < firstDayOfWeek; i++) days.push(null);
+  for (let d = 1; d <= daysInMonth; d++) {
+    days.push(currentMonth.set({ day: d }));
+  }
+
+  // Helper: is available
+  const isAvailable = (date: DateTime) => availableDates.has(date.toISODate()!);
+
   return (
-    <div className='flex flex-col sm:flex-row gap-4'>
-      <div className='flex-1'>
-        <label className='block text-sm font-medium text-gray-700 mb-1'>Date</label>
-        <input
-          type='date'
-          value={selectedDate.toFormat('yyyy-MM-dd')}
-          onChange={(e) => onDateChange(e.target.value)}
-          className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500'
-        />
-      </div>
-      <div className='flex-1'>
-        <label className='block text-sm font-medium text-gray-700 mb-1'>Timezone</label>
-        <div className='w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700 flex items-center h-[42px]'>
-          {timezone}
+    <div className='w-full bg-white rounded-xl p-6 mb-4'>
+      <div className='flex items-center justify-between mb-6'>
+        <button
+          className='p-2 rounded-full hover:bg-gray-100 transition'
+          onClick={() => setCurrentMonth(currentMonth.minus({ months: 1 }))}
+          aria-label='Previous month'
+        >
+          <ChevronLeft className='w-5 h-5 text-gray-500' />
+        </button>
+        <div className='font-semibold text-xl text-gray-800'>
+          {currentMonth.toFormat('MMMM yyyy')}
         </div>
+        <button
+          className='p-2 rounded-full hover:bg-gray-100 transition'
+          onClick={() => setCurrentMonth(currentMonth.plus({ months: 1 }))}
+          aria-label='Next month'
+        >
+          <ChevronRight className='w-5 h-5 text-gray-500' />
+        </button>
+      </div>
+      <div className='grid grid-cols-7 gap-2 text-sm text-center font-medium text-gray-500 mb-2'>
+        {Info.weekdays('short').map((wd: string) => (
+          <div key={wd} className='py-2'>
+            {wd}
+          </div>
+        ))}
+      </div>
+      <div className='grid grid-cols-7 gap-2'>
+        {days.map((date, idx) => {
+          if (!date) return <div key={`empty-${idx}`} />;
+          const isToday = date.hasSame(today, 'day');
+          const isSelected = date.hasSame(selectedDate, 'day');
+          const available = isAvailable(date);
+          return (
+            <button
+              key={date.toISO() || idx}
+              onClick={() => onDateSelect(date)}
+              className={`py-3 aspect-square flex items-center justify-center rounded-lg font-medium transition
+                ${
+                  isSelected
+                    ? COLORS.WARM_PURPLE.bg + ' text-white shadow-lg'
+                    : isToday
+                      ? 'border ' + COLORS.WARM_PURPLE.border + ' ' + COLORS.WARM_PURPLE.DEFAULT
+                      : 'text-gray-800 hover:bg-gray-50'
+                }
+                ${available ? 'relative' : 'opacity-40 cursor-not-allowed'}
+                hover:' + COLORS.WARM_PURPLE.hover + ' focus:outline-none focus:' + COLORS.WARM_PURPLE.focus
+              `}
+              disabled={!available}
+              aria-label={date.toLocaleString(DateTime.DATE_FULL)}
+            >
+              {date.day}
+              {available && (
+                <span
+                  className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${COLORS.WARM_PURPLE.bg}`}
+                ></span>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -168,32 +197,161 @@ interface TherapistAvailabilityProps {
   selectedSlot?: TimeSlot | null;
 }
 
+// Simple modal for mobile
+function TimeSelectionModal({
+  open,
+  onClose,
+  slots,
+  date,
+  timezone,
+  onSlotSelect,
+  selectedSlot,
+}: {
+  open: boolean;
+  onClose: () => void;
+  slots: TimeSlot[];
+  date: DateTime;
+  timezone: string;
+  onSlotSelect: (slot: TimeSlot) => void;
+  selectedSlot: TimeSlot | null | undefined;
+}) {
+  if (!open) return null;
+  return (
+    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40'>
+      <div className='bg-white rounded-xl shadow-lg max-w-sm w-full p-6 relative flex flex-col'>
+        <button
+          className='absolute top-3 left-3 text-gray-400 hover:text-gray-600'
+          onClick={onClose}
+          aria-label='Back'
+        >
+          <ChevronLeft className='h-6 w-6' />
+        </button>
+        <div className='text-center mb-4'>
+          <div className='text-xs text-gray-500'>{date.toFormat('cccc, LLLL d, yyyy')}</div>
+          <div className='text-sm text-gray-700 mb-2'>Timezone: {timezone}</div>
+        </div>
+        <div className='flex flex-col gap-3'>
+          {slots.length === 0 ? (
+            <div className='text-gray-400 text-center'>No available slots for this date</div>
+          ) : (
+            slots.map((slot: TimeSlot, idx: number) => {
+              const start = DateTime.fromISO(slot.start, { zone: timezone });
+              const end = DateTime.fromISO(slot.end, { zone: timezone });
+              const isSelected =
+                selectedSlot && selectedSlot.start === slot.start && selectedSlot.end === slot.end;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    onSlotSelect(slot);
+                    onClose();
+                  }}
+                  className={`flex items-center gap-2 px-5 py-3 rounded-full border transition-all duration-150 font-semibold shadow-sm focus:outline-none
+                    ${
+                      isSelected
+                        ? COLORS.WARM_PURPLE.bg + ' text-white border-transparent'
+                        : 'bg-white border-gray-200 text-gray-900 hover:' +
+                          COLORS.WARM_PURPLE.hover +
+                          ' hover:border-' +
+                          COLORS.WARM_PURPLE.DEFAULT
+                    }
+                  `}
+                >
+                  <Clock className={isSelected ? 'text-white' : COLORS.WARM_PURPLE.DEFAULT} />
+                  <span className='flex flex-col items-start'>
+                    <span
+                      className={isSelected ? 'font-bold text-white' : 'font-bold text-gray-900'}
+                    >
+                      {start.toFormat('h:mm')} - {end.toFormat('h:mm')}
+                    </span>
+                    <span className={`text-xs ${isSelected ? 'text-purple-100' : 'text-gray-500'}`}>
+                      {start.toFormat('a')} - {end.toFormat('a')}
+                    </span>
+                  </span>
+                  {isSelected && <span className='ml-2 text-white font-bold'>✓</span>}
+                </button>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * TherapistAvailability Component
+ *
+ * Responsive calendar that shows available days with slots and allows selecting time slots.
+ * - On desktop: Calendar on the left, times on the right (only after selection)
+ * - On mobile: Full-screen calendar, modal for time selection
+ */
 export function TherapistAvailability({
   therapistId,
   onSlotSelect,
   onGoogleCalendarNotAvailable,
   selectedSlot,
 }: TherapistAvailabilityProps) {
-  // Initial integration check
+  // Initial calendar setup
+  const isMobile = useMediaQuery({ maxWidth: 768 });
+  const [modalOpen, setModalOpen] = useState(false);
+  const [calendarSelectedDate, setCalendarSelectedDate] = useState<DateTime | null>(null);
+
+  // Integration check
   useEffect(() => {
     if (isCheckingIntegrationSignal.value) {
       checkGoogleCalendarIntegration(therapistId);
     }
-    // Only run on therapistId change
   }, [therapistId]);
 
-  // Fetch availability when dependencies change
+  // Fetch availability for the selected month
   useEffect(() => {
-    fetchAvailability(therapistId, selectedDateSignal.value, timezoneSignal.value);
-    // Only run when these values change
+    if (calendarSelectedDate) {
+      fetchAvailability(therapistId, calendarSelectedDate, timezoneSignal.value);
+    } else {
+      // Initial fetch for current month
+      fetchAvailability(therapistId, DateTime.now(), timezoneSignal.value);
+    }
   }, [
     therapistId,
-    selectedDateSignal.value,
+    calendarSelectedDate,
     timezoneSignal.value,
     isGoogleCalendarIntegratedSignal.value,
   ]);
 
-  // Show loading state while checking integration
+  // Gather all available slots (no filtering by current time)
+  const allAvailableSlots = availableSlotsSignal.value;
+
+  // Gather available dates (any dates that have at least one slot)
+  const availableDates = useMemo(() => {
+    const set = new Set<string>();
+    allAvailableSlots.forEach((slot: TimeSlot) => {
+      set.add(DateTime.fromISO(slot.start, { zone: timezoneSignal.value }).toISODate()!);
+    });
+    return set;
+  }, [allAvailableSlots, timezoneSignal.value]);
+
+  // For the selected date, filter out past times only if it's today
+  const now = DateTime.now().setZone(timezoneSignal.value);
+  const slotsForSelectedDate = useMemo(() => {
+    if (!calendarSelectedDate) return [];
+
+    return allAvailableSlots.filter((slot: TimeSlot) => {
+      const slotDate = DateTime.fromISO(slot.start, { zone: timezoneSignal.value });
+
+      // Only include slots for the selected date
+      if (slotDate.toISODate() !== calendarSelectedDate.toISODate()) return false;
+
+      // If today is selected, only show future slots
+      if (calendarSelectedDate.hasSame(now, 'day')) {
+        return slotDate > now;
+      }
+
+      return true;
+    });
+  }, [calendarSelectedDate, allAvailableSlots, now, timezoneSignal.value]);
+
+  // Loading state
   if (isCheckingIntegrationSignal.value) {
     return (
       <div className='flex items-center justify-center py-8'>
@@ -202,7 +360,7 @@ export function TherapistAvailability({
     );
   }
 
-  // Notify parent if Google Calendar is not available
+  // Not available via Google Calendar
   if (!isGoogleCalendarIntegratedSignal.value) {
     onGoogleCalendarNotAvailable?.();
     return (
@@ -215,42 +373,146 @@ export function TherapistAvailability({
     );
   }
 
+  // Error state
   if (errorSignal.value) {
     return <div className='p-4 bg-red-50 text-red-700 rounded-md'>{errorSignal.value}</div>;
   }
 
-  // Filter out slots that start before the current time
-  const now = DateTime.now();
-  const filteredSlots = availableSlotsSignal.value.filter(
-    (slot) => DateTime.fromISO(slot.start) > now,
-  );
+  // Desktop: two-column layout with calendar and times (shown only after selection)
+  if (!isMobile) {
+    return (
+      <div className='w-full max-w-5xl mx-auto bg-white rounded-2xl shadow-xl p-6'>
+        <div className='flex flex-col md:flex-row gap-8'>
+          <div className='w-full md:w-3/5'>
+            <CalendarGrid
+              selectedDate={calendarSelectedDate || DateTime.now()}
+              onDateSelect={setCalendarSelectedDate}
+              availableDates={availableDates}
+              timezone={timezoneSignal.value}
+              currentMonth={(calendarSelectedDate || DateTime.now()).startOf('month')}
+              setCurrentMonth={(d) => {
+                if (calendarSelectedDate) {
+                  setCalendarSelectedDate(d);
+                } else {
+                  setCalendarSelectedDate(d);
+                }
+              }}
+            />
+          </div>
 
+          <div className='w-full md:w-2/5'>
+            {calendarSelectedDate ? (
+              <div className='flex flex-col h-full'>
+                <div className='mb-4'>
+                  <div className='text-xl font-semibold text-gray-800'>
+                    {calendarSelectedDate.toFormat('cccc, LLLL d, yyyy')}
+                  </div>
+                  <div className='text-sm text-gray-500'>Timezone: {timezoneSignal.value}</div>
+                </div>
+                <div className='flex flex-col gap-3 flex-1'>
+                  {slotsForSelectedDate.length === 0 ? (
+                    <div className='text-gray-400 text-center py-8'>
+                      No available slots for this date
+                    </div>
+                  ) : (
+                    slotsForSelectedDate.map((slot: TimeSlot, idx: number) => {
+                      const start = DateTime.fromISO(slot.start, { zone: timezoneSignal.value });
+                      const end = DateTime.fromISO(slot.end, { zone: timezoneSignal.value });
+                      const isSelected =
+                        selectedSlot &&
+                        selectedSlot.start === slot.start &&
+                        selectedSlot.end === slot.end;
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => onSlotSelect(slot)}
+                          className={`flex items-center gap-2 px-5 py-3 rounded-full border transition-all duration-150 font-semibold shadow-sm focus:outline-none
+                            ${
+                              isSelected
+                                ? COLORS.WARM_PURPLE.bg + ' text-white border-transparent'
+                                : 'bg-white border-gray-200 text-gray-900 hover:' +
+                                  COLORS.WARM_PURPLE.hover +
+                                  ' hover:border-' +
+                                  COLORS.WARM_PURPLE.DEFAULT
+                            }
+                          `}
+                        >
+                          <Clock
+                            className={isSelected ? 'text-white' : COLORS.WARM_PURPLE.DEFAULT}
+                          />
+                          <span className='flex flex-col items-start'>
+                            <span
+                              className={
+                                isSelected ? 'font-bold text-white' : 'font-bold text-gray-900'
+                              }
+                            >
+                              {start.toFormat('h:mm')} - {end.toFormat('h:mm')}
+                            </span>
+                            <span
+                              className={`text-xs ${isSelected ? 'text-purple-100' : 'text-gray-500'}`}
+                            >
+                              {start.toFormat('a')} - {end.toFormat('a')}
+                            </span>
+                          </span>
+                          {isSelected && <span className='ml-2 text-white font-bold'>✓</span>}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className='flex flex-col items-center justify-center h-full py-16 px-4 text-center'>
+                <div
+                  className={`w-14 h-14 rounded-full ${COLORS.WARM_PURPLE[5]} flex items-center justify-center mb-4`}
+                >
+                  <Clock className={`h-7 w-7 ${COLORS.WARM_PURPLE.DEFAULT}`} />
+                </div>
+                <h3 className='text-xl font-semibold text-gray-700 mb-2'>Select a date first</h3>
+                <p className='text-gray-500'>
+                  Please choose a date from the calendar to see available times.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Mobile: full-screen calendar, modal for time selection
   return (
-    <div className='space-y-6'>
-      <DateTimeSelector
-        selectedDate={selectedDateSignal.value}
-        timezone={timezoneSignal.value}
-        onDateChange={(dateString) => {
-          selectedDateSignal.value = DateTime.fromFormat(dateString, 'yyyy-MM-dd');
-        }}
-      />
-
-      {loadingSignal.value ? (
-        <div className='flex items-center justify-center py-8'>
-          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-purple-700'></div>
-        </div>
-      ) : !filteredSlots.length ? (
-        <div className='flex flex-col items-center justify-center py-8 text-gray-400'>
-          <span className='block text-4xl mb-2'>📅</span>
-          No available slots for this date
-        </div>
-      ) : (
-        <AvailableSlots
-          slots={filteredSlots}
-          onSlotSelect={onSlotSelect}
-          selectedSlot={selectedSlot}
+    <div className='w-full min-h-screen bg-white flex flex-col'>
+      <div className='flex-1 p-2'>
+        <CalendarGrid
+          selectedDate={calendarSelectedDate || DateTime.now()}
+          onDateSelect={(date) => {
+            setCalendarSelectedDate(date);
+            if (availableDates.has(date.toISODate()!)) {
+              setModalOpen(true);
+            }
+          }}
+          availableDates={availableDates}
+          timezone={timezoneSignal.value}
+          currentMonth={(calendarSelectedDate || DateTime.now()).startOf('month')}
+          setCurrentMonth={(d) => {
+            if (calendarSelectedDate) {
+              setCalendarSelectedDate(d);
+            } else {
+              setCalendarSelectedDate(d);
+            }
+          }}
         />
-      )}
+      </div>
+      <TimeSelectionModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        slots={slotsForSelectedDate}
+        date={calendarSelectedDate || DateTime.now()}
+        timezone={timezoneSignal.value}
+        onSlotSelect={onSlotSelect}
+        selectedSlot={selectedSlot}
+      />
     </div>
   );
 }
