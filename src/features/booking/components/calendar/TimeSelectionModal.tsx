@@ -62,7 +62,7 @@ export function TimeSelectionModal({
                     ${
                       isSelected
                         ? COLORS.WARM_PURPLE.bg + ' text-white border-transparent'
-                        : 'bg-white border-gray-200 text-gray-900 hover:' +
+                        : 'bg-white border-2 border-purple-300 text-gray-900 hover:' +
                           COLORS.WARM_PURPLE.hover +
                           ' hover:border-' +
                           COLORS.WARM_PURPLE.DEFAULT
