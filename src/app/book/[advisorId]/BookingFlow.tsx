@@ -1,5 +1,6 @@
 'use client';
 
+import posthog from 'posthog-js';
 import { useEffect, useState } from 'react';
 import { InlineWidget } from 'react-calendly';
 import { useCalendlyEventListener } from 'react-calendly';
@@ -19,15 +20,13 @@ interface BookingFlowProps {
   userEmail: string;
 }
 
-export default function UnifiedBookingFlow({ advisor, userId, userEmail }: BookingFlowProps) {
+// Custom hook to check Google Calendar integration
+function useGoogleCalendarIntegration(advisorId: string) {
   const [isGoogleCalendarConnected, setIsGoogleCalendarConnected] = useState<null | boolean>(null);
-  const [isBookingConfirmed, setIsBookingConfirmed] = useState(false);
-
-  // Check Google Calendar integration on mount
   useEffect(() => {
     async function checkIntegration() {
       try {
-        const res = await fetch(`/api/google-calendar/status?therapistId=${advisor.id}`);
+        const res = await fetch(`/api/google-calendar/status?therapistId=${advisorId}`);
         const data = await res.json();
         setIsGoogleCalendarConnected(!!data.isConnected);
       } catch {
@@ -35,7 +34,20 @@ export default function UnifiedBookingFlow({ advisor, userId, userEmail }: Booki
       }
     }
     checkIntegration();
-  }, [advisor.id]);
+  }, [advisorId]);
+  return isGoogleCalendarConnected;
+}
+
+export default function UnifiedBookingFlow({ advisor, userId, userEmail }: BookingFlowProps) {
+  // Identify user in PostHog on mount
+  useEffect(() => {
+    if (userId && userEmail && typeof window !== 'undefined') {
+      posthog.identify(userId, { email: userEmail });
+    }
+  }, [userId, userEmail]);
+
+  const isGoogleCalendarConnected = useGoogleCalendarIntegration(advisor.id);
+  const [isBookingConfirmed, setIsBookingConfirmed] = useState(false);
 
   // Track Calendly events
   const trackCalendlyEvent = async (eventType: string, eventData?: Record<string, unknown>) => {

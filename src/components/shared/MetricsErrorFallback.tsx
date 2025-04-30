@@ -1,15 +1,14 @@
-import { AlertTriangle } from 'lucide-react';
+interface MetricsErrorFallbackProps {
+  error: Error;
+}
 
-export function MetricsErrorFallback({ error }: { error?: Error }) {
+export function MetricsErrorFallback({ error }: MetricsErrorFallbackProps) {
   return (
-    <div className='bg-white rounded-lg shadow-sm p-4 flex items-center space-x-4 border-l-4 border-red-500'>
-      <AlertTriangle className='h-8 w-8 text-red-500' />
-      <div>
-        <h3 className='text-lg font-semibold text-gray-800'>Error Loading Metrics</h3>
-        <p className='text-gray-600 text-sm'>
-          {error?.message || 'Unable to load dashboard metrics. Please try again later.'}
-        </p>
-      </div>
+    <div className='bg-red-50 p-4 rounded-lg'>
+      <h3 className='text-red-700 font-semibold'>Error Loading Data</h3>
+      <p className='text-red-600 text-sm mt-2'>
+        {error instanceof Error ? error.message : 'Unknown error'}
+      </p>
     </div>
   );
 }

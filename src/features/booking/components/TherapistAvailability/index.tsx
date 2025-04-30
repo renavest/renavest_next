@@ -1,10 +1,15 @@
 'use client';
 
+import { Clock } from 'lucide-react';
+import { DateTime } from 'luxon';
 import { useEffect, useMemo, useState } from 'react';
 import { useMediaQuery } from 'react-responsive';
-import { DateTime } from 'luxon';
-import { Clock } from 'lucide-react';
+
+import { COLORS } from '@/src/styles/colors';
+
 import { CalendarGrid } from '../calendar/CalendarGrid';
+
+import { TimeSelectionModal } from './TimeSelectionModal';
 import {
   timezoneSignal,
   availableSlotsSignal,
@@ -15,8 +20,6 @@ import {
   checkGoogleCalendarIntegration,
   fetchAvailability,
 } from './useTherapistAvailability';
-import { TimeSelectionModal } from './TimeSelectionModal';
-import { COLORS } from '@/src/styles/colors';
 
 interface TimeSlot {
   start: string;
