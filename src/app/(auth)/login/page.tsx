@@ -3,7 +3,7 @@
 import { Heart, BarChart, Lightbulb } from 'lucide-react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense } from 'react';
 
 import LoginForm from '@/src/features/auth/components/LoginForm';
 import {
@@ -170,7 +170,7 @@ const LoginLeftSection = () => {
   );
 };
 
-export default function LoginPage() {
+function LoginPageContent() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -229,5 +229,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

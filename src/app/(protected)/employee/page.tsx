@@ -21,7 +21,7 @@ export default async function DashboardPage() {
   clearOnboardingState();
 
   // Render specific view based on email
-  if (email === 'stanley@renavestapp.com') {
+  if (email === 'stanley@renavestapp.com' || email === 'sethmorton05@gmail.com') {
     return <DashboardClient />;
   } else {
     return <LimitedDashboardClient />;
