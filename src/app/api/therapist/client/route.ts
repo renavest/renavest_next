@@ -43,23 +43,24 @@ export async function POST(request: Request) {
     if (existingUser) {
       return NextResponse.json({ error: 'A user with this email already exists' }, { status: 400 });
     }
-    
-    // Create user in Clerk
+
+    // Invite user in Clerk
     const clerk = await clerkClient();
-    const clerkUser = await clerk.users.createUser({
-      firstName: validatedInput.firstName,
-      lastName: validatedInput.lastName,
-      emailAddress: [validatedInput.email],
-      privateMetadata: {
+    const invitation = await clerk.invitations.createInvitation({
+      emailAddress: validatedInput.email,
+      publicMetadata: {
         therapistId: therapist.id,
+        firstName: validatedInput.firstName,
+        lastName: validatedInput.lastName,
       },
+      notify: true,
     });
 
     // Create new user in our database
     const newUser = await db
       .insert(users)
       .values({
-        clerkId: clerkUser.id,
+        clerkId: invitation.id,
         firstName: validatedInput.firstName,
         lastName: validatedInput.lastName,
         email: validatedInput.email,

@@ -1,6 +1,7 @@
 'use client';
 
 // import { useClerk, useUser } from '@clerk/nextjs';
+// import Image from 'next/image';
 import Link from 'next/link';
 // import { useSignIn, useClerk } from '@clerk/nextjs';
 // import posthog from 'posthog-js';
@@ -15,6 +16,7 @@ import {
   // passwordSignal,
   selectedRoleSignal,
   setSelectedRole,
+  // companyIntegrationSignal,
   // setUserType,
 } from '../state/authState';
 import { UserType } from '../types/auth';
@@ -132,9 +134,10 @@ function RoleSelection() {
 
 export default function AuthenticationForm() {
   // const { user } = useUser();
+  // Remove company logic from the form
 
   return (
-    <div className='space-y-8'>
+    <div className='space-y-6'>
       <div className='animate-fade-in opacity-0 [animation-delay:200ms]'>
         <h2 className='text-2xl font-semibold text-gray-900 mb-2'>Welcome to Renavest</h2>
         <p className='text-gray-600'>Choose your role to get started with Google Sign-In</p>

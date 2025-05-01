@@ -69,6 +69,9 @@ export const TherapistBookingNotificationEmailTemplate: React.FC<
             <Text className='text-gray-800 my-2'>
               <strong className={COLORS.WARM_PURPLE.DEFAULT}>Time:</strong> {sessionTime}
             </Text>
+            <Text className='text-gray-800 my-2'>
+              <strong className={COLORS.WARM_PURPLE.DEFAULT}>Timezone:</strong> {timezone}
+            </Text>
           </Section>
 
           {googleMeetLink && (

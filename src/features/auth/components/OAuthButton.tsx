@@ -6,7 +6,7 @@ import * as React from 'react';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
-import { authErrorSignal, getSelectedRole, selectedRoleSignal } from '../state/authState';
+import { authErrorSignal, getSelectedRole, getCompanyIntegration } from '../state/authState';
 
 interface OAuthButtonProps {
   strategy: OAuthStrategy;
@@ -18,47 +18,48 @@ interface OAuthButtonProps {
 export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProps) {
   const { signIn, isLoaded } = useSignIn();
   const { user } = useUser();
+  const userRole = getSelectedRole();
+  const company = getCompanyIntegration();
 
   const handleOAuthSignIn = async () => {
-    if (!isLoaded) return;
-
-    const userRole = getSelectedRole();
     if (!userRole) {
-      selectedRoleSignal.value = null;
+      authErrorSignal.value = 'Please select a role first.';
       return;
     }
 
     try {
+      if (!isLoaded) {
+        return;
+      }
+
       // Determine redirect URL based on selected role
-      const redirectUrlComplete =
-        userRole === 'employee'
-          ? '/employee'
-          : userRole === 'therapist'
-            ? '/therapist'
-            : userRole === 'employer'
-              ? '/employer'
-              : '/dashboard';
+      const redirectUrlComplete = userRole === 'employee' ? '/employee' : `/${userRole}`;
 
       // Track OAuth redirect with detailed information
-      posthog.capture('user_signup_oauth_redirect', {
+      posthog.capture('oauth_redirect', {
         method: strategy,
         role: userRole,
-        redirect_url: '/sign-up/sso-callback',
+        redirect_url: '/sso-callback',
         redirect_url_complete: redirectUrlComplete,
         user_id: user?.id || 'anonymous',
         email: user?.emailAddresses[0]?.emailAddress || 'unknown',
+        ...(company ? { integration: company } : {}),
       });
 
       // Authenticate with redirect and pass role in redirectUrl
       await signIn.authenticateWithRedirect({
         strategy,
-        redirectUrl: '/sign-up/sso-callback',
+        redirectUrl: '/sso-callback',
         redirectUrlComplete,
+        // Since additionalData isn't recognized, we'll need to use Clerk metadata later
       });
+
       // Capture initial signup attempt with role
       posthog.capture('user_signup_attempt', {
+        method: strategy,
         role: userRole,
-        oauth_method: strategy,
+        user_id: user?.id || 'anonymous',
+        ...(company ? { integration: company } : {}),
       });
     } catch (err) {
       console.error('OAuth error:', err);
@@ -75,13 +76,15 @@ export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProp
         oauth_method: strategy,
         user_id: user?.id || 'anonymous',
         email: userEmail,
+        ...(company ? { integration: company } : {}),
       });
-      
+
       // Fallback tracking to ensure email is always present
       posthog.identify(userEmail, {
         email: userEmail,
         role: userRole,
         signup_error: true,
+        ...(company ? { integration: company } : {}),
       });
     }
   };

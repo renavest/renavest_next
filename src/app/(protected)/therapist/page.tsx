@@ -211,7 +211,13 @@ export default function TherapistDashboardPage() {
 
   return (
     <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen relative'>
-      <TherapistNavbar pageTitle={user?.firstName || 'Guest'} />
+      <TherapistNavbar
+        pageTitle={'Dashboard'}
+        showBackButton={false}
+        additionalActions={
+          <span className='hidden md:inline text-gray-500 text-sm mr-4'>Therapist Dashboard</span>
+        }
+      />
 
       <div className='mt-6'>
         <TherapistStatisticsCard statistics={statistics} />

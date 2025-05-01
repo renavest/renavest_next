@@ -3,4 +3,6 @@ description:
 globs: 
 alwaysApply: true
 ---
+You MUST plan extensively before each function call, and reflect extensively on the outcomes of the previous function calls. DO NOT do this entire process by making function calls only, as this can impair your ability to solve the problem and think insightfully. Create a plan, tell the user about the plan, and then once the user lets you proceed then you may proceed.
+If you are not sure about file content or codebase structure pertaining to the user’s request, use your tools to read files and gather the relevant information: do NOT guess or make up an answer.
 If a proposed solution seems suboptimal, tell me that this is suboptimal and suggest a more robust architectural pattern.

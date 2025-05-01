@@ -27,6 +27,7 @@ export const selectedRoleSignal = signal<UserType | null>(null);
 export const authErrorSignal = signal<string | null>(null);
 export const emailSignal = signal<string>('');
 export const passwordSignal = signal<string>('');
+export const companyIntegrationSignal = signal<string | null>(null);
 
 export const authState = signal<AuthState>(initialState);
 
@@ -78,4 +79,23 @@ export const getSelectedRole = (): UserType | null => {
 
 export const clearSelectedRole = () => {
   localStorage.removeItem('selectedRole');
+};
+
+export const setCompanyIntegration = (company: string | null) => {
+  companyIntegrationSignal.value = company;
+  if (company) {
+    localStorage.setItem('companyIntegration', company);
+  } else {
+    localStorage.removeItem('companyIntegration');
+  }
+};
+
+export const getCompanyIntegration = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('companyIntegration') || companyIntegrationSignal.value;
+};
+
+export const clearCompanyIntegration = () => {
+  companyIntegrationSignal.value = null;
+  localStorage.removeItem('companyIntegration');
 };

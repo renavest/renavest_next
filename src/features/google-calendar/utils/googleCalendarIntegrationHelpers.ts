@@ -1,8 +1,8 @@
 import { toast } from 'sonner';
 
-export async function fetchGoogleCalendarStatus() {
+export async function fetchGoogleCalendarStatus(therapistId: number) {
   try {
-    const response = await fetch('/api/google-calendar/status');
+    const response = await fetch(`/api/google-calendar/status?therapistId=${therapistId}`);
     return await response.json();
   } catch (error) {
     console.error('Error checking Google Calendar status:', error);
