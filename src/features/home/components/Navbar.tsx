@@ -5,6 +5,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
+import { ctaTextSignal } from '@/src/features/home/state/ctaSignals';
+
 function Navbar() {
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -82,7 +84,7 @@ function Navbar() {
               rel='noopener noreferrer'
             >
               <button className='px-6 py-2.5 bg-[#9071FF] text-white rounded-full hover:bg-[#9071FF]/90 transition font-medium text-sm'>
-                Book a Demo
+                {ctaTextSignal.value}
               </button>
             </a>
           </div>
@@ -140,7 +142,7 @@ function Navbar() {
               rel='noopener noreferrer'
               className='flex items-center justify-center px-4 py-3 bg-[#9071FF] text-white rounded-lg w-full'
             >
-              <span className='text-base font-medium'>Book a Demo</span>
+              <span className='text-base font-medium'>{ctaTextSignal.value}</span>
             </a>
           </div>
         </div>

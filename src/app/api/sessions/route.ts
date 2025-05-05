@@ -8,6 +8,7 @@ import { db } from '@/src/db';
 import { bookingSessions } from '@/src/db/schema';
 
 import { UserType, TherapistType } from './types';
+import { createAndStoreGoogleCalendarEvent } from '@/src/utils/googleCalendar';
 
 // OAuth2 client configuration
 const oauth2Client = new google.auth.OAuth2(
@@ -85,50 +86,6 @@ async function checkSlotAvailability(
   return busySlots.length === 0;
 }
 
-// Helper function to create Google Calendar event
-async function createGoogleCalendarEvent(
-  calendar: calendar_v3.Calendar,
-  user: UserType,
-  therapist: TherapistType,
-  startTime: Date,
-  endTime: Date,
-  therapistTimezone: string,
-) {
-  return calendar.events.insert({
-    calendarId: 'primary',
-    requestBody: {
-      summary: `Therapy Session with ${user.firstName} ${user.lastName}`,
-      description: 'Therapy session booked through Renavest',
-      start: {
-        dateTime: startTime.toISOString(),
-        timeZone: therapistTimezone,
-      },
-      end: {
-        dateTime: endTime.toISOString(),
-        timeZone: therapistTimezone,
-      },
-      attendees: [
-        {
-          email: user.email || '',
-          responseStatus: 'accepted',
-        },
-        {
-          email: therapist.googleCalendarEmail || '',
-          responseStatus: 'accepted',
-        },
-      ],
-      guestsCanModify: false,
-      reminders: {
-        useDefault: false,
-        overrides: [
-          { method: 'email', minutes: 24 * 60 }, // 24 hours before
-          { method: 'popup', minutes: 30 }, // 30 minutes before
-        ],
-      },
-    },
-  });
-}
-
 // Create a new booking
 export async function POST(req: NextRequest) {
   try {
@@ -197,25 +154,23 @@ export async function POST(req: NextRequest) {
 
     const booking = bookingResult[0];
 
-    // Create Google Calendar event
-    if (therapist.googleCalendarAccessToken) {
-      const event = await createGoogleCalendarEvent(
-        calendar,
-        user,
-        therapist,
-        therapistStartTime,
-        therapistEndTime,
-        therapistTimezone,
-      );
-
-      // Update booking with Google Calendar event ID
-      await db
-        .update(bookingSessions)
-        .set({
-          googleEventId: event.data.id,
-          status: 'confirmed',
-        })
-        .where(eq(bookingSessions.id, booking.id));
+    // Use shared utility for Google Calendar event creation
+    let calendarResult = null;
+    if (
+      therapist.googleCalendarAccessToken &&
+      therapist.googleCalendarIntegrationStatus === 'connected'
+    ) {
+      try {
+        calendarResult = await createAndStoreGoogleCalendarEvent({
+          booking,
+          therapist,
+          user,
+          db,
+        });
+      } catch (error) {
+        console.error('Error creating Google Calendar event:', error);
+        // Optionally: return error or continue
+      }
     }
 
     // TODO: Send email notifications to both user and therapist with timezone-aware times
@@ -226,6 +181,9 @@ export async function POST(req: NextRequest) {
         ...booking,
         clientTimezone: validatedData.timezone,
         therapistTimezone,
+        googleCalendarEventId: calendarResult?.eventId || null,
+        googleCalendarEventLink: calendarResult?.eventLink || null,
+        googleMeetLink: calendarResult?.googleMeetLink || null,
       },
     });
   } catch (error) {

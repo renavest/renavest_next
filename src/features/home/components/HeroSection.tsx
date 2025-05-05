@@ -1,5 +1,7 @@
 import { ArrowRight } from 'lucide-react';
 
+import { ctaTextSignal } from '@/src/features/home/state/ctaSignals';
+
 function HeroSection() {
   return (
     <section className='w-full flex flex-col items-center mt-24 md:mt-28'>
@@ -15,7 +17,7 @@ function HeroSection() {
           <div className='flex flex-col sm:flex-row gap-4'>
             <a href='#jasmine-journey'>
               <button className='px-8 py-4 bg-[#9071FF] text-white rounded-full shadow-sm hover:shadow-md hover:bg-[#9071FF]/90 transition font-medium text-base flex items-center gap-2'>
-                Book a Demo <ArrowRight size={18} />
+                {ctaTextSignal.value} <ArrowRight size={18} />
               </button>
             </a>
           </div>
