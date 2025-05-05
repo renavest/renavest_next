@@ -4,7 +4,7 @@ import { Resend } from 'resend';
 
 import { BookingConfirmationEmailTemplate } from '../components/EmailTemplates/BookingConfirmationEmailTemplate';
 import { TherapistBookingNotificationEmailTemplate } from '../components/EmailTemplates/TherapistBookingNotificationEmailTemplate';
-import { TimezoneIdentifier, SUPPORTED_TIMEZONES } from '../utils/dateTimeUtils';
+import { TimezoneIdentifier } from '../utils/dateTimeUtils';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -44,10 +44,7 @@ export async function sendBookingConfirmationEmail({
       };
     }
 
-    // Format timezone for display
-    const displayTimezone = SUPPORTED_TIMEZONES[timezone];
-
-    // Send email to client
+    // Pass formatted date and time directly to templates
     const clientEmailResult = await resend.emails.send({
       from: 'Renavest Booking <booking@booking.renavestapp.com>',
       to: [clientEmail],
@@ -57,7 +54,7 @@ export async function sendBookingConfirmationEmail({
         therapistName,
         sessionDate,
         sessionTime,
-        timezone: displayTimezone,
+        timezone,
         googleMeetLink,
       }),
     });
@@ -75,7 +72,7 @@ export async function sendBookingConfirmationEmail({
         clientName,
         sessionDate,
         sessionTime,
-        timezone: displayTimezone,
+        timezone,
         googleMeetLink,
       }),
     });

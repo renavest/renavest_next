@@ -38,7 +38,7 @@ export default function TherapistSummaryCard() {
           <h3 className='text-lg font-semibold text-gray-700'>View Financial Therapists</h3>
         </div>
         <Link
-          href='/employer/therapists'
+          href='/explore'
           className='text-purple-600 hover:text-purple-800 flex items-center gap-1 text-sm font-medium transition-colors'
         >
           View all <ArrowRight className='w-4 h-4' />

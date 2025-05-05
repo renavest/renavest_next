@@ -24,6 +24,7 @@ const journeySteps: JourneyStepType[] = [
     hrInsight: '87% of employees want financial wellness support beyond basic education',
     bg: 'bg-[#f9f8ff]',
     image: 'https://d2qcuj7ucxw61o.cloudfront.net/opening_up.jpg',
+    therapistImage: 'https://d2qcuj7ucxw61o.cloudfront.net/GeorgeBlount.jpg',
   },
   {
     icon: PieChart,
@@ -41,6 +42,7 @@ const journeySteps: JourneyStepType[] = [
     hrInsight: 'Companies offering financial therapy see up to 13% reduction in turnover',
     bg: 'bg-[#f9f8ff]',
     image: 'https://d2qcuj7ucxw61o.cloudfront.net/after_financial_therapy.jpg',
+    therapistImage: 'https://d2qcuj7ucxw61o.cloudfront.net/GeorgeBlount.jpg',
   },
   {
     icon: Users,
@@ -90,16 +92,16 @@ function JasmineJourneySection() {
   return (
     <>
       <span id='jasmine-journey' className='block scroll-mt-16'></span>
-      <section className='w-full flex flex-col items-center py-16 bg-[#F9F9F7]'>
-        <div className='max-w-7xl w-full px-6 md:px-10 mb-20'>
+      <section className='w-full flex flex-col items-center py-12 md:py-16 bg-[#F9F9F7]'>
+        <div className='max-w-7xl w-full px-4 md:px-10 mb-12 md:mb-20'>
           <div className='max-w-3xl mx-auto text-center'>
-            <span className='px-6 py-2.5 bg-[#9071FF]/10 text-[#9071FF] font-medium rounded-full text-sm mb-6 inline-block'>
+            <span className='px-4 md:px-6 py-1.5 md:py-2.5 bg-[#9071FF]/10 text-[#9071FF] font-medium rounded-full text-xs md:text-sm mb-4 md:mb-6 inline-block'>
               EMPLOYEE JOURNEY
             </span>
-            <h2 className='text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-relaxed'>
+            <h2 className='text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 md:mb-6 leading-tight'>
               How financial therapy transforms work and life
             </h2>
-            <h3 className='text-xl md:text-2xl text-gray-700 mb-0 font-medium'>
+            <h3 className='text-base md:text-xl lg:text-2xl text-gray-700 mb-0 font-medium px-2 md:px-0'>
               88% of employees bring money worries to work. Jasmine was one of them—until she found
               a financial therapist who listened. When employees feel supported, they show up
               differently for your business.
@@ -107,8 +109,8 @@ function JasmineJourneySection() {
           </div>
         </div>
 
-        <div className='w-full max-w-[90rem] px-6 lg:px-16'>
-          <div className='flex flex-col space-y-0 md:space-y-0'>
+        <div className='w-full max-w-[90rem] px-4 md:px-16'>
+          <div className='space-y-8 md:space-y-0'>
             {journeySteps.map((step, idx) => (
               <div key={step.title} className='flex flex-col'>
                 <JourneyStep step={step} idx={idx} />

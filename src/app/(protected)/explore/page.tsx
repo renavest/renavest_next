@@ -1,5 +1,3 @@
-import { sql } from 'drizzle-orm';
-
 import { db } from '@/src/db';
 import { therapists } from '@/src/db/schema';
 import AdvisorGrid from '@/src/features/explore/components/AdvisorGrid';
