@@ -63,7 +63,13 @@ function Navbar() {
             href='#jasmine-journey'
             className='text-gray-600 hover:text-[#9071FF] font-medium text-sm'
           >
-            Employee Journey
+            How it works
+          </Link>
+          <Link
+            href='#what-is-financial-therapy'
+            className='text-gray-600 hover:text-[#9071FF] font-medium text-sm'
+          >
+            What is financial therapy?
           </Link>
           <Link
             href='#business-impact'
@@ -117,7 +123,15 @@ function Navbar() {
             onClick={() => setIsMobileMenuOpen(false)}
           >
             <Users className='h-5 w-5 text-[#9071FF]' />
-            <span className='text-base'>Employee Journey</span>
+            <span className='text-base'>How it works</span>
+          </Link>
+          <Link
+            href='#what-is-financial-therapy'
+            className='flex items-center gap-2 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors w-full'
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <Users className='h-5 w-5 text-[#9071FF]' />
+            <span className='text-base'>What is financial therapy?</span>
           </Link>
           <Link
             href='#business-impact'

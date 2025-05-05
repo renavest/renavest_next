@@ -7,12 +7,12 @@ function HeroSection() {
     <section className='w-full flex flex-col items-center mt-24 md:mt-28'>
       <div className='flex flex-col md:flex-row w-full max-w-6xl px-6 md:px-10 py-20 items-center'>
         <div className='md:w-1/2 mb-16 md:mb-0 md:pr-16'>
-          <h1 className='text-4xl md:text-5xl lg:text-6xl font-bold mb-8 text-gray-900 leading-tight'>
-            Money stress is costing your
-            <span className='text-[#9071FF]'> company.</span>
+          <h1 className='text-3xl md:text-4xl lg:text-5xl font-bold mb-8 text-gray-900 leading-tight'>
+          Transform Your Workplace with
+            <span className='text-[#9071FF]'> Financial Therapy.</span>
           </h1>
-          <p className='text-xl text-gray-600 mb-12 leading-relaxed'>
-            40% of employees waste 3+ productive hours weekly dealing with financial anxiety.
+          <p className='text-lg text-gray-600 mb-12 leading-relaxed'>
+          Your workforce's financial stress is costing you $2,500 per employee annually. 
           </p>
           <div className='flex flex-col sm:flex-row gap-4'>
             <a href='#jasmine-journey'>
