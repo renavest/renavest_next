@@ -18,7 +18,11 @@ function TestimonialCard({
       <div className='absolute -top-5 left-1/2 -translate-x-1/2 w-10 h-10 transform rotate-45 bg-white'></div>
       <div className='flex justify-center mb-6'>
         <div className='w-16 h-16 rounded-full border-4 border-white overflow-hidden'>
-          <img src='/landing/esmaa.png' alt='Essma Litmim' className='w-full h-full object-cover' />
+          <img
+            src='https://d2qcuj7ucxw61o.cloudfront.net/esmaa.png'
+            alt='Essma Litmim'
+            className='w-full h-full object-cover'
+          />
         </div>
       </div>
       <p className='text-xl text-gray-800 mb-8 italic text-center'>

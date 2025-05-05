@@ -23,7 +23,7 @@ function HeroSection() {
         <div className='md:w-1/2 flex justify-center items-center relative'>
           {/* Replaced Clouds with Demo Image */}
           <img
-            src='/landing/demo_example.png'
+            src='https://d2qcuj7ucxw61o.cloudfront.net/demo_example.png'
             alt='Demo Example'
             style={{
               width: '100%',
