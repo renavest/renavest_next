@@ -32,15 +32,15 @@ function BusinessImpactSection() {
         >
           <div className='max-w-3xl mx-auto text-center mb-20'>
             <span className='px-4 py-2 bg-[#9071FF]/10 text-[#9071FF] font-medium rounded-full text-sm mb-4 inline-block'>
-              WHY FINANCIAL THERAPY FOR YOUR TEAM
+              THE BUSINESS IMPACT
             </span>
             <h2 className='text-3xl md:text-4xl font-bold text-gray-900 mb-6'>
-              When your people feel heard, your business thrives
+              When Financial Stress Disappears, Performance Soars
             </h2>
             <p className='text-xl text-gray-600 leading-relaxed'>
-              Financial therapy is more than a benefit—it's a way to show your team you care. When
-              employees feel truly supported, they bring more focus, loyalty, and energy to your
-              organization.
+              Financial therapy is more than a benefit—it's a strategic investment in your team's
+              potential. By addressing financial stress, you unlock unprecedented workplace
+              performance.
             </p>
           </div>
 
@@ -50,12 +50,12 @@ function BusinessImpactSection() {
                 <TrendingUp className='text-[#9071FF]' size={32} />
               </div>
               <div className='mb-6'>
-                <span className='text-5xl font-bold text-[#9071FF] block mb-2'>2x</span>
-                <h3 className='text-xl font-semibold text-gray-800'>More Focus, More Energy</h3>
+                <span className='text-5xl font-bold text-[#9071FF] block mb-2'>34%</span>
+                <h3 className='text-xl font-semibold text-gray-800'>Higher Productivity</h3>
               </div>
               <p className='text-gray-600 mt-auto'>
-                When financial worries ease, your people find space to do their best work. Employers
-                tell us: "I can see the difference in my team's energy and focus."
+                Financial stress elimination boosts workplace focus and output. Employees can
+                redirect mental energy from money worries to meaningful work.
               </p>
             </div>
 
@@ -64,26 +64,24 @@ function BusinessImpactSection() {
                 <Users className='text-[#9071FF]' size={32} />
               </div>
               <div className='mb-6'>
-                <span className='text-5xl font-bold text-[#9071FF] block mb-2'>13%</span>
-                <h3 className='text-xl font-semibold text-gray-800'>People Stay Longer</h3>
+                <span className='text-5xl font-bold text-[#9071FF] block mb-2'>6:1</span>
+                <h3 className='text-xl font-semibold text-gray-800'>Return on Investment</h3>
               </div>
               <p className='text-gray-600 mt-auto'>
-                When employees feel cared for, they stick around. Financial therapy helps your team
-                feel valued—and that loyalty means less turnover for your business.
+                Companies see up to $6 return for every $1 invested in financial wellness, through reduced healthcare costs and lower absenteeism.
               </p>
             </div>
-
             <div className='flex flex-col h-full bg-white rounded-3xl p-10 shadow-md hover:shadow-xl transition-shadow duration-500 group'>
               <div className='bg-[#9071FF]/10 rounded-full w-16 h-16 flex items-center justify-center mb-8 group-hover:bg-[#9071FF]/20 transition-colors duration-500'>
                 <Shield className='text-[#9071FF]' size={32} />
               </div>
               <div className='mb-6'>
-                <span className='text-5xl font-bold text-[#9071FF] block mb-2'>↑</span>
-                <h3 className='text-xl font-semibold text-gray-800'>Benefits That Matter</h3>
+                <span className='text-5xl font-bold text-[#9071FF] block mb-2'>56%</span>
+                <h3 className='text-xl font-semibold text-gray-800'>Time Reclaimed</h3>
               </div>
               <p className='text-gray-600 mt-auto'>
-                Financial therapy gives your people the confidence to use all the resources you
-                offer. When support feels real, benefits get used—and your investment pays off.
+                The average stressed employee spends a full workday weekly on money worries.
+                Financial therapy gives back productive hours to your organization.
               </p>
             </div>
           </div>

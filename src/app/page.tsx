@@ -3,6 +3,7 @@
 import { Inter } from 'next/font/google';
 import { useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
+import { Suspense } from 'react';
 
 import BusinessImpactSection from '@/src/features/home/components/BusinessImpactSection';
 import Footer from '@/src/features/home/components/Footer';
@@ -15,7 +16,7 @@ import { ctaTextSignal } from '@/src/features/home/state/ctaSignals';
 
 const inter = Inter({ subsets: ['latin'] });
 
-export default function HomePage() {
+function HomeContent() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -43,5 +44,13 @@ export default function HomePage() {
       <TestimonialSection />
       <Footer />
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<div>Loading home page...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }
