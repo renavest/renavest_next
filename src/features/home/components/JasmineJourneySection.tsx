@@ -14,7 +14,7 @@ const journeySteps: JourneyStepType[] = [
       "Jasmine sits at her desk, the bills and debt weighing on her mind. She wonders, 'Is it just me?' That night, she discovers financial therapy. For employers, these silent struggles can quietly erode focus and productivity across the team.",
     hrInsight: 'Financial stress decreases productivity by up to 34%',
     bg: 'bg-white',
-    image: '/landing/hitting_the_wall.jpg',
+    image: 'https://d2qcuj7ucxw61o.cloudfront.net/hitting_the_wall.jpg',
   },
   {
     icon: HeartHandshake,
@@ -23,7 +23,7 @@ const journeySteps: JourneyStepType[] = [
       "Jasmine feels fortunate her employer offered a safe, private space to talk about money. In her first session, she's surprised by how comfortable it feels to open up. When employees feel supported, they bring more of themselves to work.",
     hrInsight: '87% of employees want financial wellness support beyond basic education',
     bg: 'bg-[#f9f8ff]',
-    image: '/landing/opening_up.jpg',
+    image: 'https://d2qcuj7ucxw61o.cloudfront.net/opening_up.jpg',
   },
   {
     icon: PieChart,
@@ -40,7 +40,7 @@ const journeySteps: JourneyStepType[] = [
       "Jasmine celebrates her first emergency fund—it's not huge, but it's hers. The anxiety doesn't vanish overnight, but with her financial therapist's support, she feels lighter, more hopeful. These small wins add up to greater engagement and resilience at work.",
     hrInsight: 'Companies offering financial therapy see up to 13% reduction in turnover',
     bg: 'bg-[#f9f8ff]',
-    image: '/landing/after_financial_therapy.jpg',
+    image: 'https://d2qcuj7ucxw61o.cloudfront.net/after_financial_therapy.jpg',
   },
   {
     icon: Users,
@@ -49,7 +49,7 @@ const journeySteps: JourneyStepType[] = [
       "Jasmine's manager notices she's more focused, more present. Jasmine feels it too—she's not just surviving, she's starting to thrive. For employers, that means a team that's more engaged, loyal, and ready to grow.",
     hrInsight: 'Employees with reduced financial stress utilize all benefits 28% more effectively',
     bg: 'bg-white',
-    image: '/landing/final_image.jpg',
+    image: 'https://d2qcuj7ucxw61o.cloudfront.net/final_image.jpg',
   },
 ];
 
