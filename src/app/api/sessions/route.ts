@@ -9,6 +9,8 @@ import { bookingSessions } from '@/src/db/schema';
 
 import { UserType, TherapistType } from './types';
 import { createAndStoreGoogleCalendarEvent } from '@/src/utils/googleCalendar';
+import { sendBookingConfirmationEmail } from '@/src/features/booking/actions/sendBookingConfirmationEmail';
+import { convertTimeBetweenZones } from '@/src/utils/timezone';
 
 // OAuth2 client configuration
 const oauth2Client = new google.auth.OAuth2(
@@ -173,7 +175,20 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // TODO: Send email notifications to both user and therapist with timezone-aware times
+    // Send confirmation email with timezone-aware details and Google Meet link
+    if (user && therapist) {
+      await sendBookingConfirmationEmail({
+        userEmail: user.email,
+        therapistEmail: therapist.googleCalendarEmail || '',
+        sessionStartTime: booking.sessionStartTime,
+        sessionEndTime: booking.sessionEndTime,
+        userTimezone: validatedData.timezone, // Client's timezone
+        therapistTimezone: therapistTimezone,
+        googleMeetLink: calendarResult?.googleMeetLink,
+        therapistName: `${therapist.firstName} ${therapist.lastName}`.trim(),
+        userName: `${user.firstName} ${user.lastName}`.trim(),
+      });
+    }
 
     return NextResponse.json({
       success: true,

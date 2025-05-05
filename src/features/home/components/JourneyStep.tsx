@@ -1,9 +1,10 @@
 'use client';
+import { ArrowDownUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { ElementType } from 'react';
 
 import DataCardExample from './DataCardExample';
-import { JourneySectionProps } from './types';
+import type { JourneySectionProps } from './types';
 
 // Types for the extracted components
 type AnimatedTitleProps = {
@@ -153,18 +154,34 @@ function JourneyStep({ step, idx }: JourneySectionProps) {
 
   const animationDelay = `${idx * 0.2}s`;
 
+  const renderImage = () => {
+    if (step.title === 'Week 2: Noticing Patterns, Together') {
+      return <DataCardExample />;
+    }
+
+    return step.image ? (
+      <img
+        src={step.image}
+        alt={step.title}
+        className='w-full h-full object-cover rounded-3xl shadow-md'
+        style={{ transitionDelay: `calc(${animationDelay} + 0.4s)` }}
+      />
+    ) : null;
+  };
+
   return (
     <div
       ref={setElementRef}
       className={`
-        w-full px-8 py-14 md:p-20 bg-white rounded-3xl shadow-md hover:shadow-xl
+        w-full px-4 py-10 md:px-20 md:py-14 ${step.bg || 'bg-white'} rounded-3xl shadow-md hover:shadow-xl
         transform transition-all duration-1000
         ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-24 opacity-0'}
       `}
       style={{ transitionDelay: animationDelay }}
     >
-      <div className='flex flex-col md:flex-row items-center gap-16'>
-        <div className={`w-full md:w-1/2 ${idx % 2 === 1 ? 'md:order-2' : 'md:order-1'}`}>
+      {/* Animated view for larger screens */}
+      <div className='hidden lg:flex flex-row items-center gap-16'>
+        <div className={`w-1/2 ${idx % 2 === 1 ? 'order-2' : 'order-1'}`}>
           <div className='max-w-xl'>
             <AnimatedTitle
               title={step.title}
@@ -185,43 +202,55 @@ function JourneyStep({ step, idx }: JourneySectionProps) {
           </div>
         </div>
 
-        <div
-          className={`w-full md:w-1/2 ${idx % 2 === 1 ? 'md:order-1' : 'md:order-2'} flex justify-center`}
-        >
-          <div className='relative w-[300px] h-[300px] md:w-[380px] md:h-[380px]'>
-            {step.title === 'Week 2: Noticing Patterns, Together' ? (
-              <DataCardExample />
-            ) : step.image ? (
+        <div className={`w-1/2 ${idx % 2 === 1 ? 'order-1' : 'order-2'} flex justify-center`}>
+          <div className='relative w-[380px] h-[380px]'>
+            {renderImage()}
+            {step.title === 'Week 1: Opening Up' && step.therapistImage && (
+              <>
+                <img
+                  src={step.therapistImage}
+                  alt='Financial Therapist'
+                  className='absolute top-4 right-4 w-24 h-24 object-cover rounded-lg border-4 border-white shadow-lg z-10'
+                  style={{ transitionDelay: `calc(${animationDelay} + 0.5s)` }}
+                />
+                <ArrowDownUp
+                  size={64}
+                  height={300}
+                  width={64}
+                  strokeWidth={2.5}
+                  color='#B9A7E6'
+                  className='absolute right-6 bottom-10 z-10'
+                  style={{ filter: 'drop-shadow(0 2px 6px rgba(185,167,230,0.15))' }}
+                />
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Simplified view for mobile */}
+      <div className='lg:hidden flex flex-col items-center'>
+        <div className='w-full text-center mb-6'>
+          <span className='inline-flex items-center gap-2 text-[#9071FF] font-medium mb-3 text-sm'>
+            {step.icon && <step.icon size={20} />}
+            {step.title.split(':')[0]}
+          </span>
+          <h2 className='text-2xl font-bold mb-4 text-gray-900'>
+            {step.title.split(':')[1] || ''}
+          </h2>
+          <p className='text-base text-gray-600 leading-relaxed px-4'>{step.description}</p>
+        </div>
+
+        <div className='w-full flex justify-center'>
+          <div className='relative w-[250px] h-[250px]'>
+            {renderImage()}
+            {step.title === 'Week 1: Opening Up' && step.therapistImage && (
               <img
-                src={step.image}
-                alt={step.title}
-                className='w-full h-full object-cover rounded-3xl shadow-md'
-                style={{ transitionDelay: `calc(${animationDelay} + 0.4s)` }}
-              />
-            ) : (
-              <video
-                src='/videos/example_vid.mp4'
-                autoPlay
-                loop
-                muted
-                playsInline
-                className='hidden md:block w-full h-full object-cover rounded-3xl shadow-md'
-                style={{ transitionDelay: `calc(${animationDelay} + 0.4s)` }}
+                src={step.therapistImage}
+                alt='Financial Therapist'
+                className='absolute top-4 right-4 w-16 h-16 object-cover rounded-lg border-2 border-white shadow-lg z-10'
               />
             )}
-            <div
-              className={`block md:hidden bg-[#F9F9F7] rounded-3xl flex items-center justify-center group shadow-md hover:shadow-lg transition-all duration-700 w-full h-full
-                transform ${isVisible ? 'scale-100 rotate-0' : 'scale-90 rotate-3'}`}
-              style={{ transitionDelay: `calc(${animationDelay} + 0.4s)` }}
-            >
-              <ContentDisplay
-                icon={step.icon}
-                title={step.title}
-                description={step.description}
-                isVisible={isVisible}
-                animationDelay={animationDelay}
-              />
-            </div>
           </div>
         </div>
       </div>

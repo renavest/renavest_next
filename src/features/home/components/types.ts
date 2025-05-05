@@ -5,6 +5,7 @@ export type JourneyStep = {
   bg: string;
   hrInsight?: string;
   image?: string;
+  therapistImage?: string;
 };
 
 export type JourneySectionProps = {
