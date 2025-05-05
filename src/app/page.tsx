@@ -16,7 +16,7 @@ import { ctaTextSignal } from '@/src/features/home/state/ctaSignals';
 
 const inter = Inter({ subsets: ['latin'] });
 
-function HomeComponent() {
+function HomeContent() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -49,10 +49,8 @@ function HomeComponent() {
 
 export default function HomePage() {
   return (
-    <div>
-      <Suspense fallback={<div>Loading...</div>}>
-        <HomeComponent />
-      </Suspense>
-    </div>
+    <Suspense fallback={<div>Loading home page...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }
