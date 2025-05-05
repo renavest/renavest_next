@@ -1,166 +1,41 @@
 'use client';
 
-import { Heart, BarChart, Lightbulb } from 'lucide-react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import React, { useEffect, Suspense } from 'react';
 
-import companyInfo from '@/src/features/auth/companyInfo';
 import LoginForm from '@/src/features/auth/components/LoginForm';
-import {
-  setCompanyIntegration,
-  companyIntegrationSignal,
-} from '@/src/features/auth/state/authState';
+import { setCompanyIntegration } from '@/src/features/auth/state/authState';
 import { COLORS } from '@/src/styles/colors';
 
-const logoScaleOverrides: { [key: string]: number } = {
-  'bridge.png': 1.5,
-  
-};
-
-const FeatureSection = () => {
-  const features = [
-    {
-      icon: Heart,
-      title: 'Employee Empowerment',
-      description:
-        'Personalized financial therapy that transforms individual money mindsets and supports holistic financial well-being.',
-    },
-    {
-      icon: BarChart,
-      title: 'Employer Insights',
-      description:
-        'Aggregate, anonymized analytics that help organizations understand workforce financial health and support strategies.',
-    },
-    {
-      icon: Lightbulb,
-      title: 'Therapist Collaboration',
-      description:
-        'A comprehensive platform for financial therapists to manage clients, track progress, and deliver targeted financial wellness support.',
-    },
-  ];
+function TestimonialSection() {
+  // Testimonial/Quote
+  const quote =
+    "My session with financial therapy coach Paige was nothing short of transformative. Her insight, compassion, and affirming guidance created a space where I felt truly seen and empowered... ";
+  const quoteName = 'Essma Litim';
+  const quoteTitle = 'Renavest User';
+  const personImage = 'https://d2qcuj7ucxw61o.cloudfront.net/esmaa_testimonial.png';
 
   return (
-    <div className='space-y-4'>
-      {features.map((feature, index) => (
-        <div
-          key={index}
-          className={`
-            flex items-start space-x-4 
-            p-4 rounded-xl 
-            bg-white/80 backdrop-blur-sm 
-            border border-purple-100
-            hover:shadow-md hover:-translate-y-0.5 
-            transition-all duration-300 ease-out
-            animate-fade-in opacity-0 
-            [animation-delay:${400 + index * 100}ms]
-          `}
-        >
-          <feature.icon
-            className={`
-              w-8 h-8 mt-1 
-              ${COLORS.WARM_PURPLE.DEFAULT} 
-              opacity-80
-            `}
-          />
-          <div>
-            <h3 className='text-lg font-semibold text-gray-900 mb-1'>{feature.title}</h3>
-            <p className='text-sm text-gray-600'>{feature.description}</p>
-          </div>
+    <div className='flex flex-col items-center justify-center w-full h-full min-h-screen bg-[#f7f5ff] px-6'>
+      <div className='max-w-md w-full flex flex-col items-center justify-center text-center'>
+        <div className='text-gray-900 text-xl md:text-2xl font-normal leading-snug mb-8 mt-8 md:mt-0'>
+          “{quote}”
         </div>
-      ))}
-    </div>
-  );
-};
-
-const LoginLeftSection = () => {
-  const company = companyIntegrationSignal.value;
-  const companyKey = company ? company.toLowerCase() : '';
-  const companyData = companyKey ? companyInfo[companyKey] : undefined;
-
-  const headline =
-    companyData?.headline || 'Where emotional intelligence meets financial empowerment';
-  const subheadline =
-    companyData?.about || 'A compassionate approach to understanding your relationship with money';
-
-  return (
-    <div
-      className={`
-      hidden 
-      lg:flex 
-      lg:w-7/12 
-      ${COLORS.WARM_WHITE.bg} 
-      p-16 
-      flex-col 
-      justify-between 
-      relative 
-      overflow-hidden
-    `}
-    >
-      {/* Enhanced gradient background with animation */}
-      <div className='absolute inset-0'>
-        <div className='absolute inset-0 bg-gradient-to-br from-purple-50 via-white to-purple-50/30' />
-        <div className='absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(144,113,255,0.1),transparent_50%)] animate-pulse-slow' />
-        <div className='absolute inset-0 bg-[radial-gradient(circle_at_70%_60%,rgba(255,229,229,0.15),transparent_50%)] animate-pulse-slower' />
-      </div>
-
-      {/* Logo and main content */}
-      <div className='relative z-10 animate-fade-in [animation-delay:200ms] opacity-0'>
-        <div className='flex items-center space-x-3 mb-8 hover:translate-x-0.5 transition-transform duration-300'>
-          <span style={{ display: 'flex', alignItems: 'center' }}>
-            <Image
-              src='/renavestlogo.png'
-              alt='Renavest'
-              width={40}
-              height={40}
-              className='w-10 h-10'
-            />
-            <h1 className={`text-2xl font-bold ${COLORS.WARM_PURPLE.DEFAULT} ml-2`}>Renavest</h1>
-          </span>
-          {companyData && (
-            <>
-              <span className='mx-2 text-gray-400 text-2xl font-bold'>×</span>
-              {(() => {
-                const fileName =
-                  (companyData.logoSrc && companyData.logoSrc.split('/').pop()) || '';
-                const scale = logoScaleOverrides[fileName] || 1;
-                return (
-                  <img
-                    src={companyData.logoSrc}
-                    alt={companyData.title}
-                    className='object-contain ml-6'
-                    style={{
-                      height: '80px',
-                      width: 'auto',
-                      display: 'block',
-
-                      transform: `scale(${scale})`,
-                      transformOrigin: 'left center',
-                    }}
-                  />
-                );
-              })()}
-            </>
-          )}
-        </div>
-
-        <div className='max-w-xl mb-8'>
-          <h2 className='text-4xl font-bold text-gray-900 mb-4 animate-fade-in [animation-delay:400ms] opacity-0'>
-            {headline}
-          </h2>
-          <p className='text-xl text-gray-600 leading-relaxed mb-6 animate-fade-in [animation-delay:500ms] opacity-0'>
-            {subheadline}
-          </p>
-        </div>
-      </div>
-
-      {/* Features */}
-      <div className='relative z-10'>
-        <FeatureSection />
+        <Image
+          src={personImage}
+          alt={quoteName}
+          width={48}
+          height={48}
+          className='rounded-full object-cover border-2 border-purple-100 shadow-sm mb-3'
+          priority
+        />
+        <div className='text-base text-gray-900 font-semibold'>{quoteName}</div>
+        <div className='text-sm text-gray-500'>{quoteTitle}</div>
       </div>
     </div>
   );
-};
+}
 
 function LoginPageContent() {
   const searchParams = useSearchParams();
@@ -173,7 +48,7 @@ function LoginPageContent() {
   }, [searchParams]);
 
   return (
-    <div className='min-h-screen flex bg-gradient-to-br from-purple-50 via-[#f7f5ff] to-[#faf9f6]'>
+    <div className='min-h-screen flex flex-col lg:flex-row bg-gradient-to-br from-purple-50 via-[#f7f5ff] to-[#faf9f6]'>
       <style jsx global>{`
         @keyframes fade-in {
           from {
@@ -185,39 +60,34 @@ function LoginPageContent() {
             transform: translateY(0);
           }
         }
-        @keyframes pulse-slow {
-          0%,
-          100% {
-            opacity: 0.1;
-          }
-          50% {
-            opacity: 0.15;
-          }
-        }
-        @keyframes pulse-slower {
-          0%,
-          100% {
-            opacity: 0.15;
-          }
-          50% {
-            opacity: 0.2;
-          }
-        }
         .animate-fade-in {
           animation: fade-in 0.6s ease-out forwards;
         }
-        .animate-pulse-slow {
-          animation: pulse-slow 4s ease-in-out infinite;
-        }
-        .animate-pulse-slower {
-          animation: pulse-slower 6s ease-in-out infinite;
-        }
       `}</style>
-      <LoginLeftSection />
-      <div className='w-full lg:w-5/12 flex items-center justify-center px-6 py-12 relative animate-fade-in [animation-delay:300ms] opacity-0'>
-        <div className='absolute inset-0 bg-gradient-to-b from-purple-50/50 to-transparent lg:hidden' />
-        <div className='w-full max-w-md relative z-10'>
-          <LoginForm />
+      {/* Testimonial on the left */}
+      <div className='w-full lg:w-4/12 flex items-center justify-center p-0'>
+        <TestimonialSection />
+      </div>
+      {/* Login section on the right */}
+      <div className='w-full lg:w-8/12 flex flex-col items-center bg-white p-8 min-h-screen relative overflow-hidden'>
+        <div className='w-full max-w-md relative z-10 flex flex-col h-full'>
+          {/* Logo and name row, centered */}
+          <div className='flex items-center justify-center mt-16 mb-2'>
+            <Image
+              src='/renavestlogo.png'
+              alt='Renavest'
+              width={48}
+              height={48}
+              className='w-12 h-12 mr-3'
+            />
+            <h1 className={`text-3xl font-bold ${COLORS.WARM_PURPLE.DEFAULT}`}>Renavest</h1>
+          </div>
+          {/* New large header and subheader */}
+
+          {/* Vertically centered login card content */}
+          <div className='flex-1 flex flex-col justify-center'>
+            <LoginForm />
+          </div>
         </div>
       </div>
     </div>

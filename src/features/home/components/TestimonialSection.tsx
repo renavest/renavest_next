@@ -2,6 +2,8 @@
 import { ArrowRight } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 
+import { ctaTextSignal } from '@/src/features/home/state/ctaSignals';
+
 function TestimonialCard({
   isVisible,
   sectionRef,
@@ -33,7 +35,7 @@ function TestimonialCard({
         space... This work is transformational and will absolutely change lives."
       </p>
       <div className='text-center'>
-        <span className='block font-semibold text-gray-900 text-lg'>Essma Litmim</span>
+        <span className='block font-semibold text-gray-900 text-lg'>Essma Litim</span>
         <span className='text-gray-600'>Renavest User</span>
       </div>
     </div>
@@ -70,7 +72,7 @@ function TestimonialSection() {
             rel='noopener noreferrer'
           >
             <button className='w-full sm:w-auto px-8 py-4 bg-[#9071FF] text-white rounded-full shadow-md hover:shadow-lg transition font-medium text-lg flex items-center justify-center'>
-              <span>Book a Demo</span>
+              <span>{ctaTextSignal.value}</span>
               <ArrowRight size={20} className='ml-2' />
             </button>
           </a>

@@ -141,9 +141,11 @@ export default function AuthenticationForm() {
 
   return (
     <div className='space-y-6'>
-      <div className='animate-fade-in opacity-0 [animation-delay:200ms]'>
-        <h2 className='text-2xl font-semibold text-gray-900 mb-2'>Welcome to Renavest</h2>
-        <p className='text-gray-600'>Choose your role to get started with Google Sign-In</p>
+      <div className='flex flex-col items-center mb-8'>
+        <h2 className='text-4xl font-extrabold text-gray-900 mb-2 text-center'>
+          Welcome to Renavest
+        </h2>
+        <div className='text-lg text-gray-500 text-center'>A safe place to talk about money</div>
       </div>
 
       <RoleSelection />

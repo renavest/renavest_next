@@ -8,6 +8,7 @@ const config: NextConfig = {
       'localhost',
       'app.renavestapp.com',
       'renavest-therapist-images.s3.amazonaws.com',
+      'd2qcuj7ucxw61o.cloudfront.net',
     ],
     remotePatterns: [
       {

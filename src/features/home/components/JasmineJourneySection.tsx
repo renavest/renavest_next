@@ -88,36 +88,39 @@ function AnimatedInsight({ children }: { children: React.ReactNode }) {
 
 function JasmineJourneySection() {
   return (
-    <section id='jasmine-journey' className='w-full flex flex-col items-center py-32 bg-[#F9F9F7]'>
-      <div className='max-w-7xl w-full px-6 md:px-10 mb-20'>
-        <div className='max-w-3xl mx-auto text-center'>
-          <span className='px-6 py-2.5 bg-[#9071FF]/10 text-[#9071FF] font-medium rounded-full text-sm mb-6 inline-block'>
-            EMPLOYEE JOURNEY
-          </span>
-          <h2 className='text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-relaxed'>
-            How financial therapy transforms work and life
-          </h2>
-          <h3 className='text-xl md:text-2xl text-gray-700 mb-0 font-medium'>
-            76% of employees bring money worries to work. Jasmine was one of them—until she found a
-            financial therapist who listened. When employees feel supported, they show up
-            differently for your business.
-          </h3>
+    <>
+      <span id='jasmine-journey' className='block scroll-mt-16'></span>
+      <section className='w-full flex flex-col items-center py-16 bg-[#F9F9F7]'>
+        <div className='max-w-7xl w-full px-6 md:px-10 mb-20'>
+          <div className='max-w-3xl mx-auto text-center'>
+            <span className='px-6 py-2.5 bg-[#9071FF]/10 text-[#9071FF] font-medium rounded-full text-sm mb-6 inline-block'>
+              EMPLOYEE JOURNEY
+            </span>
+            <h2 className='text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-relaxed'>
+              How financial therapy transforms work and life
+            </h2>
+            <h3 className='text-xl md:text-2xl text-gray-700 mb-0 font-medium'>
+              88% of employees bring money worries to work. Jasmine was one of them—until she found
+              a financial therapist who listened. When employees feel supported, they show up
+              differently for your business.
+            </h3>
+          </div>
         </div>
-      </div>
 
-      <div className='w-full max-w-[90rem] px-6 lg:px-16'>
-        <div className='flex flex-col space-y-0 md:space-y-0'>
-          {journeySteps.map((step, idx) => (
-            <div key={step.title} className='flex flex-col'>
-              <JourneyStep step={step} idx={idx} />
-              {idx < journeySteps.length - 1 && step.hrInsight && (
-                <AnimatedInsight>{step.hrInsight}</AnimatedInsight>
-              )}
-            </div>
-          ))}
+        <div className='w-full max-w-[90rem] px-6 lg:px-16'>
+          <div className='flex flex-col space-y-0 md:space-y-0'>
+            {journeySteps.map((step, idx) => (
+              <div key={step.title} className='flex flex-col'>
+                <JourneyStep step={step} idx={idx} />
+                {idx < journeySteps.length - 1 && step.hrInsight && (
+                  <AnimatedInsight>{step.hrInsight}</AnimatedInsight>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }
 

@@ -4,11 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } fro
 const data = [
   { name: 'Mon', current: 40, previous: 35 },
   { name: 'Tue', current: 30, previous: 32 },
-  { name: 'Wed', current: 80, previous: 60 },
-  { name: 'Thu', current: 45, previous: 50 },
-  { name: 'Fri', current: 120, previous: 55, flagged: true },
-  { name: 'Sat', current: 60, previous: 58 },
-  { name: 'Sun', current: 50, previous: 52 },
+  { name: 'Wed', current: 120, previous: 60, flagged: true },
 ];
 
 const DataCardExample = () => (
@@ -35,7 +31,7 @@ const DataCardExample = () => (
       </ResponsiveContainer>
     </div>
     <div className='text-xs text-gray-500 text-center'>
-      <span className='font-semibold'>Friday:</span> Large transaction detected ($120 at Coffee
+      <span className='font-semibold'>Wednesday:</span> Large transaction detected ($120 at Coffee
       Shop)
     </div>
   </div>
