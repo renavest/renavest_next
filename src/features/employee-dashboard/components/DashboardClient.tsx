@@ -9,9 +9,9 @@ import { MetricsErrorFallback } from '@/src/components/shared/MetricsErrorFallba
 import OnboardingModal from '@/src/features/onboarding/components/OnboardingModal';
 import { COLORS } from '@/src/styles/colors';
 
-import Navbar from '../../home/components/Navbar';
 import { onboardingSignal } from '../../onboarding/state/onboardingState';
 
+import EmployeeNavbar from './EmployeeNavbar';
 import PersonalActionableInsights from './insights/PersonalActionableInsights';
 import PersonalGoalsTracker from './insights/PersonalGoalsTracker';
 import ProgressComparisonChart from './insights/ProgressComparisonChart';
@@ -33,7 +33,7 @@ export default function DashboardClient() {
   const { user } = useUser();
   return (
     <div className={`min-h-screen ${COLORS.WARM_WHITE.bg} font-sans`}>
-      <Navbar />
+      <EmployeeNavbar />
 
       {/* Main Content */}
       <main className='container mx-auto px-4 pt-24 md:pt-32 pb-8'>
@@ -107,43 +107,9 @@ export default function DashboardClient() {
           </div>
         </div>
 
-        {/* Additional Sections */}
-        <section className='mt-12 md:mt-16'>
-          <h2 className='text-xl md:text-2xl font-semibold text-gray-800 mb-6'>
-            Your Dashboard Overview
-          </h2>
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
-            <ErrorBoundary FallbackComponent={MetricsErrorFallback}>
-              <Suspense
-                fallback={
-                  <div className='bg-white rounded-lg shadow-sm p-4'>Loading metrics...</div>
-                }
-              >
-                {/* Placeholder for MetricsSection */}
-                <div className='bg-white rounded-lg shadow-sm p-4'>
-                  <h3 className='text-lg font-semibold mb-4'>Financial Metrics</h3>
-                  <p className='text-gray-500'>Metrics coming soon</p>
-                </div>
-              </Suspense>
-            </ErrorBoundary>
-
-            <ErrorBoundary FallbackComponent={MetricsErrorFallback}>
-              <Suspense
-                fallback={
-                  <div className='bg-white rounded-lg shadow-sm p-4'>
-                    Loading upcoming sessions...
-                  </div>
-                }
-              >
-                <UpcomingSessionsSection />
-              </Suspense>
-            </ErrorBoundary>
-          </div>
-        </section>
+        {/* Onboarding Modal */}
+        {showOnboardingSignal.value && <OnboardingModal />}
       </main>
-
-      {/* Onboarding Modal */}
-      {showOnboardingSignal.value && <OnboardingModal />}
     </div>
   );
 }

@@ -142,7 +142,7 @@ export function GoogleCalendarIntegration() {
     // Step 0: Welcome
     <div key='welcome' className='flex flex-col items-center text-center p-4'>
       <Image
-        src='/renavestlogo.avif'
+        src='/renavestlogo.png'
         alt='Renavest Butterfly'
         width={48}
         height={48}
@@ -244,7 +244,7 @@ export function GoogleCalendarIntegration() {
     <div className='w-full max-w-md mx-auto bg-white shadow-md rounded-lg overflow-hidden'>
       <div className='px-4 py-5 sm:px-6 flex flex-col items-center'>
         <Image
-          src='/renavestlogo.avif'
+          src='/renavestlogo.png'
           alt='Renavest Butterfly'
           width={36}
           height={36}

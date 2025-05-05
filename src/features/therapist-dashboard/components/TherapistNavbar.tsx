@@ -76,7 +76,7 @@ export default function TherapistDashboardHeader({
           )}
           <div className='relative flex-shrink-0 w-8 h-8 md:w-10 md:h-10 mx-3'>
             <Image
-              src='/renavestlogo.avif'
+              src='/renavestlogo.png'
               alt='Renavest Logo'
               fill
               sizes='(max-width: 768px) 32px, 40px'

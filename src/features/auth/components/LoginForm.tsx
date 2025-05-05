@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
+// import { companyAuthOptions } from '../companyAuthOptions';
 import {
   authErrorSignal,
   // authModeSignal,
@@ -21,8 +22,10 @@ import {
 } from '../state/authState';
 import { UserType } from '../types/auth';
 
-import GoogleSignInButton from './GoogleSignInButton';
+// import GoogleSignInButton from './GoogleSignInButton';
 // import MicrosoftSignInButton from './MicrosoftSignInButton';
+import GoogleSignInButton from './GoogleSignInButton';
+// import OAuthButton from './OAuthButton';
 
 function AuthErrorMessage({ message }: { message: string }) {
   return (

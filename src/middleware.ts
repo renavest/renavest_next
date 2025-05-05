@@ -2,6 +2,8 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+import { ALLOWED_EMAILS } from './constants';
+
 // Define protected routes that require authentication
 const protectedRoutes = [
   '/therapist',
