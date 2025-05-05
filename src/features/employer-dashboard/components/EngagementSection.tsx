@@ -1,5 +1,7 @@
 'use client';
 
+import { ActivitySquare, BarChart, Repeat, Users } from 'lucide-react';
+
 import { engagementMetricsSignal } from '@/src/features/employer-dashboard/state/employerDashboardState';
 import MetricCard from '@/src/shared/components/MetricCard';
 
@@ -25,14 +27,36 @@ export function EngagementSection() {
         value={metrics.dailyActiveUsers}
         subtitle='Unique users today'
         trend={+20}
+        icon={ActivitySquare}
+        iconClassName='bg-emerald-100'
+        className='bg-gradient-to-br from-emerald-100 to-emerald-300 text-emerald-900 shadow-lg rounded-xl'
       />
-      <MetricCard title='Average Sessions' value='3.2' subtitle='Per employee' trend={+15} />
-      <MetricCard title='Return Rate' value='85%' subtitle='Book multiple sessions' trend={+15} />
+      <MetricCard
+        title='Average Sessions'
+        value='3.2'
+        subtitle='Per employee'
+        trend={+15}
+        icon={BarChart}
+        iconClassName='bg-indigo-100'
+        className='bg-gradient-to-br from-indigo-100 to-indigo-300 text-indigo-900 shadow-lg rounded-xl'
+      />
+      <MetricCard
+        title='Return Rate'
+        value='85%'
+        subtitle='Book multiple sessions'
+        trend={+15}
+        icon={Repeat}
+        iconClassName='bg-violet-100'
+        className='bg-gradient-to-br from-violet-100 to-violet-300 text-violet-900 shadow-lg rounded-xl'
+      />
       <MetricCard
         title='Weekly Active'
         value={metrics.weeklyActiveUsers}
         subtitle='Past 7 days'
         trend={+10}
+        icon={Users}
+        iconClassName='bg-sky-100'
+        className='bg-gradient-to-br from-sky-100 to-sky-300 text-sky-900 shadow-lg rounded-xl'
       />
     </MetricsSection>
   );

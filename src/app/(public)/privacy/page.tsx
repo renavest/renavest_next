@@ -130,7 +130,7 @@ export default function PrivacyPage() {
 
   return (
     <div className={`min-h-screen ${COLORS.WARM_WHITE.bg} font-sans`}>
-      <Navbar title='Renavest' />
+      <Navbar />
       <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-20'>
         <Link
           href={backPath}

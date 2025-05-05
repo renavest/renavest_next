@@ -126,7 +126,7 @@ export default function EmployerNavbar() {
           {/* Logo */}
           <div className='relative flex-shrink-0 w-10 h-10 md:w-12 md:h-12'>
             <Image
-              src='/renavestlogo.avif'
+              src='/renavestlogo.png'
               alt='Renavest Logo'
               fill
               sizes='(max-width: 768px) 40px, 48px'

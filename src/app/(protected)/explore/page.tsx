@@ -2,12 +2,12 @@ import { sql } from 'drizzle-orm';
 
 import { db } from '@/src/db';
 import { therapists } from '@/src/db/schema';
+import AdvisorGrid from '@/src/features/explore/components/AdvisorGrid';
 import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
 import { Advisor } from '@/src/shared/types';
 import { COLORS } from '@/src/styles/colors';
 
-import AdvisorGrid from '../../../features/advisors/components/AdvisorGrid';
-import ExploreNavbar from '../../../features/home/components/ExploreNavbar';
+import ExploreNavbar from '../../../features/explore/components/ExploreNavbar';
 // import Navbar from '../../../features/home/components/Navbar';
 
 // Make this a server component since we're doing DB fetching

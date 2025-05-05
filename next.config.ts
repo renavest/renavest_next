@@ -46,11 +46,11 @@ const config: NextConfig = {
   },
   async redirects() {
     return [
-      {
-        source: '/',
-        destination: '/login',
-        permanent: false,
-      },
+      // {
+      //   source: '/',
+      //   destination: '/',
+      //   permanent: false,
+      // },
     ];
   },
   async headers() {

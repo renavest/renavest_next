@@ -1,5 +1,7 @@
 'use client';
 
+import { CalendarCheck, Award, Calendar, CalendarClock } from 'lucide-react';
+
 import {
   sessionMetricsSignal,
   programStatsSignal,
@@ -29,24 +31,36 @@ export function SessionsSection() {
         value={stats.employeesWithSessions}
         subtitle={`${((stats.employeesWithSessions / stats.totalEmployees) * 100).toFixed(0)}% booked first session`}
         trend={+10}
+        icon={CalendarCheck}
+        iconClassName='bg-blue-100'
+        className='bg-gradient-to-br from-blue-100 to-blue-300 text-blue-900 shadow-lg rounded-xl'
       />
       <MetricCard
         title='Exhausted All Credits'
         value={stats.employeesCompletedAllSessions}
         subtitle={`${((stats.employeesCompletedAllSessions / stats.totalEmployees) * 100).toFixed(0)}% used all 400 credits`}
         trend={+8}
+        icon={Award}
+        iconClassName='bg-purple-100'
+        className='bg-gradient-to-br from-purple-100 to-purple-300 text-purple-900 shadow-lg rounded-xl'
       />
       <MetricCard
         title='Current Sessions'
         value={metrics.sessionsThisMonth}
         subtitle='Active this month'
         trend={+12}
+        icon={Calendar}
+        iconClassName='bg-teal-100'
+        className='bg-gradient-to-br from-teal-100 to-teal-300 text-teal-900 shadow-lg rounded-xl'
       />
       <MetricCard
         title='Scheduled Sessions'
         value={metrics.upcomingSessions}
         subtitle='Next 30 days'
         trend={+5}
+        icon={CalendarClock}
+        iconClassName='bg-indigo-100'
+        className='bg-gradient-to-br from-indigo-100 to-indigo-300 text-indigo-900 shadow-lg rounded-xl'
       />
     </MetricsSection>
   );

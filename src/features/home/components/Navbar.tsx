@@ -1,191 +1,152 @@
 'use client';
 
-import { UserButton, useUser } from '@clerk/nextjs';
-import { Menu, Users, X, Shield, DollarSign, ChevronLeft } from 'lucide-react';
+import { Menu, Users, TrendingUp } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-import { LogoutButton } from '@/src/components/shared/LogoutButton';
-import { cn } from '@/src/lib/utils';
-import { COLORS } from '@/src/styles/colors';
-
-import {
-  isHeaderScrolledSignal,
-  isMobileMenuOpenSignal,
-} from '../../employee-dashboard/state/dashboardState';
-
-// Extract common navigation items into a separate component
-const NavigationItem = ({
-  href,
-  icon: Icon,
-  label,
-  isMobile = false,
-}: {
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  isMobile?: boolean;
-}) => (
-  <Link
-    href={href}
-    className={cn(
-      'flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors',
-      'group hover:text-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500',
-      isMobile && 'w-full py-3 hover:bg-gray-50',
-    )}
-  >
-    <Icon
-      className={cn(
-        isMobile ? 'h-5 w-5' : 'h-4 w-4',
-        'text-gray-500 group-hover:text-primary-600 transition-colors',
-      )}
-    />
-    <span className={isMobile ? 'text-base' : 'text-sm font-medium'}>{label}</span>
-  </Link>
-);
-
-// Mobile Navigation Component
-const MobileNavigation = ({ isSignedIn }: { isSignedIn: boolean }) => (
-  <div
-    className={`
-      md:hidden fixed inset-x-0 top-[57px] bg-white border-t border-gray-100
-      transition-all duration-300 ease-in-out shadow-lg
-      ${isMobileMenuOpenSignal.value ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'}
-    `}
-  >
-    <div className='p-4 space-y-2'>
-      <NavigationItem href='/explore' icon={Users} label='Find Therapists' isMobile />
-      <NavigationItem href='/pricing' icon={DollarSign} label='Pricing' isMobile />
-      <NavigationItem href='/privacy' icon={Shield} label='Privacy & Security' isMobile />
-
-      {isSignedIn && (
-        <>
-          <div className='px-4 py-3 border-t border-gray-100 mt-3'>
-            <LogoutButton
-              className='w-full flex items-center justify-center space-x-2 text-red-600 hover:bg-red-50 p-2 rounded-md'
-              iconClassName='h-5 w-5'
-              textClassName='font-medium'
-            />
-          </div>
-          <div className='px-4 py-3 flex items-center'>
-            <span className='text-sm text-gray-500 mr-3'>Your Account</span>
-            <UserButton afterSignOutUrl='/login' />
-          </div>
-        </>
-      )}
-    </div>
-  </div>
-);
-
-// Desktop Navigation Component
-const DesktopNavigation = ({ isSignedIn }: { isSignedIn: boolean }) => (
-  <div className='hidden md:flex items-center gap-3 lg:gap-4'>
-    <NavigationItem href='/explore' icon={Users} label='Find Therapists' />
-    <NavigationItem href='/pricing' icon={DollarSign} label='Pricing' />
-    <NavigationItem href='/privacy' icon={Shield} label='Privacy & Security' />
-
-    {isSignedIn && (
-      <>
-        <div className='h-6 w-px bg-gray-200 mx-1'></div>
-        <LogoutButton />
-        <div className='ml-1 lg:ml-2'>
-          <UserButton afterSignOutUrl='/login' />
-        </div>
-      </>
-    )}
-  </div>
-);
-
-export default function DashboardHeader({
-  pageTitle = 'Dashboard',
-  showBackButton = false,
-  additionalActions = null,
-}: {
-  pageTitle?: string;
-  showBackButton?: boolean;
-  additionalActions?: React.ReactNode;
-}) {
-  const { isSignedIn = false } = useUser();
+function Navbar() {
+  const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      isHeaderScrolledSignal.value = window.scrollY > 0;
+      setIsHeaderScrolled(window.scrollY > 0);
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const toggleMobileMenu = () => {
-    isMobileMenuOpenSignal.value = !isMobileMenuOpenSignal.value;
+    setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
   return (
     <header
-      className={cn(
-        'fixed top-0 left-0 right-0 z-40 backdrop-blur-sm border-b',
-        isHeaderScrolledSignal.value ? 'border-gray-200 shadow-sm' : 'border-transparent',
-        COLORS.WARM_WHITE.bg,
-        'py-3 px-4 md:py-4 md:px-8 lg:px-20',
-        'transition-all duration-300 ease-in-out', // Added smooth transition
-      )}
+      className={`
+        fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm
+        ${
+          isHeaderScrolled
+            ? 'border-gray-200 shadow-md mx-4 md:mx-8 mt-3 rounded-full border'
+            : 'border-transparent border-b'
+        }
+        py-4 px-6 md:px-10 lg:px-20
+        transition-all duration-300 ease-in-out
+      `}
     >
       <div className='flex items-center justify-between max-w-7xl mx-auto'>
         {/* Logo and Title Container */}
         <div className='flex items-center'>
-          {/* Optional Back Button */}
-          {showBackButton && (
-            <Link
-              href='/dashboard'
-              className='mr-3 text-gray-600 hover:text-gray-800 transition-colors group'
-            >
-              <ChevronLeft className='h-6 w-6 group-hover:text-primary-600' />
-            </Link>
-          )}
-
           {/* Logo */}
           <div className='relative flex-shrink-0 w-10 h-10 md:w-12 md:h-12'>
             <Image
-              src='/renavestlogo.avif'
+              src='/renavestlogo.png'
               alt='Renavest Logo'
-              fill
-              sizes='(max-width: 768px) 40px, 48px'
-              className='object-contain hover:scale-105 transition-transform'
+              width={48}
+              height={48}
+              className='object-contain'
               priority
             />
           </div>
 
-          {/* Dynamic Page Title */}
-          <h1 className='ml-3 md:ml-4 text-xl md:text-2xl font-semibold text-gray-800 transition-all duration-300 hover:text-primary-600'>
-            {pageTitle}
+          {/* Page Title */}
+          <h1 className='ml-3 md:ml-4 text-xl md:text-2xl font-semibold text-gray-800 transition-all duration-300 hover:text-[#9071FF]'>
+            Renavest
           </h1>
         </div>
 
-        {/* Mobile Menu Button */}
-        <div className='flex items-center space-x-2'>
-          {/* Optional Additional Actions */}
-          {additionalActions}
-
-          <button
-            onClick={toggleMobileMenu}
-            className='md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors group'
-            aria-label={isMobileMenuOpenSignal.value ? 'Close menu' : 'Open menu'}
+        {/* Desktop Navigation */}
+        <div className='hidden md:flex items-center gap-8'>
+          <Link
+            href='#jasmine-journey'
+            className='text-gray-600 hover:text-[#9071FF] font-medium text-sm'
           >
-            {isMobileMenuOpenSignal.value ? (
-              <X className='h-6 w-6 group-hover:text-primary-600' />
-            ) : (
-              <Menu className='h-6 w-6 group-hover:text-primary-600' />
-            )}
-          </button>
+            Employee Journey
+          </Link>
+          <Link
+            href='#business-impact'
+            className='text-gray-600 hover:text-[#9071FF] font-medium text-sm'
+          >
+            Business Impact
+          </Link>
+          {/* Button Group */}
+          <div className='flex items-center gap-3'>
+            <Link href='/login'>
+              <button className='px-6 py-2.5 border border-[#9071FF] text-[#9071FF] bg-transparent rounded-full hover:bg-[#9071FF]/10 transition font-medium text-sm'>
+                Sign In
+              </button>
+            </Link>
+            <a
+              href='https://calendly.com/rameau-stan/one-on-one'
+              target='_blank'
+              rel='noopener noreferrer'
+            >
+              <button className='px-6 py-2.5 bg-[#9071FF] text-white rounded-full hover:bg-[#9071FF]/90 transition font-medium text-sm'>
+                Book a Demo
+              </button>
+            </a>
+          </div>
         </div>
 
-        {/* Desktop Navigation */}
-        <DesktopNavigation isSignedIn={isSignedIn} />
+        {/* Mobile Menu Button */}
+        <div className='flex items-center space-x-2 md:hidden'>
+          <button
+            onClick={toggleMobileMenu}
+            className='p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors group'
+            aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+          >
+            <Menu className='h-6 w-6 group-hover:text-[#9071FF]' />
+          </button>
+        </div>
+      </div>
 
-        {/* Mobile Navigation */}
-        <MobileNavigation isSignedIn={isSignedIn} />
+      {/* Mobile Navigation */}
+      <div
+        className={`
+          md:hidden fixed inset-x-0 top-[65px] bg-white border-t border-gray-100
+          transition-all duration-300 ease-in-out shadow-lg
+          ${isMobileMenuOpen ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'}
+        `}
+      >
+        <div className='p-6 space-y-4'>
+          <Link
+            href='#jasmine-journey'
+            className='flex items-center gap-2 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors w-full'
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <Users className='h-5 w-5 text-[#9071FF]' />
+            <span className='text-base'>Employee Journey</span>
+          </Link>
+          <Link
+            href='#business-impact'
+            className='flex items-center gap-2 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors w-full'
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <TrendingUp className='h-5 w-5 text-[#9071FF]' />
+            <span className='text-base'>Business Impact</span>
+          </Link>
+          {/* Sign In Button */}
+          <div className='pt-4 border-t border-gray-100 mt-2'>
+            <Link
+              href='/login'
+              className='flex items-center justify-center px-4 py-3 border border-[#9071FF] text-[#9071FF] bg-transparent rounded-lg w-full hover:bg-[#9071FF]/10 transition text-base font-medium mb-3'
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Sign In
+            </Link>
+            <a
+              href='https://calendly.com/rameau-stan/one-on-one'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='flex items-center justify-center px-4 py-3 bg-[#9071FF] text-white rounded-lg w-full'
+            >
+              <span className='text-base font-medium'>Book a Demo</span>
+            </a>
+          </div>
+        </div>
       </div>
     </header>
   );
 }
+
+export default Navbar;
