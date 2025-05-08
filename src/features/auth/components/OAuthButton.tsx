@@ -1,12 +1,17 @@
 import { useSignIn, useUser } from '@clerk/nextjs';
 import { OAuthStrategy } from '@clerk/types';
-import posthog from 'posthog-js';
 import * as React from 'react';
 
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
 import { authErrorSignal, getSelectedRole, getCompanyIntegration } from '../state/authState';
+import {
+  trackLoginAttempt,
+  trackLoginError,
+  trackOAuthRedirect,
+  trackSignupAttempt,
+} from '../utils/authTracking';
 
 interface OAuthButtonProps {
   strategy: OAuthStrategy;
@@ -35,15 +40,15 @@ export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProp
       // Determine redirect URL based on selected role
       const redirectUrlComplete = userRole === 'employee' ? '/employee' : `/${userRole}`;
 
+      // Get provider name for tracking
+      const provider = strategy === 'oauth_google' ? 'google' : 'microsoft';
+
       // Track OAuth redirect with detailed information
-      posthog.capture('oauth_redirect', {
-        method: strategy,
+      trackOAuthRedirect(provider as 'google' | 'microsoft', {
         role: userRole,
-        redirect_url: '/sso-callback',
-        redirect_url_complete: redirectUrlComplete,
-        user_id: user?.id || 'anonymous',
-        email: user?.emailAddresses[0]?.emailAddress || 'unknown',
-        ...(company ? { integration: company } : {}),
+        company: company || undefined,
+        userId: user?.id,
+        email: user?.emailAddresses[0]?.emailAddress,
       });
 
       // Authenticate with redirect and pass role in redirectUrl
@@ -53,38 +58,35 @@ export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProp
         redirectUrlComplete,
         // Since additionalData isn't recognized, we'll need to use Clerk metadata later
       });
-
-      // Capture initial signup attempt with role
-      posthog.capture('user_signup_attempt', {
-        method: strategy,
-        role: userRole,
-        user_id: user?.id || 'anonymous',
-        ...(company ? { integration: company } : {}),
-      });
+      
+      // Track login/signup attempt
+      const isExistingUser = !!user?.id;
+      if (isExistingUser) {
+        trackLoginAttempt(provider as 'google' | 'microsoft', {
+          role: userRole,
+          company: company || undefined,
+          userId: user?.id,
+          email: user?.emailAddresses[0]?.emailAddress,
+        });
+      } else {
+        trackSignupAttempt(provider as 'google' | 'microsoft', {
+          role: userRole,
+          company: company || undefined,
+        });
+      }
     } catch (err) {
       console.error('OAuth error:', err);
       authErrorSignal.value = 'Failed to sign in. Please try again.';
 
-      // Ensure email is captured even in error scenarios
-      const userEmail = user?.emailAddresses[0]?.emailAddress || 'unknown';
+      // Get provider name for tracking
+      const provider = strategy === 'oauth_google' ? 'google' : 'microsoft';
 
-      // Track OAuth signup error with comprehensive context
-      posthog.capture('user_signup_error', {
-        error: err instanceof Error ? err.message : 'Unknown error',
+      // Track OAuth error
+      trackLoginError(provider as 'google' | 'microsoft', err, {
         role: userRole,
-        signup_stage: 'oauth_exception',
-        oauth_method: strategy,
-        user_id: user?.id || 'anonymous',
-        email: userEmail,
-        ...(company ? { integration: company } : {}),
-      });
-
-      // Fallback tracking to ensure email is always present
-      posthog.identify(userEmail, {
-        email: userEmail,
-        role: userRole,
-        signup_error: true,
-        ...(company ? { integration: company } : {}),
+        company: company || undefined,
+        userId: user?.id,
+        email: user?.emailAddresses[0]?.emailAddress,
       });
     }
   };

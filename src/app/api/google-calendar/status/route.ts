@@ -1,24 +1,18 @@
-import { currentUser } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
+import { createDate } from '@/src/utils/timezone';
 
 export async function GET(req: Request) {
   try {
-    console.log('Google Calendar status check initiated');
-    const user = await currentUser();
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const url = new URL(req.url);
     const therapistId = url.searchParams.get('therapistId');
-
-    console.log('Request params:', {
-      therapistId,
-      hasUser: !!user,
-    });
-
-    if (!user) {
-      console.log('No user found, returning 401');
-      return NextResponse.json({ success: false, message: 'User not found' }, { status: 401 });
-    }
 
     if (!therapistId) {
       console.log('No therapist ID provided, returning 400');
@@ -37,6 +31,10 @@ export async function GET(req: Request) {
         email: true,
         googleCalendarEmail: true,
         googleCalendarIntegrationStatus: true,
+        googleCalendarIntegrationDate: true,
+        googleCalendarAccessToken: true,
+        googleCalendarRefreshToken: true,
+        updatedAt: true,
       },
     });
 
@@ -44,6 +42,8 @@ export async function GET(req: Request) {
       found: !!therapist,
       integrationStatus: therapist?.googleCalendarIntegrationStatus,
       hasCalendarEmail: !!therapist?.googleCalendarEmail,
+      hasAccessToken: !!therapist?.googleCalendarAccessToken,
+      hasRefreshToken: !!therapist?.googleCalendarRefreshToken,
     });
 
     if (!therapist) {
@@ -51,18 +51,45 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'Therapist not found' }, { status: 404 });
     }
 
+    // Determine if the integration is actually connected based on tokens and status
+    const isConnected =
+      therapist.googleCalendarIntegrationStatus === 'connected' &&
+      !!therapist.googleCalendarAccessToken &&
+      !!therapist.googleCalendarRefreshToken;
+
+    // Format the last synced date if available
+    let lastSynced = null;
+    if (therapist.googleCalendarIntegrationDate) {
+      lastSynced = createDate(therapist.googleCalendarIntegrationDate).toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true,
+      });
+    }
+
     const response = {
       success: true,
       therapistId: therapist.id,
       email: therapist.email,
-      isConnected: therapist.googleCalendarIntegrationStatus === 'connected',
+      isConnected,
       calendarEmail: therapist.googleCalendarEmail || null,
+      integrationStatus: therapist.googleCalendarIntegrationStatus,
+      lastSynced,
     };
 
-    console.log('Returning successful response:', response);
     return NextResponse.json(response);
   } catch (error) {
     console.error('Error checking Google Calendar status:', error);
-    return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        message: 'Internal server error',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 },
+    );
   }
 }

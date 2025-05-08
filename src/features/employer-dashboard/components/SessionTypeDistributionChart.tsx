@@ -1,5 +1,7 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, TooltipProps } from 'recharts';
+
 import { PieChart as PieChartIcon } from 'lucide-react';
+
 import { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 
 // Mock data for session types (since this isn't in the existing state)

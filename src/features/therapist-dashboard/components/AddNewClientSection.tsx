@@ -102,7 +102,7 @@ const AddClientForm: React.FC<AddClientFormProps> = ({
         ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}
       `}
     >
-      {isSubmitting ? 'Adding Client...' : 'Add Client'}
+      {isSubmitting ? 'Inviting Client...' : 'Invite Client'}
     </button>
   </form>
 );
@@ -171,7 +171,7 @@ export const AddNewClientSection = () => {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch('/api/therapist/client', {
+      const response = await fetch('/api/therapist/new-client', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -203,7 +203,6 @@ export const AddNewClientSection = () => {
 
   return (
     <div className='bg-white rounded-xl p-8 border border-purple-100 shadow-sm'>
-      <h2 className={`text-xl font-bold ${COLORS.WARM_PURPLE.DEFAULT} mb-6`}>Add New Client</h2>
       <AddClientForm
         formData={formData}
         errors={errors}

@@ -5,9 +5,9 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import * as dotenv from 'dotenv';
 import fetch from 'node-fetch';
 
-import TherapistList from '../config/therapistsList';
 import { db } from '../db';
 import { therapists } from '../db/schema';
+import TherapistList from '../old_config/therapistsList';
 import { generateTherapistImageKey } from '../services/s3/assetUrls';
 
 // Load environment variables

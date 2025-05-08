@@ -1,7 +1,8 @@
+import { eq } from 'drizzle-orm';
+
 import { db } from '@/src/db';
 import { therapists } from '@/src/db/schema';
-import { eq } from 'drizzle-orm';
-import TherapistList from '@/src/config/therapistsList';
+import TherapistList from '@/src/old_config/therapistsList';
 
 /**
  * Migrate therapist hourly rates from the therapist list

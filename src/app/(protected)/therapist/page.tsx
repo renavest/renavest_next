@@ -1,7 +1,8 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { FileText, UserCircle2, ChevronRight } from 'lucide-react';
+import { UserCircle2, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
 import { GoogleCalendarIntegration } from '@/src/features/google-calendar/components/GoogleCalendarIntegration';
@@ -11,9 +12,12 @@ import TherapistNavbar from '@/src/features/therapist-dashboard/components/Thera
 import { TherapistStatisticsCard } from '@/src/features/therapist-dashboard/components/TherapistStatisticsCard';
 import { UpcomingSessionsCard } from '@/src/features/therapist-dashboard/components/UpcomingSessionsCard';
 import { useTherapistDashboardData } from '@/src/features/therapist-dashboard/hooks/useTherapistDashboardData';
+import {
+  therapistIdSignal,
+  therapistPageLoadedSignal,
+} from '@/src/features/therapist-dashboard/state/therapistDashboardState';
 import { Client, UpcomingSession } from '@/src/features/therapist-dashboard/types';
 import { COLORS } from '@/src/styles/colors';
-
 const ClientSidebar = ({
   clients,
   selectedClient,
@@ -56,7 +60,7 @@ const ClientSidebar = ({
     <button
       onClick={onAddClientClick}
       className='mt-4 w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg shadow p-3 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2'
-      aria-label='Add New Client'
+      aria-label='Invite a Client to Renavest'
     >
       <svg
         className='w-5 h-5'
@@ -67,7 +71,7 @@ const ClientSidebar = ({
       >
         <path strokeLinecap='round' strokeLinejoin='round' d='M12 4v16m8-8H4' />
       </svg>
-      <span className='font-medium'>Add Client</span>
+      <span className='font-medium'>Invite a Client</span>
     </button>
   </div>
 );
@@ -75,11 +79,9 @@ const ClientSidebar = ({
 const ClientDetailView = ({
   client,
   upcomingSessions,
-  therapistId,
 }: {
   client: Client | null;
   upcomingSessions: UpcomingSession[];
-  therapistId: number;
 }) => {
   // If no client is selected, show all sessions
   const clientSessions = client
@@ -105,67 +107,36 @@ const ClientDetailView = ({
         </div>
       </div>
 
-      <div className='grid md:grid-cols-2 gap-6'>
+      <div className='grid md:grid-cols-1 gap-6'>
         <UpcomingSessionsCard
           sessions={clientSessions}
           onSessionClick={() => {}} // Disable click functionality
         />
-
-        <div className='bg-white rounded-xl p-6 border border-purple-100 shadow-sm'>
-          <h3 className='text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4'>
-            <FileText className='h-5 w-5 text-purple-600' />
-            Insights & Analytics
-          </h3>
-          <div className='space-y-3'>
-            <button
-              className={`
-                w-full p-3 rounded-lg text-center 
-                ${COLORS.WARM_PURPLE.bg} text-white 
-                hover:${COLORS.WARM_PURPLE['80']} 
-                transition-colors
-              `}
-            >
-              Financial Behavior Patterns
-            </button>
-            <button
-              className={`
-                w-full p-3 rounded-lg text-center 
-                border ${COLORS.WARM_PURPLE.border} 
-                ${COLORS.WARM_PURPLE.DEFAULT} 
-                hover:${COLORS.WARM_PURPLE['10']} 
-                transition-colors
-              `}
-            >
-              Client Progress Tracker
-            </button>
-            <button
-              className={`
-                w-full p-3 rounded-lg text-center 
-                border ${COLORS.WARM_PURPLE.border} 
-                ${COLORS.WARM_PURPLE.DEFAULT} 
-                hover:${COLORS.WARM_PURPLE['10']} 
-                transition-colors
-              `}
-            >
-              Resource Recommendation Engine
-            </button>
-          </div>
-        </div>
       </div>
 
-      {therapistId && <ClientNotesSection clientId={client.id} />}
+      {therapistIdSignal.value && <ClientNotesSection clientId={client.id} />}
     </div>
   );
 };
 
 export default function TherapistDashboardPage() {
-  const { user } = useUser();
-  const { clients, upcomingSessions, statistics, isLoading, error } = useTherapistDashboardData();
+  const { user, isLoaded: isUserLoaded } = useUser();
+  const { clients, upcomingSessions, statistics } = useTherapistDashboardData();
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [therapistId, setTherapistId] = useState<number | null>(null);
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
+  const [showOnboardingBanner, setShowOnboardingBanner] = useState(true);
+  const [isOnboarded, setIsOnboarded] = useState(false);
 
-  // Fetch therapist ID when user is loaded
+  // Check if user is fully onboarded
+  useEffect(() => {
+    if (user) {
+      // Check if profile is complete and Google Calendar is connected
+      const profileComplete = !!(user.firstName && user.lastName);
+      const calendarConnected = !!user.publicMetadata?.googleCalendarConnected;
+      setIsOnboarded(profileComplete && calendarConnected);
+    }
+  }, [user]);
+
   useEffect(() => {
     const fetchTherapistId = async () => {
       if (user) {
@@ -174,31 +145,34 @@ export default function TherapistDashboardPage() {
           const data = await response.json();
 
           if (data.therapistId) {
-            setTherapistId(data.therapistId);
+            therapistIdSignal.value = data.therapistId;
           }
         } catch (error) {
           console.error('Failed to fetch therapist ID:', error);
         }
       }
     };
-
     fetchTherapistId();
   }, [user]);
 
-  // If still loading, show a loading state
-  if (isLoading) {
+  // If still loading initial data, show a loading state
+  if (!isUserLoaded) {
     return (
       <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen flex items-center justify-center'>
         <div className='text-center'>
           <div className='animate-spin rounded-full h-16 w-16 border-t-2 border-purple-600 mx-auto mb-4'></div>
-          <p className={`${COLORS.WARM_PURPLE.DEFAULT} text-lg`}>Loading Dashboard...</p>
+          <p className={`${COLORS.WARM_PURPLE.DEFAULT} text-lg`}>
+            {!isUserLoaded ? 'Authenticating...' : 'Loading...'}
+          </p>
         </div>
       </div>
     );
   }
-
-  // If no clients (likely not a therapist), show the add client section with Google Calendar Integration
-  if (!isLoading && (clients.length === 0 || error)) {
+  if (
+    therapistPageLoadedSignal.value == true &&
+    clients.length === 0 &&
+    therapistIdSignal.value !== null
+  ) {
     return (
       <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen flex items-center justify-center'>
         <div className='w-full max-w-md space-y-6'>
@@ -211,13 +185,57 @@ export default function TherapistDashboardPage() {
 
   return (
     <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen relative'>
-      <TherapistNavbar
-        pageTitle={'Dashboard'}
-        showBackButton={false}
-        additionalActions={
-          <span className='hidden md:inline text-gray-500 text-sm mr-4'>Therapist Dashboard</span>
-        }
-      />
+      <TherapistNavbar showBackButton={false} isOnboarded={isOnboarded} />
+
+      {/* Onboarding Banner */}
+      {!isOnboarded && showOnboardingBanner && (
+        <div className='mt-6 bg-gradient-to-r from-purple-600 to-purple-800 text-white p-4 rounded-xl shadow-md'>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center space-x-3'>
+              <div className='rounded-full bg-white/20 p-2'>
+                <svg className='w-6 h-6' viewBox='0 0 24 24' fill='none'>
+                  <path
+                    d='M9 12l2 2 4-4'
+                    stroke='currentColor'
+                    strokeWidth='2'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                  />
+                </svg>
+              </div>
+              <div>
+                <h3 className='font-semibold'>Complete your setup</h3>
+                <p className='text-sm text-white/80'>
+                  Finish setting up your therapist account for the best experience
+                </p>
+              </div>
+            </div>
+            <div className='flex items-center space-x-2'>
+              <Link
+                href='/therapist/onboarding'
+                className='px-4 py-2 bg-white text-purple-700 rounded-lg shadow-sm hover:bg-purple-50 transition font-medium'
+              >
+                Complete Setup
+              </Link>
+              <button
+                onClick={() => setShowOnboardingBanner(false)}
+                className='p-2 text-white/80 hover:text-white rounded-full'
+                aria-label='Dismiss'
+              >
+                <svg className='w-5 h-5' viewBox='0 0 24 24' fill='none'>
+                  <path
+                    d='M6 18L18 6M6 6l12 12'
+                    stroke='currentColor'
+                    strokeWidth='2'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className='mt-6'>
         <TherapistStatisticsCard statistics={statistics} />
@@ -233,11 +251,7 @@ export default function TherapistDashboardPage() {
           />
         </div>
         <div className='col-span-8 bg-white rounded-xl border border-gray-100 shadow-sm'>
-          <ClientDetailView
-            client={selectedClient}
-            upcomingSessions={upcomingSessions}
-            therapistId={therapistId || 0}
-          />
+          <ClientDetailView client={selectedClient} upcomingSessions={upcomingSessions} />
         </div>
       </div>
 
@@ -253,7 +267,7 @@ export default function TherapistDashboardPage() {
           <div className='relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6 animate-in fade-in zoom-in duration-200'>
             {/* Header */}
             <div className='mb-6 flex justify-between items-center'>
-              <h2 className='text-2xl font-semibold text-gray-900'>Add New Client</h2>
+              <h2 className='text-2xl font-semibold text-gray-900'>Invite a Client</h2>
               <button
                 onClick={() => setIsAddClientOpen(false)}
                 className='text-gray-400 hover:text-gray-600 p-2 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-400'

@@ -1,7 +1,10 @@
 'use client';
 
 import { Frown, HeartHandshake, PieChart, TrendingUp, Users } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
+import { Parallax } from 'react-scroll-parallax';
+
+import { trackSectionView, trackUIInteraction, useViewTracker } from '../../posthog/tracking';
 
 import JourneyStep from './JourneyStep';
 import { JourneyStep as JourneyStepType } from './types';
@@ -55,57 +58,59 @@ const journeySteps: JourneyStepType[] = [
   },
 ];
 
-function AnimatedInsight({ children }: { children: React.ReactNode }) {
-  const [isVisible, setIsVisible] = useState(false);
-  const ref = useRef<HTMLDivElement | null>(null);
+function AnimatedInsight({ children, index }: { children: React.ReactNode; index: number }) {
+  const insightRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const observer = new window.IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setIsVisible(true);
-        }
-      },
-      { threshold: 0.1 },
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => {
-      if (ref.current) observer.unobserve(ref.current);
-    };
-  }, []);
+  // Track insight view when it becomes visible
+  useViewTracker(insightRef, () =>
+    trackUIInteraction('journey_insight_viewed', `insight_${index}`, {
+      insight_text: children?.toString(),
+    }),
+  );
 
   return (
     <div
-      ref={ref}
+      ref={insightRef}
       className={`transition-all duration-[1200ms] ease-out transform
-        ${isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-6 scale-95'}
         flex justify-center my-12`}
     >
-      <span className='inline-block bg-[#F3F0FF] text-[#9071FF] px-10 py-5 rounded-full font-medium text-lg shadow-sm'>
-        {children}
-      </span>
+      <Parallax opacity={[0.8, 1]} scale={[0.95, 1.05]}>
+        <span className='inline-block bg-[#F3F0FF] text-[#9071FF] px-10 py-5 rounded-full font-medium text-lg shadow-sm'>
+          {children}
+        </span>
+      </Parallax>
     </div>
   );
 }
 
 function JasmineJourneySection() {
+  const sectionRef = useRef<HTMLElement>(null);
+
+  // Track section view when it becomes visible
+  useViewTracker(sectionRef, () => trackSectionView('jasmine_journey'));
+
   return (
     <>
       <span id='jasmine-journey' className='block scroll-mt-16'></span>
-      <section className='w-full flex flex-col items-center py-12 md:py-16 bg-[#F9F9F7]'>
+      <section
+        ref={sectionRef}
+        className='w-full flex flex-col items-center py-12 md:py-16 bg-[#F9F9F7]'
+      >
         <div className='max-w-7xl w-full px-4 md:px-10 mb-12 md:mb-20'>
           <div className='max-w-3xl mx-auto text-center'>
-            <span className='px-4 md:px-6 py-1.5 md:py-2.5 bg-[#9071FF]/10 text-[#9071FF] font-medium rounded-full text-xs md:text-sm mb-4 md:mb-6 inline-block'>
-              EMPLOYEE JOURNEY
-            </span>
-            <h2 className='text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 md:mb-6 leading-tight'>
-              How financial therapy transforms work and life
-            </h2>
-            <h3 className='text-base md:text-xl lg:text-2xl text-gray-700 mb-0 font-medium px-2 md:px-0'>
-              88% of employees bring money worries to work. Jasmine was one of them—until she found
-              a financial therapist who listened. When employees feel supported, they show up
-              differently for your business.
-            </h3>
+            <Parallax translateY={[-5, 5]}>
+              <span className='px-4 md:px-6 py-1.5 md:py-2.5 bg-[#9071FF]/10 text-[#9071FF] font-medium rounded-full text-xs md:text-sm mb-4 md:mb-6 inline-block'>
+                EMPLOYEE JOURNEY
+              </span>
+              <h2 className='text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 md:mb-6 leading-tight'>
+                How financial therapy transforms work and life
+              </h2>
+              <h3 className='text-base md:text-xl lg:text-2xl text-gray-700 mb-0 font-medium px-2 md:px-0'>
+                88% of employees bring money worries to work. Jasmine was one of them—until she
+                found a financial therapist who listened. When employees feel supported, they show
+                up differently for your business.
+              </h3>
+            </Parallax>
           </div>
         </div>
 
@@ -115,7 +120,7 @@ function JasmineJourneySection() {
               <div key={step.title} className='flex flex-col'>
                 <JourneyStep step={step} idx={idx} />
                 {idx < journeySteps.length - 1 && step.hrInsight && (
-                  <AnimatedInsight>{step.hrInsight}</AnimatedInsight>
+                  <AnimatedInsight index={idx}>{step.hrInsight}</AnimatedInsight>
                 )}
               </div>
             ))}

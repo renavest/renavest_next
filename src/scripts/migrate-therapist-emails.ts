@@ -1,8 +1,8 @@
 import { eq } from 'drizzle-orm';
 
-import TherapistList from '../config/therapistsList';
 import { db } from '../db/index';
 import { therapists } from '../db/schema';
+import TherapistList from '../old_config/therapistsList';
 
 async function migrateTherapistEmails() {
   console.log('Starting therapist email migration...');

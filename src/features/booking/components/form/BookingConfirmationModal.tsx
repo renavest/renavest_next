@@ -1,26 +1,26 @@
 import React from 'react';
 
-interface TimeSlot {
-  start: string;
-  end: string;
-}
+import { createDate } from '@/src/utils/timezone';
+
+import {
+  selectedSlotSignal,
+  timezoneSignal,
+} from '../TherapistAvailability/useTherapistAvailability';
 
 interface BookingConfirmationModalProps {
-  slot: TimeSlot;
   error: string | null;
   isBooking: boolean;
   onConfirm: () => void;
   onCancel: () => void;
-  advisorName?: string;
+  _advisorName?: string;
 }
 
 export function BookingConfirmationModal({
-  slot,
   error,
   isBooking,
   onConfirm,
   onCancel,
-  advisorName,
+  _advisorName,
 }: BookingConfirmationModalProps) {
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30'>
@@ -36,22 +36,14 @@ export function BookingConfirmationModal({
           <div className='text-lg font-semibold text-gray-900 mb-3'>Confirm Your Booking</div>
           <div className='flex flex-col items-center'>
             <div className='text-purple-700 font-bold text-xl mb-1'>
-              {new Date(slot.start).toLocaleDateString(undefined, {
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric',
-              })}
+              {createDate(selectedSlotSignal.value?.start, timezoneSignal.value).toFormat(
+                'LLLL d, yyyy',
+              )}
             </div>
             <div className='flex items-center justify-center text-lg text-gray-800 font-medium'>
-              {new Date(slot.start).toLocaleTimeString(undefined, {
-                hour: 'numeric',
-                minute: '2-digit',
-              })}
+              {createDate(selectedSlotSignal.value?.start, timezoneSignal.value).toFormat('h:mm a')}
               <span className='mx-2'>-</span>
-              {new Date(slot.end).toLocaleTimeString(undefined, {
-                hour: 'numeric',
-                minute: '2-digit',
-              })}
+              {createDate(selectedSlotSignal.value?.end, timezoneSignal.value).toFormat('h:mm a')}
             </div>
           </div>
         </div>

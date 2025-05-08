@@ -6,12 +6,13 @@ import React, { useEffect, Suspense } from 'react';
 
 import LoginForm from '@/src/features/auth/components/LoginForm';
 import { setCompanyIntegration } from '@/src/features/auth/state/authState';
+import { trackAuthPageView } from '@/src/features/auth/utils/authTracking';
 import { COLORS } from '@/src/styles/colors';
 
 function TestimonialSection() {
   // Testimonial/Quote
   const quote =
-    "My session with financial therapy coach Paige was nothing short of transformative. Her insight, compassion, and affirming guidance created a space where I felt truly seen and empowered... ";
+    'My session with financial therapy coach Paige was nothing short of transformative. Her insight, compassion, and affirming guidance created a space where I felt truly seen and empowered... ';
   const quoteName = 'Essma Litim';
   const quoteTitle = 'Renavest User';
   const personImage = 'https://d2qcuj7ucxw61o.cloudfront.net/esmaa_testimonial.png';
@@ -20,7 +21,7 @@ function TestimonialSection() {
     <div className='flex flex-col items-center justify-center w-full h-full min-h-screen bg-[#f7f5ff] px-6'>
       <div className='max-w-md w-full flex flex-col items-center justify-center text-center'>
         <div className='text-gray-900 text-xl md:text-2xl font-normal leading-snug mb-8 mt-8 md:mt-0'>
-          “{quote}”
+          "{quote}"
         </div>
         <Image
           src={personImage}
@@ -45,6 +46,9 @@ function LoginPageContent() {
     if (company) {
       setCompanyIntegration(company);
     }
+
+    // Track page view using the utility
+    trackAuthPageView('/login', { company: company || 'none' });
   }, [searchParams]);
 
   return (
@@ -82,8 +86,6 @@ function LoginPageContent() {
             />
             <h1 className={`text-3xl font-bold ${COLORS.WARM_PURPLE.DEFAULT}`}>Renavest</h1>
           </div>
-          {/* New large header and subheader */}
-
           {/* Vertically centered login card content */}
           <div className='flex-1 flex flex-col justify-center'>
             <LoginForm />

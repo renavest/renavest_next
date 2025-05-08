@@ -5,7 +5,7 @@ import { z } from 'zod';
 
 import { db } from '@/src/db';
 import { bookingSessions } from '@/src/db/schema';
-import { createAndStoreGoogleCalendarEvent } from '@/src/utils/googleCalendar';
+import { createAndStoreGoogleCalendarEvent } from '@/src/features/google-calendar/utils/googleCalendar';
 
 const CreateCalendarEventSchema = z.object({
   bookingSessionId: z.number(),

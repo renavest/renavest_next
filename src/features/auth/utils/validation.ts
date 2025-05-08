@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const loginSchema = z.object({
   email: z
@@ -9,9 +9,9 @@ export const loginSchema = z.object({
 });
 
 export function validateCompanyEmail(email: string): boolean {
-  return email.endsWith("@companyemail.com");
+  return email.endsWith('@companyemail.com');
 }
 
 export function validateCode(code: string): boolean {
-  return code === "0000";
+  return code === '0000';
 }

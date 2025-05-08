@@ -49,8 +49,8 @@ export async function ensureUserInDb({ clerkId, email }: { clerkId?: string; ema
       lastName: clerkUser.lastName || null,
       imageUrl: clerkUser.imageUrl || null,
       isActive: true,
-      createdAt: new Date(clerkUser.createdAt),
-      updatedAt: new Date(clerkUser.updatedAt),
+      createdAt: createDate(clerkUser.createdAt),
+      updatedAt: createDate(clerkUser.updatedAt),
     })
     .returning();
 

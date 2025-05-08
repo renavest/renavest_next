@@ -6,6 +6,7 @@
  * 2. Add webhook URL in Clerk Dashboard: https://tall-sloths.loca.lt/api/webhooks/clerk
  * 3. Make sure to verify webhook secret key is what's in .env.local
  */
+
 import { Result, ok, err } from 'neverthrow';
 import { headers } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
@@ -17,7 +18,7 @@ import {
   handleUserCreateOrUpdate,
   handleUserDeletion,
 } from './handlers';
-
+  
 // User-related Clerk webhook event types
 type WebhookEventType =
   | 'user.created'

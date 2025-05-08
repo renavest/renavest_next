@@ -1,146 +1,46 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import type { UserResource } from '@clerk/types';
-import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import {
+  CheckCircle,
+  XCircle,
+  Loader2,
+  Calendar,
+  AlertTriangle,
+  ArrowRightLeft,
+} from 'lucide-react';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import type { Dispatch, SetStateAction } from 'react';
 
-import {
-  fetchGoogleCalendarStatus,
-  initiateGoogleCalendarConnection,
-  disconnectGoogleCalendar,
-  fetchTherapistId,
-} from '../utils/googleCalendarIntegrationHelpers';
+import { useGoogleCalendarIntegration, fetchTherapistId } from '../utils/googleCalendarIntegration';
 
-// Extract the SVG icon from GoogleSignInButton for reuse
+// Google icon SVG
 const GoogleIcon = (
-  <svg className='w-5 h-5 mr-2' viewBox='0 0 24 24'>
+  <svg className='w-5 h-5 mr-2' width='20' height='20' viewBox='0 0 48 48'>
     <path
-      d='M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z'
-      fill='#4285F4'
-    />
-    <path
-      d='M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z'
-      fill='#34A853'
-    />
-    <path
-      d='M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z'
-      fill='#FBBC05'
-    />
-    <path
-      d='M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z'
       fill='#EA4335'
+      d='M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z'
     />
-    <path d='M1 1h22v22H1z' fill='none' />
+    <path
+      fill='#4285F4'
+      d='M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z'
+    />
+    <path
+      fill='#FBBC05'
+      d='M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z'
+    />
+    <path
+      fill='#34A853'
+      d='M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z'
+    />
+    <path fill='none' d='M0 0h48v48H0z' />
   </svg>
 );
 
-// Extracted helper to reduce component length
-async function checkGoogleCalendarStatusHelper(
-  user: UserResource | null | undefined,
-  setIsLoading: Dispatch<SetStateAction<boolean>>,
-  setError: Dispatch<SetStateAction<string>>,
-  setIsConnected: Dispatch<SetStateAction<boolean>>,
-  setCalendarEmail: Dispatch<SetStateAction<string>>,
-  setLastSynced: Dispatch<SetStateAction<string | null>>,
-) {
-  if (!user) return;
-  setIsLoading(true);
-  setError('');
-  try {
-    const therapistId = user?.publicMetadata?.therapistId || (await fetchTherapistId(user?.id));
-    if (!therapistId) {
-      setError('Unable to find therapist ID');
-      setIsLoading(false);
-      return;
-    }
-    const data = await fetchGoogleCalendarStatus(Number(therapistId));
-    if (data && data.success && typeof data.isConnected === 'boolean') {
-      setIsConnected(data.isConnected);
-      setCalendarEmail(data.calendarEmail || '');
-      setLastSynced(data.lastSynced || null);
-    } else {
-      setIsConnected(false);
-      setCalendarEmail('');
-      setError('Could not determine Google Calendar connection status.');
-    }
-  } catch {
-    setError('Failed to fetch calendar status.');
-  } finally {
-    setIsLoading(false);
-  }
-}
-
-export function GoogleCalendarIntegration() {
-  const { user } = useUser();
-  const [isConnected, setIsConnected] = useState(false);
-  const [calendarEmail, setCalendarEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [step, setStep] = useState(0); // 0: Welcome, 1: Permissions, 2: Connect, 3: Success/Error
-  const [error, setError] = useState('');
-  const [lastSynced, setLastSynced] = useState<string | null>(null);
-
-  // Fetch Google Calendar integration status
-  useEffect(() => {
-    checkGoogleCalendarStatusHelper(
-      user,
-      setIsLoading,
-      setError,
-      setIsConnected,
-      setCalendarEmail,
-      setLastSynced,
-    );
-  }, [user]);
-
-  // Handler for connecting Google Calendar
-  const handleConnectCalendar = async () => {
-    setIsLoading(true);
-    setError('');
-    try {
-      const therapistId = user?.publicMetadata?.therapistId || (await fetchTherapistId(user?.id));
-      if (!therapistId) {
-        setError('Unable to find therapist ID');
-        return;
-      }
-      await initiateGoogleCalendarConnection(Number(therapistId));
-    } catch {
-      setError('Failed to connect Google Calendar');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Handler for disconnecting Google Calendar
-  const handleDisconnectCalendar = async () => {
-    setIsLoading(true);
-    setError('');
-    try {
-      const therapistId = user?.publicMetadata?.therapistId || (await fetchTherapistId(user?.id));
-      if (!therapistId) {
-        setError('Unable to find therapist ID');
-        return;
-      }
-      const success = await disconnectGoogleCalendar(Number(therapistId));
-      if (success) {
-        setIsConnected(false);
-        setCalendarEmail('');
-        setLastSynced(null);
-        setStep(0);
-      }
-    } catch {
-      setError('Failed to disconnect Google Calendar');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Stepper modal content
-  const stepContent = [
-    // Step 0: Welcome
-    <div key='welcome' className='flex flex-col items-center text-center p-4'>
+// Welcome step component
+function WelcomeStep({ onNext }: { onNext: () => void }) {
+  return (
+    <div className='flex flex-col items-center text-center p-4'>
       <Image
         src='/renavestlogo.png'
         alt='Renavest Butterfly'
@@ -155,13 +55,18 @@ export function GoogleCalendarIntegration() {
       </p>
       <button
         className='bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-2 rounded-lg shadow mt-2 transition-colors'
-        onClick={() => setStep(1)}
+        onClick={onNext}
       >
         Get Started
       </button>
-    </div>,
-    // Step 1: Permissions
-    <div key='permissions' className='flex flex-col items-center text-center p-4'>
+    </div>
+  );
+}
+
+// Permissions step component
+function PermissionsStep({ onNext }: { onNext: () => void }) {
+  return (
+    <div className='flex flex-col items-center text-center p-4'>
       <Image src='/google-logo.svg' alt='Google Logo' width={40} height={40} className='mb-2' />
       <h2 className='text-lg font-semibold text-gray-800 mb-2'>Permissions Needed</h2>
       <p className='text-gray-600 mb-4'>
@@ -170,21 +75,36 @@ export function GoogleCalendarIntegration() {
       </p>
       <button
         className='bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-2 rounded-lg shadow mt-2 transition-colors'
-        onClick={() => setStep(2)}
+        onClick={onNext}
       >
         Continue
       </button>
-    </div>,
-    // Step 2: Connect
-    <div key='connect' className='flex flex-col items-center text-center p-4'>
+    </div>
+  );
+}
+
+// Connect step component
+function ConnectStep({
+  isLoading,
+  therapistId,
+  error,
+  onConnect,
+}: {
+  isLoading: boolean;
+  therapistId: string | null;
+  error: string | null;
+  onConnect: () => void;
+}) {
+  return (
+    <div className='flex flex-col items-center text-center p-4'>
       <Image src='/google-logo.svg' alt='Google Logo' width={40} height={40} className='mb-2' />
       <h2 className='text-lg font-semibold text-gray-800 mb-2'>Connect to Google</h2>
       <p className='text-gray-600 mb-4'>
         Sign in with your Google account to complete the integration.
       </p>
       <button
-        onClick={handleConnectCalendar}
-        disabled={isLoading}
+        onClick={onConnect}
+        disabled={isLoading || !therapistId}
         className='flex items-center justify-center gap-2 bg-white border border-gray-300 rounded-lg px-6 py-2 shadow hover:bg-gray-50 transition-colors text-gray-700 font-semibold disabled:opacity-50 mb-2'
         style={{ minWidth: 220 }}
       >
@@ -200,9 +120,26 @@ export function GoogleCalendarIntegration() {
           <XCircle className='h-4 w-4' /> {error}
         </div>
       )}
-    </div>,
-    // Step 3: Success/Error
-    <div key='result' className='flex flex-col items-center text-center p-4'>
+    </div>
+  );
+}
+
+// Result step component
+function ResultStep({
+  isConnected,
+  calendarEmail,
+  lastSynced,
+  onClose,
+  onRetry,
+}: {
+  isConnected: boolean;
+  calendarEmail: string | null | undefined;
+  lastSynced: string | null | undefined;
+  onClose: () => void;
+  onRetry: () => void;
+}) {
+  return (
+    <div className='flex flex-col items-center text-center p-4'>
       {isConnected ? (
         <>
           <CheckCircle className='h-10 w-10 text-green-500 mb-2' />
@@ -216,7 +153,7 @@ export function GoogleCalendarIntegration() {
           {lastSynced && <p className='text-xs text-gray-500 mb-2'>Last synced: {lastSynced}</p>}
           <button
             className='bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-2 rounded-lg shadow mt-2 transition-colors'
-            onClick={() => setShowModal(false)}
+            onClick={onClose}
           >
             Done
           </button>
@@ -230,81 +167,221 @@ export function GoogleCalendarIntegration() {
           </p>
           <button
             className='bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-2 rounded-lg shadow mt-2 transition-colors'
-            onClick={() => setStep(0)}
+            onClick={onRetry}
           >
             Try Again
           </button>
         </>
       )}
-    </div>,
+    </div>
+  );
+}
+
+// Connected status component
+function ConnectedStatus({
+  calendarEmail,
+  lastSynced,
+  isLoading,
+  onReconnect,
+  onDisconnect,
+}: {
+  calendarEmail: string | null | undefined;
+  lastSynced: string | null | undefined;
+  isLoading: boolean;
+  onReconnect: () => void;
+  onDisconnect: () => void;
+}) {
+  return (
+    <div className='py-4 sm:px-6 flex flex-col items-center'>
+      <div className='flex items-center mb-2'>
+        <CheckCircle className='h-5 w-5 text-green-500 mr-2' />
+        <span className='text-sm font-medium text-gray-900'>Connected</span>
+      </div>
+      <p className='text-sm text-gray-500 mb-2'>{calendarEmail}</p>
+      {lastSynced && <p className='text-xs text-gray-400 mb-2'>Last synced: {lastSynced}</p>}
+      <div className='flex gap-2 mt-2'>
+        <button
+          onClick={onReconnect}
+          className='inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:opacity-50'
+          disabled={isLoading}
+        >
+          <ArrowRightLeft className='w-4 h-4 mr-2' />
+          Reconnect
+        </button>
+        <button
+          onClick={onDisconnect}
+          disabled={isLoading}
+          className='inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50'
+        >
+          <XCircle className='w-4 h-4 mr-2' />
+          Disconnect
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Disconnected status component
+function DisconnectedStatus({
+  error,
+  onConnect,
+  isLoading,
+}: {
+  error: string | null | undefined;
+  onConnect: () => void;
+  isLoading: boolean;
+}) {
+  return (
+    <div className='py-4 px-4 sm:px-6 text-center'>
+      {error ? (
+        <div className='mb-4 p-2 bg-red-50 rounded-md border border-red-100'>
+          <div className='flex items-center text-red-600 mb-1'>
+            <AlertTriangle className='h-4 w-4 mr-1' />
+            <span className='text-sm font-medium'>Connection Error</span>
+          </div>
+          <p className='text-xs text-red-600'>{error}</p>
+        </div>
+      ) : (
+        <p className='text-sm text-gray-600 mb-4'>
+          Connect your Google Calendar to automatically add Renavest sessions
+        </p>
+      )}
+      <button
+        onClick={onConnect}
+        disabled={isLoading}
+        className='w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500'
+      >
+        {GoogleIcon}
+        Connect Google Calendar
+      </button>
+    </div>
+  );
+}
+
+// Main integration component
+export function GoogleCalendarIntegration() {
+  const { user } = useUser();
+  const [therapistId, setTherapistId] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [step, setStep] = useState<number>(0);
+
+  // Get integration status and actions from our unified hook
+  const {
+    status: { isConnected, isLoading, calendarEmail, lastSynced, error },
+    connect,
+    disconnect,
+    reconnect,
+    refreshStatus,
+  } = useGoogleCalendarIntegration(therapistId || '');
+  
+  // Ensure we have non-undefined values for our components
+  const safeCalendarEmail = calendarEmail || null;
+  const safeLastSynced = lastSynced || null;
+  const safeError = error || null;
+
+  // Get therapist ID on mount
+  useEffect(() => {
+    async function getTherapistId() {
+      if (user?.id) {
+        // Try to get from metadata first
+        const id = user.publicMetadata?.therapistId || (await fetchTherapistId(user.id));
+        setTherapistId(id ? String(id) : null);
+      }
+    }
+
+    getTherapistId();
+  }, [user]);
+
+  // Handle URL params for connection status
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('connected') === 'true') {
+      // Just connected, show success step
+      setShowModal(true);
+      setStep(3);
+      // Refresh status to get latest
+      if (therapistId) {
+        refreshStatus();
+      }
+    }
+  }, [therapistId, refreshStatus]);
+
+  // Handler functions
+  const handleStartConnect = () => {
+    setShowModal(true);
+    setStep(0);
+  };
+
+  const handleReconnect = async () => {
+    if (!therapistId) return;
+    await reconnect();
+  };
+
+  const handleConnect = () => {
+    if (therapistId) {
+      connect();
+    }
+  };
+
+  const handleDisconnect = () => {
+    if (therapistId) {
+      disconnect();
+    }
+  };
+
+  // Stepper modal content components
+  const stepContent = [
+    <WelcomeStep key='welcome' onNext={() => setStep(1)} />,
+    <PermissionsStep key='permissions' onNext={() => setStep(2)} />,
+    <ConnectStep
+      key='connect'
+      isLoading={isLoading}
+      therapistId={therapistId}
+      error={safeError}
+      onConnect={handleConnect}
+    />,
+    <ResultStep
+      key='result'
+      isConnected={!!isConnected}
+      calendarEmail={safeCalendarEmail}
+      lastSynced={safeLastSynced}
+      onClose={() => setShowModal(false)}
+      onRetry={() => setStep(0)}
+    />,
   ];
 
   // Main card UI
   return (
     <div className='w-full max-w-md mx-auto bg-white shadow-md rounded-lg overflow-hidden'>
       <div className='px-4 py-5 sm:px-6 flex flex-col items-center'>
-        <Image
-          src='/renavestlogo.png'
-          alt='Renavest Butterfly'
-          width={36}
-          height={36}
-          className='mb-2'
-        />
-        <h3 className='text-lg font-semibold leading-6 text-purple-700'>
-          Google Calendar Integration
-        </h3>
+        <div className='flex items-center justify-center gap-2 mb-2'>
+          <Calendar className='h-5 w-5 text-purple-700' />
+          <h3 className='text-lg font-semibold leading-6 text-purple-700'>Google Calendar</h3>
+        </div>
         <p className='mt-1 max-w-2xl text-sm text-gray-500 text-center'>
           Sync your Renavest sessions directly with your Google Calendar
         </p>
       </div>
       <div className='border-t border-gray-200 px-4 py-5 sm:p-0'>
         <div className='sm:divide-y sm:divide-gray-200'>
-          {isLoading ? (
+          {isLoading && !isConnected ? (
             <div className='flex justify-center items-center py-8'>
               <Loader2 className='animate-spin h-6 w-6 text-purple-600' />
             </div>
           ) : isConnected ? (
-            <div className='py-4 sm:px-6 flex flex-col items-center'>
-              <div className='flex items-center space-x-3 mb-2'>
-                {GoogleIcon}
-                <div>
-                  <p className='text-sm font-medium text-gray-900'>Connected Calendar</p>
-                </div>
-              </div>
-              <p className='text-sm text-gray-500 mb-2'>{calendarEmail}</p>
-              {lastSynced && (
-                <p className='text-xs text-gray-400 mb-2'>Last synced: {lastSynced}</p>
-              )}
-              <div className='flex gap-2 mt-2'>
-                <button
-                  onClick={() => setShowModal(true)}
-                  className='inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500'
-                >
-                  Manage
-                </button>
-                <button
-                  onClick={handleDisconnectCalendar}
-                  disabled={isLoading}
-                  className='inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50'
-                >
-                  <XCircle className='w-4 h-4 mr-2' />
-                  Disconnect
-                </button>
-              </div>
-            </div>
+            <ConnectedStatus
+              calendarEmail={safeCalendarEmail}
+              lastSynced={safeLastSynced}
+              isLoading={isLoading}
+              onReconnect={handleReconnect}
+              onDisconnect={handleDisconnect}
+            />
           ) : (
-            <div className='py-4 px-4 sm:px-6 text-center'>
-              <p className='text-sm text-gray-600 mb-4'>
-                Connect your Google Calendar to automatically add Renavest sessions
-              </p>
-              <button
-                onClick={() => setShowModal(true)}
-                className='w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500'
-              >
-                {GoogleIcon}
-                Connect Google Calendar
-              </button>
-            </div>
+            <DisconnectedStatus
+              error={safeError}
+              onConnect={handleStartConnect}
+              isLoading={isLoading}
+            />
           )}
         </div>
       </div>

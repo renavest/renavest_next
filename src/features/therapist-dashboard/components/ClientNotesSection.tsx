@@ -120,7 +120,9 @@ const NotesList = ({
         >
           <div>
             <p className='font-medium'>{note.title}</p>
-            <p className='text-xs text-gray-400'>{new Date(note.createdAt).toLocaleDateString()}</p>
+            <p className='text-xs text-gray-400'>
+              {createDate(note.createdAt).toLocaleDateString()}
+            </p>
           </div>
           <div className='text-purple-600'>
             {expandedNoteId === note.id ? <ChevronUp /> : <ChevronDown />}

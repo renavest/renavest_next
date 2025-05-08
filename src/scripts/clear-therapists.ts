@@ -61,7 +61,7 @@ async function clearUsers() {
 
     // Clear users table
     await db.delete(users);
-      
+
     console.log('Successfully cleared users table');
     console.log('Deleted users:', existingUsers.length);
 

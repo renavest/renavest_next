@@ -1,9 +1,9 @@
 import * as dotenv from 'dotenv';
 import { eq } from 'drizzle-orm';
 
-import TherapistList from '@/src/config/therapistsList';
 import { db } from '@/src/db';
 import { therapists } from '@/src/db/schema';
+import TherapistList from '@/src/old_config/therapistsList';
 
 import { uploadImageToS3 } from './migrate-therapists';
 

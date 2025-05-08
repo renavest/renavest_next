@@ -2,19 +2,20 @@
 
 import posthog from 'posthog-js';
 import { useEffect, useState } from 'react';
-import { InlineWidget } from 'react-calendly';
 import { useCalendlyEventListener } from 'react-calendly';
 
 import { createBookingSession } from '@/src/features/booking/actions/bookingActions';
+import AlternativeBooking from '@/src/features/booking/components/AlternativeBooking';
 import { BookingForm } from '@/src/features/booking/components/form/BookingForm';
 import { getInitials } from '@/src/features/booking/utils/stringUtils';
-
+import { fetchGoogleCalendarStatus } from '@/src/features/google-calendar/utils/googleCalendarIntegration';
 interface BookingFlowProps {
   advisor: {
     id: string;
     name: string;
     bookingURL: string;
     profileUrl?: string;
+    email?: string;
   };
   userId: string;
   userEmail: string;
@@ -26,15 +27,14 @@ function useGoogleCalendarIntegration(advisorId: string) {
   useEffect(() => {
     async function checkIntegration() {
       try {
-        const res = await fetch(`/api/google-calendar/status?therapistId=${advisorId}`);
-        const data = await res.json();
-        setIsGoogleCalendarConnected(!!data.isConnected);
+        const res = await fetchGoogleCalendarStatus(advisorId);
+        setIsGoogleCalendarConnected(!!res.isConnected);
       } catch {
         setIsGoogleCalendarConnected(false);
       }
     }
     checkIntegration();
-  }, [advisorId]);
+  });
   return isGoogleCalendarConnected;
 }
 
@@ -47,8 +47,6 @@ export default function UnifiedBookingFlow({ advisor, userId, userEmail }: Booki
   }, [userId, userEmail]);
 
   const isGoogleCalendarConnected = useGoogleCalendarIntegration(advisor.id);
-  const [isBookingConfirmed, setIsBookingConfirmed] = useState(false);
-
   // Track Calendly events
   const trackCalendlyEvent = async (eventType: string, eventData?: Record<string, unknown>) => {
     try {
@@ -96,7 +94,7 @@ export default function UnifiedBookingFlow({ advisor, userId, userEmail }: Booki
   useCalendlyEventListener({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onEventScheduled: (e: any) => {
-      setIsBookingConfirmed(true);
+      // setIsBookingConfirmed(true);
       trackCalendlyEvent('calendly_event_scheduled', e);
     },
   });
@@ -110,36 +108,19 @@ export default function UnifiedBookingFlow({ advisor, userId, userEmail }: Booki
     );
   }
 
+  // If Google Calendar is not connected, show AlternativeBooking
+  if (!isGoogleCalendarConnected) {
+    return <AlternativeBooking advisor={advisor} bookingURL={advisor.bookingURL} />;
+  }
+
   // If Google Calendar is connected, show internal booking
-  if (isGoogleCalendarConnected) {
-    return (
-      <BookingForm
-        advisorId={advisor.id}
-        onConfirm={handleBookingConfirmation}
-        advisorName={advisor.name}
-        advisorImage={advisor.profileUrl}
-        advisorInitials={getInitials(advisor.name)}
-      />
-    );
-  }
-
-  // If not connected, show Calendly widget and confirmation after booking
-  if (isBookingConfirmed) {
-    return (
-      <BookingForm
-        advisorId={advisor.id}
-        onConfirm={handleBookingConfirmation}
-        advisorName={advisor.name}
-        advisorImage={advisor.profileUrl}
-        advisorInitials={getInitials(advisor.name)}
-      />
-    );
-  }
-
   return (
-    <InlineWidget
-      url={advisor.bookingURL}
-      styles={{ height: '100%', width: '100%', minHeight: '100vh' }}
+    <BookingForm
+      advisorId={advisor.id}
+      onConfirm={handleBookingConfirmation}
+      advisorName={advisor.name}
+      advisorImage={advisor.profileUrl}
+      advisorInitials={getInitials(advisor.name)}
     />
   );
 }

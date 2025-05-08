@@ -9,6 +9,7 @@ import {
   TherapistStatistics,
 } from '@/src/features/therapist-dashboard/types';
 
+import { therapistPageLoadedSignal } from '../state/therapistDashboardState';
 export function useTherapistDashboardData() {
   const { user, isLoaded } = useUser();
   const [clients, setClients] = useState<Client[]>([]);
@@ -18,7 +19,6 @@ export function useTherapistDashboardData() {
     totalClients: 0,
     completedSessions: 0,
   });
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
@@ -27,14 +27,12 @@ export function useTherapistDashboardData() {
 
     if (!isLoaded || !user) {
       console.log('User not loaded, skipping data fetch');
-      setIsLoading(false);
       return;
     }
 
     // Fetch data when user is loaded
     const fetchData = async () => {
       try {
-        setIsLoading(true);
         setError(null);
 
         // Use fetch with error handling
@@ -44,7 +42,7 @@ export function useTherapistDashboardData() {
           if (!response.ok) {
             const errorData = await response.json();
             console.error(`Error fetching from ${url}:`, errorData);
-            throw new Error(errorData.error || 'Failed to fetch data');
+            throw new Error(errorData.error || `Failed to fetch data from ${url}`);
           }
           return response.json();
         };
@@ -60,16 +58,30 @@ export function useTherapistDashboardData() {
         console.log('Sessions Response:', sessionsResponse);
         console.log('Statistics Response:', statisticsResponse);
 
+        // Validate responses
+        const processedClients = clientsResponse.clients || [];
+        const processedSessions = sessionsResponse.sessions || [];
+        const processedStatistics = statisticsResponse.statistics || {
+          totalSessions: 0,
+          totalClients: 0,
+          completedSessions: 0,
+        };
+
+        console.log('Processed Data:', {
+          clientsCount: processedClients.length,
+          sessionsCount: processedSessions.length,
+          statistics: processedStatistics,
+        });
+
         // Update state with fetched data
-        setClients(clientsResponse.clients || []);
-        setUpcomingSessions(sessionsResponse.sessions || []);
-        setStatistics(
-          statisticsResponse.statistics || {
-            totalSessions: 0,
-            totalClients: 0,
-            completedSessions: 0,
-          },
-        );
+        setClients(processedClients);
+        setUpcomingSessions(processedSessions);
+        setStatistics(processedStatistics);
+
+        // Additional logging for debugging
+        if (processedClients.length === 0) {
+          console.warn('No clients found in the response');
+        }
       } catch (err) {
         console.error('Error fetching therapist dashboard data:', err);
         setError(err instanceof Error ? err : new Error('Failed to fetch dashboard data'));
@@ -83,7 +95,7 @@ export function useTherapistDashboardData() {
           completedSessions: 0,
         });
       } finally {
-        setIsLoading(false);
+        therapistPageLoadedSignal.value = true;
       }
     };
 
@@ -94,7 +106,6 @@ export function useTherapistDashboardData() {
     clients,
     upcomingSessions,
     statistics,
-    isLoading,
     error,
   };
 }

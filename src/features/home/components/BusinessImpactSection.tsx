@@ -1,6 +1,9 @@
 'use client';
+
 import { TrendingUp, Users, Shield } from 'lucide-react';
+import posthog from 'posthog-js';
 import { useEffect, useState, useRef } from 'react';
+import { Parallax } from 'react-scroll-parallax';
 
 function BusinessImpactSection() {
   const [isVisible, setIsVisible] = useState(false);
@@ -11,6 +14,15 @@ function BusinessImpactSection() {
       (entries) => {
         if (entries[0].isIntersecting) {
           setIsVisible(true);
+
+          // Track when section becomes visible
+          if (typeof window !== 'undefined') {
+            posthog.capture('section_viewed', {
+              section_name: 'business_impact',
+              url: window.location.href,
+              visibility_time: new Date().toISOString(),
+            });
+          }
         }
       },
       { threshold: 0.1 },
@@ -21,6 +33,17 @@ function BusinessImpactSection() {
     };
   }, []);
 
+  const trackStatHover = (statName: string, statValue: string) => {
+    if (typeof window !== 'undefined') {
+      posthog.capture('business_impact_stat_hover', {
+        stat_name: statName,
+        stat_value: statValue,
+        section: 'business_impact',
+        url: window.location.href,
+      });
+    }
+  };
+
   return (
     <>
       <span id='business-impact' className='block scroll-mt-16'></span>
@@ -30,7 +53,11 @@ function BusinessImpactSection() {
           className={`max-w-6xl mx-auto px-6 md:px-10 transform transition-all duration-1000
           ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}
         >
-          <div className='max-w-3xl mx-auto text-center mb-20'>
+          <Parallax
+            translateY={[-15, 15]}
+            opacity={[0.8, 1]}
+            className='max-w-3xl mx-auto text-center mb-20'
+          >
             <span className='px-4 py-2 bg-[#9071FF]/10 text-[#9071FF] font-medium rounded-full text-sm mb-4 inline-block'>
               THE BUSINESS IMPACT
             </span>
@@ -42,48 +69,60 @@ function BusinessImpactSection() {
               potential. By addressing financial stress, you unlock unprecedented workplace
               performance.
             </p>
-          </div>
+          </Parallax>
 
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-10'>
-            <div className='flex flex-col h-full bg-white rounded-3xl p-10 shadow-md hover:shadow-xl transition-shadow duration-500 group'>
-              <div className='bg-[#9071FF]/10 rounded-full w-16 h-16 flex items-center justify-center mb-8 group-hover:bg-[#9071FF]/20 transition-colors duration-500'>
-                <TrendingUp className='text-[#9071FF]' size={32} />
+          <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
+            <Parallax translateY={[20, -20]} scale={[0.9, 1]} className='group'>
+              <div
+                className='bg-white rounded-2xl shadow-lg p-8 h-full hover:shadow-xl transition-shadow duration-300'
+                onMouseEnter={() => trackStatHover('productivity', '34% increase in productivity')}
+              >
+                <div className='text-[#9071FF] mb-6'>
+                  <TrendingUp size={48} />
+                </div>
+                <h3 className='text-2xl font-bold mb-3'>34% increase in productivity</h3>
+                <p className='text-gray-600'>
+                  Financial therapists can help alleviate mental load, freeing employees to focus on
+                  their core responsibilities.
+                </p>
               </div>
-              <div className='mb-6'>
-                <span className='text-5xl font-bold text-[#9071FF] block mb-2'>34%</span>
-                <h3 className='text-xl font-semibold text-gray-800'>Higher Productivity</h3>
-              </div>
-              <p className='text-gray-600 mt-auto'>
-                Financial stress elimination boosts workplace focus and output. Employees can
-                redirect mental energy from money worries to meaningful work.
-              </p>
-            </div>
+            </Parallax>
 
-            <div className='flex flex-col h-full bg-white rounded-3xl p-10 shadow-md hover:shadow-xl transition-shadow duration-500 group'>
-              <div className='bg-[#9071FF]/10 rounded-full w-16 h-16 flex items-center justify-center mb-8 group-hover:bg-[#9071FF]/20 transition-colors duration-500'>
-                <Users className='text-[#9071FF]' size={32} />
+            <Parallax translateY={[30, -30]} scale={[0.9, 1]} className='group'>
+              <div
+                className='bg-white rounded-2xl shadow-lg p-8 h-full hover:shadow-xl transition-shadow duration-300'
+                onMouseEnter={() => trackStatHover('retention', '48% improvement in retention')}
+              >
+                <div className='text-[#9071FF] mb-6'>
+                  <Users size={48} />
+                </div>
+                <h3 className='text-2xl font-bold mb-3'>48% improvement in retention</h3>
+                <p className='text-gray-600'>
+                  Employees who feel supported in their financial wellness are significantly more
+                  likely to stay with their employer.
+                </p>
               </div>
-              <div className='mb-6'>
-                <span className='text-5xl font-bold text-[#9071FF] block mb-2'>6:1</span>
-                <h3 className='text-xl font-semibold text-gray-800'>Return on Investment</h3>
+            </Parallax>
+
+            <Parallax translateY={[40, -40]} scale={[0.9, 1]} className='group'>
+              <div
+                className='bg-white rounded-2xl shadow-lg p-8 h-full hover:shadow-xl transition-shadow duration-300'
+                onMouseEnter={() =>
+                  trackStatHover('absenteeism', '22% reduction in financial-related absenteeism')
+                }
+              >
+                <div className='text-[#9071FF] mb-6'>
+                  <Shield size={48} />
+                </div>
+                <h3 className='text-2xl font-bold mb-3'>
+                  22% reduction in financial-related absenteeism
+                </h3>
+                <p className='text-gray-600'>
+                  Financial wellness programs directly correlate with reduced stress-related sick
+                  days and absences.
+                </p>
               </div>
-              <p className='text-gray-600 mt-auto'>
-                Companies see up to $6 return for every $1 invested in financial wellness, through reduced healthcare costs and lower absenteeism.
-              </p>
-            </div>
-            <div className='flex flex-col h-full bg-white rounded-3xl p-10 shadow-md hover:shadow-xl transition-shadow duration-500 group'>
-              <div className='bg-[#9071FF]/10 rounded-full w-16 h-16 flex items-center justify-center mb-8 group-hover:bg-[#9071FF]/20 transition-colors duration-500'>
-                <Shield className='text-[#9071FF]' size={32} />
-              </div>
-              <div className='mb-6'>
-                <span className='text-5xl font-bold text-[#9071FF] block mb-2'>56%</span>
-                <h3 className='text-xl font-semibold text-gray-800'>Time Reclaimed</h3>
-              </div>
-              <p className='text-gray-600 mt-auto'>
-                The average stressed employee spends a full workday weekly on money worries.
-                Financial therapy gives back productive hours to your organization.
-              </p>
-            </div>
+            </Parallax>
           </div>
         </div>
       </section>

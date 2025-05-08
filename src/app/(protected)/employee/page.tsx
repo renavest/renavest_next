@@ -1,4 +1,3 @@
-// import { auth } from '@clerk/nextjs';
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 
@@ -22,7 +21,7 @@ export default async function DashboardPage() {
 
   // Render specific view based on email
   if (email === 'stanley@renavestapp.com' || email === 'sethmorton05@gmail.com') {
-    return <DashboardClient />;
+    return <DashboardClient />; // TODO: Remove this once we have a full employee dashboard
   } else {
     return <LimitedDashboardClient />;
   }

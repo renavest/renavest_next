@@ -74,7 +74,7 @@ async function seedTherapistDashboard() {
     console.log(`Created new Clerk user for ${therapistEmail}`);
   }
   // Insert user row for therapist
-  const now = new Date();
+  const now = createDate();
   await db
     .insert(users)
     .values({
@@ -156,9 +156,9 @@ async function seedTherapistDashboard() {
     {
       userId: clientClerkId,
       therapistId: therapistRow.id,
-      sessionDate: new Date('2025-04-09T10:00:00Z'),
-      sessionStartTime: new Date('2025-04-09T10:00:00Z'),
-      sessionEndTime: new Date('2025-04-09T11:00:00Z'),
+      sessionDate: createDate('2025-04-09T10:00:00Z'),
+      sessionStartTime: createDate('2025-04-09T10:00:00Z'),
+      sessionEndTime: createDate('2025-04-09T11:00:00Z'),
       status: 'scheduled' as const,
       metadata: {
         topic: 'Startup Financial Strategy',
@@ -170,9 +170,9 @@ async function seedTherapistDashboard() {
     {
       userId: clientClerkId,
       therapistId: therapistRow.id,
-      sessionDate: new Date('2025-05-15T14:30:00Z'),
-      sessionStartTime: new Date('2025-05-15T14:30:00Z'),
-      sessionEndTime: new Date('2025-05-15T15:30:00Z'),
+      sessionDate: createDate('2025-05-15T14:30:00Z'),
+      sessionStartTime: createDate('2025-05-15T14:30:00Z'),
+      sessionEndTime: createDate('2025-05-15T15:30:00Z'),
       status: 'completed' as const,
       metadata: {
         topic: 'Investment Portfolio Review',
