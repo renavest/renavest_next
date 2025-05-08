@@ -1,8 +1,7 @@
-
 import Link from 'next/link';
-
 import React from 'react';
 
+import { createDate } from '@/src/utils/timezone';
 export default function TermsOfService() {
   return (
     <div className='container mx-auto px-4 py-8 max-w-4xl'>
@@ -63,8 +62,8 @@ export default function TermsOfService() {
       </div>
 
       <footer className='mt-8 text-center text-gray-500'>
-        <p>Last Updated: {createDate().toLocaleDateString()}</p>
-        <p>© {createDate()getCurrentYear()} Renavest. All rights reserved.</p>
+        <p>Last Updated: {createDate().toLocaleString()}</p>
+        <p>© {createDate().year} Renavest. All rights reserved.</p>
       </footer>
     </div>
   );
