@@ -1,4 +1,5 @@
 'use client';
+
 import { COLORS } from '@/src/styles/colors';
 
 import { actionableInsights } from '../../state/dashboardState';

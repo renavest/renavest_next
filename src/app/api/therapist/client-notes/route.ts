@@ -62,7 +62,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       notes: notes.map((note) => ({
         ...note,
-        createdAt: note.createdAt?.toISOString() ?? null,
+        createdAt: note.createdAt?.toISO() ?? null,
         isConfidential: note.isConfidential ?? false,
       })),
     });

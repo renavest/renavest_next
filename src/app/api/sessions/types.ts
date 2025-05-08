@@ -20,4 +20,5 @@ export type TherapistType = {
   googleCalendarAccessToken: string | null;
   googleCalendarRefreshToken: string | null;
   googleCalendarEmail: string | null;
+  googleCalendarIntegrationStatus: string;
 };

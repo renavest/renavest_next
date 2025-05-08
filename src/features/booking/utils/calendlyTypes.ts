@@ -14,11 +14,11 @@ export type BookingDetails = {
 
 // Extract booking details parsing logic to a separate function
 export const parseBookingDetails = (eventDetails: CalendlyEventDetails): BookingDetails => {
-  const startTimeStr = eventDetails.start_time || new Date().toISOString();
-  const endTimeStr = eventDetails.end_time || new Date().toISOString();
+  const startTimeStr = eventDetails.start_time || createDate().toISO();
+  const endTimeStr = eventDetails.end_time || createDate().toISO();
 
-  const startTime = new Date(startTimeStr);
-  const endTime = new Date(endTimeStr);
+  const startTime = createDate(startTimeStr);
+  const endTime = createDate(endTimeStr);
 
   return {
     date: startTime.toLocaleDateString('en-US', {

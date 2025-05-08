@@ -2,7 +2,7 @@
 
 import { useClerk } from '@clerk/nextjs';
 import posthog from 'posthog-js';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { getSelectedRole } from '../../auth/state/authState';
 import { useOnboardingSubmission } from '../hooks/useOnboardingSubmission';
@@ -15,16 +15,48 @@ export default function OnboardingModal() {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string[]>>(
     () => onboardingSignal.value.answers,
   );
-  if (typeof window !== 'undefined' && clerkUser?.id) {
-    posthog.identify(clerkUser.id, {
-      $set_once: {
-        email: clerkUser?.emailAddresses[0]?.emailAddress,
-      },
-      $set: {
-        role: getSelectedRole(),
-      },
-    });
-  }
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && clerkUser?.id) {
+      // Get referrer ID from localStorage if it exists
+      const referrerId = localStorage.getItem('referrer_id');
+
+      // Identify the user in PostHog with referral data
+      posthog.identify(clerkUser.id, {
+        $set_once: {
+          email: clerkUser?.emailAddresses[0]?.emailAddress,
+          initial_referrer_id: referrerId || null, // Store who referred this user
+          signup_date: new Date().toISOString(),
+        },
+        $set: {
+          role: getSelectedRole(),
+          last_seen: new Date().toISOString(),
+        },
+      });
+
+      // If user was referred, track the conversion event
+      if (referrerId) {
+        posthog.capture('referral_converted', {
+          referrer_id: referrerId,
+          user_id: clerkUser.id,
+          user_email: clerkUser?.emailAddresses[0]?.emailAddress,
+        });
+
+        // Optional: Call API to record the referral in your database
+        fetch('/api/referrals/record', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            referrerId: referrerId,
+            referredId: clerkUser.id,
+          }),
+        }).catch((err) => console.error('Failed to record referral:', err));
+      }
+    }
+  }, [clerkUser]);
+
   const signalState = onboardingSignal.value;
   const { handleSubmit, isSubmitting } = useOnboardingSubmission();
 

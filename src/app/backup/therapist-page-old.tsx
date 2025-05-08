@@ -40,11 +40,11 @@ function AppointmentCard({ upcomingSessions }: { upcomingSessions: UpcomingSessi
                   <div>
                     <p className='font-medium text-gray-800'>{session.clientName}</p>
                     <p className='text-sm text-gray-500'>
-                      {new Date(session.sessionDate).toLocaleDateString()}
+                      {createDate(session.sessionDate).toLocaleDateString()}
                     </p>
                   </div>
                   <p className='text-sm font-medium text-purple-600'>
-                    {new Date(session.sessionStartTime).toLocaleTimeString()}
+                    {createDate(session.sessionStartTime).toLocaleTimeString()}
                   </p>
                 </div>
                 <p className='text-xs text-gray-600 capitalize'>{session.status}</p>

@@ -1,10 +1,11 @@
-import { auth } from '@clerk/nextjs/server';
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 import { google } from 'googleapis';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
 import { therapists } from '@/src/db/schema';
+import { createDate } from '@/src/utils/timezone';
 
 // OAuth2 client configuration
 const oauth2Client = new google.auth.OAuth2(
@@ -26,12 +27,6 @@ export async function POST(_req: NextRequest) {
     // Find therapist by userId
     const therapist = await db.query.therapists.findFirst({
       where: (therapists, { eq }) => eq(therapists.userId, userId),
-      columns: {
-        id: true,
-        googleCalendarAccessToken: true,
-        googleCalendarRefreshToken: true,
-        googleCalendarEmail: true,
-      },
     });
 
     if (!therapist) {
@@ -45,7 +40,7 @@ export async function POST(_req: NextRequest) {
       hasRefreshToken: !!therapist.googleCalendarRefreshToken,
       email: therapist.googleCalendarEmail,
     });
-
+    
     // If there's an access token, try to revoke it
     if (therapist.googleCalendarAccessToken) {
       try {
@@ -70,10 +65,18 @@ export async function POST(_req: NextRequest) {
         googleCalendarEmail: null,
         googleCalendarIntegrationStatus: 'not_connected',
         googleCalendarIntegrationDate: null,
-        updatedAt: new Date(),
+        updatedAt: createDate().toJSDate(),
       })
       .where(eq(therapists.id, therapist.id));
-
+    await (
+      await clerkClient()
+    ).users.updateUserMetadata(userId, {
+      publicMetadata: {
+        googleCalendarConnected: false,
+        googleCalendarIntegrationStatus: 'not_connected',
+        googleCalendarIntegrationDate: null,
+      },
+    });
     console.log('Successfully disconnected Google Calendar for therapist:', therapist.id);
 
     return NextResponse.json({

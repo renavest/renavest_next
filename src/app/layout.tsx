@@ -4,7 +4,10 @@ import { Figtree } from 'next/font/google';
 import { Toaster } from 'sonner';
 
 import './globals.css';
-import { PostHogProvider } from '../components/PostHogProvider';
+
+import { PostHogProvider } from '@/src/features/posthog/PostHogProvider';
+
+import { Providers as ParallaxProviders } from '../features/parallax/Providers';
 
 const figtreeFont = Figtree({
   variable: '--font-figtree',
@@ -23,7 +26,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <html lang='en'>
         <body className={`${figtreeFont.variable} antialiased bg-amber-50/30`}>
           <Toaster position='bottom-right' />
-          <PostHogProvider>{children}</PostHogProvider>
+          <ParallaxProviders>
+            <PostHogProvider>{children}</PostHogProvider>
+          </ParallaxProviders>
         </body>
       </html>
     </ClerkProvider>

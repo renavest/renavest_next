@@ -1,16 +1,20 @@
 'use client';
 
+import { useUser } from '@clerk/nextjs';
 import { Menu, Users, TrendingUp, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import posthog from 'posthog-js';
 import { useEffect, useState } from 'react';
 
 import { ctaTextSignal } from '@/src/features/home/state/ctaSignals';
 
+import CTAButton from './CTAButton';
+
 // Header style configuration
 
 const getHeaderClassName = (isHeaderScrolled: boolean) => `
-  fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm
+  fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm
   ${
     isHeaderScrolled
       ? 'border-gray-200 shadow-md mx-4 md:mx-8 mt-3 rounded-full border'
@@ -20,49 +24,67 @@ const getHeaderClassName = (isHeaderScrolled: boolean) => `
   transition-all duration-300 ease-in-out
 `;
 
+// Track navigation clicks
+const trackNavClick = (linkName: string, isMobile: boolean = false) => {
+  if (typeof window !== 'undefined') {
+    posthog.capture('navigation_link_clicked', {
+      link_name: linkName,
+      device_type: isMobile ? 'mobile' : 'desktop',
+      url: window.location.href,
+    });
+  }
+};
+
+// Track CTA clicks
+
 // Desktop Navigation Component
-const DesktopNavigation = () => (
+const DesktopNavigation = ({ isSignedIn }: { isSignedIn: boolean }) => (
   <div className='hidden lg:flex items-center gap-4 xl:gap-8'>
     <Link
       href='#jasmine-journey'
       className='text-gray-600 hover:text-[#9071FF] font-medium text-sm truncate'
+      onClick={() => trackNavClick('jasmine_journey')}
     >
       How it works
     </Link>
     <Link
       href='#what-is-financial-therapy'
       className='text-gray-600 hover:text-[#9071FF] font-medium text-sm truncate'
+      onClick={() => trackNavClick('what_is_financial_therapy')}
     >
       What is financial therapy?
     </Link>
     <Link
       href='#business-impact'
       className='text-gray-600 hover:text-[#9071FF] font-medium text-sm truncate'
+      onClick={() => trackNavClick('business_impact')}
     >
       Business Impact
     </Link>
     {/* Button Group */}
     <div className='flex items-center gap-3'>
-      <Link href='/login'>
-        <button className='px-2 py-1 xl:px-6 xl:py-2.5 border border-[#9071FF] text-[#9071FF] bg-transparent rounded-full hover:bg-[#9071FF]/10 transition font-medium text-sm lg:text-lg'>
-          Sign In
-        </button>
-      </Link>
-      <a
-        href='https://calendly.com/rameau-stan/one-on-one'
-        target='_blank'
-        rel='noopener noreferrer'
-      >
-        <button className='px-2 py-1 xl:px-6 xl:py-2.5 bg-[#9071FF] text-white rounded-full hover:bg-[#9071FF]/90 transition font-medium text-sm lg:text-lg'>
-          {ctaTextSignal.value}
-        </button>
-      </a>
+      {isSignedIn ? (
+        <Link href='/login' onClick={() => trackNavClick('dashboard')}>
+          <button className='px-2 py-1 xl:px-6 xl:py-2.5 bg-[#9071FF] text-white rounded-full hover:bg-[#9071FF]/90 transition font-medium text-sm lg:text-lg'>
+            Dashboard
+          </button>
+        </Link>
+      ) : (
+        <>
+          <Link href='/login' onClick={() => trackNavClick('secondary')}>
+            <button className='px-2 py-1 xl:px-6 xl:py-2.5 border border-[#9071FF] text-[#9071FF] bg-transparent rounded-full hover:bg-[#9071FF]/10 transition font-medium text-sm lg:text-lg'>
+              Sign In
+            </button>
+          </Link>
+          <CTAButton />
+        </>
+      )}
     </div>
   </div>
 );
 
 // Extract mobile navigation links to a separate component
-const MobileNavLinks = ({ onClose }: { onClose: () => void }) => (
+const MobileNavLinks = ({ onClose, isSignedIn }: { onClose: () => void; isSignedIn: boolean }) => (
   <div className='p-4 sm:p-6 space-y-4 '>
     <MobileNavLink
       href='#jasmine-journey'
@@ -85,21 +107,40 @@ const MobileNavLinks = ({ onClose }: { onClose: () => void }) => (
 
     {/* Mobile Action Buttons */}
     <div className='pt-4 border-t border-gray-100 mt-2 space-y-3'>
-      <Link
-        href='/login'
-        className='flex items-center justify-center px-4 py-3 border border-[#9071FF] text-[#9071FF] bg-transparent rounded-lg w-full hover:bg-[#9071FF]/10 transition text-base font-medium min-h-[44px]'
-        onClick={onClose}
-      >
-        Sign In
-      </Link>
-      <a
-        href='https://calendly.com/rameau-stan/one-on-one'
-        target='_blank'
-        rel='noopener noreferrer'
-        className='flex items-center justify-center px-4 py-3 bg-[#9071FF] text-white rounded-lg w-full min-h-[44px]'
-      >
-        <span className='text-base font-medium'>{ctaTextSignal.value}</span>
-      </a>
+      {isSignedIn ? (
+        <Link
+          href='/therapist'
+          className='flex items-center justify-center px-4 py-3 bg-[#9071FF] text-white rounded-lg w-full min-h-[44px]'
+          onClick={() => {
+            trackNavClick('dashboard', true);
+            onClose();
+          }}
+        >
+          Dashboard
+        </Link>
+      ) : (
+        <>
+          <Link
+            href='/login'
+            className='flex items-center justify-center px-4 py-3 border border-[#9071FF] text-[#9071FF] bg-transparent rounded-lg w-full hover:bg-[#9071FF]/10 transition text-base font-medium min-h-[44px]'
+            onClick={() => {
+              trackNavClick('secondary', true);
+              onClose();
+            }}
+          >
+            Sign In
+          </Link>
+          <a
+            href='https://calendly.com/rameau-stan/one-on-one'
+            target='_blank'
+            rel='noopener noreferrer'
+            className='flex items-center justify-center px-4 py-3 bg-[#9071FF] text-white rounded-lg w-full min-h-[44px]'
+            onClick={() => trackNavClick('primary', true)}
+          >
+            <span className='text-base font-medium'>{ctaTextSignal.value}</span>
+          </a>
+        </>
+      )}
     </div>
   </div>
 );
@@ -119,7 +160,10 @@ const MobileNavLink = ({
   <Link
     href={href}
     className='flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors w-full group min-h-[44px] text-base sm:text-lg'
-    onClick={onClose}
+    onClick={() => {
+      trackNavClick(href.replace('#', ''), true);
+      onClose();
+    }}
   >
     {icon}
     <span className='group-hover:text-[#9071FF] transition'>{label}</span>
@@ -129,7 +173,7 @@ const MobileNavLink = ({
 function Navbar() {
   const [isHeaderScrolled, setIsHeaderScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
+  const { isSignedIn } = useUser();
   useEffect(() => {
     const handleScroll = () => {
       setIsHeaderScrolled(window.scrollY > 0);
@@ -140,6 +184,14 @@ function Navbar() {
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
+
+    // Track mobile menu toggle
+    if (typeof window !== 'undefined') {
+      posthog.capture('mobile_menu_toggled', {
+        action: !isMobileMenuOpen ? 'opened' : 'closed',
+        url: window.location.href,
+      });
+    }
   };
 
   return (
@@ -166,7 +218,7 @@ function Navbar() {
         </div>
 
         {/* Desktop Navigation */}
-        <DesktopNavigation />
+        <DesktopNavigation isSignedIn={!!isSignedIn} />
 
         {/* Mobile Menu Button */}
         <div className='flex items-center space-x-2 lg:hidden'>
@@ -195,7 +247,7 @@ function Navbar() {
           rounded-b-2xl
         `}
       >
-        <MobileNavLinks onClose={() => setIsMobileMenuOpen(false)} />
+        <MobileNavLinks onClose={() => setIsMobileMenuOpen(false)} isSignedIn={!!isSignedIn} />
       </div>
     </header>
   );

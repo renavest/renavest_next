@@ -67,7 +67,7 @@ export async function submitOnboardingData(answers: Record<number, string[]>) {
       publicMetadata: {
         onboardingComplete: true,
         onboardingVersion: ONBOARDING_VERSION,
-        onboardingCompletedAt: new Date().toISOString(),
+        onboardingCompletedAt: createDate().toISO(),
         onboardingAnswers: Object.entries(answers).map(([key, value]) => ({
           questionId: Number(key),
           answeredCategories: value,

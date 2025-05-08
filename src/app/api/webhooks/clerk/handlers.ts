@@ -2,7 +2,8 @@ import { eq } from 'drizzle-orm';
 import { Result, ok, err } from 'neverthrow';
 
 import { db } from '@/src/db';
-import { users } from '@/src/db/schema';
+import { users, therapists } from '@/src/db/schema';
+import { createDate } from '@/src/utils/timezone';
 
 // User-related webhook data
 export interface WebhookUserData {
@@ -26,17 +27,17 @@ type UserHandlingError =
  * Get primary email from user data
  */
 function getPrimaryEmail(
-  email_addresses: WebhookUserData['email_addresses'],
+  emailAddresses: WebhookUserData['email_addresses'],
 ): Result<string, UserHandlingError> {
-  const verifiedEmail = email_addresses?.find(
+  const verifiedEmail = emailAddresses?.find(
     (email) => email.verification?.status === 'verified',
   )?.email_address;
 
-  const primaryEmail = verifiedEmail || email_addresses?.[0]?.email_address;
+  const primaryEmail = verifiedEmail || emailAddresses?.[0]?.email_address;
 
   return primaryEmail
     ? ok(primaryEmail)
-    : (err({ type: 'NoValidEmail', userId: email_addresses?.[0]?.id || 'unknown' }) as Result<
+    : (err({ type: 'NoValidEmail', userId: emailAddresses?.[0]?.id || 'unknown' }) as Result<
         string,
         UserHandlingError
       >);
@@ -49,11 +50,19 @@ export async function handleUserCreateOrUpdate(
   eventType: 'user.created' | 'user.updated',
   data: WebhookUserData,
 ): Promise<Result<boolean, UserHandlingError>> {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  const { id, email_addresses, first_name, last_name, image_url, created_at, updated_at } = data;
-
+  const {
+    id,
+    email_addresses: emailAddresses,
+    first_name: firstName,
+    last_name: lastName,
+    image_url: imageUrl,
+    created_at: createdAt,
+    updated_at: updatedAt,
+  } = data;
+  console.log('data', data);
+  console.log('WEHOOK DATA', data);
   // Get primary email
-  const emailResult = getPrimaryEmail(email_addresses);
+  const emailResult = getPrimaryEmail(emailAddresses);
   if (emailResult.isErr()) {
     console.error('No valid email found for user', {
       userId: id,
@@ -69,17 +78,58 @@ export async function handleUserCreateOrUpdate(
 
   try {
     // Check if user exists by either clerkId or email
-    const [existingUserByClerkId, existingUserByEmail] = await Promise.all([
+    const [existingUserByClerkId, existingUserByEmail, therapistRecord] = await Promise.all([
       db.select().from(users).where(eq(users.clerkId, id)).limit(1),
       db.select().from(users).where(eq(users.email, primaryEmail)).limit(1),
+      db.select().from(therapists).where(eq(therapists.email, primaryEmail.toLowerCase())).limit(1),
     ]);
 
     const existingUser = existingUserByClerkId[0];
     const userWithEmail = existingUserByEmail[0];
+    const matchedTherapist = therapistRecord[0];
 
-    const now = new Date();
-    const userCreatedAt = new Date(created_at);
-    const userUpdatedAt = new Date(updated_at);
+    if (!matchedTherapist) {
+      console.error('Therapist signup attempted but no therapist row found for email', {
+        userId: id,
+        eventType,
+        email: primaryEmail,
+      });
+      return err({
+        type: 'DatabaseError',
+        message: `No therapist row found for email: ${primaryEmail}`,
+        originalError: null,
+      });
+    }
+
+    const now = createDate().toJSDate();
+    // Handle date conversions safely to prevent "Invalid time value" errors
+    let userCreatedAt;
+    let userUpdatedAt;
+
+    try {
+      // Convert timestamps to ISO dates if they're numbers
+      const createdAtDate = typeof createdAt === 'number' ? new Date(createdAt) : createdAt;
+      const updatedAtDate = typeof updatedAt === 'number' ? new Date(updatedAt) : updatedAt;
+
+      userCreatedAt = createdAt ? createDate(createdAtDate).toJSDate() : now;
+      userUpdatedAt = updatedAt ? createDate(updatedAtDate).toJSDate() : now;
+    } catch (error) {
+      console.error('Error converting dates', { createdAt, updatedAt, error });
+      userCreatedAt = now;
+      userUpdatedAt = now;
+    }
+    // TODO: add employer table
+
+    // Determine user role and set public metadata
+    let userRole = 'user'; // default role
+    if (matchedTherapist) {
+      userRole = 'therapist';
+    }
+
+    // Add public metadata to Clerk user
+    const publicMetadata = {
+      role: userRole,
+    };
 
     if (existingUser) {
       // Update existing user
@@ -87,16 +137,19 @@ export async function handleUserCreateOrUpdate(
         .update(users)
         .set({
           email: primaryEmail,
-          firstName: first_name || null,
-          lastName: last_name || null,
-          imageUrl: image_url || null,
+          firstName: firstName || null,
+          lastName: lastName || null,
+          imageUrl: imageUrl || null,
           updatedAt: userUpdatedAt || now,
+          therapistId: matchedTherapist?.id || null,
         })
         .where(eq(users.clerkId, id));
 
       console.info('Updated existing user', {
         userId: id,
         eventType,
+        isTherapist: !!matchedTherapist,
+        publicMetadata,
       });
     } else if (eventType === 'user.created') {
       if (userWithEmail) {
@@ -105,10 +158,11 @@ export async function handleUserCreateOrUpdate(
           .update(users)
           .set({
             clerkId: id,
-            firstName: first_name || userWithEmail.firstName,
-            lastName: last_name || userWithEmail.lastName,
-            imageUrl: image_url || userWithEmail.imageUrl,
+            firstName: firstName || userWithEmail.firstName,
+            lastName: lastName || userWithEmail.lastName,
+            imageUrl: imageUrl || userWithEmail.imageUrl,
             updatedAt: userUpdatedAt || now,
+            therapistId: matchedTherapist?.id || null,
           })
           .where(eq(users.email, primaryEmail));
 
@@ -116,22 +170,29 @@ export async function handleUserCreateOrUpdate(
           userId: id,
           eventType,
           previousId: userWithEmail.clerkId,
+          isTherapist: !!matchedTherapist,
+          therapistId: matchedTherapist?.id,
+          publicMetadata,
         });
       } else {
         // Create new user
         await db.insert(users).values({
           clerkId: id,
           email: primaryEmail,
-          firstName: first_name || null,
-          lastName: last_name || null,
-          imageUrl: image_url || null,
+          firstName: firstName || null,
+          lastName: lastName || null,
+          imageUrl: imageUrl || null,
           createdAt: userCreatedAt || now,
           updatedAt: userUpdatedAt || now,
+          therapistId: matchedTherapist?.id || null,
         });
 
         console.info('Created new user', {
           userId: id,
           eventType,
+          isTherapist: !!matchedTherapist,
+          therapistId: matchedTherapist?.id,
+          publicMetadata,
         });
       }
     }
@@ -168,7 +229,7 @@ export async function handleUserDeletion(
       .update(users)
       .set({
         isActive: false,
-        updatedAt: new Date(),
+        updatedAt: createDate().toJSDate(),
       })
       .where(eq(users.clerkId, id));
 
@@ -204,7 +265,7 @@ export async function handleUserActivity(
     await db
       .update(users)
       .set({
-        updatedAt: new Date(), // Using updatedAt as activity tracker
+        updatedAt: createDate().toJSDate(), // Using updatedAt as activity tracker
       })
       .where(eq(users.clerkId, id));
 

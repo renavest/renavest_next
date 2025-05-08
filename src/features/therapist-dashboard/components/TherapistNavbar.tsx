@@ -1,32 +1,40 @@
 'use client';
 
 import { UserButton, useUser } from '@clerk/nextjs';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Calendar, Check, AlertCircle, CheckCircle, User } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
-import { LogoutButton } from '@/src/components/shared/LogoutButton';
+import { LogoutButton } from '@/src/features/auth/components/LogoutButton';
 import {
-  fetchGoogleCalendarStatus,
+  useGoogleCalendarIntegration,
   fetchTherapistId,
-} from '@/src/features/google-calendar/utils/googleCalendarIntegrationHelpers';
+} from '@/src/features/google-calendar/utils/googleCalendarIntegration';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
 import { isHeaderScrolledSignal } from '../../employee-dashboard/state/dashboardState';
+import { therapistIdSignal } from '../state/therapistDashboardState';
 
 export default function TherapistDashboardHeader({
-  pageTitle = 'Dashboard',
+  pageTitle = 'Therapist Dashboard',
   showBackButton = false,
   backButtonHref = '/therapist',
+  isOnboarded = false,
 }: {
   pageTitle?: string;
   showBackButton?: boolean;
   backButtonHref?: string;
+  isOnboarded?: boolean;
 }) {
   const { user } = useUser();
-  const [isCalendarConnected, setIsCalendarConnected] = useState<boolean | null>(null);
+
+  // Use the Google Calendar integration hook with refresh capability
+  const { status: calendarStatus, refreshStatus } = useGoogleCalendarIntegration(
+    therapistIdSignal.value || 0,
+  );
+
   useEffect(() => {
     const handleScroll = () => {
       isHeaderScrolledSignal.value = window.scrollY > 0;
@@ -35,22 +43,16 @@ export default function TherapistDashboardHeader({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Get therapist ID if not in metadata
   useEffect(() => {
-    async function checkCalendar() {
-      try {
-        const therapistId = user?.publicMetadata?.therapistId || (await fetchTherapistId(user?.id));
-        if (!therapistId) {
-          setIsCalendarConnected(false);
-          return;
-        }
-        const data = await fetchGoogleCalendarStatus(Number(therapistId));
-        setIsCalendarConnected(!!data.isConnected);
-      } catch {
-        setIsCalendarConnected(false);
+    async function getTherapistId() {
+      if (user?.id && !therapistIdSignal.value) {
+        const therapistId = await fetchTherapistId(user.id);
+        therapistIdSignal.value = therapistId;
       }
     }
-    checkCalendar();
-  }, [user]);
+    getTherapistId();
+  }, [user?.id]);
 
   return (
     <header
@@ -88,16 +90,43 @@ export default function TherapistDashboardHeader({
             {pageTitle}
           </h1>
         </div>
-        {/* Right: Avatar and Logout button side by side */}
-        <div className='flex items-center gap-2'>
-          {isCalendarConnected === false && (
+        {/* Right: Integration status, Logout, Avatar */}
+        <div className='flex items-center gap-3'>
+          {!isOnboarded && (
             <Link
-              href='/therapist/integrations'
-              className='text-gray-700 hover:text-gray-900 transition-colors'
+              href='/therapist/onboarding'
+              className='flex items-center gap-1.5 text-gray-700 hover:text-gray-900 transition-colors text-sm px-2 py-1 rounded-md hover:bg-gray-100'
             >
-              Connect Calendar
+              <CheckCircle className='h-4 w-4' />
+              <span>Onboarding</span>
             </Link>
           )}
+          <Link
+            href='/therapist/'
+            className='flex items-center gap-1.5 text-gray-700 hover:text-gray-900 transition-colors text-sm px-2 py-1 rounded-md hover:bg-gray-100'
+          >
+            <User className='h-4 w-4' />
+            <span>View Profile</span>
+          </Link>
+          <div className='h-6 w-px bg-gray-200 mx-1'></div>
+          <Link
+            href='/therapist/integrations'
+            className='flex items-center gap-1.5 text-gray-700 hover:text-gray-900 transition-colors text-sm px-2 py-1 rounded-md hover:bg-gray-100'
+            onClick={() => {
+              // Optional: Refresh status when clicking on integrations link
+              refreshStatus();
+            }}
+          >
+            <Calendar className='h-4 w-4' />
+            <span>Integrations</span>
+            {calendarStatus.isLoading ? (
+              <span className='h-2 w-2 rounded-full bg-gray-300 animate-pulse'></span>
+            ) : calendarStatus.isConnected ? (
+              <Check className='h-4 w-4 text-green-500' />
+            ) : (
+              <AlertCircle className='h-4 w-4 text-amber-500' />
+            )}
+          </Link>
           <div className='h-6 w-px bg-gray-200 mx-1'></div>
           <LogoutButton />
           <div className='h-6 w-px bg-gray-200 mx-1'></div>

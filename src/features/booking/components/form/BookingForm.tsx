@@ -3,6 +3,7 @@
 import { useState } from 'react';
 
 import { TherapistAvailability } from '../TherapistAvailability';
+import { selectedSlotSignal } from '../TherapistAvailability/useTherapistAvailability';
 
 import { BookingConfirmationModal } from './BookingConfirmationModal';
 import { useBookingConfirmation } from './useBookingConfirmation';
@@ -37,11 +38,11 @@ export function BookingForm({
 
   const { isBooking, error, handleConfirmBooking, setError } = useBookingConfirmation(
     onConfirm,
-    selectedSlot,
     advisorId,
   );
 
   const handleSlotSelect = (slot: TimeSlot) => {
+    selectedSlotSignal.value = slot;
     setSelectedSlot(slot);
     setError(null);
     setShowModal(true);
@@ -82,7 +83,6 @@ export function BookingForm({
             <TherapistAvailability
               therapistId={parseInt(advisorId)}
               onSlotSelect={handleSlotSelect}
-              selectedSlot={selectedSlot}
             />
           </div>
         </div>
@@ -90,12 +90,10 @@ export function BookingForm({
       {/* Confirmation Modal */}
       {selectedSlot && showModal && (
         <BookingConfirmationModal
-          slot={selectedSlot}
           error={error}
           isBooking={isBooking}
           onConfirm={handleConfirmBooking}
           onCancel={handleCancel}
-          advisorName={advisorName}
         />
       )}
     </div>

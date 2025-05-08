@@ -2,10 +2,12 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-interface TimeSlot {
-  start: string;
-  end: string;
-}
+import { createDate } from '@/src/utils/timezone';
+
+import {
+  selectedSlotSignal,
+  timezoneSignal,
+} from '../TherapistAvailability/useTherapistAvailability';
 
 interface BookingDetails {
   date: string;
@@ -21,7 +23,6 @@ export function useBookingConfirmation(
     message?: string;
     emailSent?: boolean;
   }>,
-  selectedSlot: TimeSlot | null,
   advisorId: string,
 ) {
   const router = useRouter();
@@ -29,19 +30,22 @@ export function useBookingConfirmation(
   const [error, setError] = useState<string | null>(null);
 
   const handleConfirmBooking = async () => {
-    if (!selectedSlot) return;
     setIsBooking(true);
     setError(null);
     try {
-      const date = new Date(selectedSlot.start).toISOString().split('T')[0];
-      const startTime = new Date(selectedSlot.start).toTimeString().split(' ')[0];
+      const startDateTime = createDate(selectedSlotSignal.value?.start, timezoneSignal.value);
+      const date = startDateTime.toISODate() || '';
+      const startTime = startDateTime.toFormat('HH:mm') || '';
+      
       const result = await onConfirm({
         date,
         startTime,
         therapistId: advisorId,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
+
       toast.success('Session booked successfully!');
+
       if (result.success && result.sessionId) {
         fetch('/api/google-calendar/events', {
           method: 'POST',
@@ -58,6 +62,7 @@ export function useBookingConfirmation(
             toast.error('Failed to create Google Calendar event');
           });
       }
+
       router.push(`/booking/confirmation?bookingId=${String(result.sessionId)}`);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to book session');

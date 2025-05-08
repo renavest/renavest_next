@@ -1,9 +1,9 @@
 import dotenv from 'dotenv';
 import { eq } from 'drizzle-orm';
 
-import TherapistList from '../config/therapistsList';
 import { db } from '../db';
 import { therapists, users } from '../db/schema';
+import TherapistList from '../old_config/therapistsList';
 import { generateTherapistImageKey } from '../services/s3/assetUrls';
 
 const envFile = '.env.local';
@@ -95,7 +95,7 @@ async function main() {
         console.log(`Created new Clerk user for ${therapist.email}`);
       }
       // Insert user row
-      const now = new Date();
+      const now = createDate();
       await db.insert(users).values({
         clerkId,
         email: therapist.email,

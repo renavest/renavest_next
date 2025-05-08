@@ -13,12 +13,12 @@ import { TimeSelectionModal } from './TimeSelectionModal';
 import {
   timezoneSignal,
   availableSlotsSignal,
-  loadingSignal,
   errorSignal,
   isGoogleCalendarIntegratedSignal,
   isCheckingIntegrationSignal,
   checkGoogleCalendarIntegration,
   fetchAvailability,
+  selectedSlotSignal,
 } from './useTherapistAvailability';
 
 interface TimeSlot {
@@ -30,14 +30,12 @@ interface TherapistAvailabilityProps {
   therapistId: number;
   onSlotSelect: (slot: TimeSlot) => void;
   onGoogleCalendarNotAvailable?: () => void;
-  selectedSlot?: TimeSlot | null;
 }
 
 export function TherapistAvailability({
   therapistId,
   onSlotSelect,
   onGoogleCalendarNotAvailable,
-  selectedSlot,
 }: TherapistAvailabilityProps) {
   // Initial calendar setup
   const isMobile = useMediaQuery({ maxWidth: 768 });
@@ -82,7 +80,7 @@ export function TherapistAvailability({
   const now = DateTime.now().setZone(timezoneSignal.value);
   const slotsForSelectedDate = useMemo(() => {
     if (!calendarSelectedDate) return [];
-    return allAvailableSlots.filter((slot: TimeSlot) => {
+    const filteredSlots = allAvailableSlots.filter((slot: TimeSlot) => {
       const slotDate = DateTime.fromISO(slot.start, { zone: timezoneSignal.value });
       // Only include slots for the selected date
       if (slotDate.toISODate() !== calendarSelectedDate.toISODate()) return false;
@@ -92,6 +90,8 @@ export function TherapistAvailability({
       }
       return true;
     });
+
+    return filteredSlots;
   }, [calendarSelectedDate, allAvailableSlots, now, timezoneSignal.value]);
 
   // Loading state
@@ -156,9 +156,9 @@ export function TherapistAvailability({
                     slotsForSelectedDate.map((slot: TimeSlot, idx: number) => {
                       const start = DateTime.fromISO(slot.start, { zone: timezoneSignal.value });
                       const isSelected =
-                        selectedSlot &&
-                        selectedSlot.start === slot.start &&
-                        selectedSlot.end === slot.end;
+                        selectedSlotSignal.value &&
+                        selectedSlotSignal.value.start === slot.start &&
+                        selectedSlotSignal.value.end === slot.end;
                       return (
                         <button
                           key={idx}
@@ -234,7 +234,7 @@ export function TherapistAvailability({
         date={calendarSelectedDate || DateTime.now()}
         timezone={timezoneSignal.value}
         onSlotSelect={onSlotSelect}
-        selectedSlot={selectedSlot}
+        selectedSlot={selectedSlotSignal.value}
       />
     </div>
   );

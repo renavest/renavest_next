@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 import readline from 'readline';
 
 import dotenv from 'dotenv';
@@ -66,7 +67,7 @@ async function createDbUser(
   db: any,
   user: { clerkId: string; email: string; firstName: string; lastName: string; imageUrl?: string },
 ) {
-  const now = new Date();
+  const now = createDate();
   const [created] = await db
     .insert(users)
     .values({

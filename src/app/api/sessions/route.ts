@@ -6,11 +6,12 @@ import { z } from 'zod';
 
 import { db } from '@/src/db';
 import { bookingSessions } from '@/src/db/schema';
+import { sendBookingConfirmationEmail } from '@/src/features/booking/actions/sendBookingConfirmationEmail';
+import { TimezoneIdentifier } from '@/src/features/booking/utils/dateTimeUtils';
+import { createAndStoreGoogleCalendarEvent } from '@/src/features/google-calendar/utils/googleCalendar';
+import { createDate } from '@/src/utils/timezone';
 
 import { UserType, TherapistType } from './types';
-import { createAndStoreGoogleCalendarEvent } from '@/src/utils/googleCalendar';
-import { sendBookingConfirmationEmail } from '@/src/features/booking/actions/sendBookingConfirmationEmail';
-import { convertTimeBetweenZones } from '@/src/utils/timezone';
 
 // OAuth2 client configuration
 const oauth2Client = new google.auth.OAuth2(
@@ -59,15 +60,6 @@ async function getTherapistTimezone(calendar: calendar_v3.Calendar) {
   return calendarSettings.data.value || 'UTC';
 }
 
-// Helper function to convert times between timezones
-function convertTimezone(time: Date, timezone: string) {
-  return new Date(
-    time.toLocaleString('en-US', {
-      timeZone: timezone,
-    }),
-  );
-}
-
 // Helper function to check slot availability
 async function checkSlotAvailability(
   calendar: calendar_v3.Calendar,
@@ -77,8 +69,8 @@ async function checkSlotAvailability(
 ) {
   const freeBusyResponse = await calendar.freebusy.query({
     requestBody: {
-      timeMin: startTime.toISOString(),
-      timeMax: endTime.toISOString(),
+      timeMin: createDate(startTime, 'UTC').toISO(),
+      timeMax: createDate(endTime, 'UTC').toISO(),
       timeZone: therapistTimezone,
       items: [{ id: 'primary' }],
     },
@@ -117,11 +109,11 @@ export async function POST(req: NextRequest) {
     const therapistTimezone = await getTherapistTimezone(calendar);
 
     // Convert session times from client timezone to therapist timezone
-    const clientStartTime = new Date(validatedData.sessionStartTime);
-    const clientEndTime = new Date(validatedData.sessionEndTime);
+    const clientStartTime = createDate(validatedData.sessionStartTime, validatedData.timezone);
+    const clientEndTime = createDate(validatedData.sessionEndTime, validatedData.timezone);
 
-    const therapistStartTime = convertTimezone(clientStartTime, therapistTimezone);
-    const therapistEndTime = convertTimezone(clientEndTime, therapistTimezone);
+    const therapistStartTime = clientStartTime.setZone(therapistTimezone).toJSDate();
+    const therapistEndTime = clientEndTime.setZone(therapistTimezone).toJSDate();
 
     // Verify the slot is still available
     const isSlotAvailable = await checkSlotAvailability(
@@ -178,15 +170,14 @@ export async function POST(req: NextRequest) {
     // Send confirmation email with timezone-aware details and Google Meet link
     if (user && therapist) {
       await sendBookingConfirmationEmail({
-        userEmail: user.email,
+        clientEmail: user.email,
         therapistEmail: therapist.googleCalendarEmail || '',
-        sessionStartTime: booking.sessionStartTime,
-        sessionEndTime: booking.sessionEndTime,
-        userTimezone: validatedData.timezone, // Client's timezone
-        therapistTimezone: therapistTimezone,
+        sessionDate: createDate(booking.sessionDate).toFormat('yyyy-MM-dd'),
+        sessionTime: createDate(booking.sessionStartTime).toFormat('HH:mm'),
+        timezone: validatedData.timezone as TimezoneIdentifier,
         googleMeetLink: calendarResult?.googleMeetLink,
-        therapistName: `${therapist.firstName} ${therapist.lastName}`.trim(),
-        userName: `${user.firstName} ${user.lastName}`.trim(),
+        therapistName: therapist.name,
+        clientName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
       });
     }
 
@@ -240,7 +231,7 @@ export async function PATCH(req: NextRequest) {
       .set({
         status: validatedData.status,
         cancellationReason: validatedData.cancellationReason,
-        updatedAt: new Date(),
+        updatedAt: createDate(new Date(), 'UTC').toJSDate(),
       })
       .where(eq(bookingSessions.id, validatedData.bookingId));
 
@@ -300,7 +291,7 @@ export async function GET(req: NextRequest) {
     let bookings;
     if (role === 'therapist') {
       const therapist = await db.query.therapists.findFirst({
-        where: (therapists, { eq }) => eq(therapists.userId, parseInt(userId)),
+        where: (therapists, { eq }) => eq(therapists.userId, userId),
       });
 
       if (!therapist) {

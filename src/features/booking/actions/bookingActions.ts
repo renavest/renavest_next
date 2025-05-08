@@ -7,7 +7,6 @@ import PostHogClient from '@/posthog';
 import { db } from '@/src/db';
 import { bookingSessions } from '@/src/db/schema';
 
-
 import {
   TimezoneIdentifier,
   parseDateTime,

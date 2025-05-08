@@ -1,4 +1,5 @@
 import { S3Client, GetObjectCommand, S3ServiceException } from '@aws-sdk/client-s3';
+import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Configure AWS S3
@@ -17,6 +18,11 @@ export async function GET(
   context: { params: Promise<{ key: string }> },
 ): Promise<NextResponse> {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const params = await context.params;
     const decodedKey = decodeURIComponent(params.key);
 

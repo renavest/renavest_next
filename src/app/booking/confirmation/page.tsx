@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
 
 import { BookingSuccess } from '@/src/features/booking/components/confirmation/BookingSuccess';
-
 interface PageProps {
   searchParams: { bookingId?: string };
 }

@@ -9,7 +9,9 @@ import {
   TooltipProps,
   Legend,
 } from 'recharts';
+
 import { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
+
 import { TrendingUp } from 'lucide-react';
 
 import { engagementMetricsSignal } from '../state/employerDashboardState';

@@ -12,6 +12,7 @@ import { Tailwind } from '@react-email/tailwind';
 import * as React from 'react';
 
 import { COLORS } from '@/src/styles/colors';
+import { createDate } from '@/src/utils/timezone';
 
 interface BookingConfirmationEmailProps {
   clientName: string;
@@ -102,7 +103,7 @@ export const BookingConfirmationEmailTemplate: React.FC<
 
           <Section className={`${COLORS.WARM_PURPLE['10']} p-3 rounded-lg text-center mt-6`}>
             <Text className={`${COLORS.WARM_PURPLE.DEFAULT} text-xs m-0`}>
-              © {new Date().getFullYear()} Renavest. All rights reserved.
+              © {createDate().year} Renavest. All rights reserved.
             </Text>
           </Section>
         </Container>

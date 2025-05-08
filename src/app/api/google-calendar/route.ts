@@ -1,3 +1,4 @@
+import { auth } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 import { google } from 'googleapis';
 import { NextRequest, NextResponse } from 'next/server';
@@ -5,6 +6,7 @@ import { z } from 'zod';
 
 import { db } from '@/src/db';
 import { therapists } from '@/src/db/schema';
+import { createDate } from '@/src/utils/timezone';
 
 // OAuth2 client configuration
 const oauth2Client = new google.auth.OAuth2(
@@ -20,6 +22,10 @@ const GoogleCalendarAuthSchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   // Get therapistId from query string
   const { searchParams } = new URL(req.url);
   const therapistId = searchParams.get('therapistId');
@@ -70,8 +76,8 @@ export async function POST(req: NextRequest) {
         googleCalendarRefreshToken: tokens.refresh_token,
         googleCalendarEmail: calendarEmail,
         googleCalendarIntegrationStatus: 'connected',
-        googleCalendarIntegrationDate: new Date(),
-        updatedAt: new Date(),
+        googleCalendarIntegrationDate: createDate().toJSDate(),
+        updatedAt: createDate().toJSDate(),
       })
       .where(eq(therapists.id, therapistId));
 

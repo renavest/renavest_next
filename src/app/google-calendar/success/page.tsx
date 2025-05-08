@@ -44,14 +44,14 @@ function GoogleCalendarSuccessPageInner() {
           return;
         }
         // fetch next week
-        const now = new Date();
-        const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const now = createDate();
+        const oneWeekFromNow = createDate(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
         const availabilityResponse = await fetch(
           `/api/sessions/availability?` +
             `therapistId=${therapistId}&` +
-            `startDate=${now.toISOString()}&` +
-            `endDate=${oneWeekFromNow.toISOString()}&` +
+            `startDate=${now.toISO()}&` +
+            `endDate=${oneWeekFromNow.toISO()}&` +
             `timezone=${Intl.DateTimeFormat().resolvedOptions().timeZone}`,
         );
         const availabilityData = await availabilityResponse.json();
@@ -129,8 +129,8 @@ function GoogleCalendarSuccessPageInner() {
                     >
                       <Clock className='w-4 h-4 text-purple-600' />
                       <span>
-                        {new Date(slot.start).toLocaleString()} -{' '}
-                        {new Date(slot.end).toLocaleTimeString()}
+                        {createDate(slot.start).toLocaleString()} -{' '}
+                        {createDate(slot.end).toLocaleTimeString()}
                       </span>
                     </div>
                   ))}

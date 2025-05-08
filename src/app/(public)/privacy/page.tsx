@@ -5,9 +5,11 @@ import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
 
+import { timezoneSignal } from '@/src/features/booking/components/TherapistAvailability/useTherapistAvailability';
 import Navbar from '@/src/features/home/components/Navbar';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
+import { createDate } from '@/src/utils/timezone';
 
 // Extract each section into its own component
 const SecurityFrameworkSection = () => (
@@ -97,7 +99,9 @@ const EnterpriseReadinessSection = () => (
 
 const ContactSection = () => (
   <section className='text-center'>
-    <p className='text-sm text-gray-500 italic'>Last Updated: {new Date().toLocaleDateString()}</p>
+    <p className='text-sm text-gray-500 italic'>
+      Last Updated: {createDate(new Date().toISOString(), timezoneSignal.value).toLocaleString()}
+    </p>
     <p className='mt-4 text-sm text-gray-600'>
       For any security inquiries, please contact:
       <a href='mailto:hello@renavestapp.com' className='ml-2 text-purple-600 hover:underline'>

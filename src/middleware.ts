@@ -2,8 +2,6 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-import { ALLOWED_EMAILS } from './constants';
-
 // Define protected routes that require authentication
 const protectedRoutes = [
   '/therapist',
@@ -31,6 +29,30 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
       return NextResponse.redirect(loginUrl);
     }
   }
+
+  // Block signup unless email is in therapists table
+  if (request.nextUrl.pathname === '/therapist-signup') {
+    if (request.method === 'POST') {
+      const body = await request.json();
+      const email = body.email || body.identifier || body.emailAddress;
+      if (email) {
+        // Import db and therapists
+        const { db } = await import('@/src/db');
+        const { therapists } = await import('@/src/db/schema');
+        const { eq } = await import('drizzle-orm');
+        const therapistRows = await db
+          .select()
+          .from(therapists)
+          .where(eq(therapists.email, email.toLowerCase()))
+          .limit(1);
+        if (therapistRows.length === 0) {
+          // Redirect or return error
+          return NextResponse.redirect(new URL('/therapist-signup/error', request.url));
+        }
+      }
+    }
+  }
+
   if (request.nextUrl.pathname === '/login') {
     const { userId } = await auth();
     if (userId) {

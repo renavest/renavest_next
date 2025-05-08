@@ -1,4 +1,5 @@
 import posthog from 'posthog-js';
+
 import { CreateClientNoteInput } from '../types';
 
 export const noteFormTracking = {

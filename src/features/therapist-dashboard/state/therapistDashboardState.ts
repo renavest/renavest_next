@@ -1,27 +1,9 @@
 import { signal } from '@preact-signals/safe-react';
 
-export interface ClientMetrics {
-  totalClients: number;
-  activeClients: number;
-  averageSessionsPerClient: number;
-  clientSatisfactionRate: number;
-}
+import { ClientMetrics, SessionStats, EarningsMetrics } from '../types';
 
-export interface SessionStats {
-  completedSessions: number;
-  upcomingSessions: number;
-  cancellationRate: number;
-  averageSessionDuration: number;
-}
-
-export interface EarningsMetrics {
-  currentMonthEarnings: number;
-  previousMonthEarnings: number;
-  projectedEarnings: number;
-  pendingPayouts: number;
-}
-
-// Sample data for now
+export const therapistPageLoadedSignal = signal(false);
+export const therapistIdSignal = signal<number | null>(null);
 export const clientMetricsSignal = signal<ClientMetrics>({
   totalClients: 45,
   activeClients: 32,

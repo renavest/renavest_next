@@ -1,4 +1,5 @@
 import { COLORS } from '@/src/styles/colors';
+import { createDate } from '@/src/utils/timezone';
 
 interface DateInputProps {
   label: string;
@@ -8,8 +9,8 @@ interface DateInputProps {
 }
 
 export const DateInput = ({ label, value, onChange, error }: DateInputProps) => {
-  const today = new Date().toISOString().split('T')[0];
-
+  const today = createDate().toISO().split('T')[0];
+  const todayFormatted = createDate(today).toFormat('yyyy-MM-dd');
   return (
     <div className='mb-4'>
       <label className='block text-sm font-medium text-gray-700 mb-2'>{label}</label>

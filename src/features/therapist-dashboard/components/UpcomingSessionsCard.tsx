@@ -3,7 +3,7 @@
 import { Calendar } from 'lucide-react';
 
 import { UpcomingSession } from '@/src/features/therapist-dashboard/types';
-
+import { createDate } from '@/src/utils/timezone';
 export function UpcomingSessionsCard({
   sessions,
   onSessionClick = () => {},
@@ -39,11 +39,11 @@ export function UpcomingSessionsCard({
                     {session.clientName || 'Unknown Client'}
                   </p>
                   <p className='text-sm text-gray-500'>
-                    {new Date(session.sessionDate).toLocaleDateString()}
+                    {createDate(session.sessionDate).toLocaleString()}
                   </p>
                 </div>
                 <p className='text-sm font-medium text-purple-600'>
-                  {new Date(session.sessionStartTime).toLocaleTimeString()}
+                  {createDate(session.sessionStartTime).toLocaleString()}
                 </p>
               </div>
               <p className='text-xs text-gray-600 capitalize'>{session.status}</p>

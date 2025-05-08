@@ -2,10 +2,7 @@
 
 import { useUser } from '@clerk/nextjs';
 import { computed } from '@preact-signals/safe-react';
-import { Suspense } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
 
-import { MetricsErrorFallback } from '@/src/components/shared/MetricsErrorFallback';
 import OnboardingModal from '@/src/features/onboarding/components/OnboardingModal';
 import { COLORS } from '@/src/styles/colors';
 
@@ -18,10 +15,7 @@ import ProgressComparisonChart from './insights/ProgressComparisonChart';
 import TherapistConnectionSummary from './insights/TherapistConnectionSummary';
 import TherapistRecommendations from './insights/TherapistRecommendations';
 import WeeklyFinancialReport from './insights/WeeklyFinancialReport';
-// import { MetricsSection } from './sections/MetricsSection';
-import { UpcomingSessionsSection } from './UpcomingSessionsSection';
 
-// Create a computed signal for showing onboarding
 const showOnboardingSignal = computed(() => {
   return (
     !onboardingSignal.value.isComplete &&

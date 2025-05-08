@@ -42,7 +42,7 @@ export function useOnboardingSubmission() {
       role: context.userRole,
       is_staff: isStaff,
       onboarding_complete: true,
-      created_at: user?.createdAt || new Date().toISOString(),
+      created_at: user?.createdAt || createDate().toISO(),
       onboarding_questions: Object.entries(onboardingAnswers).map(([questionId, answers]) => ({
         questionId: parseInt(questionId),
         answers,

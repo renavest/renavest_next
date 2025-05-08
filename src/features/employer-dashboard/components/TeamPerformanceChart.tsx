@@ -10,7 +10,9 @@ import {
   Legend,
   Cell,
 } from 'recharts';
+
 import { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
+
 import { BarChart3 } from 'lucide-react';
 
 // Mock data for team/department performance

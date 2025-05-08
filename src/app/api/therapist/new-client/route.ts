@@ -56,6 +56,8 @@ export async function POST(request: Request) {
       notify: true,
     });
 
+    console.log('Invitation created:', invitation);
+
     // Create new user in our database
     const newUser = await db
       .insert(users)

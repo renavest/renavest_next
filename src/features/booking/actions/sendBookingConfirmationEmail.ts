@@ -4,6 +4,7 @@ import { Resend } from 'resend';
 
 import { BookingConfirmationEmailTemplate } from '../components/EmailTemplates/BookingConfirmationEmailTemplate';
 import { TherapistBookingNotificationEmailTemplate } from '../components/EmailTemplates/TherapistBookingNotificationEmailTemplate';
+import { TherapistCalendlyEmail } from '../components/EmailTemplates/TherapistCalendlyEmail';
 import { TimezoneIdentifier } from '../utils/dateTimeUtils';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -99,6 +100,70 @@ export async function sendBookingConfirmationEmail({
     };
   } catch (error) {
     console.error('Error in sending booking confirmation emails:', error);
+    return { success: false, error };
+  }
+}
+
+interface TherapistCalendlyEmailParams {
+  therapistName: string;
+  therapistEmail: string;
+  clientName: string;
+  clientEmail: string;
+}
+
+/**
+ * Sends a notification email to a therapist when a client books them through Calendly
+ * This is used when we only have the client name and no session details
+ */
+export async function sendTherapistCalendlyEmail({
+  therapistName,
+  therapistEmail,
+  clientName,
+  clientEmail,
+}: TherapistCalendlyEmailParams) {
+  try {
+    // Validate inputs to prevent sending if any required field is missing
+    if (!therapistEmail || !therapistName || !clientName) {
+      console.error('Missing required email parameters', {
+        therapistEmail,
+        therapistName,
+        clientName,
+        clientEmail,
+      });
+      return {
+        success: false,
+        error: 'Missing required email parameters',
+      };
+    }
+
+    // Send email to therapist (to therapist and Stanley only)
+    const therapistEmailResult = await resend.emails.send({
+      from: 'Renavest Booking <booking@booking.renavestapp.com>',
+      to: ['sethmorton05@gmail.com', 'stanley@renavestapp.com'],
+      subject: 'New Client Booking Notification - Renavest',
+      react: await TherapistCalendlyEmail({
+        therapistName,
+        clientName,
+        clientEmail,
+      }),
+    });
+
+    // Check for errors in the email
+    if (therapistEmailResult.error) {
+      console.error(
+        'Failed to send therapist Calendly notification email:',
+        therapistEmailResult.error,
+      );
+      return { success: false, error: therapistEmailResult.error };
+    }
+
+    console.log('Therapist Calendly notification email sent successfully');
+    return {
+      success: true,
+      therapistEmailData: therapistEmailResult.data,
+    };
+  } catch (error) {
+    console.error('Error in sending therapist Calendly notification email:', error);
     return { success: false, error };
   }
 }

@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-import { LogoutButton } from '@/src/components/shared/LogoutButton';
+import { LogoutButton } from '@/src/features/auth/components/LogoutButton';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 

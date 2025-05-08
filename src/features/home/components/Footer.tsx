@@ -1,6 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
+import { getCurrentYear } from '@/src/utils/timezone';
+
 function Footer() {
   return (
     <footer className='bg-gray-50 border-t border-gray-200 py-8 md:py-10'>
@@ -16,7 +18,7 @@ function Footer() {
             />
           </div>
           <p className='text-gray-500 text-sm'>
-            © {new Date().getFullYear()} Renavest. All rights reserved.
+            © {getCurrentYear()} Renavest. All rights reserved.
           </p>
         </div>
         <div className='flex space-x-4'>
