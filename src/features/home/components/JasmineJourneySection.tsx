@@ -4,6 +4,8 @@ import { Frown, HeartHandshake, PieChart, TrendingUp, Users } from 'lucide-react
 import { useRef } from 'react';
 import { Parallax } from 'react-scroll-parallax';
 
+import { journeySectionTitleSignal } from '@/src/features/utm/utmCustomDemo';
+
 import { trackSectionView, trackUIInteraction, useViewTracker } from '../../posthog/tracking';
 
 import JourneyStep from './JourneyStep';
@@ -103,7 +105,7 @@ function JasmineJourneySection() {
                 EMPLOYEE JOURNEY
               </span>
               <h2 className='text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 md:mb-6 leading-tight'>
-                How financial therapy transforms work and life
+                {journeySectionTitleSignal.value}
               </h2>
               <h3 className='text-base md:text-xl lg:text-2xl text-gray-700 mb-0 font-medium px-2 md:px-0'>
                 88% of employees bring money worries to work. Jasmine was one of them—until she

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
 
+import { createDate } from '@/src/utils/timezone';
 interface CalendarStatus {
   isConnected: boolean;
   calendarEmail: string;
@@ -45,7 +46,7 @@ function GoogleCalendarSuccessPageInner() {
         }
         // fetch next week
         const now = createDate();
-        const oneWeekFromNow = createDate(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const oneWeekFromNow = now.plus({ days: 7 });
 
         const availabilityResponse = await fetch(
           `/api/sessions/availability?` +
@@ -130,7 +131,7 @@ function GoogleCalendarSuccessPageInner() {
                       <Clock className='w-4 h-4 text-purple-600' />
                       <span>
                         {createDate(slot.start).toLocaleString()} -{' '}
-                        {createDate(slot.end).toLocaleTimeString()}
+                        {createDate(slot.end).toLocaleString()}
                       </span>
                     </div>
                   ))}

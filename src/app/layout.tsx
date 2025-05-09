@@ -8,6 +8,7 @@ import './globals.css';
 import { PostHogProvider } from '@/src/features/posthog/PostHogProvider';
 
 import { Providers as ParallaxProviders } from '../features/parallax/Providers';
+import PageUtmHandler from '../features/utm/PageText';
 
 const figtreeFont = Figtree({
   variable: '--font-figtree',
@@ -25,10 +26,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <ClerkProvider>
       <html lang='en'>
         <body className={`${figtreeFont.variable} antialiased bg-amber-50/30`}>
-          <Toaster position='bottom-right' />
-          <ParallaxProviders>
-            <PostHogProvider>{children}</PostHogProvider>
-          </ParallaxProviders>
+          <PageUtmHandler>
+            <Toaster position='bottom-right' />
+            <ParallaxProviders>
+              <PostHogProvider>{children}</PostHogProvider>
+            </ParallaxProviders>
+          </PageUtmHandler>
         </body>
       </html>
     </ClerkProvider>
