@@ -1,10 +1,8 @@
 'use client';
-import { ArrowRight } from 'lucide-react';
 import posthog from 'posthog-js';
 import { useEffect, useState, useRef } from 'react';
 import { Parallax } from 'react-scroll-parallax';
 
-import { ctaTextSignal } from '@/src/features/home/state/ctaSignals';
 import { useParallaxImage } from '@/src/features/parallax/hooks/useParallaxImage';
 
 import CTAButton from './CTAButton';
@@ -80,18 +78,6 @@ function TestimonialSection() {
     };
   }, []);
 
-  const trackCtaClick = (ctaType: string) => {
-    if (typeof window !== 'undefined') {
-      posthog.capture('testimonial_cta_clicked', {
-        cta_type: ctaType,
-        cta_text: ctaType === 'primary' ? ctaTextSignal.value : 'Talk to Sales',
-        section: 'testimonial',
-        position: 'bottom',
-        url: window.location.href,
-      });
-    }
-  };
-
   return (
     <>
       <span id='testimonials' className='block scroll-mt-16'></span>
@@ -124,7 +110,7 @@ function TestimonialSection() {
               ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
               style={{ transitionDelay: '0.2s' }}
             >
-              <CTAButton />
+              <CTAButton className='px-4 py-1 xl:px-6 xl:py-2.5 bg-[#9071FF] text-white rounded-full hover:bg-[#9071FF]/90 transition font-medium text-sm lg:text-lg' />
             </div>
           </Parallax>
         </div>

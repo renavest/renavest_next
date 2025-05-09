@@ -7,7 +7,7 @@ import Link from 'next/link';
 import posthog from 'posthog-js';
 import { useEffect, useState } from 'react';
 
-import { ctaTextSignal } from '@/src/features/home/state/ctaSignals';
+import { ctaTextSignal } from '@/src/features/utm/utmCustomDemo';
 
 import CTAButton from './CTAButton';
 
@@ -65,18 +65,18 @@ const DesktopNavigation = ({ isSignedIn }: { isSignedIn: boolean }) => (
     <div className='flex items-center gap-3'>
       {isSignedIn ? (
         <Link href='/login' onClick={() => trackNavClick('dashboard')}>
-          <button className='px-2 py-1 xl:px-6 xl:py-2.5 bg-[#9071FF] text-white rounded-full hover:bg-[#9071FF]/90 transition font-medium text-sm lg:text-lg'>
+          <button className='px-6 py-2 xl:px-6 xl:py-2.5 bg-[#9071FF] text-white rounded-full hover:bg-[#9071FF]/90 transition font-medium text-sm lg:text-lg'>
             Dashboard
           </button>
         </Link>
       ) : (
         <>
           <Link href='/login' onClick={() => trackNavClick('secondary')}>
-            <button className='px-2 py-1 xl:px-6 xl:py-2.5 border border-[#9071FF] text-[#9071FF] bg-transparent rounded-full hover:bg-[#9071FF]/10 transition font-medium text-sm lg:text-lg'>
+            <button className='px-6 py-1 xl:px-6 xl:py-2.5 border border-[#9071FF] text-[#9071FF] bg-transparent rounded-full hover:bg-[#9071FF]/10 transition font-medium text-sm lg:text-lg'>
               Sign In
             </button>
           </Link>
-          <CTAButton />
+          <CTAButton className='px-6 py-2 xl:px-6 xl:py-2.5 bg-[#9071FF] text-white rounded-full hover:bg-[#9071FF]/90 transition font-medium text-sm lg:text-lg' />
         </>
       )}
     </div>

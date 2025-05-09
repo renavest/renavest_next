@@ -9,6 +9,7 @@ import { LogoutButton } from '@/src/features/auth/components/LogoutButton';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
+import { companyNameSignal } from '../../utm/utmCustomDemo';
 import { isHeaderScrolledSignal, isMobileMenuOpenSignal } from '../state/dashboardState';
 
 const MobileNavigation = () => (
@@ -82,10 +83,17 @@ export default function EmployeeNavbar() {
               priority
             />
           </div>
-
           {/* Page Title */}
           <h1 className='ml-3 md:ml-4 text-xl md:text-2xl font-semibold text-gray-800 transition-all duration-300'>
-            Employee Dashboard
+            <span className='bg-clip-text text-transparent bg-gradient-to-r from-[#9071FF] to-[#6A4BFF]'>
+              Renavest
+            </span>
+            {companyNameSignal.value && (
+              <>
+                <span className='text-gray-400 mx-2'>×</span>
+                <span className='text-black'>{companyNameSignal.value}</span>
+              </>
+            )}
           </h1>
         </div>
 

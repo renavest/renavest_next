@@ -2,6 +2,7 @@
 
 import { useUser } from '@clerk/nextjs';
 import { UserCircle2, ChevronRight } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
@@ -18,6 +19,7 @@ import {
 } from '@/src/features/therapist-dashboard/state/therapistDashboardState';
 import { Client, UpcomingSession } from '@/src/features/therapist-dashboard/types';
 import { COLORS } from '@/src/styles/colors';
+
 const ClientSidebar = ({
   clients,
   selectedClient,
@@ -119,6 +121,93 @@ const ClientDetailView = ({
   );
 };
 
+const FutureInsightsCards = () => {
+  const futureFeatures = [
+    {
+      title: 'Client Behavior Analysis',
+      description: 'Gain deep insights into client progress and patterns',
+      icon: (
+        <svg
+          className='w-8 h-8 text-purple-600'
+          fill='none'
+          stroke='currentColor'
+          viewBox='0 0 24 24'
+        >
+          <path
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            strokeWidth={2}
+            d='M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'
+          />
+        </svg>
+      ),
+      comingSoon: true,
+    },
+    {
+      title: 'Treatment Effectiveness Tracker',
+      description: 'Monitor and evaluate treatment outcomes',
+      icon: (
+        <svg
+          className='w-8 h-8 text-green-600'
+          fill='none'
+          stroke='currentColor'
+          viewBox='0 0 24 24'
+        >
+          <path
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            strokeWidth={2}
+            d='M13 10V3L4 14h7v7l9-11h-7z'
+          />
+        </svg>
+      ),
+      comingSoon: true,
+    },
+    {
+      title: 'Client Communication Insights',
+      description: 'Analyze communication patterns and engagement',
+      icon: (
+        <svg
+          className='w-8 h-8 text-blue-600'
+          fill='none'
+          stroke='currentColor'
+          viewBox='0 0 24 24'
+        >
+          <path
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            strokeWidth={2}
+            d='M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z'
+          />
+        </svg>
+      ),
+      comingSoon: true,
+    },
+  ];
+
+  return (
+    <div className='grid md:grid-cols-3 gap-4'>
+      {futureFeatures.map((feature, index) => (
+        <div
+          key={index}
+          className='bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all relative overflow-hidden'
+        >
+          <div className='flex items-center mb-4'>
+            {feature.icon}
+            <h3 className='ml-3 text-lg font-semibold text-gray-800'>{feature.title}</h3>
+          </div>
+          <p className='text-gray-500 text-sm mb-4'>{feature.description}</p>
+          {feature.comingSoon && (
+            <div className='absolute top-2 right-2 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full'>
+              Coming Soon
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 export default function TherapistDashboardPage() {
   const { user, isLoaded: isUserLoaded } = useUser();
   const { clients, upcomingSessions, statistics } = useTherapistDashboardData();
@@ -174,10 +263,27 @@ export default function TherapistDashboardPage() {
     therapistIdSignal.value !== null
   ) {
     return (
-      <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen flex items-center justify-center'>
-        <div className='w-full max-w-md space-y-6'>
-          <AddNewClientSection />
-          <GoogleCalendarIntegration />
+      <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-gradient-to-br from-purple-50 to-white min-h-screen flex items-center justify-center'>
+        <div className='w-full max-w-lg p-8 bg-white rounded-2xl shadow-xl border border-purple-100 space-y-6 text-center'>
+          <div className='w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-md'>
+            <Image
+              src='/renavestlogo.png'
+              alt='Renavest Logo'
+              width={80}
+              height={80}
+              className='p-2 animate-pulse-slow'
+            />
+          </div>
+          <h1 className='text-4xl font-extrabold text-purple-900 mb-4 tracking-tight'>
+            Welcome to Renavest
+          </h1>
+          <p className='text-gray-700 text-xl font-medium leading-relaxed max-w-md mx-auto'>
+            You don't have any clients yet. Let's embark on your financial therapy journey!
+          </p>
+          <div className='space-y-4'>
+            <AddNewClientSection />
+            <GoogleCalendarIntegration />
+          </div>
         </div>
       </div>
     );
@@ -239,6 +345,12 @@ export default function TherapistDashboardPage() {
 
       <div className='mt-6'>
         <TherapistStatisticsCard statistics={statistics} />
+      </div>
+
+      {/* New section for Future Insights */}
+      <div className='mt-6'>
+        <h2 className='text-xl font-semibold text-gray-800 mb-4'>Future Insights</h2>
+        <FutureInsightsCards />
       </div>
 
       <div className='grid grid-cols-12 gap-6 mt-6'>

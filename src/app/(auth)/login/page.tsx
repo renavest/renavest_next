@@ -7,6 +7,8 @@ import React, { useEffect, Suspense } from 'react';
 import LoginForm from '@/src/features/auth/components/LoginForm';
 import { setCompanyIntegration } from '@/src/features/auth/state/authState';
 import { trackAuthPageView } from '@/src/features/auth/utils/authTracking';
+import PageUtmHandler from '@/src/features/utm/PageText';
+import { companyNameSignal } from '@/src/features/utm/utmCustomDemo';
 import { COLORS } from '@/src/styles/colors';
 
 function TestimonialSection() {
@@ -52,47 +54,63 @@ function LoginPageContent() {
   }, [searchParams]);
 
   return (
-    <div className='min-h-screen flex flex-col lg:flex-row bg-gradient-to-br from-purple-50 via-[#f7f5ff] to-[#faf9f6]'>
-      <style jsx global>{`
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
+    <PageUtmHandler>
+      <div className='min-h-screen flex flex-col lg:flex-row bg-gradient-to-br from-purple-50 via-[#f7f5ff] to-[#faf9f6]'>
+        <style jsx global>{`
+          @keyframes fade-in {
+            from {
+              opacity: 0;
+              transform: translateY(10px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
           }
-          to {
-            opacity: 1;
-            transform: translateY(0);
+          .animate-fade-in {
+            animation: fade-in 0.6s ease-out forwards;
           }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.6s ease-out forwards;
-        }
-      `}</style>
-      {/* Testimonial on the left */}
-      <div className='w-full lg:w-4/12 flex items-center justify-center p-0'>
-        <TestimonialSection />
-      </div>
-      {/* Login section on the right */}
-      <div className='w-full lg:w-8/12 flex flex-col items-center bg-white p-8 min-h-screen relative overflow-hidden'>
-        <div className='w-full max-w-md relative z-10 flex flex-col h-full'>
-          {/* Logo and name row, centered */}
-          <div className='flex items-center justify-center mt-16 mb-2'>
-            <Image
-              src='/renavestlogo.png'
-              alt='Renavest'
-              width={48}
-              height={48}
-              className='w-12 h-12 mr-3'
-            />
-            <h1 className={`text-3xl font-bold ${COLORS.WARM_PURPLE.DEFAULT}`}>Renavest</h1>
-          </div>
-          {/* Vertically centered login card content */}
-          <div className='flex-1 flex flex-col justify-center'>
-            <LoginForm />
+        `}</style>
+        {/* Testimonial on the left */}
+        <div className='w-full lg:w-4/12 flex items-center justify-center p-0'>
+          <TestimonialSection />
+        </div>
+        {/* Login section on the right */}
+        <div className='w-full lg:w-8/12 flex flex-col items-center bg-white p-8 min-h-screen relative overflow-hidden'>
+          <div className='w-full max-w-md relative z-10 flex flex-col h-full'>
+            {/* Logo and name row, centered */}
+            <div className='flex items-center justify-center mt-16 mb-2'>
+              <Image
+                src='/renavestlogo.png'
+                alt='Renavest'
+                width={48}
+                height={48}
+                className='w-12 h-12 mr-3'
+              />
+              <h1 className={`text-4xl font-extrabold`}>
+                <span className='bg-clip-text text-transparent bg-gradient-to-r from-[#9071FF] to-[#6A4BFF]'>Renavest</span> 
+                {companyNameSignal.value && (
+                  <>
+                    <span className='text-gray-400 mx-2'>×</span>
+                    <span className='text-black'>{companyNameSignal.value}</span>
+                  </>
+                )}
+              </h1>
+            </div>
+            {/* Company subtitle if available */}
+            {companyNameSignal.value && (
+              <div className='text-center mb-6 text-gray-600'>
+                Financial therapy for {companyNameSignal.value} employees
+              </div>
+            )}
+            {/* Vertically centered login card content */}
+            <div className='flex-1 flex flex-col justify-center'>
+              <LoginForm />
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </PageUtmHandler>
   );
 }
 

@@ -1,10 +1,9 @@
 import Link from 'next/link';
 import posthog from 'posthog-js';
 
-import { ctaTextSignal } from '@/src/features/home/state/ctaSignals';
-import { isEmployeeSignal } from '@/src/features/home/state/ctaSignals';
+import { ctaTextSignal, isEmployeeSignal } from '../../utm/utmCustomDemo';
 
-export default function CTAButton() {
+export default function CTAButton({ className }: { className?: string }) {
   const trackCtaClick = (ctaType: string, isMobile: boolean = false) => {
     if (typeof window !== 'undefined') {
       posthog.capture('navbar_cta_clicked', {
@@ -25,15 +24,11 @@ export default function CTAButton() {
           rel='noopener noreferrer'
           onClick={() => trackCtaClick('primary')}
         >
-          <button className='px-2 py-1 xl:px-6 xl:py-2.5 bg-[#9071FF] text-white rounded-full hover:bg-[#9071FF]/90 transition font-medium text-sm lg:text-lg'>
-            {ctaTextSignal.value}
-          </button>
+          <button className={`${className}`}>{ctaTextSignal.value}</button>
         </a>
       ) : (
         <Link href='/login' onClick={() => trackCtaClick('primary')}>
-          <button className='px-2 py-1 xl:px-6 xl:py-2.5 bg-[#9071FF] text-white rounded-full hover:bg-[#9071FF]/90 transition font-medium text-sm lg:text-lg'>
-            {ctaTextSignal.value}
-          </button>
+          <button className={`${className}`}>{ctaTextSignal.value}</button>
         </Link>
       )}
     </>

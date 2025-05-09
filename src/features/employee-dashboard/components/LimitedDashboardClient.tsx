@@ -1,26 +1,24 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { Share2 } from 'lucide-react';
+import { ArrowRight, Play, Share2 } from 'lucide-react';
+import Image from 'next/image';
 import posthog from 'posthog-js';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
+import { companyNameSignal } from '@/src/features/utm/utmCustomDemo';
 import { trackReferralShare } from '@/src/lib/referralTracking';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
+import ComingSoon from './ComingSoon';
 import EmployeeNavbar from './EmployeeNavbar';
+import FinancialTherapyModal from './FinancialTherapyModal';
 import TherapistRecommendations from './insights/TherapistRecommendations';
 import { UpcomingSessionsSection } from './UpcomingSessionsSection';
 
-const SharePanel = ({
-  onShareClick,
-  referralLink,
-}: {
-  onShareClick: () => void;
-  referralLink: string;
-}) => {
+const SharePanel = ({ onShareClick }: { onShareClick: () => void; referralLink: string }) => {
   return (
     <div
       className={cn(
@@ -35,8 +33,8 @@ const SharePanel = ({
         Share Renavest
       </h3>
       <p className='text-gray-600 mb-4 text-sm'>
-        Help your colleagues discover financial wellness with Renavest. Share the link and track
-        your impact!
+        Help your colleagues {companyNameSignal.value ? `at ${companyNameSignal.value}` : ''}{' '}
+        discover financial wellness with Renavest. Share the link and track your impact!
       </p>
 
       <button
@@ -50,46 +48,10 @@ const SharePanel = ({
   );
 };
 
-const ResourcesPanel = () => {
-  const resources = [
-    'Budgeting Basics',
-    'Retirement Planning',
-    'Debt Management',
-    'Investment 101',
-  ];
-
-  return (
-    <div
-      className='bg-white rounded-xl shadow-sm p-6 border border-gray-100 
-      hover:shadow-md transition-shadow duration-300 animate-fade-in-up delay-300'
-    >
-      <h3 className='font-semibold text-gray-800 mb-3'>Financial Resources</h3>
-      <ul className='space-y-3'>
-        {resources.map((item, i) => (
-          <li
-            key={i}
-            className='flex items-center text-gray-700 hover:text-indigo-600 transition-colors cursor-pointer group'
-            onClick={() => posthog.capture('employee_resource_clicked', { resource: item })}
-          >
-            <svg
-              className='h-4 w-4 text-indigo-500 mr-2 group-hover:translate-x-1 transition-transform'
-              fill='none'
-              viewBox='0 0 24 24'
-              stroke='currentColor'
-            >
-              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5l7 7-7 7' />
-            </svg>
-            {item}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-};
-
 export default function LimitedDashboardClient() {
   const { user } = useUser();
   const [referralLink, setReferralLink] = useState('');
+  const [isFinancialTherapyModalOpen, setIsFinancialTherapyModalOpen] = useState(false);
   // const [referralsCount, setReferralsCount] = useState(0);
 
   useEffect(() => {
@@ -160,6 +122,10 @@ export default function LimitedDashboardClient() {
   return (
     <div className={`min-h-screen ${COLORS.WARM_WHITE.bg} font-sans`}>
       {/* Render toast notification */}
+      <FinancialTherapyModal
+        isOpen={isFinancialTherapyModalOpen}
+        onClose={() => setIsFinancialTherapyModalOpen(false)}
+      />
 
       <EmployeeNavbar />
       <main className='container mx-auto px-4 pt-24 md:pt-32 pb-8'>
@@ -171,7 +137,7 @@ export default function LimitedDashboardClient() {
             </h2>
             <p className='text-gray-600 mt-2 text-base md:text-lg max-w-2xl animate-fade-in'>
               Your financial wellness journey starts here. Explore resources and connect with expert
-              therapists.
+              financial therapists.
             </p>
           </div>
         </div>
@@ -207,7 +173,7 @@ export default function LimitedDashboardClient() {
               </div>
             </div>
 
-            {/* Therapist recommendations with enhanced styling */}
+            {/* Therapist recommendations  with enhanced styling */}
             <div
               className='bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 
               overflow-hidden border border-gray-100 animate-fade-in-up delay-200'
@@ -234,24 +200,70 @@ export default function LimitedDashboardClient() {
           {/* Share link panel and resources */}
           <div className='md:col-span-1 space-y-6'>
             {/* Share Panel */}
-            <SharePanel
-              onShareClick={handleShareClick}
-              referralLink={referralLink}
-            />
-
-            {/* Stats panel showing referral impact */}
-            {/* <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-100'>
-              <h3 className='font-semibold text-gray-800 mb-3'>Your Referral Impact</h3>
-              <div className='flex justify-between items-center text-gray-700'>
-                <span>Total Referrals</span>
-                <span className='font-medium text-purple-700'>{referralsCount}</span>
-              </div>
-            </div> */}
+            <SharePanel onShareClick={handleShareClick} referralLink={referralLink} />
 
             {/* Additional resources card */}
-            <ResourcesPanel />
+            <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-100'>
+              <h3 className='font-semibold text-gray-800 mb-3'>Additional Resources</h3>
+              <p className='text-gray-600'>
+                Want to learn more about financial therapy? Check out our resources below.
+              </p>
+              <button
+                onClick={() => setIsFinancialTherapyModalOpen(true)}
+                className='w-full mt-4 bg-purple-600 text-white py-3 rounded-lg 
+                  hover:bg-purple-700 transition-colors duration-300 
+                  flex items-center justify-center font-semibold 
+                  shadow-md hover:shadow-lg'
+              >
+                <svg
+                  xmlns='http://www.w3.org/2000/svg'
+                  className='h-5 w-5 mr-2'
+                  viewBox='0 0 20 20'
+                  fill='currentColor'
+                >
+                  <path
+                    fillRule='evenodd'
+                    d='M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z'
+                    clipRule='evenodd'
+                  />
+                </svg>
+                Learn More About Financial Therapy
+              </button>
+            </div>
+            <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-100'>
+              <h3 className='font-semibold text-gray-800 mb-3'>Video Library</h3>
+              <div className='flex space-x-4 items-stretch'>
+                <div className='relative h-[250px] w-[150px] md:h-[300px] md:w-[200px] lg:h-[250px] lg:w-[150px]'>
+                  <Image
+                    src='https://d2qcuj7ucxw61o.cloudfront.net/atia_demo.jpg'
+                    alt='Financial Therapy Video 1'
+                    fill
+                    className='object-cover rounded-lg'
+                  />
+                  <div className='absolute inset-0 flex items-center justify-center'>
+                    <Play className='w-8 h-8 text-white bg-black/50 rounded-full p-2' />
+                  </div>
+                </div>
+                <div className='relative h-[250px] w-[150px]  md:hidden lg:block'>
+                  <Image
+                    src='https://d2qcuj7ucxw61o.cloudfront.net/shani_demo.jpg'
+                    alt='Financial Therapy Video 2'
+                    fill
+                    className='object-cover rounded-lg'
+                  />
+                  <div className='absolute inset-0 flex items-center justify-center'>
+                    <Play className='w-8 h-8 text-white bg-black/50 rounded-full p-2' />
+                  </div>
+                </div>
+                <button className='text-purple-600 hover:text-purple-800 text-sm flex items-center gap-1'>
+                  View All
+                  <ArrowRight className='h-3 w-3 md:h-4 md:w-4' />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
+        <ComingSoon />
       </main>
     </div>
   );

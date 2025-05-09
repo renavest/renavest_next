@@ -7,6 +7,7 @@ import OnboardingModal from '@/src/features/onboarding/components/OnboardingModa
 import { COLORS } from '@/src/styles/colors';
 
 import { onboardingSignal } from '../../onboarding/state/onboardingState';
+import { firstNameSignal } from '../../utm/utmCustomDemo';
 
 import EmployeeNavbar from './EmployeeNavbar';
 import PersonalActionableInsights from './insights/PersonalActionableInsights';
@@ -15,7 +16,6 @@ import ProgressComparisonChart from './insights/ProgressComparisonChart';
 import TherapistConnectionSummary from './insights/TherapistConnectionSummary';
 import TherapistRecommendations from './insights/TherapistRecommendations';
 import WeeklyFinancialReport from './insights/WeeklyFinancialReport';
-
 const showOnboardingSignal = computed(() => {
   return (
     !onboardingSignal.value.isComplete &&
@@ -34,7 +34,7 @@ export default function DashboardClient() {
         {/* Welcome Section */}
         <div className='mb-8 md:mb-12'>
           <h2 className='text-3xl md:text-4xl font-bold text-gray-800'>
-            Welcome back, {user?.firstName} 👋
+            Welcome back, {firstNameSignal.value ? firstNameSignal.value : user?.firstName} 👋
           </h2>
           <p className='text-gray-500 mt-2 text-base md:text-lg'>
             Your financial wellness journey is unique to you. Let's see how you're progressing and
