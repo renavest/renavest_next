@@ -1,0 +1,118 @@
+---
+description: posthog and analytics and tracking
+globs: 
+alwaysApply: false
+---
+# Renavest PostHog Implementation Rules (MDC)
+## I. Foundations & Data Hygiene
+
+### A. Event Tracking
+1.  **Client-Side (Next.js Frontend - `posthog-js`):**
+    * Use for UI interactions (autocapture: pageviews, clicks, forms; custom events).
+    * **Manual Capture REQUIRED:** `$pageview` and `$pageleave` events for accurate SPA navigation in Next.js.
+2.  **Server-Side (Next.js API Routes - `posthog-node`):**
+    * **MANDATORY** for critical business logic, financial transactions (credit allocations, purchases, usage), and sensitive data manipulations.
+    * Offers reliability (not blocked by ad-blockers).
+3.  **Naming Conventions:**
+    * **Events:** Lowercase, `snake_case`, present-tense verbs. Framework: `category:object_action` (e.g., `benefits_portal:view_plan_details_click`).
+    * **Properties:** `object_adjective` (e.g., `user_id`, `plan_type`). Booleans: `is_` or `has_`. Dates: `_date` or `_timestamp`.
+    * Use distinct event names for backend vs. frontend events (e.g., `user_created` (backend) vs. `user_signed_up` (frontend)).
+4.  **Event Versioning:** Implement event versioning for evolving features (e.g., `onboarding_step1_completed_v1`).
+
+### B. User & Group Identification
+1.  **User Identification (`posthog.identify()`):**
+    * Call **immediately** on user login or signup.
+    * Use a stable, unique `userId` (e.g., database ID).
+    * Include essential person properties: `role` (e.g., 'employee', 'hr_manager'), `email`, `email_domain`.
+2.  **User Aliasing (`posthog.alias()`):**
+    * Use to merge anonymous user activity with identified user profiles.
+3.  **Group Analytics (`posthog.group()`):**
+    * **ESSENTIAL** for B2B: Associate users with their company.
+    * Call after `identify()` (typically on login).
+    * Syntax: `posthog.group('company', companyId, {name: 'CompanyName', ...otherGroupProps})`.
+    * `groupTypeKey`: Use a consistent key (e.g., 'company').
+    * `groupKey`: Must be a unique and stable ID (e.g., company database ID), **NOT** a mutable name.
+4.  **Super Properties (`posthog.register()`):**
+    * Register once for properties to be included with all client-side events (e.g., `app_version`).
+
+### C. Data Management
+1.  **Filter Internal Users:**
+    * Implement filtering via IP addresses, email domains (e.g., `@renavest.com`), or a user property (e.g., `is_employee: true`).
+    * Disable tracking in development environments.
+2.  **Data Retention:** Be aware of PostHog's data retention policies (differs by plan).
+
+### D. Security & Privacy
+1.  **PII Masking:**
+    * Utilize `ph-no-capture` CSS class on HTML elements containing sensitive data to prevent capture in session replays/autocapture.
+    * Leverage PostHog's default masking for input elements.
+    * Use `before_send` callback for client-side event property sanitization.
+    * Consider PII Hashing transformation app for sensitive properties.
+2.  **Secure Transactions:** All financial/credit system events **MUST** be server-side. Keep API keys secure.
+3.  **Reverse Proxy:**
+    * Strongly consider setting up for `analytics.renavest.com` to improve data capture and alleviate enterprise client concerns.
+    * Avoid "analytics" or "tracking" in the subdomain.
+    * Ensure correct `Host` header and `ui_host` parameter configuration.
+
+## II. Core B2B SaaS Metrics & KPI Tracking
+
+1.  **Focus:** Prioritize **actionable KPIs** over vanity metrics. KPIs should be understandable, comparative, specific, actionable.
+2.  **Key KPI Categories for Renavest:**
+    * Employer Acquisition (e.g., Website Visitors to Demo Request Rate).
+    * Company Activation (e.g., % new companies completing setup milestones – use Group Analytics).
+    * Employee Activation (e.g., % invited employees completing core onboarding & first value action).
+    * Company Engagement (e.g., Active Companies – use Group Analytics).
+    * Employee Engagement (e.g., Core Feature Adoption Rate).
+    * Company/Employee Retention.
+    * Pilot Program Success Metrics (e.g., Participation Rate, Stress Reduction).
+3.  **PostHog Tools:** Utilize Trends, Funnels, Retention, Paths, Stickiness, Actions, Cohorts, and Group Analytics to track these KPIs.
+
+## III. Dashboards, Funnels & Cohorts
+
+1.  **Dashboard Design Principles:** Focus on KPIs, clarity, simplicity, context, user-centricity, near real-time data, and drill-down capability.
+2.  **Funnels:**
+    * **Define Critical Funnels:**
+        * Employer Lead to Demo Request.
+        * Employee Onboarding.
+        * Company-Level Onboarding (using Group Analytics).
+    * **Analyze Drop-offs:** Investigate high drop-off points; use session recordings for qualitative insights.
+3.  **Cohorts:**
+    * Use for segmented analysis (client companies, user roles, behaviors).
+    * Leverage dynamic cohorts where applicable.
+4.  **Path Analysis:** Understand actual user journeys beyond predefined funnels. Use wildcards for path cleaning.
+5.  **Annotations:** Add annotations to charts for marketing campaigns, sales initiatives, or product releases to correlate activities with metric changes.
+
+## IV. Advanced Analytics & Integrations
+
+1.  **High-Intent B2B Signals:**
+    * Define PostHog **Actions** for complex B2B intent (e.g., HR Manager viewing enterprise pricing & case studies).
+    * Utilize **HogQL** for sophisticated queries to identify target accounts or growth signals.
+2.  **CRM Integration (e.g., HubSpot):**
+    * Use Zapier or Webhooks to connect PostHog events/actions to CRM workflows (e.g., create deal on demo request, task on high engagement).
+    * Filter webhooks by event and properties for targeted triggers.
+3.  **Alerts:**
+    * Set up alerts on Trends insights for critical B2B events (e.g., spike in demo requests, drop in active companies).
+4.  **Client-Facing Dashboards (Proceed with Caution):**
+    * **Data Segregation:** Use a single project with Group Analytics. **ALL** insights on client-facing dashboards **MUST** be rigorously filtered for that specific client's group.
+    * **Access:** Prefer embeddable dashboards (with public links) or API-driven custom portal. **AVOID** direct client login to PostHog UI for viewing shared data.
+    * **Anonymization:** Ensure all shared data is aggregated and fully anonymized. No individual employee PII.
+
+## V. Next.js Specific Implementation (App Router)
+
+1.  **Setup:**
+    * Use `PostHogProvider` component with `'use client'` directive in `app/providers.js`.
+    * Wrap root layout (`app/layout.js`) with `PostHogProvider`.
+    * **Disable `capture_pageview: false`** in `posthog.init()` if manually capturing.
+2.  **Manual Pageview Tracking:**
+    * Create `PostHogPageView.jsx` component using `usePathname`, `useSearchParams`, and `usePostHog()`.
+    * Capture `$pageview` with `'$current_url'` in `useEffect`. Include in root layout within `<Suspense>`.
+3.  **Server-Side SDK (`posthog-node`):**
+    * Initialize in a helper (e.g., `app/posthog-server.js`) for API Routes/Server Components.
+    * Call `await posthog.shutdown()` in short-lived server functions.
+4.  **`identify()` Call:** On successful login/signup. Include `userId`, `role`, `email`.
+5.  **`group()` Call:** After `identify()` on login/signup, using `companyId` (stable DB ID) as `groupKey`.
+6.  **`reset()` Call:** On user logout to clear identified user/group context.
+7.  **Anonymous to Known Lead Conversion:**
+    * On form submission (e.g., demo request), call `posthog.identify(email, {email: email, role: 'hr_lead', ...})` to link anonymous activity.
+8.  **UTM & Referral Tracking:**
+    * Ensure marketing links are correctly UTM-tagged. PostHog auto-captures standard UTMs.
+    * Configure `custom_campaign_params` if needed.

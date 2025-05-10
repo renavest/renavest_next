@@ -27,7 +27,7 @@ export const heroSubtitleSignal = signal<string>(
   "Your workforce's financial stress is costing you $2,500 per employee annually.",
 );
 export const journeySectionTitleSignal = signal<string>(
-  'How financial therapy transforms work at ',
+  'How financial therapy transforms your workplace.',
 );
 
 // List of all standard and custom URL parameters to track
