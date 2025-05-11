@@ -10,14 +10,15 @@ export default function GoogleCalendarErrorPage({
     switch (reason) {
       case 'token_exchange_failed':
         return {
-          title: 'Insufficient Calendar Permissions',
+          title: 'Calendar Connection Needed',
           description:
-            'We need permission to access your Google Calendar to manage your availability. Please reconnect and make sure to check all required permissions.',
+            'We need your help to access your Google Calendar and support your wellness journey. Reconnecting ensures we can provide personalized scheduling support.',
         };
       default:
         return {
-          title: 'Google Calendar Connection Error',
-          description: 'An error occurred while connecting to Google Calendar. Please try again.',
+          title: 'Connection Interrupted',
+          description:
+            "Our connection to Google Calendar was momentarily disrupted. Let's get you back on track.",
         };
     }
   };
@@ -25,35 +26,41 @@ export default function GoogleCalendarErrorPage({
   const { title, description } = getErrorMessage(searchParams.reason);
 
   return (
-    <div className='container mx-auto max-w-2xl py-8'>
-      <div className='bg-white shadow rounded-lg p-6'>
+    <div className='container mx-auto max-w-2xl py-8 px-4'>
+      <div className='bg-white shadow-lg rounded-2xl p-8 border border-gray-100'>
         <div className='flex flex-col items-center space-y-6 text-center'>
-          <div className='rounded-full bg-red-100 p-3'>
-            <Calendar className='h-6 w-6 text-red-600' />
+          <div className='rounded-full bg-purple-100 p-4 animate-pulse-soft'>
+            <Calendar className='h-8 w-8 text-[#9071FF]' />
           </div>
 
-          <div className='space-y-2'>
-            <h1 className='text-2xl font-bold tracking-tight'>{title}</h1>
-            <p className='text-gray-500'>{description}</p>
+          <div className='space-y-4'>
+            <h1 className='text-3xl font-bold tracking-tight text-gray-800'>{title}</h1>
+            <p className='text-gray-600 max-w-md mx-auto leading-relaxed'>{description}</p>
           </div>
 
-          <div className='flex flex-col gap-4 w-full'>
-            <Link href='/therapist/integations' className='w-full'>
+          <div className='flex flex-col gap-4 w-full max-w-xs'>
+            <Link href='/therapist/integrations' className='w-full'>
               <button
-                className='flex items-center justify-center w-full px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2'
+                className='flex items-center justify-center w-full px-5 py-3 bg-[#9071FF] text-white rounded-lg font-semibold 
+                hover:bg-purple-700 transition-all duration-300 ease-in-out 
+                focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 
+                transform hover:-translate-y-0.5 shadow-lg hover:shadow-xl'
                 type='button'
               >
-                <Calendar className='mr-2 h-4 w-4' />
-                Reconnect Google Calendar
+                <Calendar className='mr-3 h-5 w-5' />
+                Reconnect Calendar
               </button>
             </Link>
 
             <Link href='/settings' className='w-full'>
               <button
-                className='flex items-center justify-center w-full px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2'
+                className='flex items-center justify-center w-full px-5 py-3 border border-gray-300 bg-white text-gray-700 
+                rounded-lg font-semibold hover:bg-gray-50 transition-all duration-300 ease-in-out 
+                focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 
+                transform hover:-translate-y-0.5 shadow-md hover:shadow-lg'
                 type='button'
               >
-                <ArrowLeft className='mr-2 h-4 w-4' />
+                <ArrowLeft className='mr-3 h-5 w-5' />
                 Back to Settings
               </button>
             </Link>
