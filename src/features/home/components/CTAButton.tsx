@@ -6,11 +6,11 @@ import { ctaTextSignal, isEmployeeSignal } from '../../utm/utmCustomDemo';
 export default function CTAButton({ className }: { className?: string }) {
   const trackCtaClick = (ctaType: string, isMobile: boolean = false) => {
     if (typeof window !== 'undefined') {
-      posthog.capture('navbar_cta_clicked', {
+      posthog.capture('landing_page_cta_clicked', {
         cta_type: ctaType,
         cta_text: ctaType === 'primary' ? ctaTextSignal.value : 'Sign In',
         device_type: isMobile ? 'mobile' : 'desktop',
-        position: 'navbar',
+        position: 'landing_page',
         url: window.location.href,
       });
     }
