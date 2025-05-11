@@ -1,3 +1,5 @@
+import { auth } from '@clerk/nextjs/server';
+
 import { db } from '@/src/db';
 import { therapists } from '@/src/db/schema';
 import AdvisorGrid from '@/src/features/explore/components/AdvisorGrid';
@@ -11,6 +13,7 @@ import ExploreNavbar from '../../../features/explore/components/ExploreNavbar';
 // Make this a server component since we're doing DB fetching
 export default async function Home() {
   try {
+    auth.protect();
     // Fetch all therapists except Seth Morton from the database
     const dbTherapists = await db.select().from(therapists);
 

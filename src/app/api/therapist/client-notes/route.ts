@@ -1,4 +1,4 @@
-import { currentUser } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { eq, desc } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
@@ -8,6 +8,11 @@ import { clientNotes, therapists } from '@/src/db/schema';
 
 export async function GET(request: Request) {
   try {
+    const { userId, sessionClaims } = await auth();
+    const metadata = sessionClaims?.metadata as { role?: string } | undefined;
+    if (!userId || metadata?.role !== 'therapist') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const { searchParams } = new URL(request.url);
     const clientId = searchParams.get('clientId');
 
@@ -62,7 +67,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       notes: notes.map((note) => ({
         ...note,
-        createdAt: note.createdAt?.toISO() ?? null,
+        createdAt: note.createdAt ? note.createdAt.toISOString() : null,
         isConfidential: note.isConfidential ?? false,
       })),
     });
@@ -74,6 +79,11 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const { userId, sessionClaims } = await auth();
+    const metadata = sessionClaims?.metadata as { role?: string } | undefined;
+    if (!userId || metadata?.role !== 'therapist') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const user = await currentUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -1,6 +1,6 @@
 'use client';
 import { ArrowDownUp } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, memo } from 'react';
 import type { ElementType } from 'react';
 import { Parallax } from 'react-scroll-parallax';
 
@@ -29,80 +29,86 @@ type AnimatedDescriptionProps = {
   animationDelay: string;
 };
 
-// Extract animation components to reduce main component size
-const AnimatedTitle = ({ title, isVisible, animationDelay, icon: Icon }: AnimatedTitleProps) => (
-  <span
-    className={`
+// Memoized components to reduce re-renders
+const AnimatedTitle = memo(
+  ({ title, isVisible, animationDelay, icon: Icon }: AnimatedTitleProps) => (
+    <span
+      className={`
       inline-flex items-center gap-2 text-[#9071FF] font-medium mb-3 text-sm
-      transition-all duration-700 delay-200
-      ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}
+      transition-opacity duration-500 ease-in-out
+      ${isVisible ? 'opacity-100' : 'opacity-0'}
     `}
-    style={{ transitionDelay: `calc(${animationDelay} + 0.1s)` }}
-  >
-    <Icon size={20} />
-    {title.split(':')[0]}
-  </span>
+      style={{ transitionDelay: `calc(${animationDelay} + 0.1s)` }}
+    >
+      <Icon size={20} />
+      {title.split(':')[0]}
+    </span>
+  ),
 );
 
-const AnimatedHeading = ({ title, isVisible, animationDelay }: AnimatedHeadingProps) => (
+const AnimatedHeading = memo(({ title, isVisible, animationDelay }: AnimatedHeadingProps) => (
   <h2
     className={`
       text-2xl md:text-3xl font-bold mb-4 text-gray-900
-      transform transition-all duration-700
-      ${isVisible ? 'scale-100 translate-x-0' : 'scale-95 -translate-x-6'}
+      transition-all duration-500 ease-in-out
+      ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}
     `}
     style={{ transitionDelay: `calc(${animationDelay} + 0.2s)` }}
   >
     {title.split(':')[1] || ''}
   </h2>
-);
+));
 
-const AnimatedDescription = ({
-  description,
-  isVisible,
-  animationDelay,
-}: AnimatedDescriptionProps) => (
-  <p
-    className={`
+const AnimatedDescription = memo(
+  ({ description, isVisible, animationDelay }: AnimatedDescriptionProps) => (
+    <p
+      className={`
       text-lg text-gray-600 leading-relaxed
-      transition-all duration-700
-      ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}
+      transition-all duration-500 ease-in-out
+      ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}
     `}
-    style={{ transitionDelay: `calc(${animationDelay} + 0.3s)` }}
-  >
-    {description}
-  </p>
+      style={{ transitionDelay: `calc(${animationDelay} + 0.3s)` }}
+    >
+      {description}
+    </p>
+  ),
 );
 
 function JourneyStep({ step, idx }: JourneySectionProps) {
-  const [elementRef, setElementRef] = useState<HTMLDivElement | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const parallaxImage = useParallaxImage();
 
+  // Use passive intersection observer for better performance
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) {
-          setIsVisible(true);
-        }
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+            observer.unobserve(entry.target);
+          }
+        });
       },
-      { threshold: 0.1 },
+      {
+        threshold: 0.1,
+      },
     );
 
-    if (elementRef) {
-      observer.observe(elementRef);
+    const currentTarget = document.querySelector(`#journey-step-${idx}`);
+    if (currentTarget) {
+      observer.observe(currentTarget);
     }
 
     return () => {
-      if (elementRef) {
-        observer.unobserve(elementRef);
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
       }
     };
-  }, [elementRef]);
+  }, [idx]);
 
   const animationDelay = `${idx * 0.2}s`;
 
-  const renderImage = () => {
+  const renderImage = React.useCallback(() => {
     if (step.title === 'Week 2: Noticing Patterns, Together') {
       return <DataCardExample />;
     }
@@ -112,18 +118,18 @@ function JourneyStep({ step, idx }: JourneySectionProps) {
         src={step.image}
         alt={step.title}
         className='w-full h-full object-cover rounded-3xl shadow-md'
-        style={{ transitionDelay: `calc(${animationDelay} + 0.4s)` }}
+        loading='lazy'
         onLoad={parallaxImage.onLoad}
       />
     ) : null;
-  };
+  }, [step, parallaxImage]);
 
   return (
     <div
-      ref={setElementRef}
+      id={`journey-step-${idx}`}
       className={`
         w-full px-4 py-10 md:px-20 md:py-14 ${step.bg || 'bg-white'} rounded-3xl shadow-md hover:shadow-xl
-        transform transition-all duration-1000
+        transform transition-all duration-700
         ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-24 opacity-0'}
       `}
       style={{ transitionDelay: animationDelay }}
@@ -213,4 +219,4 @@ function JourneyStep({ step, idx }: JourneySectionProps) {
   );
 }
 
-export default JourneyStep;
+export default React.memo(JourneyStep);

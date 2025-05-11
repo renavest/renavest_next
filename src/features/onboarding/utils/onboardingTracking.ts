@@ -14,8 +14,13 @@ export type OnboardingData = {
 export const isStaffRole = (role: string | null): boolean =>
   ['employee', 'therapist', 'employer'].includes(role || '');
 
-export const trackEvent = (eventName: string, additionalProps: Record<string, unknown> = {}) => {
-  posthog.capture(eventName, {
+export const trackEvent = (
+  event_name: string,
+  additionalProps: Record<string, unknown> = {},
+  userContext: { user_id?: string; company_id?: string } = {},
+) => {
+  posthog.capture(`onboarding:${event_name}_v1`, {
+    ...userContext,
     ...additionalProps,
   });
 };

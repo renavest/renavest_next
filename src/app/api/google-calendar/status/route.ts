@@ -6,24 +6,18 @@ import { createDate } from '@/src/utils/timezone';
 
 export async function GET(req: Request) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    auth.protect();
 
     const url = new URL(req.url);
     const therapistId = url.searchParams.get('therapistId');
-
+    
     if (!therapistId) {
-      console.log('No therapist ID provided, returning 400');
       return NextResponse.json(
         { success: false, message: 'Missing therapist ID' },
         { status: 400 },
       );
     }
 
-    // Find therapist by ID
-    console.log('Finding therapist with ID:', therapistId);
     const therapist = await db.query.therapists.findFirst({
       where: (therapists, { eq }) => eq(therapists.id, parseInt(therapistId)),
       columns: {

@@ -25,12 +25,17 @@ const getHeaderClassName = (isHeaderScrolled: boolean) => `
 `;
 
 // Track navigation clicks
-const trackNavClick = (linkName: string, isMobile: boolean = false) => {
+const trackNavClick = (
+  link_name: string,
+  is_mobile: boolean = false,
+  userContext: { user_id?: string; company_id?: string } = {},
+) => {
   if (typeof window !== 'undefined') {
-    posthog.capture('navigation_link_clicked', {
-      link_name: linkName,
-      device_type: isMobile ? 'mobile' : 'desktop',
+    posthog.capture('navigation:link_clicked_v1', {
+      link_name,
+      device_type: is_mobile ? 'mobile' : 'desktop',
       url: window.location.href,
+      ...userContext,
     });
   }
 };

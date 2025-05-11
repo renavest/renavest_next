@@ -1,10 +1,11 @@
+import { auth } from '@clerk/nextjs/server';
 import { eq, desc, count } from 'drizzle-orm';
 
 import { db } from '@/src/db';
 import { bookingSessions, therapists, users } from '@/src/db/schema';
-
 export async function fetchTherapistDashboardData(therapistId: number) {
   try {
+    auth.protect();
     // Fetch therapist details
     const therapist = await db.query.therapists.findFirst({
       where: eq(therapists.id, therapistId),

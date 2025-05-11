@@ -1,8 +1,10 @@
 'use client';
 
-import Link from 'next/link';
-
+import { useClerk } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 export default function TherapistSignupErrorPage() {
+  const { signOut } = useClerk();
+  const router = useRouter();
   return (
     <div className='min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4'>
       <div className='max-w-md w-full bg-white shadow-lg rounded-lg p-8 text-center'>
@@ -36,19 +38,15 @@ export default function TherapistSignupErrorPage() {
         </div>
 
         <div className='space-y-4'>
-          <a
-            href='mailto:support@renavestapp.com'
-            className='block w-full bg-[#9071FF] hover:bg-purple-700 text-white py-2 px-4 rounded-md transition-colors'
-          >
-            Contact Support
-          </a>
-
-          <Link
-            href='/'
+          <button
+            onClick={() => {
+              signOut();
+              router.push('/');
+            }}
             className='block w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-md transition-colors'
           >
             Return to Homepage
-          </Link>
+          </button>
         </div>
       </div>
     </div>

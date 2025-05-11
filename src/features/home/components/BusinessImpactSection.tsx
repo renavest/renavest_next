@@ -17,10 +17,11 @@ function BusinessImpactSection() {
 
           // Track when section becomes visible
           if (typeof window !== 'undefined') {
-            posthog.capture('section_viewed', {
+            posthog.capture('section:viewed_v1', {
               section_name: 'business_impact',
               url: window.location.href,
-              visibility_time: new Date().toISOString(),
+              visibility_timestamp: new Date().toISOString(),
+              // Add user context if available
             });
           }
         }
@@ -33,13 +34,18 @@ function BusinessImpactSection() {
     };
   }, []);
 
-  const trackStatHover = (statName: string, statValue: string) => {
+  const trackStatHover = (
+    stat_name: string,
+    stat_value: string,
+    userContext: { user_id?: string; company_id?: string } = {},
+  ) => {
     if (typeof window !== 'undefined') {
-      posthog.capture('business_impact_stat_hover', {
-        stat_name: statName,
-        stat_value: statValue,
+      posthog.capture('business_impact:stat_hover_v1', {
+        stat_name,
+        stat_value,
         section: 'business_impact',
         url: window.location.href,
+        ...userContext,
       });
     }
   };

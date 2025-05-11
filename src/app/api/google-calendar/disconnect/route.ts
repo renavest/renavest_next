@@ -1,4 +1,4 @@
-import { auth, clerkClient } from '@clerk/nextjs/server';
+import { auth, clerkClient, currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 import { google } from 'googleapis';
 import { NextRequest, NextResponse } from 'next/server';
@@ -16,11 +16,12 @@ const oauth2Client = new google.auth.OAuth2(
 
 export async function POST(_req: NextRequest) {
   try {
-    const { userId } = await auth();
+    auth.protect();
+    const user = await currentUser();
+    const userId = user?.id;
     if (!userId) {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
     }
-
     console.log('=== Google Calendar Disconnect ===');
     console.log('User ID:', userId);
 
@@ -40,7 +41,7 @@ export async function POST(_req: NextRequest) {
       hasRefreshToken: !!therapist.googleCalendarRefreshToken,
       email: therapist.googleCalendarEmail,
     });
-    
+
     // If there's an access token, try to revoke it
     if (therapist.googleCalendarAccessToken) {
       try {
@@ -77,8 +78,6 @@ export async function POST(_req: NextRequest) {
         googleCalendarIntegrationDate: null,
       },
     });
-    console.log('Successfully disconnected Google Calendar for therapist:', therapist.id);
-
     return NextResponse.json({
       success: true,
       message: 'Google Calendar successfully disconnected',

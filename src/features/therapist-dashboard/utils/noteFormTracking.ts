@@ -3,12 +3,18 @@ import posthog from 'posthog-js';
 import { CreateClientNoteInput } from '../types';
 
 export const noteFormTracking = {
-  fieldInteraction: (userId: string, field: string, value: string | boolean) => {
+  fieldInteraction: (
+    userId: string,
+    field: string,
+    value: string | boolean,
+    userContext: { companyId?: string } = {},
+  ) => {
     if (field !== 'isConfidential') {
-      posthog.capture('therapist_note_form_field_interaction', {
-        userId,
+      posthog.capture('therapist_note:form_field_interaction_v1', {
+        user_id: userId,
         field,
-        hasValue: !!value,
+        has_value: !!value,
+        ...userContext,
       });
     }
   },
@@ -25,25 +31,28 @@ export const noteFormTracking = {
       emotionalState: string;
       isConfidential: boolean;
     };
+    companyId?: string;
   }) => {
-    const { userId, therapistId, sessionId, formState } = params;
-    posthog.capture('therapist_note_creation_attempt', {
-      userId,
-      therapistId,
-      sessionId,
-      hasTitle: !!formState.title,
-      hasKeyObservations: !!formState.keyObservations,
-      hasProgressNotes: !!formState.progressNotes,
-      hasActionItems: !!formState.actionItems,
-      hasEmotionalState: !!formState.emotionalState,
-      isConfidential: formState.isConfidential,
+    const { userId, therapistId, sessionId, formState, companyId } = params;
+    posthog.capture('therapist_note:creation_attempt_v1', {
+      user_id: userId,
+      therapist_id: therapistId,
+      session_id: sessionId,
+      has_title: !!formState.title,
+      has_key_observations: !!formState.keyObservations,
+      has_progress_notes: !!formState.progressNotes,
+      has_action_items: !!formState.actionItems,
+      has_emotional_state: !!formState.emotionalState,
+      is_confidential: formState.isConfidential,
+      company_id: companyId,
     });
   },
 
-  validationError: (userId: string) => {
-    posthog.capture('therapist_note_creation_validation_error', {
-      userId,
-      errorType: 'missing_title',
+  validationError: (userId: string, userContext: { companyId?: string } = {}) => {
+    posthog.capture('therapist_note:creation_validation_error_v1', {
+      user_id: userId,
+      error_type: 'missing_title',
+      ...userContext,
     });
   },
 

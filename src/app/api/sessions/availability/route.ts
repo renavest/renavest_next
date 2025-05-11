@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 import { google } from 'googleapis';
 import { NextRequest, NextResponse } from 'next/server';
@@ -36,11 +36,11 @@ interface TimeSlot {
 // Get available time slots
 export async function GET(req: NextRequest) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    auth.protect();
+    const user = await currentUser();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     const searchParams = req.nextUrl.searchParams;
     const validatedData = GetAvailabilitySchema.parse({
       therapistId: searchParams.get('therapistId'),

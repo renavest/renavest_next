@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 import { calendar_v3, google } from 'googleapis';
 import { NextRequest, NextResponse } from 'next/server';
@@ -83,7 +83,8 @@ async function checkSlotAvailability(
 // Create a new booking
 export async function POST(req: NextRequest) {
   try {
-    const { userId } = await auth();
+    auth.protect();
+    const userId = (await currentUser())?.id;
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -208,11 +209,7 @@ export async function POST(req: NextRequest) {
 // Update booking status
 export async function PATCH(req: NextRequest) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+    auth.protect();
     const body = await req.json();
     const validatedData = UpdateBookingSchema.parse(body);
 

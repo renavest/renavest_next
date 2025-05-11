@@ -6,9 +6,9 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { ALLOWED_EMAILS } from '@/src/constants';
-import { getSelectedRole } from '@/src/features/auth/state/authState';
+import { selectedRoleSignal } from '@/src/features/auth/state/authState';
 import { UserType } from '@/src/features/auth/types/auth';
-import { useClerkUserMetadata } from '@/src/features/auth/utils/clerkUtils';
+import { createDate } from '@/src/utils/timezone';
 
 import { submitOnboardingData } from '../actions/onboardingActions';
 import { onboardingSignal, onboardingQuestions } from '../state/onboardingState';
@@ -26,7 +26,6 @@ export function useOnboardingSubmission() {
   const { user: clerkUser } = useClerk();
   const { user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { updateUserRole } = useClerkUserMetadata();
 
   const prepareOnboardingData = (selectedAnswers: Record<number, string[]>): OnboardingData[] =>
     Object.entries(selectedAnswers).map(([questionId, answers]) => ({
@@ -69,7 +68,7 @@ export function useOnboardingSubmission() {
     trackOnboardingSkipped(context);
 
     // Update Clerk metadata for salespeople
-    await updateUserRole(context.userRole as UserType);
+    // await updateUserRole(context.userRole as UserType);
 
     // Identify user even for allowed emails
     identifyUser(
@@ -107,8 +106,8 @@ export function useOnboardingSubmission() {
   const handleSubmit = async (selectedAnswers: Record<number, string[]>, currentStep: number) => {
     setIsSubmitting(true);
 
-    // Use the role set in LoginForm via selectedRoleSignal
-    const userRole = getSelectedRole();
+    // Prefer Clerk metadata, fallback to selectedRoleSignal
+    const userRole = user?.publicMetadata?.role || selectedRoleSignal.value;
     const userEmail = clerkUser?.emailAddresses[0]?.emailAddress || '';
 
     const context: OnboardingContext = {

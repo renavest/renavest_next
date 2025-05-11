@@ -7,15 +7,17 @@ import posthog from 'posthog-js';
  * @param referralLink The complete referral link that was shared
  */
 export function trackReferralShare(
-  userId: string | undefined,
-  shareMethod: string,
-  referralLink: string,
+  user_id: string | undefined,
+  share_method: string,
+  referral_link: string,
+  userContext: { company_id?: string } = {},
 ) {
-  posthog.capture('referral_link_shared', {
-    user_id: userId,
-    share_method: shareMethod,
-    referral_link: referralLink,
-    timestamp: new Date().toISOString(),
+  posthog.capture('referral:link_shared_v1', {
+    user_id,
+    share_method,
+    referral_link,
+    shared_timestamp: new Date().toISOString(),
+    ...userContext,
   });
 }
 
