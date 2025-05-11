@@ -1,4 +1,4 @@
-import { currentUser } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
@@ -7,12 +7,17 @@ import { therapists, users } from '@/src/db/schema';
 
 export async function GET() {
   try {
-    const user = await currentUser();
-
-    if (!user) {
+    const { userId, sessionClaims } = await auth();
+    const metadata = sessionClaims?.metadata as { role?: string } | undefined;
+    if (!userId || metadata?.role !== 'therapist') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Only fetch full user if needed (for email)
+    const user = await currentUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const userEmail = user.emailAddresses[0]?.emailAddress;
 
     // Find the therapist ID associated with the current user's email

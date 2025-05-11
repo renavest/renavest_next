@@ -25,7 +25,7 @@ export default function TherapistRecommendations() {
       try {
         setIsLoading(true);
         setError(null);
-        const res = await fetch('/api/therapists?limit=2');
+        const res = await fetch('/api/therapist/list-therapists?limit=2');
         if (!res.ok) throw new Error('Failed to fetch therapists');
         const data = await res.json();
         setTherapists(data.therapists || []);

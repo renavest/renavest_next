@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 
+import { BookingConfirmationModal } from '../BookingConfirmation/BookingConfirmationModal';
 import { TherapistAvailability } from '../TherapistAvailability';
 import { selectedSlotSignal } from '../TherapistAvailability/useTherapistAvailability';
 
-import { BookingConfirmationModal } from './BookingConfirmationModal';
 import { useBookingConfirmation } from './useBookingConfirmation';
 
 interface BookingConfirmationProps {

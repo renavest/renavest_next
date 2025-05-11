@@ -1,7 +1,8 @@
 'use client';
 
+import { useUser } from '@clerk/nextjs';
 import Image from 'next/image';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import React, { useEffect, Suspense } from 'react';
 
 import LoginForm from '@/src/features/auth/components/LoginForm';
@@ -9,7 +10,6 @@ import { setCompanyIntegration } from '@/src/features/auth/state/authState';
 import { trackAuthPageView } from '@/src/features/auth/utils/authTracking';
 import PageUtmHandler from '@/src/features/utm/PageText';
 import { companyNameSignal } from '@/src/features/utm/utmCustomDemo';
-import { COLORS } from '@/src/styles/colors';
 
 function TestimonialSection() {
   // Testimonial/Quote
@@ -42,16 +42,32 @@ function TestimonialSection() {
 
 function LoginPageContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const { user, isSignedIn, isLoaded } = useUser();
 
   useEffect(() => {
     const company = searchParams.get('company');
     if (company) {
       setCompanyIntegration(company);
     }
-
     // Track page view using the utility
     trackAuthPageView('/login', { company: company || 'none' });
   }, [searchParams]);
+
+  // Role-based redirect after login
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (isSignedIn && user) {
+      const role = user.publicMetadata?.role;
+      if (role === 'therapist') {
+        router.replace('/therapist');
+      } else if (role === 'employer') {
+        router.replace('/employer');
+      } else {
+        router.replace('/employee');
+      }
+    }
+  }, [isLoaded, isSignedIn, user, router]);
 
   return (
     <PageUtmHandler>
@@ -88,7 +104,9 @@ function LoginPageContent() {
                 className='w-12 h-12 mr-3'
               />
               <h1 className={`text-4xl font-extrabold`}>
-                <span className='bg-clip-text text-transparent bg-gradient-to-r from-[#9071FF] to-[#6A4BFF]'>Renavest</span> 
+                <span className='bg-clip-text text-transparent bg-gradient-to-r from-[#9071FF] to-[#6A4BFF]'>
+                  Renavest
+                </span>
                 {companyNameSignal.value && (
                   <>
                     <span className='text-gray-400 mx-2'>×</span>

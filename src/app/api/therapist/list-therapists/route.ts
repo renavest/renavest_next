@@ -1,4 +1,4 @@
-import { currentUser } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server';
 import { isNotNull, sql, and } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
@@ -8,10 +8,11 @@ import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
 
 export async function GET(request: Request) {
   try {
-    const user = await currentUser();
-    if (!user) {
+    const { userId } = await auth();
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    // Only fetch full user if needed (not needed here, so skip currentUser)
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '2', 10);
     const results = await db

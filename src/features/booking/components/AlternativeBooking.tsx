@@ -1,6 +1,7 @@
 'use client';
 
 import { useClerk } from '@clerk/nextjs';
+import { useUser } from '@clerk/nextjs';
 import { ChevronLeft } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -13,7 +14,7 @@ import { toast } from 'sonner';
 import { sendTherapistCalendlyEmail } from '@/src/features/booking/actions/sendBookingConfirmationEmail';
 import { COLORS } from '@/src/styles/colors';
 
-import { getSelectedRole } from '../../auth/state/authState';
+import { selectedRoleSignal } from '../../auth/state/authState';
 
 interface AlternativeBookingProps {
   advisor: {
@@ -34,13 +35,14 @@ export default function AlternativeBooking({ advisor, bookingURL }: AlternativeB
     purpose: 'Intro Call',
   });
   const { user: clerkUser } = useClerk();
+  const user = useUser();
   if (typeof window !== 'undefined' && clerkUser?.id) {
     posthog.identify(clerkUser.id, {
       $set_once: {
         email: clerkUser?.emailAddresses[0]?.emailAddress,
       },
       $set: {
-        role: getSelectedRole(),
+        role: user?.publicMetadata?.role || selectedRoleSignal.value,
       },
     });
   }
@@ -81,7 +83,7 @@ export default function AlternativeBooking({ advisor, bookingURL }: AlternativeB
         toast.success('Booking confirmed! The therapist has been notified.');
 
         // Redirect to booking confirmation page
-        router.push('/booking/alternative-confirmation');
+        router.push('/book/alternative-confirmation');
       } catch (error) {
         console.error('Booking scheduling error:', error);
         toast.error('There was an issue scheduling your booking. Please try again.');
@@ -134,7 +136,7 @@ export default function AlternativeBooking({ advisor, bookingURL }: AlternativeB
       toast.success('Request sent to therapist');
 
       // Redirect to confirmation page
-      router.push('/booking/alternative-success');
+      router.push('/book/alternative-success');
 
       // Reset form after submission
       setFormData({

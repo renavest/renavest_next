@@ -6,6 +6,7 @@ import { useClerk, useSignIn } from '@clerk/nextjs';
 import { SignInResource } from '@clerk/types';
 import Link from 'next/link';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
@@ -18,7 +19,6 @@ import {
   // emailSignal,
   // passwordSignal,
   selectedRoleSignal,
-  setSelectedRole,
   // companyIntegrationSignal,
   // setUserType,
 } from '../state/authState';
@@ -29,9 +29,6 @@ import {
   trackLoginSuccess,
   trackRoleSelection,
 } from '../utils/authTracking';
-
-// import GoogleSignInButton from './GoogleSignInButton';
-// import MicrosoftSignInButton from './MicrosoftSignInButton';
 
 import GoogleSignInButton from './GoogleSignInButton';
 // import OAuthButton from './OAuthButton';
@@ -308,9 +305,10 @@ function RoleSelection() {
     try {
       // Track role selection
       trackRoleSelection(role);
-      setSelectedRole(role);
+      selectedRoleSignal.value = role;
     } catch (error) {
       authErrorSignal.value = 'Failed to set role. Please try again.';
+      toast.error('Failed to set role.');
       console.error('Role selection error:', error);
     }
   };
@@ -377,7 +375,7 @@ export default function AuthenticationForm() {
               href='https://calendly.com/rameau-stan/one-on-one'
               className='text-sm text-[#9071FF] hover:underline'
             >
-              Apply to become a therapist on our platform
+              Apply to become a financial therapist on our platform
             </Link>
           </div>
         </div>

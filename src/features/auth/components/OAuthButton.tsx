@@ -5,7 +5,8 @@ import * as React from 'react';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
-import { authErrorSignal, getSelectedRole, getCompanyIntegration } from '../state/authState';
+import { authErrorSignal, selectedRoleSignal, getCompanyIntegration } from '../state/authState';
+import { UserType } from '../types/auth';
 import {
   trackLoginAttempt,
   trackLoginError,
@@ -23,7 +24,8 @@ interface OAuthButtonProps {
 export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProps) {
   const { signIn, isLoaded } = useSignIn();
   const { user } = useUser();
-  const userRole = getSelectedRole();
+  // Prefer Clerk metadata, fallback to selectedRoleSignal
+  const userRole = user?.publicMetadata?.role || selectedRoleSignal.value;
   const company = getCompanyIntegration();
 
   const handleOAuthSignIn = async () => {
@@ -39,18 +41,18 @@ export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProp
 
       // Determine redirect URL based on selected role
       const redirectUrlComplete = userRole === 'employee' ? '/employee' : `/${userRole}`;
-
+ 
       // Get provider name for tracking
       const provider = strategy === 'oauth_google' ? 'google' : 'microsoft';
 
       // Track OAuth redirect with detailed information
       trackOAuthRedirect(provider as 'google' | 'microsoft', {
-        role: userRole,
+        role: userRole as UserType,
         company: company || undefined,
         userId: user?.id,
         email: user?.emailAddresses[0]?.emailAddress,
       });
-
+      localStorage.setItem('role_from_oauth', userRole.toString());
       // Authenticate with redirect and pass role in redirectUrl
       await signIn.authenticateWithRedirect({
         strategy,
@@ -58,19 +60,19 @@ export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProp
         redirectUrlComplete,
         // Since additionalData isn't recognized, we'll need to use Clerk metadata later
       });
-      
+
       // Track login/signup attempt
       const isExistingUser = !!user?.id;
       if (isExistingUser) {
         trackLoginAttempt(provider as 'google' | 'microsoft', {
-          role: userRole,
+          role: userRole as UserType,
           company: company || undefined,
           userId: user?.id,
           email: user?.emailAddresses[0]?.emailAddress,
         });
       } else {
         trackSignupAttempt(provider as 'google' | 'microsoft', {
-          role: userRole,
+          role: userRole as UserType,
           company: company || undefined,
         });
       }
@@ -83,7 +85,7 @@ export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProp
 
       // Track OAuth error
       trackLoginError(provider as 'google' | 'microsoft', err, {
-        role: userRole,
+        role: userRole as UserType,
         company: company || undefined,
         userId: user?.id,
         email: user?.emailAddresses[0]?.emailAddress,

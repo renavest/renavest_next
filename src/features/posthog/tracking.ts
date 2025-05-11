@@ -5,15 +5,17 @@ import { useEffect, RefObject } from 'react';
  * Track page section view with consistent format
  */
 export const trackSectionView = (
-  sectionName: string,
+  section_name: string,
   additionalProps: Record<string, unknown> = {},
+  userContext: { user_id?: string; company_id?: string } = {},
 ) => {
   if (typeof window === 'undefined') return;
 
-  posthog.capture('section_viewed', {
-    section_name: sectionName,
+  posthog.capture('section:viewed_v1', {
+    section_name,
     url: window.location.href,
-    timestamp: new Date().toISOString(),
+    viewed_timestamp: new Date().toISOString(),
+    ...userContext,
     ...additionalProps,
   });
 };
@@ -22,16 +24,18 @@ export const trackSectionView = (
  * Track UI element interaction
  */
 export const trackUIInteraction = (
-  interactionType: string,
-  elementName: string,
+  interaction_type: string,
+  element_name: string,
   additionalProps: Record<string, unknown> = {},
+  userContext: { user_id?: string; company_id?: string } = {},
 ) => {
   if (typeof window === 'undefined') return;
 
-  posthog.capture(interactionType, {
-    element_name: elementName,
+  posthog.capture(`ui:${interaction_type}_v1`, {
+    element_name,
     url: window.location.href,
-    timestamp: new Date().toISOString(),
+    interacted_timestamp: new Date().toISOString(),
+    ...userContext,
     ...additionalProps,
   });
 };

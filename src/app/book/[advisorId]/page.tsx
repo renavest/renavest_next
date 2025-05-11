@@ -6,7 +6,7 @@ import { trackSessionSearch } from '@/src/app/api/track/calendly/route';
 import { db } from '@/src/db';
 import { therapists } from '@/src/db/schema';
 
-import UnifiedBookingFlow from './BookingFlow';
+import UnifiedBookingFlow from '../../../features/booking/components/BookingFlow';
 
 export default async function TherapistCalendlyPage({ params }: { params: { advisorId: string } }) {
   const { advisorId } = await params;
@@ -16,7 +16,9 @@ export default async function TherapistCalendlyPage({ params }: { params: { advi
   }
 
   const user = await currentUser();
-
+  if (!user) {
+    redirect('/explore');
+  }
   // Fetch therapist data server-side
   const advisor = await db.query.therapists.findFirst({
     where: eq(therapists.id, parseInt(advisorId)),

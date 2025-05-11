@@ -64,23 +64,6 @@ export const setUserType = (userType: UserType | null) => {
   selectedRoleSignal.value = userType;
 };
 
-export const setSelectedRole = (role: UserType | null) => {
-  selectedRoleSignal.value = role;
-  localStorage.setItem('selectedRole', role || '');
-};
-
-export const getSelectedRole = (): UserType | null => {
-  const role = localStorage.getItem('selectedRole') || selectedRoleSignal.value;
-  if (!role) {
-    return null;
-  }
-  return role as UserType;
-};
-
-export const clearSelectedRole = () => {
-  localStorage.removeItem('selectedRole');
-};
-
 export const setCompanyIntegration = (company: string | null) => {
   companyIntegrationSignal.value = company;
   if (company) {

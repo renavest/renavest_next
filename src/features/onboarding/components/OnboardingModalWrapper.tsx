@@ -2,6 +2,7 @@
 
 import { useUser } from '@clerk/nextjs';
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 
 import OnboardingModal from './OnboardingModal';
 
@@ -15,12 +16,16 @@ export default function OnboardingModalWrapper({ userId }: OnboardingModalWrappe
 
   useEffect(() => {
     if (isLoaded && user) {
-      // Check if onboarding is complete in Clerk metadata
+      // Check if onboarding is complete in Clerk metadata or if role is missing
       const isOnboardingComplete = user.publicMetadata?.onboardingComplete;
-
-      // Show modal if onboarding is not complete and user is not a "seth" user
+      const hasRole = !!user.publicMetadata?.role;
+      if (!hasRole) {
+        toast.info('Please complete onboarding to continue.');
+      }
+      // Show modal if onboarding is not complete or role is missing and user is not a "seth" user
       setShowModal(
-        !isOnboardingComplete && !user.emailAddresses[0]?.emailAddress?.includes('seth'),
+        (!isOnboardingComplete || !hasRole) &&
+          !user.emailAddresses[0]?.emailAddress?.includes('seth'),
       );
     }
   }, [user, isLoaded]);

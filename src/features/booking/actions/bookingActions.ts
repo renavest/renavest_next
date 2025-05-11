@@ -1,5 +1,6 @@
 'use server';
 
+import { auth } from '@clerk/nextjs/server';
 import { DateTime } from 'luxon';
 import { z } from 'zod';
 
@@ -16,7 +17,6 @@ import {
 import { ensureUserInDb } from '../utils/ensureUserInDb';
 
 import { sendBookingConfirmationEmail } from './sendBookingConfirmationEmail';
-
 // Validation schema
 const BookingSessionSchema = z.object({
   userId: z.string(),
@@ -51,6 +51,7 @@ const BookingSessionSchema = z.object({
 
 // Helper to fetch user and therapist details
 async function fetchUserAndTherapist(userEmail: string, therapistId: string | number) {
+  auth.protect();
   const parsedTherapistId = typeof therapistId === 'string' ? parseInt(therapistId) : therapistId;
 
   // Ensure user exists in DB (by email)
@@ -96,6 +97,7 @@ async function createBookingRecord(data: {
 export async function createBookingSession(rawData: unknown) {
   console.log('rawData', rawData);
   try {
+    auth.protect();
     const validatedData = BookingSessionSchema.parse(rawData);
     console.log('validatedData', validatedData);
     const { therapistId, sessionDate, sessionStartTime, userEmail, timezone } = validatedData;

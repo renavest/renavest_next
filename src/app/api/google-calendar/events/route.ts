@@ -12,6 +12,7 @@ const CreateCalendarEventSchema = z.object({
 });
 
 async function fetchBookingSessionDetails(bookingSessionId: number) {
+  auth.protect();
   return db.query.bookingSessions.findFirst({
     where: eq(bookingSessions.id, bookingSessionId),
     with: {

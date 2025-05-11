@@ -1,3 +1,4 @@
+import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 import PostHogClient from '@/posthog'; // Adjust path as needed
@@ -5,6 +6,7 @@ import { db } from '@/src/db'; // Import database client
 
 export async function POST(request: NextRequest) {
   try {
+    auth.protect();
     const body = await request.json();
     const { eventType, therapistId, therapistName, eventData, userEmail } = body;
 
@@ -19,10 +21,12 @@ export async function POST(request: NextRequest) {
     const posthogClient = PostHogClient();
     console.log('eventType', eventType);
 
+    // Enforce event naming convention and versioning
+    const formattedEvent = `calendly:${eventType}_v1`;
     // Track the event
     posthogClient.capture({
       distinctId: user?.clerkId || therapistId || 'unknown_user',
-      event: eventType,
+      event: formattedEvent,
       properties: {
         $set_once: user
           ? {
@@ -38,6 +42,8 @@ export async function POST(request: NextRequest) {
         user_email: userEmail,
       },
     });
+    // Ensure all events are flushed
+    await posthogClient.shutdown();
 
     return NextResponse.json(
       {

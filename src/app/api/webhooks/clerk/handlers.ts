@@ -1,8 +1,10 @@
+import { clerkClient } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 import { Result, ok, err } from 'neverthrow';
 
 import { db } from '@/src/db';
 import { users, therapists } from '@/src/db/schema';
+import { UserType } from '@/src/features/auth/types/auth';
 import { createDate } from '@/src/utils/timezone';
 
 // User-related webhook data
@@ -88,18 +90,18 @@ export async function handleUserCreateOrUpdate(
     const userWithEmail = existingUserByEmail[0];
     const matchedTherapist = therapistRecord[0];
 
-    if (!matchedTherapist) {
-      console.error('Therapist signup attempted but no therapist row found for email', {
-        userId: id,
-        eventType,
-        email: primaryEmail,
-      });
-      return err({
-        type: 'DatabaseError',
-        message: `No therapist row found for email: ${primaryEmail}`,
-        originalError: null,
-      });
+    // Determine user role and set public metadata
+    let userRole = 'user'; // default role
+    if (matchedTherapist) {
+      userRole = 'therapist';
     }
+
+    // Add public metadata to Clerk user
+    (await clerkClient()).users.updateUserMetadata(id, {
+      publicMetadata: {
+        role: userRole as UserType,
+      },
+    });
 
     const now = createDate().toJSDate();
     // Handle date conversions safely to prevent "Invalid time value" errors
@@ -120,17 +122,6 @@ export async function handleUserCreateOrUpdate(
     }
     // TODO: add employer table
 
-    // Determine user role and set public metadata
-    let userRole = 'user'; // default role
-    if (matchedTherapist) {
-      userRole = 'therapist';
-    }
-
-    // Add public metadata to Clerk user
-    const publicMetadata = {
-      role: userRole,
-    };
-
     if (existingUser) {
       // Update existing user
       await db
@@ -149,7 +140,7 @@ export async function handleUserCreateOrUpdate(
         userId: id,
         eventType,
         isTherapist: !!matchedTherapist,
-        publicMetadata,
+        publicMetadata: { role: userRole },
       });
     } else if (eventType === 'user.created') {
       if (userWithEmail) {
@@ -172,7 +163,7 @@ export async function handleUserCreateOrUpdate(
           previousId: userWithEmail.clerkId,
           isTherapist: !!matchedTherapist,
           therapistId: matchedTherapist?.id,
-          publicMetadata,
+          publicMetadata: { role: userRole },
         });
       } else {
         // Create new user
@@ -192,7 +183,7 @@ export async function handleUserCreateOrUpdate(
           eventType,
           isTherapist: !!matchedTherapist,
           therapistId: matchedTherapist?.id,
-          publicMetadata,
+          publicMetadata: { role: userRole },
         });
       }
     }

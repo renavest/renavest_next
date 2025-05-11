@@ -1,67 +1,9 @@
-'use client';
+import { AuthenticateWithRedirectCallback } from '@clerk/nextjs';
+// import { useClerk } from '@clerk/nextjs';
+export default function Page() {
+  // Handle the redirect flow by calling the Clerk.handleRedirectCallback() method
+  // or rendering the prebuilt <AuthenticateWithRedirectCallback/> component.
+  // This is the final step in the custom OAuth flow.
 
-import { useClerk } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
-import posthog from 'posthog-js';
-import { useEffect } from 'react';
-
-import { trackAuthPageView } from '@/src/features/auth/utils/authTracking';
-import { processUtmParameters } from '@/src/features/utm/utmCustomDemo';
-
-export default function SsoCallback() {
-  const { user } = useClerk();
-  const router = useRouter();
-
-  useEffect(() => {
-    // Process any existing UTM parameters
-    const searchParams = new URLSearchParams(window.location.search);
-    const utmParams = processUtmParameters(searchParams);
-
-    // Track SSO login event
-    if (user) {
-      posthog.capture('sso_login_successful', {
-        user_id: user.id,
-        email: user.primaryEmailAddress?.emailAddress,
-        first_name: user.firstName,
-        last_name: user.lastName,
-        ...utmParams, // Include UTM parameters in tracking
-      });
-
-      // Track auth page view
-      trackAuthPageView('/sso-callback', {
-        userId: user.id,
-      });
-
-      // Redirect to appropriate page based on UTM parameters
-      const isEmployee = searchParams.get('employee') === 'true';
-      router.push(isEmployee ? '/dashboard' : '/');
-    }
-  }, [user, router]);
-
-  return (
-    <div className='flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-50 via-[#f7f5ff] to-[#faf9f6]'>
-      <div className='text-center'>
-        <div role='status'>
-          <svg
-            aria-hidden='true'
-            className='inline w-10 h-10 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-purple-600'
-            viewBox='0 0 100 101'
-            fill='none'
-            xmlns='http://www.w3.org/2000/svg'
-          >
-            <path
-              d='M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z'
-              fill='currentColor'
-            />
-            <path
-              d='M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7479 32.2913 88.1032 35.8758C89.658 40.0013 93.6473 42.2591 93.9676 39.0409Z'
-              fill='currentFill'
-            />
-          </svg>
-          <span className='sr-only'>Loading...</span>
-        </div>
-        <p className='mt-4 text-gray-600'>Completing your sign-in...</p>
-      </div>
-    </div>
-  );
+  return <AuthenticateWithRedirectCallback />;
 }

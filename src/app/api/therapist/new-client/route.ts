@@ -1,4 +1,4 @@
-import { clerkClient, currentUser } from '@clerk/nextjs/server';
+import { auth, clerkClient, currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -16,6 +16,11 @@ const CreateClientSchema = z.object({
 export async function POST(request: Request) {
   try {
     // Authenticate the therapist
+    const { userId, sessionClaims } = await auth();
+    const metadata = sessionClaims?.metadata as { role?: string } | undefined;
+    if (!userId || metadata?.role !== 'therapist') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const user = await currentUser();
     const userEmail = user?.emailAddresses[0]?.emailAddress;
     if (!userEmail) {
@@ -45,8 +50,9 @@ export async function POST(request: Request) {
     }
 
     // Invite user in Clerk
-    const clerk = await clerkClient();
-    const invitation = await clerk.invitations.createInvitation({
+    const invitation = await (
+      await clerkClient()
+    ).invitations.createInvitation({
       emailAddress: validatedInput.email,
       publicMetadata: {
         therapistId: therapist.id,

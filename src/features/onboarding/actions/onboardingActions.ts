@@ -1,35 +1,31 @@
 'use server';
 
-import { auth } from '@clerk/nextjs/server';
-import { clerkClient } from '@clerk/nextjs/server';
+import { auth, currentUser, clerkClient } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
 
 import { db } from '@/src/db';
 import { userOnboarding } from '@/src/db/schema';
+// import { updateUserMetadata } from '@/src/features/auth/utils/clerkUtils';
+import { createDate } from '@/src/utils/timezone';
 
 const ONBOARDING_VERSION = 1;
 
 export async function submitOnboardingData(answers: Record<number, string[]>) {
   const { userId: clerkUserId } = await auth();
-
-  if (!clerkUserId) {
-    throw new Error('User not authenticated');
-  }
-
+  auth.protect();
   try {
     // First try to find user by Clerk ID
     let user = await db.query.users.findFirst({
-      where: (users, { eq }) => eq(users.clerkId, clerkUserId),
+      where: (users, { eq }) => eq(users.clerkId, clerkUserId ?? ''),
     });
 
     if (!user) {
       // If user not found, get their data from Clerk
-      const clerk = await clerkClient();
-      const clerkUser = await clerk.users.getUser(clerkUserId);
+      const clerkUser = await currentUser();
 
       // Get primary email
-      const primaryEmail = clerkUser.emailAddresses.find(
-        (email) => email.id === clerkUser.primaryEmailAddressId,
+      const primaryEmail = clerkUser?.emailAddresses.find(
+        (email) => email.id === clerkUser?.primaryEmailAddressId,
       )?.emailAddress;
 
       if (!primaryEmail) {
@@ -45,7 +41,7 @@ export async function submitOnboardingData(answers: Record<number, string[]>) {
         // If still not found, wait briefly and retry once more
         await new Promise((resolve) => setTimeout(resolve, 1000));
         user = await db.query.users.findFirst({
-          where: (users, { eq }) => eq(users.clerkId, clerkUserId),
+          where: (users, { eq }) => eq(users.clerkId, clerkUserId ?? ''),
         });
 
         if (!user) {
@@ -62,8 +58,9 @@ export async function submitOnboardingData(answers: Record<number, string[]>) {
     });
 
     // Update Clerk public metadata to mark onboarding as complete
-    const clerk = await clerkClient();
-    await clerk.users.updateUser(clerkUserId, {
+    await (
+      await clerkClient()
+    ).users.updateUserMetadata(clerkUserId ?? '', {
       publicMetadata: {
         onboardingComplete: true,
         onboardingVersion: ONBOARDING_VERSION,

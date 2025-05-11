@@ -15,16 +15,21 @@ export type AuthContext = {
  * Helper function to track auth-related events with a consistent format
  */
 export const trackAuthEvent = (
-  eventName: string,
+  event_name: string,
   authContext: Partial<AuthContext> = {},
   additionalProps: Record<string, unknown> = {},
+  userContext: { user_id?: string; company_id?: string } = {},
 ) => {
   if (typeof window === 'undefined') return;
 
-  posthog.capture(eventName, {
+  // Standardize event name and add versioning
+  const formattedEvent = `auth:${event_name}_v1`;
+
+  posthog.capture(formattedEvent, {
     ...authContext,
+    ...userContext,
     ...additionalProps,
-    timestamp: createDate().toISO(),    
+    tracked_timestamp: createDate().toISO(),
   });
 };
 
@@ -137,4 +142,22 @@ export const trackOAuthRedirect = (
   trackAuthEvent('auth_oauth_redirect', authContext, {
     provider,
   });
+};
+
+// Call this on login/signup
+export const identifyAndGroupUser = (
+  userId: string,
+  role: UserType,
+  email: string,
+  companyId?: string,
+  companyName?: string,
+) => {
+  posthog.identify(userId, {
+    role,
+    email,
+    email_domain: email?.split('@')[1],
+  });
+  if (companyId) {
+    posthog.group('company', companyId, { name: companyName });
+  }
 };
