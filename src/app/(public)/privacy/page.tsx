@@ -1,7 +1,7 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Download } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
 
@@ -13,8 +13,9 @@ import { createDate } from '@/src/utils/timezone';
 
 // Extract each section into its own component
 const SecurityFrameworkSection = () => (
-  <section className='bg-white rounded-2xl p-6 shadow-sm'>
-    <h2 className='text-2xl font-semibold text-gray-800 mb-4'>
+  <section className='bg-gradient-to-br from-purple-50 to-white rounded-3xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300'>
+    <h2 className='text-2xl font-bold text-gray-900 mb-4 flex items-center'>
+      <span className='mr-3 text-[#9071FF]'>🛡️</span>
       Enterprise-Grade Security Framework
     </h2>
     <div className='space-y-4'>
@@ -25,9 +26,9 @@ const SecurityFrameworkSection = () => (
       ].map((text, index) => (
         <div key={index} className='flex items-start space-x-3'>
           <span
-            className={cn('inline-block w-2 h-2 mt-2 rounded-full', COLORS.WARM_PURPLE['10'])}
+            className={cn('inline-block w-3 h-3 mt-2 rounded-full', COLORS.WARM_PURPLE['10'])}
           ></span>
-          <p className='text-gray-600'>{text}</p>
+          <p className='text-gray-700 text-base'>{text}</p>
         </div>
       ))}
     </div>
@@ -35,8 +36,11 @@ const SecurityFrameworkSection = () => (
 );
 
 const FinancialDataProtectionSection = () => (
-  <section className='bg-white rounded-2xl p-6 shadow-sm'>
-    <h2 className='text-2xl font-semibold text-gray-800 mb-4'>Financial Data Protection</h2>
+  <section className='bg-gradient-to-br from-purple-50 to-white rounded-3xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300'>
+    <h2 className='text-2xl font-bold text-gray-900 mb-4 flex items-center'>
+      <span className='mr-3 text-[#9071FF]'>💳</span>
+      Financial Data Protection
+    </h2>
     <div className='space-y-4'>
       {[
         'End-to-end encryption for all financial and personal data',
@@ -45,9 +49,9 @@ const FinancialDataProtectionSection = () => (
       ].map((text, index) => (
         <div key={index} className='flex items-start space-x-3'>
           <span
-            className={cn('inline-block w-2 h-2 mt-2 rounded-full', COLORS.WARM_PURPLE['10'])}
+            className={cn('inline-block w-3 h-3 mt-2 rounded-full', COLORS.WARM_PURPLE['10'])}
           ></span>
-          <p className='text-gray-600'>{text}</p>
+          <p className='text-gray-700 text-base'>{text}</p>
         </div>
       ))}
     </div>
@@ -55,8 +59,11 @@ const FinancialDataProtectionSection = () => (
 );
 
 const SecurityInfrastructureSection = () => (
-  <section className='bg-white rounded-2xl p-6 shadow-sm'>
-    <h2 className='text-2xl font-semibold text-gray-800 mb-4'>Security Infrastructure</h2>
+  <section className='bg-gradient-to-br from-purple-50 to-white rounded-3xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300'>
+    <h2 className='text-2xl font-bold text-gray-900 mb-4 flex items-center'>
+      <span className='mr-3 text-[#9071FF]'>🌐</span>
+      Security Infrastructure
+    </h2>
     <div className='space-y-4'>
       {[
         'AWS-native security services powering our entire infrastructure',
@@ -67,9 +74,9 @@ const SecurityInfrastructureSection = () => (
       ].map((text, index) => (
         <div key={index} className='flex items-start space-x-3'>
           <span
-            className={cn('inline-block w-2 h-2 mt-2 rounded-full', COLORS.WARM_PURPLE['10'])}
+            className={cn('inline-block w-3 h-3 mt-2 rounded-full', COLORS.WARM_PURPLE['10'])}
           ></span>
-          <p className='text-gray-600'>{text}</p>
+          <p className='text-gray-700 text-base'>{text}</p>
         </div>
       ))}
     </div>
@@ -77,8 +84,11 @@ const SecurityInfrastructureSection = () => (
 );
 
 const EnterpriseReadinessSection = () => (
-  <section className='bg-white rounded-2xl p-6 shadow-sm'>
-    <h2 className='text-2xl font-semibold text-gray-800 mb-4'>Enterprise Readiness</h2>
+  <section className='bg-gradient-to-br from-purple-50 to-white rounded-3xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300'>
+    <h2 className='text-2xl font-bold text-gray-900 mb-4 flex items-center'>
+      <span className='mr-3 text-[#9071FF]'>🏢</span>
+      Enterprise Readiness
+    </h2>
     <div className='space-y-4'>
       {[
         'Comprehensive security questionnaires available upon request',
@@ -88,9 +98,9 @@ const EnterpriseReadinessSection = () => (
       ].map((text, index) => (
         <div key={index} className='flex items-start space-x-3'>
           <span
-            className={cn('inline-block w-2 h-2 mt-2 rounded-full', COLORS.WARM_PURPLE['10'])}
+            className={cn('inline-block w-3 h-3 mt-2 rounded-full', COLORS.WARM_PURPLE['10'])}
           ></span>
-          <p className='text-gray-600'>{text}</p>
+          <p className='text-gray-700 text-base'>{text}</p>
         </div>
       ))}
     </div>
@@ -98,16 +108,27 @@ const EnterpriseReadinessSection = () => (
 );
 
 const ContactSection = () => (
-  <section className='text-center'>
-    <p className='text-sm text-gray-500 italic'>
+  <section className='text-center bg-purple-50 rounded-3xl p-6 shadow-md'>
+    <p className='text-sm text-gray-500 italic mb-2'>
       Last Updated: {createDate(new Date().toISOString(), timezoneSignal.value).toLocaleString()}
     </p>
-    <p className='mt-4 text-sm text-gray-600'>
+    <p className='text-sm text-gray-600 mb-4'>
       For any security inquiries, please contact:
-      <a href='mailto:hello@renavestapp.com' className='ml-2 text-purple-600 hover:underline'>
+      <a href='mailto:hello@renavestapp.com' className='ml-2 text-[#9071FF] hover:underline'>
         hello@renavestapp.com
       </a>
     </p>
+    <div className='flex justify-center'>
+      <a
+        href='https://drive.google.com/file/d/19LQ5FYIEeLBNXe6ocegDrq6PRnFucRTe/view?usp=sharing'
+        target='_blank'
+        rel='noopener noreferrer'
+        className='inline-flex items-center px-6 py-2 bg-[#9071FF] text-white rounded-full hover:bg-[#9071FF]/90 transition-colors'
+      >
+        <Download className='h-5 w-5 mr-2' />
+        Download Full Privacy Policy PDF
+      </a>
+    </div>
   </section>
 );
 
@@ -123,9 +144,9 @@ export default function PrivacyPage() {
           const role = (user.publicMetadata?.role as string | undefined) || 'employee';
           switch (role) {
             case 'employer':
-              return '/employer/dashboard';
+              return '/employer';
             case 'therapist':
-              return '/therapist/dashboard';
+              return '/therapist';
             default:
               return '/employee';
           }
@@ -135,15 +156,18 @@ export default function PrivacyPage() {
   return (
     <div className={`min-h-screen ${COLORS.WARM_WHITE.bg} font-sans`}>
       <Navbar />
-      <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-20'>
-        <Link
-          href={backPath}
-          className='inline-flex items-center text-gray-600 hover:text-gray-800 mb-6'
-        >
-          <ChevronLeft className='h-5 w-5 mr-2' />
-          <span>Back</span>
-        </Link>
-        <h1 className='text-3xl sm:text-4xl font-bold text-gray-900 mb-8 text-center'>
+      <main className='max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-24'>
+        <div className='flex items-center justify-between mb-8'>
+          <Link
+            href={backPath}
+            className='inline-flex items-center text-gray-600 hover:text-gray-800'
+          >
+            <ChevronLeft className='h-5 w-5 mr-2' />
+            <span>Back</span>
+          </Link>
+          <div className='text-sm text-gray-500 italic'>Version 1.0</div>
+        </div>
+        <h1 className='text-4xl sm:text-5xl font-bold text-gray-900 mb-12 text-center bg-clip-text text-transparent bg-gradient-to-r from-[#9071FF] to-purple-600'>
           Privacy & Security Policy
         </h1>
 
