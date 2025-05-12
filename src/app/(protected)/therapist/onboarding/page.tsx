@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { GoogleCalendarIntegration } from '@/src/features/google-calendar/components/GoogleCalendarIntegration';
+import { fetchTherapistId } from '@/src/features/google-calendar/utils/googleCalendarIntegration';
 import TherapistDashboardHeader from '@/src/features/therapist-dashboard/components/TherapistNavbar';
 
 export default function TherapistOnboardingPage() {
@@ -24,17 +25,25 @@ export default function TherapistOnboardingPage() {
 
   // Check if steps are completed
   useEffect(() => {
-    if (isLoaded && user) {
-      // Check if Google Calendar is connected via metadata
-      const calendarConnected = !!user.publicMetadata?.googleCalendarConnected;
-      const profileComplete = !!(user.firstName && user.lastName);
+    async function checkSteps() {
+      if (isLoaded && user) {
+        // Check if Google Calendar is connected via metadata
+        const therapistId = await fetchTherapistId(user.id);
+        const calendarResponse = await fetch(
+          '/api/google-calendar/status?therapistId=' + therapistId,
+        );
+        const calendarData = await calendarResponse.json();
+        const calendarConnected = calendarData.isConnected === true;
+        const profileComplete = !!(user.firstName && user.lastName);
 
-      setCompletedSteps({
-        profile: profileComplete,
-        googleCalendar: calendarConnected,
-        complete: profileComplete && calendarConnected,
-      });
+        setCompletedSteps({
+          profile: profileComplete,
+          googleCalendar: calendarConnected,
+          complete: profileComplete && calendarConnected,
+        });
+      }
     }
+    checkSteps();
   }, [isLoaded, user]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,8 +67,8 @@ export default function TherapistOnboardingPage() {
     try {
       // Update user profile
       await clerkUser?.update({
-        firstName: 'test',
-        lastName: 'test',
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
       });
 
       toast.success('Profile Updated', {

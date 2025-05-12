@@ -6,7 +6,8 @@ import { db } from '@/src/db';
 import { users } from '@/src/db/schema';
 
 // Validate Clerk Secret Key
-const CLERK_API_KEY = process.env.CLERK_SECRET_KEY;
+// const CLERK_API_KEY = "sk_live_ehswI4oWL97iAfsFLMQqx346VFywnEgHhcAa2ZzTol"
+const CLERK_API_KEY = 'sk_test_4UxtgpzLkVBxAqNg81I272ssI0V5UWZApKdezH6kLk';
 if (!CLERK_API_KEY) {
   console.error(
     '❌ CLERK_SECRET_KEY environment variable is not set. This is required to interact with the Clerk API.',
