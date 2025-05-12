@@ -273,7 +273,7 @@ export function GoogleCalendarIntegration() {
     reconnect,
     refreshStatus,
   } = useGoogleCalendarIntegration(therapistId || '');
-  
+
   // Ensure we have non-undefined values for our components
   const safeCalendarEmail = calendarEmail || null;
   const safeLastSynced = lastSynced || null;
