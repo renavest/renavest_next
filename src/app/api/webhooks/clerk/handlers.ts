@@ -61,8 +61,6 @@ export async function handleUserCreateOrUpdate(
     created_at: createdAt,
     updated_at: updatedAt,
   } = data;
-  console.log('data', data);
-  console.log('WEHOOK DATA', data);
   // Get primary email
   const emailResult = getPrimaryEmail(emailAddresses);
   if (emailResult.isErr()) {
@@ -91,7 +89,7 @@ export async function handleUserCreateOrUpdate(
     const matchedTherapist = therapistRecord[0];
 
     // Determine user role and set public metadata
-    let userRole = 'user'; // default role
+    let userRole = 'employee';
     if (matchedTherapist) {
       userRole = 'therapist';
     }
@@ -182,7 +180,6 @@ export async function handleUserCreateOrUpdate(
           userId: id,
           eventType,
           isTherapist: !!matchedTherapist,
-          therapistId: matchedTherapist?.id,
           publicMetadata: { role: userRole },
         });
       }
