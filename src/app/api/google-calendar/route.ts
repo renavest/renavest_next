@@ -31,12 +31,12 @@ export async function GET(req: NextRequest) {
   const therapistId = searchParams.get('therapistId');
 
   // Generate authorization URL
-  const scopes = [
-    'https://www.googleapis.com/auth/calendar.events',
-    'https://www.googleapis.com/auth/userinfo.email',
-    'https://www.googleapis.com/auth/calendar.settings.readonly',
-    'https://www.googleapis.com/auth/calendar.readonly',
-  ];
+    const scopes = [
+      'https://www.googleapis.com/auth/calendar.events',
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/calendar.settings.readonly',
+      'https://www.googleapis.com/auth/calendar.readonly',
+    ];
 
   // Add state if therapistId is present
   const url = oauth2Client.generateAuthUrl({

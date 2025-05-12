@@ -1,9 +1,9 @@
 'use client';
 
 import { UserButton, useUser, useClerk } from '@clerk/nextjs';
+import { signal, effect } from '@preact-signals/safe-react';
 import { CheckCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { GoogleCalendarIntegration } from '@/src/features/google-calendar/components/GoogleCalendarIntegration';
@@ -13,21 +13,23 @@ import TherapistDashboardHeader from '@/src/features/therapist-dashboard/compone
 export default function TherapistOnboardingPage() {
   const { user, isLoaded } = useUser();
   const { user: clerkUser } = useClerk();
-  const [completedSteps, setCompletedSteps] = useState({
+
+  // Replace useState with signals
+  const completedSteps = signal({
     profile: false,
     googleCalendar: false,
     complete: false,
   });
-  const [profileData, setProfileData] = useState({
+
+  const profileData = signal({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
   });
 
-  // Check if steps are completed
-  useEffect(() => {
+  // Use effect to check steps
+  effect(() => {
     async function checkSteps() {
       if (isLoaded && user) {
-        // Check if Google Calendar is connected via metadata
         const therapistId = await fetchTherapistId(user.id);
         const calendarResponse = await fetch(
           '/api/google-calendar/status?therapistId=' + therapistId,
@@ -36,28 +38,28 @@ export default function TherapistOnboardingPage() {
         const calendarConnected = calendarData.isConnected === true;
         const profileComplete = !!(user.firstName && user.lastName);
 
-        setCompletedSteps({
+        completedSteps.value = {
           profile: profileComplete,
           googleCalendar: calendarConnected,
           complete: profileComplete && calendarConnected,
-        });
+        };
       }
     }
     checkSteps();
-  }, [isLoaded, user]);
+  });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setProfileData((prev) => ({
-      ...prev,
+    profileData.value = {
+      ...profileData.value,
       [name]: value,
-    }));
+    };
   };
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!profileData.firstName) {
+    if (!profileData.value.firstName) {
       toast.error('First Name Required', {
         description: 'Please enter your first name.',
       });
@@ -65,24 +67,22 @@ export default function TherapistOnboardingPage() {
     }
 
     try {
-      // Update user profile
       await clerkUser?.update({
-        firstName: profileData.firstName,
-        lastName: profileData.lastName,
+        firstName: profileData.value.firstName,
+        lastName: profileData.value.lastName,
       });
 
       toast.success('Profile Updated', {
         description: 'Your profile has been successfully updated.',
       });
 
-      // Refresh user data
       await clerkUser?.reload();
 
       // Update completed steps
-      setCompletedSteps((prev) => ({
-        ...prev,
+      completedSteps.value = {
+        ...completedSteps.value,
         profile: true,
-      }));
+      };
     } catch (error) {
       console.error('Profile update error:', error);
       toast.error('Update Failed', {
@@ -108,7 +108,7 @@ export default function TherapistOnboardingPage() {
           <h2 className='text-lg font-medium text-gray-900 mb-4'>Setup Progress</h2>
           <div className='space-y-4'>
             <div className='flex items-center'>
-              {completedSteps.profile ? (
+              {completedSteps.value.profile ? (
                 <CheckCircle className='h-6 w-6 text-green-500 mr-3' />
               ) : (
                 <div className='h-6 w-6 rounded-full border-2 border-gray-300 mr-3' />
@@ -120,7 +120,7 @@ export default function TherapistOnboardingPage() {
             </div>
 
             <div className='flex items-center'>
-              {completedSteps.googleCalendar ? (
+              {completedSteps.value.googleCalendar ? (
                 <CheckCircle className='h-6 w-6 text-green-500 mr-3' />
               ) : (
                 <div className='h-6 w-6 rounded-full border-2 border-gray-300 mr-3' />
@@ -131,7 +131,7 @@ export default function TherapistOnboardingPage() {
               </div>
             </div>
 
-            {completedSteps.complete && (
+            {completedSteps.value.complete && (
               <div className='flex items-center mt-6 pt-4 border-t border-gray-100'>
                 <CheckCircle className='h-6 w-6 text-green-500 mr-3' />
                 <p className='font-medium text-green-600'>
@@ -143,7 +143,7 @@ export default function TherapistOnboardingPage() {
         </div>
 
         {/* Profile completion */}
-        {!completedSteps.profile && (
+        {!completedSteps.value.profile && (
           <div className='bg-white rounded-lg shadow p-6 mb-8'>
             <h2 className='text-lg font-medium text-gray-900 mb-4'>Complete Your Profile</h2>
             <form onSubmit={handleProfileSubmit} className='space-y-6'>
@@ -159,7 +159,7 @@ export default function TherapistOnboardingPage() {
                     type='text'
                     id='firstName'
                     name='firstName'
-                    value={profileData.firstName}
+                    value={profileData.value.firstName}
                     onChange={handleInputChange}
                     required
                     className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500'
@@ -177,7 +177,7 @@ export default function TherapistOnboardingPage() {
                     type='text'
                     id='lastName'
                     name='lastName'
-                    value={profileData.lastName}
+                    value={profileData.value.lastName}
                     onChange={handleInputChange}
                     className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500'
                     placeholder='Enter your last name'
@@ -198,7 +198,7 @@ export default function TherapistOnboardingPage() {
         )}
 
         {/* Google Calendar integration */}
-        {completedSteps.profile && (
+        {completedSteps.value.profile && (
           <div className='bg-white rounded-lg shadow p-6 mb-8'>
             <h2 className='text-lg font-medium text-gray-900 mb-4'>Google Calendar Integration</h2>
             <p className='text-gray-600 mb-6'>
@@ -210,7 +210,7 @@ export default function TherapistOnboardingPage() {
         )}
 
         {/* Return to dashboard */}
-        {completedSteps.complete && (
+        {completedSteps.value.complete && (
           <div className='text-center mt-12'>
             <Link href='/therapist' className='text-purple-600 hover:text-purple-800 font-medium'>
               Return to Dashboard

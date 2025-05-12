@@ -6,7 +6,7 @@ const config: NextConfig = {
     domains: [
       'randomuser.me',
       'localhost',
-      'app.renavestapp.com',
+      'renavestapp.com',
       'renavest-therapist-images.s3.amazonaws.com',
       'd2qcuj7ucxw61o.cloudfront.net',
     ],
@@ -19,7 +19,7 @@ const config: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'app.renavestapp.com',
+        hostname: 'renavestapp.com',
         pathname: '/**',
       },
       {
