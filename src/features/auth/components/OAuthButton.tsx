@@ -54,9 +54,6 @@ export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProp
       });
       localStorage.setItem('role_from_oauth', userRole.toString());
 
-      console.log('redirectUrlComplete', redirectUrlComplete);
-      console.log('userRole', userRole);
-
       await signIn.authenticateWithRedirect({
         strategy,
         redirectUrl: '/sso-callback',

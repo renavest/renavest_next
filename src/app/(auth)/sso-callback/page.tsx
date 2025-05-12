@@ -1,13 +1,17 @@
 'use client';
-
-import { redirect } from 'next/navigation';
+import { AuthenticateWithRedirectCallback } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-import { COLORS } from '@/src/styles/colors';
-
 export default function Page() {
+  const router = useRouter();
+  let redirectPath = '/';
+  if (localStorage.getItem('role_from_oauth')) {
+    redirectPath = redirectPath + localStorage.getItem('role_from_oauth');
+  }
   useEffect(() => {
-    // Determine redirect path based on role
+    let isMounted = true;
+
     const getRedirectPath = (role: string | null) => {
       switch (role) {
         case 'employee':
@@ -21,20 +25,39 @@ export default function Page() {
       }
     };
 
-    // Perform redirect if possible
-    if (typeof window !== 'undefined') {
-      const role = localStorage.getItem('role_from_oauth');
-      const redirectPath = getRedirectPath(role);
-      redirect(redirectPath);
-    }
-  }, []);
+    const pollUserReady = async () => {
+      try {
+        const res = await fetch('/api/user-ready');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.ready && isMounted) {
+          const role = localStorage.getItem('role_from_oauth');
+          router.replace(getRedirectPath(role));
+        }
+      } catch {
+        // Ignore errors, will retry
+      }
+    };
+
+    const interval = setInterval(pollUserReady, 1500);
+    pollUserReady(); // Run immediately as well
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [router]);
 
   // Render a loading indicator or placeholder
   return (
     <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen flex items-center justify-center'>
       <div className='text-center'>
         <div className='animate-spin rounded-full h-16 w-16 border-t-2 border-purple-600 mx-auto mb-4'></div>
-        <p className={`${COLORS.WARM_PURPLE.DEFAULT} text-lg`}>Loading...</p>
+        <AuthenticateWithRedirectCallback
+          signUpForceRedirectUrl={redirectPath}
+          signInForceRedirectUrl={redirectPath}
+        />
+        <p>Setting up your account...</p>
       </div>
     </div>
   );
