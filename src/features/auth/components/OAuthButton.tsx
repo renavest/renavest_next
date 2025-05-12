@@ -41,7 +41,7 @@ export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProp
 
       // Determine redirect URL based on selected role
       const redirectUrlComplete = userRole === 'employee' ? '/employee' : `/${userRole}`;
- 
+
       // Get provider name for tracking
       const provider = strategy === 'oauth_google' ? 'google' : 'microsoft';
 
@@ -53,7 +53,10 @@ export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProp
         email: user?.emailAddresses[0]?.emailAddress,
       });
       localStorage.setItem('role_from_oauth', userRole.toString());
-      // Authenticate with redirect and pass role in redirectUrl
+
+      console.log('redirectUrlComplete', redirectUrlComplete);
+      console.log('userRole', userRole);
+
       await signIn.authenticateWithRedirect({
         strategy,
         redirectUrl: '/sso-callback',

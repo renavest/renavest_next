@@ -27,7 +27,7 @@ export async function POST(_req: NextRequest) {
 
     // Find therapist by userId
     const therapist = await db.query.therapists.findFirst({
-      where: (therapists, { eq }) => eq(therapists.userId, userId),
+      where: (therapists, { eq }) => eq(therapists.email, user.emailAddresses[0]?.emailAddress),
     });
 
     if (!therapist) {

@@ -3,8 +3,9 @@
 import { useSearchParams } from 'next/navigation';
 import { useEffect, Suspense } from 'react';
 
-import { processUtmParameters } from './utmCustomDemo';
+import { COLORS } from '@/src/styles/colors';
 
+import { processUtmParameters } from './utmCustomDemo';
 interface PageUtmHandlerProps {
   children: React.ReactNode;
 }
@@ -15,7 +16,16 @@ interface PageUtmHandlerProps {
  */
 export default function PageUtmHandler({ children }: PageUtmHandlerProps) {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen flex items-center justify-center'>
+          <div className='text-center'>
+            <div className='animate-spin rounded-full h-16 w-16 border-t-2 border-purple-600 mx-auto mb-4'></div>
+            <p className={`${COLORS.WARM_PURPLE.DEFAULT} text-lg`}>Loading...</p>
+          </div>
+        </div>
+      }
+    >
       <UtmParameterProcessor>{children}</UtmParameterProcessor>
     </Suspense>
   );

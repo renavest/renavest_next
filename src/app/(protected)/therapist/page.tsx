@@ -10,12 +10,12 @@ import { therapists } from '@/src/db/schema';
 import TherapistDashboardClient from '../../../features/therapist-dashboard/components/TherapistDashboardClient';
 
 export default async function TherapistPage() {
+  console.log('TherapistPage');
   const user = await currentUser();
 
   if (!user) {
-    redirect('/sign-in');
+    redirect('/login');
   }
-
   try {
     // Get the user's email
     const email = user.emailAddresses[0]?.emailAddress;
@@ -31,21 +31,21 @@ export default async function TherapistPage() {
       .from(therapists)
       .where(eq(therapists.email, email))
       .limit(1);
-
+    console.log('therapistResult', therapistResult);
     // If no therapist found, redirect to error page
     if (!therapistResult.length) {
       console.log('No pre-approved therapist found');
       redirect('/therapist-signup/error');
+    } else {
+      // Update user metadata to mark as therapist
+      await (
+        await clerkClient()
+      ).users.updateUserMetadata(user.id, {
+        publicMetadata: {
+          role: 'therapist',
+        },
+      });
     }
-
-    // Update user metadata to mark as therapist
-    await (
-      await clerkClient()
-    ).users.updateUserMetadata(user.id, {
-      publicMetadata: {
-        role: 'therapist',
-      },
-    });
 
     return <TherapistDashboardClient />;
   } catch (error) {
