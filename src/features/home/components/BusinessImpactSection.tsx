@@ -71,9 +71,9 @@ function BusinessImpactSection() {
               When Financial Stress Disappears, Performance Soars
             </h2>
             <p className='text-xl text-gray-600 leading-relaxed'>
-              Financial therapy is more than a benefit—it's a strategic investment in your team's
-              potential. By addressing financial stress, you unlock unprecedented workplace
-              performance.
+              Financial therapy combines financial know-how with emotional support to help people
+              feel and behave better with their money. By addressing financial stress, you unlock
+              unprecedented workplace performance.
             </p>
           </Parallax>
 

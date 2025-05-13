@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { trackUIInteraction } from '@/src/features/posthog/tracking';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
@@ -61,82 +62,6 @@ const ROLE_OPTIONS: { value: UserType; label: string; description: string }[] = 
     description: 'Manage your client sessions',
   },
 ];
-
-// Add email sign-in function (utility function for potential future use)
-async function handleEmailSignIn(
-  e: React.FormEvent,
-  email: string,
-  password: string,
-  signIn: SignInResource,
-  isLoaded: boolean,
-): Promise<boolean> {
-  e.preventDefault();
-
-  if (!isLoaded) {
-    authErrorSignal.value = 'Authentication system not ready. Please try again.';
-    return false;
-  }
-
-  try {
-    // Validate that only therapists can use email sign-in
-    if (selectedRoleSignal.value !== 'therapist') {
-      authErrorSignal.value = 'Email sign-in is only available for Financial Therapists.';
-      return false;
-    }
-
-    // Track login attempt
-    trackLoginAttempt('email', {
-      email,
-      role: selectedRoleSignal.value,
-    });
-
-    // Attempt sign-in with email and password
-    await signIn.create({
-      identifier: email,
-      password: password,
-    });
-
-    // Track successful login
-    trackLoginSuccess('email', {
-      email,
-      role: selectedRoleSignal.value,
-    });
-
-    // Handle successful sign-in (you might want to add more specific routing logic)
-    window.location.href = '/dashboard';
-    return true;
-  } catch (error) {
-    console.error('Email sign-in error:', error);
-
-    // Track login error
-    trackLoginError('email', error, {
-      email,
-      role: selectedRoleSignal.value,
-    });
-
-    // Handle specific Clerk error codes
-    if (error instanceof Error && 'errors' in error) {
-      const clerkErrors = (error as { errors: Array<{ code: string; longMessage?: string }> })
-        .errors;
-      if (clerkErrors && clerkErrors.length > 0) {
-        const clerkError = clerkErrors[0];
-        switch (clerkError.code) {
-          case 'form_identifier_not_found':
-            authErrorSignal.value = 'No account found with this email address.';
-            break;
-          case 'form_password_incorrect':
-            authErrorSignal.value = 'Invalid email or password.';
-            break;
-          default:
-            authErrorSignal.value = clerkError.longMessage || 'Sign-in failed. Please try again.';
-        }
-      }
-    } else {
-      authErrorSignal.value = 'An unexpected error occurred. Please try again.';
-    }
-    return false;
-  }
-}
 
 function EmailAuthForm() {
   const [email, setEmail] = useState('');
@@ -349,8 +274,6 @@ function RoleSelection() {
 }
 
 export default function AuthenticationForm() {
-  const { user: clerkUser } = useClerk();
-
   return (
     <div className='space-y-6'>
       <div className='flex flex-col items-center mb-8'>
@@ -373,6 +296,11 @@ export default function AuthenticationForm() {
             <p className='text-sm text-gray-600'>Don't have an account?</p>
             <Link
               href='https://calendly.com/rameau-stan/one-on-one'
+              onClick={() =>
+                trackUIInteraction('click', 'calendly_therapist_application', {
+                  context: 'login_form_no_account',
+                })
+              }
               className='text-sm text-[#9071FF] hover:underline'
             >
               Apply to become a financial therapist on our platform

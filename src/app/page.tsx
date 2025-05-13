@@ -16,8 +16,10 @@ import Footer from '@/src/features/home/components/Footer';
 import HeroSection from '@/src/features/home/components/HeroSection';
 import JasmineJourneySection from '@/src/features/home/components/JasmineJourneySection';
 import Navbar from '@/src/features/home/components/Navbar';
+import PilotCohortBanner from '@/src/features/home/components/PilotCohortBanner';
 import TestimonialSection from '@/src/features/home/components/TestimonialSection';
 import WhatIsFinancialTherapySection from '@/src/features/home/components/WhatIsFinancialTherapySection';
+import WhatWeDoSection from '@/src/features/home/components/WhatWeDoSection';
 import ParallaxWrapper from '@/src/features/parallax/ParallaxWrapper';
 import { setupReferralAttribution } from '@/src/lib/referralTracking';
 
@@ -56,10 +58,12 @@ function HomeContent() {
       <Navbar />
       <ParallaxWrapper>
         <HeroSection />
-        <JasmineJourneySection />
-        <WhatIsFinancialTherapySection />
         <BusinessImpactSection />
+        <WhatWeDoSection />
+        <WhatIsFinancialTherapySection />
+        <JasmineJourneySection />
         <TestimonialSection />
+        <PilotCohortBanner />
       </ParallaxWrapper>
       <Footer />
     </div>
