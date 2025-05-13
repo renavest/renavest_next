@@ -5,6 +5,8 @@ import { DateTime } from 'luxon';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 
+import { trackUIInteraction } from '@/src/features/posthog/tracking';
+
 type UpcomingSession = {
   id: number;
   therapistName: string;
@@ -76,7 +78,12 @@ export function UpcomingSessionsSection() {
         <h4 className='text-base font-semibold text-gray-800'>No Upcoming Sessions</h4>
         <p className='text-sm text-gray-600'>Want to bring financial wellness to your company?</p>
         <button
-          onClick={() => window.open('https://calendly.com/rameau-stan/one-on-one', '_blank')}
+          onClick={() => {
+            trackUIInteraction('click', 'calendly_book_demo', {
+              context: 'upcoming_sessions_no_sessions',
+            });
+            window.open('https://calendly.com/rameau-stan/one-on-one', '_blank');
+          }}
           className='bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors'
         >
           Let's talk

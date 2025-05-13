@@ -5,7 +5,6 @@ import { ChevronLeft, Download } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
 
-import { timezoneSignal } from '@/src/features/booking/components/TherapistAvailability/useTherapistAvailability';
 import Navbar from '@/src/features/home/components/Navbar';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
@@ -107,30 +106,60 @@ const EnterpriseReadinessSection = () => (
   </section>
 );
 
-const ContactSection = () => (
-  <section className='text-center bg-purple-50 rounded-3xl p-6 shadow-md'>
-    <p className='text-sm text-gray-500 italic mb-2'>
-      Last Updated: {createDate(new Date().toISOString(), timezoneSignal.value).toLocaleString()}
-    </p>
-    <p className='text-sm text-gray-600 mb-4'>
-      For any security inquiries, please contact:
-      <a href='mailto:hello@renavestapp.com' className='ml-2 text-[#9071FF] hover:underline'>
-        hello@renavestapp.com
-      </a>
-    </p>
-    <div className='flex justify-center'>
-      <a
-        href='https://drive.google.com/file/d/19LQ5FYIEeLBNXe6ocegDrq6PRnFucRTe/view?usp=sharing'
-        target='_blank'
-        rel='noopener noreferrer'
-        className='inline-flex items-center px-6 py-2 bg-[#9071FF] text-white rounded-full hover:bg-[#9071FF]/90 transition-colors'
-      >
-        <Download className='h-5 w-5 mr-2' />
-        Download Full Privacy Policy PDF
-      </a>
-    </div>
-  </section>
-);
+const ContactSection = () => {
+  const [showPdf, setShowPdf] = React.useState(false);
+
+  return (
+    <section className='text-center bg-purple-50 rounded-3xl p-6 shadow-md'>
+      <p className='text-sm text-gray-500 italic mb-2'>
+        Last Updated: {createDate().toLocaleString()}
+      </p>
+      <p className='text-sm text-gray-600 mb-4'>
+        For any security inquiries, please contact:
+        <a href='mailto:hello@renavestapp.com' className='ml-2 text-[#9071FF] hover:underline'>
+          hello@renavestapp.com
+        </a>
+      </p>
+
+      {showPdf ? (
+        <div className='w-full mb-4'>
+          <div className='relative w-full rounded-lg overflow-hidden' style={{ height: '70vh' }}>
+            <iframe
+              src='https://drive.google.com/file/d/19LQ5FYIEeLBNXe6ocegDrq6PRnFucRTe/preview'
+              className='w-full h-full'
+              allow='autoplay'
+              title='Privacy Policy PDF'
+            />
+          </div>
+          <button
+            onClick={() => setShowPdf(false)}
+            className='mt-4 inline-flex items-center px-6 py-2 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition-colors'
+          >
+            Hide PDF
+          </button>
+        </div>
+      ) : (
+        <div className='flex flex-col items-center justify-center'>
+          <button
+            onClick={() => setShowPdf(true)}
+            className='inline-flex items-center px-6 py-2 bg-[#9071FF] text-white rounded-full hover:bg-[#9071FF]/90 transition-colors mb-3'
+          >
+            View Full Privacy Policy PDF
+          </button>
+          <a
+            href='https://drive.google.com/file/d/19LQ5FYIEeLBNXe6ocegDrq6PRnFucRTe/view?usp=sharing'
+            target='_blank'
+            rel='noopener noreferrer'
+            className='inline-flex items-center px-6 py-2 border border-[#9071FF] text-[#9071FF] rounded-full hover:bg-[#9071FF]/10 transition-colors'
+          >
+            <Download className='h-5 w-5 mr-2' />
+            Download PDF
+          </a>
+        </div>
+      )}
+    </section>
+  );
+};
 
 export default function PrivacyPage() {
   const { user, isLoaded } = useUser();

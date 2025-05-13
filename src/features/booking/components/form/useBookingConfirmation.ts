@@ -36,7 +36,7 @@ export function useBookingConfirmation(
       const startDateTime = createDate(selectedSlotSignal.value?.start, timezoneSignal.value);
       const date = startDateTime.toISODate() || '';
       const startTime = startDateTime.toFormat('HH:mm') || '';
-      
+
       const result = await onConfirm({
         date,
         startTime,
@@ -63,7 +63,7 @@ export function useBookingConfirmation(
           });
       }
 
-      router.push(`/booking/confirmation?bookingId=${String(result.sessionId)}`);
+      router.push(`/book/confirmation?bookingId=${String(result.sessionId)}`);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to book session');
       toast.error(error instanceof Error ? error.message : 'Failed to book session');

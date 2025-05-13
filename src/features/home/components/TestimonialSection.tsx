@@ -110,7 +110,7 @@ function TestimonialSection() {
               ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
               style={{ transitionDelay: '0.2s' }}
             >
-              <CTAButton className='px-4 py-1 xl:px-6 xl:py-2.5 bg-[#9071FF] text-white rounded-full hover:bg-[#9071FF]/90 transition font-medium text-sm lg:text-lg' />
+              <CTAButton className='px-5 py-2 xl:px-6 xl:py-2.5 bg-[#9071FF] text-white rounded-full hover:bg-[#9071FF]/90 transition font-medium text-sm lg:text-lg' />
             </div>
           </Parallax>
         </div>
