@@ -42,17 +42,17 @@ export default function OnboardingModal() {
           user_email: clerkUser?.emailAddresses[0]?.emailAddress,
         });
 
-        // Optional: Call API to record the referral in your database
-        fetch('/api/referrals/record', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            referrerId: referrerId,
-            referredId: clerkUser.id,
-          }),
-        }).catch((err) => console.error('Failed to record referral:', err));
+        // // Optional: Call API to record the referral in your database
+        // fetch('/api/referrals/record', {
+        //   method: 'POST',
+        //   headers: {
+        //     'Content-Type': 'application/json',
+        //   },
+        //   body: JSON.stringify({
+        //     referrerId: referrerId,
+        //     referredId: clerkUser.id,
+        //   }),
+        // }).catch((err) => console.error('Failed to record referral:', err));
       }
     }
   }, [clerkUser]);
@@ -93,7 +93,7 @@ export default function OnboardingModal() {
   const handleNext = () => {
     const nextStep = currentStep + 1;
     const isLastStep = nextStep >= onboardingQuestions.length;
-
+    
     // Track progress through onboarding steps
     posthog.capture('onboarding_step_progress', {
       user_id: clerkUser?.id,

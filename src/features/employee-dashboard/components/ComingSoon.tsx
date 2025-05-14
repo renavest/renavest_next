@@ -26,7 +26,7 @@ export default function ComingSoon() {
     {
       icon: Star,
       title: 'Advanced Analytics',
-      description: 'Deep dive into your financial phabits and potential.',
+      description: 'Deep dive into your financial habits and potential.',
       color: 'text-blue-500',
       component: <ProgressComparisonChart />,
     },
