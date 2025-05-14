@@ -3,6 +3,13 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
 
+// Define a type for booking metadata
+type BookingMetadata = {
+  googleMeetLink?: string;
+  clientTimezone?: string;
+  therapistTimezone?: string;
+};
+
 export async function GET(req: NextRequest) {
   try {
     const user = await currentUser();
@@ -52,7 +59,15 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized access to booking' }, { status: 403 });
     }
 
-    const meta = booking.metadata as { googleMeetLink?: string } | undefined;
+    const meta = booking.metadata as BookingMetadata | undefined;
+
+    // Safely extract timezones from metadata if available
+    let clientTimezone = 'UTC';
+    let therapistTimezone = 'UTC';
+    if (meta) {
+      clientTimezone = meta.clientTimezone || 'UTC';
+      therapistTimezone = meta.therapistTimezone || 'UTC';
+    }
 
     return NextResponse.json({
       success: true,
@@ -67,6 +82,8 @@ export async function GET(req: NextRequest) {
         sessionEndTime: booking.sessionEndTime,
         status: booking.status,
         googleMeetLink: meta?.googleMeetLink || '',
+        clientTimezone,
+        therapistTimezone,
       },
     });
   } catch (error) {

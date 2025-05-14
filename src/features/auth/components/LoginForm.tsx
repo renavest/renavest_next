@@ -2,8 +2,7 @@
 
 // import { useClerk, useUser } from '@clerk/nextjs';
 // import Image from 'next/image';
-import { useClerk, useSignIn } from '@clerk/nextjs';
-import { SignInResource } from '@clerk/types';
+import { useSignIn } from '@clerk/nextjs';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';

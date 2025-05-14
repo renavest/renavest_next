@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { formatDateTime } from '@/src/features/booking/utils/dateTimeUtils';
 import { createDate } from '@/src/utils/timezone';
 
 import {
@@ -35,16 +36,23 @@ export function BookingConfirmationModal({
         <div className='mb-6 text-center'>
           <div className='text-lg font-semibold text-gray-900 mb-3'>Confirm Your Booking</div>
           <div className='flex flex-col items-center'>
-            <div className='text-purple-700 font-bold text-xl mb-1'>
-              {createDate(selectedSlotSignal.value?.start, timezoneSignal.value).toFormat(
-                'LLLL d, yyyy',
-              )}
-            </div>
-            <div className='flex items-center justify-center text-lg text-gray-800 font-medium'>
-              {createDate(selectedSlotSignal.value?.start, timezoneSignal.value).toFormat('h:mm a')}
-              <span className='mx-2'>-</span>
-              {createDate(selectedSlotSignal.value?.end, timezoneSignal.value).toFormat('h:mm a')}
-            </div>
+            {(() => {
+              const start = createDate(selectedSlotSignal.value?.start, timezoneSignal.value);
+              const end = createDate(selectedSlotSignal.value?.end, timezoneSignal.value);
+              const formattedStart = formatDateTime(start, timezoneSignal.value);
+              const formattedEnd = formatDateTime(end, timezoneSignal.value);
+              return (
+                <>
+                  <div className='text-purple-700 font-bold text-xl mb-1'>
+                    {formattedStart.date}
+                  </div>
+                  <div className='flex items-center justify-center text-lg text-gray-800 font-medium'>
+                    {formattedStart.time} <span className='mx-2'>-</span> {formattedEnd.time}{' '}
+                    {formattedStart.timezone}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
         <button

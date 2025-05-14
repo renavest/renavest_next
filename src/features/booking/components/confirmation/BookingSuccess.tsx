@@ -5,6 +5,7 @@ import { DateTime } from 'luxon';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { formatDateTime } from '@/src/features/booking/utils/dateTimeUtils';
 import { COLORS } from '@/src/styles/colors';
 
 interface BookingDetails {
@@ -17,6 +18,8 @@ interface BookingDetails {
   sessionStartTime: string;
   sessionEndTime: string;
   status: string;
+  clientTimezone: string;
+  therapistTimezone: string;
 }
 
 function LoadingState() {
@@ -45,10 +48,11 @@ function ErrorState({ message }: { message: string }) {
   );
 }
 
-function BookingDetails({ booking }: { booking: BookingDetails }) {
-  const sessionDate = DateTime.fromISO(booking.sessionDate);
-  const startTime = DateTime.fromISO(booking.sessionStartTime);
-  const endTime = DateTime.fromISO(booking.sessionEndTime);
+function BookingDetailsDisplay({ booking }: { booking: BookingDetails }) {
+  // Use clientTimezone for display
+  const dateObj = DateTime.fromISO(booking.sessionStartTime);
+  const formatted = formatDateTime(dateObj, booking.clientTimezone);
+  const endTime = DateTime.fromISO(booking.sessionEndTime).setZone(booking.clientTimezone);
 
   return (
     <dl className='grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2'>
@@ -63,9 +67,7 @@ function BookingDetails({ booking }: { booking: BookingDetails }) {
         <Calendar className='h-6 w-6 text-purple-500' />
         <div>
           <dt className='text-xs font-semibold text-gray-500 uppercase tracking-wide'>Date</dt>
-          <dd className='mt-1 text-base text-gray-900 font-medium'>
-            {sessionDate.toFormat('MMMM d, yyyy')}
-          </dd>
+          <dd className='mt-1 text-base text-gray-900 font-medium'>{formatted.date}</dd>
         </div>
       </div>
       <div className='flex items-center space-x-3'>
@@ -75,7 +77,7 @@ function BookingDetails({ booking }: { booking: BookingDetails }) {
             Start Time
           </dt>
           <dd className='mt-1 text-base text-gray-900 font-medium'>
-            {startTime.toFormat('h:mm a')}
+            {formatted.time} {formatted.timezone}
           </dd>
         </div>
       </div>
@@ -83,7 +85,9 @@ function BookingDetails({ booking }: { booking: BookingDetails }) {
         <Clock className='h-6 w-6 text-purple-500' />
         <div>
           <dt className='text-xs font-semibold text-gray-500 uppercase tracking-wide'>End Time</dt>
-          <dd className='mt-1 text-base text-gray-900 font-medium'>{endTime.toFormat('h:mm a')}</dd>
+          <dd className='mt-1 text-base text-gray-900 font-medium'>
+            {endTime.toFormat('h:mm a')} {formatted.timezone}
+          </dd>
         </div>
       </div>
       <div className='flex items-center space-x-3 sm:col-span-2'>
@@ -150,7 +154,7 @@ export function BookingSuccess({ bookingId }: { bookingId: string }) {
               all the details. We look forward to seeing you!
             </p>
             <div className='w-full border-t border-gray-200 py-8'>
-              <BookingDetails booking={booking} />
+              <BookingDetailsDisplay booking={booking} />
             </div>
             <div className='mt-10 flex justify-center w-full'>
               <button
