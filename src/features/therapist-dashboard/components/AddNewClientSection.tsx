@@ -113,7 +113,11 @@ const initialFormData: FormData = {
   email: '',
 };
 
-export const AddNewClientSection = () => {
+interface AddNewClientSectionProps {
+  onClientAdded?: () => void;
+}
+
+export const AddNewClientSection = ({ onClientAdded }: AddNewClientSectionProps) => {
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -194,6 +198,11 @@ export const AddNewClientSection = () => {
 
       toast.success('Client added successfully!');
       resetForm();
+
+      // Call the onClientAdded callback if provided
+      if (onClientAdded) {
+        onClientAdded();
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {

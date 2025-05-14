@@ -5,11 +5,11 @@ import { redirect } from 'next/navigation';
 
 import { ALLOWED_EMAILS } from '@/src/constants';
 import { ChartsSections } from '@/src/features/employer-dashboard/components/ChartsSections';
+import EmployeeInsightsCard from '@/src/features/employer-dashboard/components/EmployeeInsightsCard';
 import EmployerNavbar from '@/src/features/employer-dashboard/components/EmployerNavbar';
 import { EngagementSection } from '@/src/features/employer-dashboard/components/EngagementSection';
 import { ProgramOverviewSection } from '@/src/features/employer-dashboard/components/ProgramOverviewSection';
 import { SessionsSection } from '@/src/features/employer-dashboard/components/SessionsSection';
-import TherapistSummaryCard from '@/src/features/employer-dashboard/components/TherapistSummaryCard';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
@@ -46,7 +46,7 @@ export default function EmployerDashboardView() {
         <div className='flex flex-col md:flex-row gap-8 mb-16 items-stretch'>
           <ProgramOverviewSection />
           <div className='flex-1' />
-          <TherapistSummaryCard />
+          <EmployeeInsightsCard />
         </div>
 
         <div className='space-y-16'>

@@ -109,15 +109,16 @@ export const sessionMetricsSignal = signal<SessionMetrics>({
   sessionsByMonth: [
     { month: 'Jan', completed: 180, allocated: 200 },
     { month: 'Feb', completed: 195, allocated: 200 },
-    { month: 'Mar', completed: 210, allocated: 200 },
-    { month: 'Apr', completed: 195, allocated: 200 },
-    { month: 'May', completed: 200, allocated: 200 },
+    { month: 'Mar', completed: 200, allocated: 200 },
+    { month: 'Apr', completed: 180, allocated: 200 },
+    { month: 'May', completed: 190, allocated: 200 },
+    
   ],
 });
 
 export const employeeMetricsSignal = signal<EmployeeMetrics>({
-  totalEmployees: 150,
-  activeInProgram: 120,
+  totalEmployees: 500,
+  activeInProgram: 400,
   youngWorkforce: 65,
   coachUtilization: 45,
 });
@@ -130,17 +131,17 @@ export const satisfactionMetricsSignal = signal<SatisfactionMetrics>({
 });
 
 export const engagementMetricsSignal = signal<EngagementMetrics>({
-  dailyActiveUsers: 85,
-  weeklyActiveUsers: 320,
-  monthlyActiveUsers: 450,
+  dailyActiveUsers: 120,
+  weeklyActiveUsers: 420,
+  monthlyActiveUsers: 540,
   loginFrequencyData: [
-    { day: 'Mon', users: 85 },
-    { day: 'Tue', users: 92 },
-    { day: 'Wed', users: 88 },
-    { day: 'Thu', users: 78 },
-    { day: 'Fri', users: 65 },
-    { day: 'Sat', users: 25 },
-    { day: 'Sun', users: 30 },
+    { day: 'Mon', users: 120 },
+    { day: 'Tue', users: 125 },
+    { day: 'Wed', users: 118 },
+    { day: 'Thu', users: 110 },
+    { day: 'Fri', users: 95 },
+    { day: 'Sat', users: 45 },
+    { day: 'Sun', users: 50 },
   ],
 });
 

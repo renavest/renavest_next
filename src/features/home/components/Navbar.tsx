@@ -46,9 +46,9 @@ const trackNavClick = (
 const DesktopNavigation = ({ isSignedIn }: { isSignedIn: boolean }) => (
   <div className='hidden lg:flex items-center gap-4 xl:gap-8'>
     <Link
-      href='#jasmine-journey'
+      href='#what-we-do'
       className='text-gray-600 hover:text-[#9071FF] font-medium text-sm truncate'
-      onClick={() => trackNavClick('jasmine_journey')}
+      onClick={() => trackNavClick('what_we_do')}
     >
       How it works
     </Link>

@@ -10,6 +10,9 @@ import { LogoutButton } from '@/src/features/auth/components/LogoutButton';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
+import companyInfo from '../../utm/companyInfo';
+import { companyNameSignal } from '../../utm/utmCustomDemo';
+
 // Navigation items for employer dashboard
 const NavigationItem = ({
   href,
@@ -77,8 +80,8 @@ const MobileNavigation = ({ isSignedIn, isOpen }: { isSignedIn: boolean; isOpen:
 const DesktopNavigation = ({ isSignedIn }: { isSignedIn: boolean }) => (
   <div className='hidden md:flex items-center gap-3 lg:gap-4'>
     <NavigationItem href='/employer' icon={BarChart3} label='Dashboard' />
-    <NavigationItem href='/employer/analytics' icon={Activity} label='Analytics' />
-    <NavigationItem href='/employer/team' icon={Users} label='Team' />
+    <NavigationItem href='/employer' icon={Activity} label='Analytics' />
+    <NavigationItem href='/employer' icon={Users} label='Team' />
 
     {isSignedIn && (
       <>
@@ -136,8 +139,29 @@ export default function EmployerNavbar() {
           </div>
 
           {/* Page Title */}
-          <h1 className='ml-3 md:ml-4 text-xl md:text-2xl font-semibold text-gray-800 transition-all duration-300 hover:text-primary-600'>
-            Employer Portal
+          <h1 className='ml-3 md:ml-4 text-xl md:text-2xl font-semibold text-gray-800 transition-all duration-300 flex items-center flex-nowrap'>
+            <span className='bg-clip-text text-transparent bg-gradient-to-r from-[#9071FF] to-[#6A4BFF]'>
+              Renavest
+            </span>
+            {companyNameSignal.value && (
+              <>
+                <span className='text-gray-400 mx-2'>×</span>
+                {companyInfo[companyNameSignal.value.toLowerCase()]?.logoSrc ? (
+                  <>
+                    <Image
+                      src={companyInfo[companyNameSignal.value.toLowerCase()].logoSrc}
+                      alt={companyNameSignal.value}
+                      width={56}
+                      height={56}
+                      className='w-14 h-14 mr-3 object-contain'
+                    />
+                    <span className='text-black min-w-0 truncate'>{companyNameSignal.value}</span>
+                  </>
+                ) : (
+                  <span className='text-black min-w-0 truncate'>{companyNameSignal.value}</span>
+                )}
+              </>
+            )}
           </h1>
         </div>
 

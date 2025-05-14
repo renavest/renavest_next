@@ -4,7 +4,7 @@ import { useUser } from '@clerk/nextjs';
 import { UserCircle2, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { GoogleCalendarIntegration } from '@/src/features/google-calendar/components/GoogleCalendarIntegration';
 import { AddNewClientSection } from '@/src/features/therapist-dashboard/components/AddNewClientSection';
@@ -12,13 +12,17 @@ import ClientNotesSection from '@/src/features/therapist-dashboard/components/Cl
 import TherapistNavbar from '@/src/features/therapist-dashboard/components/TherapistNavbar';
 import { TherapistStatisticsCard } from '@/src/features/therapist-dashboard/components/TherapistStatisticsCard';
 import { UpcomingSessionsCard } from '@/src/features/therapist-dashboard/components/UpcomingSessionsCard';
-import { useTherapistDashboardData } from '@/src/features/therapist-dashboard/hooks/useTherapistDashboardData';
 import {
   therapistIdSignal,
   therapistPageLoadedSignal,
 } from '@/src/features/therapist-dashboard/state/therapistDashboardState';
-import { Client, UpcomingSession } from '@/src/features/therapist-dashboard/types';
+import {
+  Client,
+  UpcomingSession,
+  TherapistStatistics,
+} from '@/src/features/therapist-dashboard/types';
 import { COLORS } from '@/src/styles/colors';
+
 const ClientSidebar = ({
   clients,
   selectedClient,
@@ -207,13 +211,38 @@ const FutureInsightsCards = () => {
   );
 };
 
-export default function TherapistDashboardPage() {
+interface TherapistDashboardPageProps {
+  initialClients: Client[];
+  initialUpcomingSessions: UpcomingSession[];
+  initialStatistics: TherapistStatistics;
+  initialTherapistId: number;
+}
+
+export default function TherapistDashboardPage({
+  initialClients,
+  initialUpcomingSessions,
+  initialStatistics,
+  initialTherapistId,
+}: TherapistDashboardPageProps) {
   const { user, isLoaded: isUserLoaded } = useUser();
-  const { clients, upcomingSessions, statistics } = useTherapistDashboardData();
+  // State initialized with server data but can be updated by client actions
+  const [clients, setClients] = useState<Client[]>(initialClients);
+  const [upcomingSessions, setUpcomingSessions] =
+    useState<UpcomingSession[]>(initialUpcomingSessions);
+  const [statistics, setStatistics] = useState<TherapistStatistics>(initialStatistics);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
   const [showOnboardingBanner, setShowOnboardingBanner] = useState(true);
   const [isOnboarded, setIsOnboarded] = useState(false);
+
+  // Set therapist ID from props
+  useEffect(() => {
+    if (initialTherapistId) {
+      therapistIdSignal.value = initialTherapistId;
+      therapistPageLoadedSignal.value = true;
+    }
+  }, [initialTherapistId]);
+
   // Check if user is fully onboarded
   useEffect(() => {
     if (user) {
@@ -224,22 +253,41 @@ export default function TherapistDashboardPage() {
     }
   }, [user]);
 
-  useEffect(() => {
-    const fetchTherapistId = async () => {
-      if (user) {
-        try {
-          const response = await fetch('/api/therapist/id');
-          const data = await response.json();
-          if (data.therapistId) {
-            therapistIdSignal.value = data.therapistId;
-          }
-        } catch (error) {
-          console.error('Failed to fetch therapist ID:', error);
+  // Function to refresh data from the server
+  const refreshData = useCallback(async () => {
+    if (!therapistIdSignal.value) return;
+
+    try {
+      // Fetch updated data
+      const fetchWithErrorHandling = async (url: string) => {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch data from ${url}`);
         }
-      }
-    };
-    fetchTherapistId();
-  }, [user]);
+        return response.json();
+      };
+
+      // Fetch all data in parallel
+      const [clientsResponse, sessionsResponse, statisticsResponse] = await Promise.all([
+        fetchWithErrorHandling('/api/therapist/clients'),
+        fetchWithErrorHandling('/api/therapist/sessions'),
+        fetchWithErrorHandling('/api/therapist/statistics'),
+      ]);
+
+      // Update state with fetched data
+      setClients(clientsResponse.clients || []);
+      setUpcomingSessions(sessionsResponse.sessions || []);
+      setStatistics(
+        statisticsResponse.statistics || {
+          totalSessions: 0,
+          totalClients: 0,
+          completedSessions: 0,
+        },
+      );
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    }
+  }, []);
 
   // If still loading initial data, show a loading state
   if (!isUserLoaded) {
@@ -252,13 +300,34 @@ export default function TherapistDashboardPage() {
       </div>
     );
   }
-  if (
-    therapistPageLoadedSignal.value == true &&
-    clients.length === 0 &&
-    therapistIdSignal.value !== null
-  ) {
-    return (
-      <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-gradient-to-br from-purple-50 to-white min-h-screen flex items-center justify-center'>
+
+  // Show empty state if no clients
+  if (clients.length === 0 && therapistIdSignal.value !== null) {
+    return renderEmptyState(isOnboarded, refreshData);
+  }
+
+  // Render main dashboard
+  return renderDashboard(
+    isOnboarded,
+    showOnboardingBanner,
+    setShowOnboardingBanner,
+    statistics,
+    clients,
+    selectedClient,
+    setSelectedClient,
+    isAddClientOpen,
+    setIsAddClientOpen,
+    upcomingSessions,
+    refreshData,
+  );
+}
+
+// Helper function to render empty state
+function renderEmptyState(isOnboarded: boolean, refreshData: () => Promise<void>) {
+  return (
+    <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-gradient-to-br from-purple-50 to-white min-h-screen flex flex-col'>
+      <TherapistNavbar showBackButton={false} isOnboarded={isOnboarded} />
+      <div className='flex-grow flex items-center justify-center'>
         <div className='w-full max-w-lg p-8 bg-white rounded-2xl shadow-xl border border-purple-100 space-y-6 text-center'>
           <div className='w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-md'>
             <Image
@@ -276,14 +345,29 @@ export default function TherapistDashboardPage() {
             You don't have any clients yet. Let's embark on your financial therapy journey!
           </p>
           <div className='space-y-4'>
-            <AddNewClientSection />
+            <AddNewClientSection onClientAdded={refreshData} />
             <GoogleCalendarIntegration />
           </div>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
+// Helper function to render main dashboard
+function renderDashboard(
+  isOnboarded: boolean,
+  showOnboardingBanner: boolean,
+  setShowOnboardingBanner: (show: boolean) => void,
+  statistics: TherapistStatistics,
+  clients: Client[],
+  selectedClient: Client | null,
+  setSelectedClient: (client: Client | null) => void,
+  isAddClientOpen: boolean,
+  setIsAddClientOpen: (open: boolean) => void,
+  upcomingSessions: UpcomingSession[],
+  refreshData: () => Promise<void>,
+) {
   return (
     <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen relative'>
       <TherapistNavbar showBackButton={false} isOnboarded={isOnboarded} />
@@ -390,7 +474,7 @@ export default function TherapistDashboardPage() {
                 </svg>
               </button>
             </div>
-            <AddNewClientSection />
+            <AddNewClientSection onClientAdded={refreshData} />
           </div>
         </div>
       )}

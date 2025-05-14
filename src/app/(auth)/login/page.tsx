@@ -8,6 +8,7 @@ import React, { useEffect, Suspense } from 'react';
 import LoginForm from '@/src/features/auth/components/LoginForm';
 import { setCompanyIntegration } from '@/src/features/auth/state/authState';
 import { trackAuthPageView } from '@/src/features/auth/utils/authTracking';
+import companyInfo from '@/src/features/utm/companyInfo';
 import PageUtmHandler from '@/src/features/utm/PageText';
 import { companyNameSignal } from '@/src/features/utm/utmCustomDemo';
 
@@ -87,41 +88,58 @@ function LoginPageContent() {
             animation: fade-in 0.6s ease-out forwards;
           }
         `}</style>
-        {/* Testimonial on the left */}
-        <div className='w-full lg:w-4/12 flex items-center justify-center p-0'>
+        {/* Testimonial - now first in DOM but will be last on mobile */}
+        <div className='order-2 lg:order-1 w-full lg:w-4/12 flex items-center justify-center p-0'>
           <TestimonialSection />
         </div>
-        {/* Login section on the right */}
-        <div className='w-full lg:w-8/12 flex flex-col items-center bg-white p-8 min-h-screen relative overflow-hidden'>
-          <div className='w-full max-w-md relative z-10 flex flex-col h-full'>
-            {/* Logo and name row, centered */}
-            <div className='flex items-center justify-center mt-16 mb-2'>
-              <Image
-                src='/renavestlogo.png'
-                alt='Renavest'
-                width={48}
-                height={48}
-                className='w-12 h-12 mr-3'
-              />
-              <h1 className={`text-4xl font-extrabold`}>
-                <span className='bg-clip-text text-transparent bg-gradient-to-r from-[#9071FF] to-[#6A4BFF]'>
-                  Renavest
-                </span>
-                {companyNameSignal.value && (
-                  <>
-                    <span className='text-gray-400 mx-2'>×</span>
-                    <span className='text-black'>{companyNameSignal.value}</span>
-                  </>
-                )}
-              </h1>
-            </div>
-            {/* Company subtitle if available */}
+        {/* Login section - now second in DOM but will be first on mobile */}
+        <div className='order-1 lg:order-2 w-full lg:w-8/12 flex flex-col items-center bg-white p-8 min-h-screen relative overflow-hidden'>
+          {/* Renavest × Company row - full width, centered, with space */}
+          <div className='flex w-full justify-center items-center my-6 space-x-4'>
+            <Image
+              src='/renavestlogo.png'
+              alt='Renavest'
+              width={48}
+              height={48}
+              className='w-12 h-12'
+            />
+            <span className='text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#9071FF] to-[#6A4BFF]'>
+              Renavest
+            </span>
             {companyNameSignal.value && (
-              <div className='text-center mb-6 text-gray-600'>
-                Financial therapy for {companyNameSignal.value} employees
-              </div>
+              <>
+                <span className='text-gray-400 text-3xl mx-3'>×</span>
+                {companyInfo[companyNameSignal.value.toLowerCase()]?.logoSrc ? (
+                  <>
+                    <Image
+                      src={companyInfo[companyNameSignal.value.toLowerCase()].logoSrc}
+                      alt={companyNameSignal.value}
+                      width={48}
+                      height={48}
+                      className='mr-2'
+                    />
+                    <span className='text-3xl text-black font-bold min-w-0 truncate'>
+                      {companyNameSignal.value}
+                    </span>
+                  </>
+                ) : (
+                  <span className='text-3xl text-black min-w-0 truncate'>
+                    {companyNameSignal.value}
+                  </span>
+                )}
+              </>
             )}
-            {/* Vertically centered login card content */}
+          </div>
+
+          {/* Company subtitle if available */}
+          {companyNameSignal.value && (
+            <div className='text-center mb-6 text-gray-600'>
+              Financial therapy for {companyNameSignal.value} employees
+            </div>
+          )}
+
+          {/* Vertically centered login card content */}
+          <div className='w-full max-w-md relative z-10 flex flex-col h-full'>
             <div className='flex-1 flex flex-col justify-center'>
               <LoginForm />
             </div>
