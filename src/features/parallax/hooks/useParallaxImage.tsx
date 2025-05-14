@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useParallaxController } from 'react-scroll-parallax';
 
-export interface ParallaxImageProps {
+interface ParallaxImageProps {
   onLoad: () => void;
 }
 

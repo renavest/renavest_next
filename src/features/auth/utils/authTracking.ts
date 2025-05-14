@@ -4,7 +4,7 @@ import { createDate } from '@/src/utils/timezone';
 
 import { UserType } from '../types/auth';
 
-export type AuthContext = {
+type AuthContext = {
   userId?: string | null;
   email?: string | null;
   role?: UserType | null;
@@ -14,7 +14,7 @@ export type AuthContext = {
 /**
  * Helper function to track auth-related events with a consistent format
  */
-export const trackAuthEvent = (
+const trackAuthEvent = (
   event_name: string,
   authContext: Partial<AuthContext> = {},
   additionalProps: Record<string, unknown> = {},
@@ -109,7 +109,7 @@ export const trackSignupAttempt = (
 /**
  * Track signup success
  */
-export const trackSignupSuccess = (
+const trackSignupSuccess = (
   authMethod: 'google' | 'email' | 'microsoft',
   authContext: Partial<AuthContext> = {},
 ) => {
@@ -121,7 +121,7 @@ export const trackSignupSuccess = (
 /**
  * Track signup error
  */
-export const trackSignupError = (
+const trackSignupError = (
   authMethod: 'google' | 'email' | 'microsoft',
   error: unknown,
   authContext: Partial<AuthContext> = {},
@@ -145,7 +145,7 @@ export const trackOAuthRedirect = (
 };
 
 // Call this on login/signup
-export const identifyAndGroupUser = (
+const identifyAndGroupUser = (
   userId: string,
   role: UserType,
   email: string,

@@ -6,11 +6,11 @@ import { createDate } from '@/src/utils/timezone';
 export const isHeaderScrolledSignal = signal(false);
 export const selectedGoalSignal = signal<number | null>(null);
 export const isScriptExpandedSignal = signal(false);
-export const currentInsightIndexSignal = signal(0);
+const currentInsightIndexSignal = signal(0);
 export const isMobileMenuOpenSignal = signal(false);
 
 // Sample data
-export const insightData = [
+const insightData = [
   {
     id: 1,
     message:

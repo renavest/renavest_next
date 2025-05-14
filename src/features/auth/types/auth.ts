@@ -1,6 +1,6 @@
 export type UserType = 'employee' | 'employer' | 'therapist';
 
-export interface AuthState {
+interface AuthState {
   userType: UserType | null;
   isLoading: boolean;
   error: string | null;

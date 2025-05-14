@@ -3,7 +3,7 @@
  * @param key The S3 key of the asset
  * @returns The URL to access the asset through our secure API endpoint
  */
-export function getAssetUrl(key: string): string {
+function getAssetUrl(key: string): string {
   // If it's already a full URL (e.g. external asset), return as is
   if (key.startsWith('http')) {
     return key;
@@ -44,7 +44,7 @@ export function getTherapistImageUrl(key?: string | null): string {
  * @param name The name of the therapist
  * @returns The S3 key for the therapist's profile image
  */
-export function generateTherapistImageKey(name: string): string {
+function generateTherapistImageKey(name: string): string {
   if (!name) return '';
 
   // Convert to lowercase and normalize special characters

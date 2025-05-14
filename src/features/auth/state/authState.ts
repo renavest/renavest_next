@@ -25,41 +25,41 @@ const initialState: AuthState = {
 export const selectedRoleSignal = signal<UserType | null>(null);
 // export const authModeSignal = signal<'signin' | 'signup'>('signin');
 export const authErrorSignal = signal<string | null>(null);
-export const emailSignal = signal<string>('');
-export const passwordSignal = signal<string>('');
-export const companyIntegrationSignal = signal<string | null>(null);
+const emailSignal = signal<string>('');
+const passwordSignal = signal<string>('');
+const companyIntegrationSignal = signal<string | null>(null);
 
-export const authState = signal<AuthState>(initialState);
+const authState = signal<AuthState>(initialState);
 
-export const useAuthStore = <T>(selector: (state: AuthState) => T): T => {
+const useAuthStore = <T>(selector: (state: AuthState) => T): T => {
   return selector(authState.value);
 };
 
-export const updateAuthEmail = (email: string) => {
+const updateAuthEmail = (email: string) => {
   authState.value = { ...authState.value, email };
 };
 
-export const updateAuthPassword = (password: string) => {
+const updateAuthPassword = (password: string) => {
   authState.value = { ...authState.value, password };
 };
 
-export const setAuthError = (error: string | null) => {
+const setAuthError = (error: string | null) => {
   authState.value = { ...authState.value, error };
 };
 
-export const setAuthLoading = (isLoading: boolean) => {
+const setAuthLoading = (isLoading: boolean) => {
   authState.value = { ...authState.value, isLoading };
 };
 
-export const resetAuth = () => {
+const resetAuth = () => {
   authState.value = initialState;
 };
 
-export const setAuthStatus = (status: Partial<AuthState>) => {
+const setAuthStatus = (status: Partial<AuthState>) => {
   authState.value = { ...authState.value, ...status };
 };
 
-export const setUserType = (userType: UserType | null) => {
+const setUserType = (userType: UserType | null) => {
   authState.value = { ...authState.value, userType };
   selectedRoleSignal.value = userType;
 };
@@ -78,7 +78,7 @@ export const getCompanyIntegration = (): string | null => {
   return localStorage.getItem('companyIntegration') || companyIntegrationSignal.value;
 };
 
-export const clearCompanyIntegration = () => {
+const clearCompanyIntegration = () => {
   companyIntegrationSignal.value = null;
   localStorage.removeItem('companyIntegration');
 };

@@ -3,7 +3,7 @@
 import posthog from 'posthog-js';
 import { useState, useEffect } from 'react';
 
-export interface FinancialTherapyModalProps {
+interface FinancialTherapyModalProps {
   isOpen: boolean;
   onClose: () => void;
 }

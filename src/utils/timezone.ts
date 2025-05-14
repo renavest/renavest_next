@@ -3,7 +3,7 @@ import { DateTime } from 'luxon';
 /**
  * Converts a time between two timezones
  */
-export function convertTimeBetweenZones(
+function convertTimeBetweenZones(
   inputTime: Date,
   fromTimezone: string,
   toTimezone: string,
@@ -38,21 +38,21 @@ export const getCurrentYear = () => {
 /**
  * Gets the current month
  */
-export const getCurrentMonth = () => {
+const getCurrentMonth = () => {
   return DateTime.now().month;
 };
 
 /**
  * Gets the current day
  */
-export const getCurrentDay = () => {
+const getCurrentDay = () => {
   return DateTime.now().day;
 };
 
 /**
  * Formats a DateTime object for email display
  */
-export function formatDateTimeForEmail(
+function formatDateTimeForEmail(
   dateTime: DateTime,
   timezone: string,
 ): { date: string; time: string; full: string } {

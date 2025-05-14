@@ -54,7 +54,7 @@ export function formatDateTime(date: DateTime, timezone: string) {
   }
 }
 
-export function isValidFutureDate(date: string): boolean {
+function isValidFutureDate(date: string): boolean {
   try {
     const selectedDate = DateTime.fromISO(date);
     const today = DateTime.now().startOf('day');
@@ -65,7 +65,7 @@ export function isValidFutureDate(date: string): boolean {
   }
 }
 
-export function convertTo24Hour(time12h: string): string {
+function convertTo24Hour(time12h: string): string {
   try {
     const parsedTime = DateTime.fromFormat(time12h, 'h:mm a');
 

@@ -27,7 +27,7 @@ export function trackReferralShare(
  * @param referrerId The user ID of the referrer
  * @param userEmail The email of the new user (optional)
  */
-export function trackReferralConversion(userId: string, referrerId: string, userEmail?: string) {
+function trackReferralConversion(userId: string, referrerId: string, userEmail?: string) {
   posthog.capture('referral_converted', {
     user_id: userId,
     referrer_id: referrerId,
@@ -66,7 +66,7 @@ export function setupReferralAttribution(): string | null {
  * Get the stored referrer ID from localStorage
  * @returns The referrer ID if found, null otherwise
  */
-export function getStoredReferrerId(): string | null {
+function getStoredReferrerId(): string | null {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem('referrer_id');
 }

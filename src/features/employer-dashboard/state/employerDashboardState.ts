@@ -92,7 +92,7 @@ interface TherapistBookingData {
   upcomingBookings: number;
 }
 
-export const financialWellnessMetricsSignal = signal<FinancialWellnessMetrics>({
+const financialWellnessMetricsSignal = signal<FinancialWellnessMetrics>({
   enrollmentRate: 75,
   avgSavingsRate: 12,
   stressReduction: 35,
@@ -112,7 +112,6 @@ export const sessionMetricsSignal = signal<SessionMetrics>({
     { month: 'Mar', completed: 200, allocated: 200 },
     { month: 'Apr', completed: 180, allocated: 200 },
     { month: 'May', completed: 190, allocated: 200 },
-    
   ],
 });
 
@@ -123,7 +122,7 @@ export const employeeMetricsSignal = signal<EmployeeMetrics>({
   coachUtilization: 45,
 });
 
-export const satisfactionMetricsSignal = signal<SatisfactionMetrics>({
+const satisfactionMetricsSignal = signal<SatisfactionMetrics>({
   overallSatisfaction: 92,
   stressReduction: 78,
   financialConfidence: 85,
@@ -145,7 +144,7 @@ export const engagementMetricsSignal = signal<EngagementMetrics>({
   ],
 });
 
-export const financialGoalsMetricsSignal = signal<FinancialGoalsMetrics>({
+const financialGoalsMetricsSignal = signal<FinancialGoalsMetrics>({
   totalGoalsSet: 520,
   goalsCompleted: 140,
   goalProgressData: [
@@ -164,14 +163,14 @@ export const programStatsSignal = signal<ProgramStats>({
   employeesCompletedAllSessions: 390,
 });
 
-export const therapistMetricsSignal = signal<TherapistMetrics>({
+const therapistMetricsSignal = signal<TherapistMetrics>({
   totalTherapists: 25,
   activeTherapists: 20,
   averageSessionsPerTherapist: 18,
   therapistUtilizationRate: 80,
 });
 
-export const bookingMetricsSignal = signal<BookingMetrics>({
+const bookingMetricsSignal = signal<BookingMetrics>({
   totalBookings: 1750,
   scheduledBookings: 1560,
   completedBookings: 1420,
