@@ -7,13 +7,9 @@ import { z } from 'zod';
 import PostHogClient from '@/posthog';
 import { db } from '@/src/db';
 import { bookingSessions } from '@/src/db/schema';
+import { createDate } from '@/src/utils/timezone';
 
-import {
-  TimezoneIdentifier,
-  parseDateTime,
-  formatDateTime,
-  SUPPORTED_TIMEZONES,
-} from '../utils/dateTimeUtils';
+import { TimezoneIdentifier, parseDateTime, SUPPORTED_TIMEZONES } from '../utils/dateTimeUtils';
 import { ensureUserInDb } from '../utils/ensureUserInDb';
 
 import { sendBookingConfirmationEmail } from './sendBookingConfirmationEmail';
@@ -129,8 +125,26 @@ export async function createBookingSession(rawData: unknown) {
       googleMeetLink = meta?.googleMeetLink || '';
     }
 
-    // Format the date and time for email
-    const { date: formattedDate, time: formattedTime } = formatDateTime(sessionDateTime, timezone);
+    // For now, use the validated timezone for both client and therapist
+    const clientTimezone = timezone;
+    const therapistTimezone = timezone;
+
+    // Ensure sessionTime is always zero-padded to 'HH:mm' and not an ISO string
+    let rawSessionTime = sessionStartTime;
+    // If it's an ISO string, use createDate to extract the time
+    if (/T\d{2}:\d{2}/.test(rawSessionTime)) {
+      const dt = createDate(rawSessionTime, timezone);
+      if (dt.isValid) {
+        rawSessionTime = dt.toFormat('HH:mm');
+      }
+    } else if (!/^\d{2}:\d{2}$/.test(rawSessionTime)) {
+      // If not already zero-padded, reformat using Luxon
+      const dt = DateTime.fromFormat(sessionStartTime, 'H:mm');
+      if (dt.isValid) {
+        rawSessionTime = dt.toFormat('HH:mm');
+      }
+    }
+    const rawSessionDate = sessionDate; // 'yyyy-MM-dd'
 
     // Send confirmation emails
     const emailResult = await sendBookingConfirmationEmail({
@@ -138,9 +152,10 @@ export async function createBookingSession(rawData: unknown) {
       clientEmail: userEmail,
       therapistName: advisor.name || 'Renavest Therapist',
       therapistEmail: advisor.email || 'seth@renavestapp.com',
-      sessionDate: formattedDate,
-      sessionTime: formattedTime,
-      timezone: timezone,
+      sessionDate: rawSessionDate,
+      sessionTime: rawSessionTime,
+      clientTimezone,
+      therapistTimezone,
       googleMeetLink,
     });
 

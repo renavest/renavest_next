@@ -38,15 +38,23 @@ export const TherapistBookingNotificationEmailTemplate: React.FC<
   googleMeetLink,
 }) => {
   // Use therapistTimezone for display
-  const dateObj =
-    typeof sessionDate === 'string' && typeof sessionTime === 'string'
-      ? formatDateTime(
-          DateTime.fromFormat(`${sessionDate} ${sessionTime}`, 'yyyy-MM-dd HH:mm', {
-            zone: therapistTimezone,
-          }),
-          therapistTimezone,
-        )
-      : { date: sessionDate, time: sessionTime, timezone: therapistTimezone };
+  let dateObj: { date: string; time: string; timezone: string };
+  let parseError = '';
+  if (typeof sessionDate === 'string' && typeof sessionTime === 'string') {
+    const dt = DateTime.fromFormat(`${sessionDate} ${sessionTime}`, 'yyyy-MM-dd HH:mm', {
+      zone: therapistTimezone,
+    });
+    if (dt.isValid) {
+      dateObj = formatDateTime(dt, therapistTimezone);
+    } else {
+      dateObj = { date: 'Invalid DateTime', time: 'Invalid DateTime', timezone: therapistTimezone };
+      parseError = `Invalid DateTime: ${sessionDate} ${sessionTime} (${therapistTimezone})`;
+
+      if (typeof window === 'undefined') console.error(parseError);
+    }
+  } else {
+    dateObj = { date: sessionDate, time: sessionTime, timezone: therapistTimezone };
+  }
 
   return (
     <Html>
@@ -97,6 +105,7 @@ export const TherapistBookingNotificationEmailTemplate: React.FC<
               <Text className='text-gray-800 my-2'>
                 <strong className={COLORS.WARM_PURPLE.DEFAULT}>Timezone:</strong> {dateObj.timezone}
               </Text>
+              {parseError && <Text className='text-red-600 my-2'>{parseError}</Text>}
             </Section>
 
             {googleMeetLink && (
