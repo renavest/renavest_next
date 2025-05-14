@@ -36,4 +36,4 @@ console.log('SSL:', {
 export const db = drizzle(pool, { schema });
 
 // Optional: Add a method to end the pool when the application closes
-export const closeDbConnection = () => pool.end();
+const closeDbConnection = () => pool.end();

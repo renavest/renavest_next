@@ -109,4 +109,3 @@ export function OAuthButton({ strategy, icon, label, disabled }: OAuthButtonProp
     </button>
   );
 }
-export default OAuthButton;

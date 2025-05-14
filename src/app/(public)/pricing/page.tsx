@@ -10,7 +10,7 @@ export default function PricingPage() {
       <div className='mx-auto max-w-7xl px-6 lg:px-8 pt-16'>
         <div className='text-center mb-16'>
           <h1 className='text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl'>
-            Financial Wellness Investment Calculator
+            Renavest Pricing
           </h1>
           <p className='mt-6 text-lg leading-8 text-gray-600'>
             Discover the impact and affordability of providing financial therapy for your team

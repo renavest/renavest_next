@@ -8,7 +8,7 @@ import { TimezoneIdentifier } from '../../utils/dateTimeUtils';
 export const selectedSlotSignal = signal<TimeSlot | null>(null);
 export const timezoneSignal = signal<TimezoneIdentifier>('America/New_York');
 export const availableSlotsSignal = signal<Array<{ start: string; end: string }>>([]);
-export const loadingSignal = signal(true);
+const loadingSignal = signal(true);
 export const errorSignal = signal<string | null>(null);
 export const isGoogleCalendarIntegratedSignal = signal(false);
 export const isCheckingIntegrationSignal = signal(true);

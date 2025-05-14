@@ -1,7 +1,7 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { Menu, Users, TrendingUp, X } from 'lucide-react';
+import { Menu, Users, TrendingUp, X, Coins } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import posthog from 'posthog-js';
@@ -66,6 +66,13 @@ const DesktopNavigation = ({ isSignedIn }: { isSignedIn: boolean }) => (
     >
       Business Impact
     </Link>
+    <Link
+      href='/pricing'
+      className='text-gray-600 hover:text-[#9071FF] font-medium text-sm truncate'
+      onClick={() => trackNavClick('pricing')}
+    >
+      Pricing
+    </Link>
     {/* Button Group */}
     <div className='flex items-center gap-3'>
       {isSignedIn ? (
@@ -107,6 +114,12 @@ const MobileNavLinks = ({ onClose, isSignedIn }: { onClose: () => void; isSigned
       href='#business-impact'
       icon={<TrendingUp className='h-5 w-5 text-[#9071FF]' />}
       label='Business Impact'
+      onClose={onClose}
+    />
+    <MobileNavLink
+      href='/pricing'
+      icon={<Coins className='h-5 w-5 text-[#9071FF]' />}
+      label='Pricing'
       onClose={onClose}
     />
 

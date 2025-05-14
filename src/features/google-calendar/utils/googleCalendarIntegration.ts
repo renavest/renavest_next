@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 /**
  * Represents the integration status with Google Calendar
  */
-export interface IntegrationStatus {
+interface IntegrationStatus {
   isConnected: boolean | null;
   isLoading: boolean;
   calendarEmail?: string | null;
@@ -14,7 +14,7 @@ export interface IntegrationStatus {
 }
 
 // Create a signal to store integration statuses keyed by therapist ID
-export const googleCalendarIntegrationStatusSignal = signal<Record<string, IntegrationStatus>>({});
+const googleCalendarIntegrationStatusSignal = signal<Record<string, IntegrationStatus>>({});
 
 // Track which therapists we've already fetched
 const fetchedTherapistIds = new Set<string>();
@@ -88,9 +88,7 @@ export async function fetchGoogleCalendarStatus(
 /**
  * Initiates the Google Calendar connection flow
  */
-export async function initiateGoogleCalendarConnection(
-  therapistId: number | string,
-): Promise<boolean> {
+async function initiateGoogleCalendarConnection(therapistId: number | string): Promise<boolean> {
   try {
     const idStr = String(therapistId);
     const statusMap = googleCalendarIntegrationStatusSignal.value;
@@ -128,7 +126,7 @@ export async function initiateGoogleCalendarConnection(
 /**
  * Disconnects Google Calendar integration
  */
-export async function disconnectGoogleCalendar(therapistId: number | string): Promise<boolean> {
+async function disconnectGoogleCalendar(therapistId: number | string): Promise<boolean> {
   const idStr = String(therapistId);
   const statusMap = googleCalendarIntegrationStatusSignal.value;
 
@@ -218,7 +216,7 @@ export async function fetchTherapistId(userId?: string): Promise<number | null> 
 /**
  * Reconnects Google Calendar - disconnects first, then initiates a new connection
  */
-export async function reconnectGoogleCalendar(therapistId: number | string): Promise<boolean> {
+async function reconnectGoogleCalendar(therapistId: number | string): Promise<boolean> {
   const idStr = String(therapistId);
   const statusMap = googleCalendarIntegrationStatusSignal.value;
 

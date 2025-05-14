@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { useState } from 'react';
 
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
@@ -8,6 +9,25 @@ import { Plan } from '../data/pricing-data';
 import { CheckIcon, XIcon } from './pricing-icons';
 
 export function PricingCard({ plan }: { plan: Plan }) {
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+
+  const calculatePrice = () => {
+    if (billingCycle === 'yearly') {
+      return {
+        price: plan.annualPrice / 12, // Convert annual price to monthly equivalent
+        billingText: '/employee/yr',
+        savings: plan.savings,
+      };
+    }
+    return {
+      price: plan.price,
+      billingText: '/employee/mo',
+      savings: '0',
+    };
+  };
+
+  const { price, billingText, savings } = calculatePrice();
+
   return (
     <div
       className={cn(
@@ -33,6 +53,39 @@ export function PricingCard({ plan }: { plan: Plan }) {
         {plan.name}
       </h3>
 
+      {/* Billing Cycle Toggle */}
+      <div className='flex justify-center items-center mt-4 space-x-2'>
+        <span
+          className={cn(
+            billingCycle === 'monthly' ? 'font-bold' : 'text-gray-500',
+            'cursor-pointer',
+          )}
+          onClick={() => setBillingCycle('monthly')}
+        >
+          Monthly
+        </span>
+        <div
+          className='w-12 h-6 bg-gray-200 rounded-full relative cursor-pointer'
+          onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'yearly' : 'monthly')}
+        >
+          <div
+            className={cn(
+              'w-6 h-6 bg-gray-500 rounded-full absolute top-0 transition-all duration-300',
+              billingCycle === 'yearly' ? 'right-0' : 'right-6',
+            )}
+          />
+        </div>
+        <span
+          className={cn(
+            billingCycle === 'yearly' ? 'font-bold' : 'text-gray-500',
+            'cursor-pointer',
+          )}
+          onClick={() => setBillingCycle('yearly')}
+        >
+          Yearly
+        </span>
+      </div>
+
       <p className='mt-4 flex items-baseline gap-x-2'>
         <span
           className={cn(
@@ -40,18 +93,25 @@ export function PricingCard({ plan }: { plan: Plan }) {
             'text-4xl font-bold tracking-tight',
           )}
         >
-          ${plan.price}
+          ${price}
         </span>
         <span
           className={cn(plan.featured ? 'text-gray-300' : 'text-gray-600', 'text-sm leading-6')}
         >
-          /employee/mo
+          {billingText}
         </span>
       </p>
       <div className='flex flex-col gap-1 mt-2'>
-        <p className={cn(plan.featured ? 'text-gray-300' : 'text-gray-600', 'text-sm leading-6')}>
-          Billed annually
-        </p>
+        {billingCycle === 'yearly' && savings !== '0' && (
+          <p
+            className={cn(
+              plan.featured ? 'text-gray-300' : 'text-gray-600',
+              'text-sm leading-6 text-green-600',
+            )}
+          >
+            Save {savings} with annual billing
+          </p>
+        )}
       </div>
       <Link
         href='/employer'

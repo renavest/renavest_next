@@ -238,7 +238,7 @@ export async function disconnectTherapistGoogleCalendar(
 /**
  * Creates a new Google OAuth client with environment variables
  */
-export function createGoogleOAuth2Client() {
+function createGoogleOAuth2Client() {
   return new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,

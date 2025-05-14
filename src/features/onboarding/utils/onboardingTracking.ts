@@ -11,10 +11,10 @@ export type OnboardingData = {
   answers: string[];
 };
 
-export const isStaffRole = (role: string | null): boolean =>
+const isStaffRole = (role: string | null): boolean =>
   ['employee', 'therapist', 'employer'].includes(role || '');
 
-export const trackEvent = (
+const trackEvent = (
   event_name: string,
   additionalProps: Record<string, unknown> = {},
   userContext: { user_id?: string; company_id?: string } = {},

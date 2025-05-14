@@ -4,22 +4,22 @@ import type { Signal } from '@preact-signals/safe-react';
 // Theme configuration signals
 export const ctaTextSignal = signal<string>('Book a Demo');
 export const isEmployeeSignal = signal<boolean>(false);
-export const ctaUrlSignal = signal<string>('https://calendly.com/rameau-stan/one-on-one');
-export const loginRedirectSignal = signal<string>('/login');
+const ctaUrlSignal = signal<string>('https://calendly.com/rameau-stan/one-on-one');
+const loginRedirectSignal = signal<string>('/login');
 
 // Company information signals
 export const companyNameSignal = signal<string>('');
 // User information signals
 export const firstNameSignal = signal<string>('');
-export const lastNameSignal = signal<string>('');
-export const fullNameSignal = signal<string>('');
+const lastNameSignal = signal<string>('');
+const fullNameSignal = signal<string>('');
 
 // UTM specific signals
-export const utmSourceSignal = signal<string>('');
-export const utmMediumSignal = signal<string>('');
-export const utmCampaignSignal = signal<string>('');
-export const utmTermSignal = signal<string>('');
-export const utmContentSignal = signal<string>('');
+const utmSourceSignal = signal<string>('');
+const utmMediumSignal = signal<string>('');
+const utmCampaignSignal = signal<string>('');
+const utmTermSignal = signal<string>('');
+const utmContentSignal = signal<string>('');
 
 // Page content signals
 export const heroTitleSignal = signal<string>('Transform Your Workplace with Financial Therapy.');
@@ -31,7 +31,7 @@ export const journeySectionTitleSignal = signal<string>(
 );
 
 // List of all standard and custom URL parameters to track
-export const TRACKED_PARAMS = [
+const TRACKED_PARAMS = [
   // UTM parameters
   'utm_source',
   'utm_medium',
@@ -49,7 +49,7 @@ export const TRACKED_PARAMS = [
 const STORAGE_PREFIX = 'renavest_utm_';
 
 // UTM parameter to configuration mapping
-export interface UtmConfig {
+interface UtmConfig {
   [key: string]: {
     param: string;
     values: {
@@ -64,7 +64,7 @@ export interface UtmConfig {
 }
 
 // Configuration for how UTM parameters affect the site
-export const utmConfigurations: UtmConfig = {
+const utmConfigurations: UtmConfig = {
   employee: {
     param: 'employee',
     values: {

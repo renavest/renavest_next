@@ -50,7 +50,7 @@ function UtmParameterProcessor({ children }: { children: React.ReactNode }) {
 /**
  * HOC to wrap any component with UTM parameter handling
  */
-export function withUtmCustomization<P extends object>(Component: React.ComponentType<P>) {
+function withUtmCustomization<P extends object>(Component: React.ComponentType<P>) {
   return function WithUtmCustomization(props: P) {
     return (
       <PageUtmHandler>
