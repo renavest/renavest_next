@@ -7,7 +7,6 @@ import { toast } from 'sonner';
 
 import { ALLOWED_EMAILS } from '@/src/constants';
 import { selectedRoleSignal } from '@/src/features/auth/state/authState';
-import { UserType } from '@/src/features/auth/types/auth';
 import { createDate } from '@/src/utils/timezone';
 
 import { submitOnboardingData } from '../actions/onboardingActions';
@@ -67,9 +66,6 @@ export function useOnboardingSubmission() {
     // Track skipped onboarding for salespeople
     trackOnboardingSkipped(context);
 
-    // Update Clerk metadata for salespeople
-    // await updateUserRole(context.userRole as UserType);
-
     // Identify user even for allowed emails
     identifyUser(
       context,
@@ -91,9 +87,6 @@ export function useOnboardingSubmission() {
     // Submit onboarding data to database
     await submitOnboardingData(selectedAnswers);
 
-    // Update Clerk metadata
-    await updateUserRole(context.userRole as UserType);
-
     // Track completion
     trackOnboardingCompletion(context, onboardingData);
 
@@ -112,7 +105,7 @@ export function useOnboardingSubmission() {
 
     const context: OnboardingContext = {
       userEmail,
-      userRole,
+      userRole: userRole as string,
       currentStep,
     };
 
