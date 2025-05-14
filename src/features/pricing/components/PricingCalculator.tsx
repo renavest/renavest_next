@@ -1,7 +1,9 @@
 'use client';
 
-import { Coins, Users, Clock, Percent, TrendingUp, Shield, Activity } from 'lucide-react';
+import { Coins, Users, Clock, Percent, Activity } from 'lucide-react';
 import { useState, useMemo } from 'react';
+
+import PricingSummaryCards from './PricingSummaryCards';
 
 interface PricingCalculatorProps {
   initialEmployeeCount?: number;
@@ -9,12 +11,6 @@ interface PricingCalculatorProps {
   initialSubsidyPercentage?: number;
   initialUtilizationRate?: number;
   initialAverageSessionCost?: number;
-}
-
-interface PerformanceMetrics {
-  roi: number;
-  productivity: number;
-  retention: number;
 }
 
 interface ExampleScenario {
@@ -39,47 +35,37 @@ export default function PricingCalculator({
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [averageSessionCost, setAverageSessionCost] = useState(initialAverageSessionCost);
 
-  const performanceMetrics: PerformanceMetrics = useMemo(
-    () => ({
-      roi: 6,
-      productivity: 34,
-      retention: 22,
-    }),
-    [],
-  );
-
   const calculatePricing = useMemo(() => {
-    // Calculate actual utilized sessions based on utilization rate
+    // Utilization-based calculations
     const totalUtilizedSessions = employeeCount * sessionsPerYear * (utilizationRate / 100);
-
-    // Base calculations with utilization rate
     const totalSessionCost = totalUtilizedSessions * averageSessionCost;
-    const companyCost = totalSessionCost * (subsidyPercentage / 100);
+    const employerCost = totalSessionCost * (subsidyPercentage / 100);
     const employeeCost = totalSessionCost * ((100 - subsidyPercentage) / 100);
-
-    // Per employee calculations
-    const perEmployeeTotalCost = employeeCost / employeeCount;
-    const perEmployeeCompanyCost = companyCost / employeeCount;
     const perEmployeeUtilizedSessions = sessionsPerYear * (utilizationRate / 100);
 
-    // Monthly vs Yearly adjustments
+    // Max possible per-employee cost (if fully utilized)
+    const maxPerEmployeeEmployerCost =
+      sessionsPerYear * averageSessionCost * (subsidyPercentage / 100);
+    const maxPerEmployeeEmployeeCost =
+      sessionsPerYear * averageSessionCost * ((100 - subsidyPercentage) / 100);
+
     return {
       monthly: {
-        total: totalSessionCost / 12,
-        company: companyCost / 12,
-        employee: employeeCost / 12,
-        perEmployeeTotalCost: perEmployeeTotalCost / 12,
-        perEmployeeCompanyCost: perEmployeeCompanyCost / 12,
         totalUtilizedSessions: totalUtilizedSessions / 12,
+        totalSessionCost: totalSessionCost / 12,
+        employerCost: employerCost / 12,
+        employeeCost: employeeCost / 12,
+        maxPerEmployeeEmployerCost: maxPerEmployeeEmployerCost / 12,
+        maxPerEmployeeEmployeeCost: maxPerEmployeeEmployeeCost / 12,
         perEmployeeUtilizedSessions: perEmployeeUtilizedSessions / 12,
       },
       yearly: {
-        total: totalSessionCost,
-        company: companyCost,
-        employee: employeeCost,
-        perEmployeeTotalCost,
-        perEmployeeCompanyCost,
         totalUtilizedSessions,
+        totalSessionCost,
+        employerCost,
+        employeeCost,
+        maxPerEmployeeEmployerCost,
+        maxPerEmployeeEmployeeCost,
         perEmployeeUtilizedSessions,
       },
     };
@@ -291,122 +277,11 @@ export default function PricingCalculator({
 
         {/* Cost Breakdown and Insights Column */}
         <div className='md:col-span-2 space-y-6'>
-          {/* Cost Breakdown */}
-          <div className='bg-white rounded-lg p-6 shadow-md'>
-            <h2 className='text-2xl font-bold text-gray-900 mb-6'>Cost Breakdown</h2>
-
-            <div className='grid md:grid-cols-3 gap-4'>
-              <div className='bg-purple-50 p-4 rounded-lg'>
-                <h3 className='text-lg font-semibold text-purple-800 mb-2'>
-                  Company-Wide Financial Therapy Sessions
-                </h3>
-                <p className='text-3xl font-bold text-purple-600'>
-                  {currentPricing.totalUtilizedSessions.toFixed(1)}
-                </p>
-                <p className='text-sm text-gray-600'>
-                  {utilizationRate}% of {employeeCount} employees participating
-                </p>
-                <p className='text-sm text-gray-600 mt-1'>
-                  Average Sessions per Participating Employee:{' '}
-                  {currentPricing.perEmployeeUtilizedSessions.toFixed(1)}
-                </p>
-              </div>
-
-              <div className='bg-blue-50 p-4 rounded-lg'>
-                <h3 className='text-lg font-semibold text-blue-800 mb-2'>
-                  Total Company Session Cost
-                </h3>
-                <p className='text-3xl font-bold text-blue-600'>
-                  ${currentPricing.employee.toLocaleString()}
-                </p>
-                <p className='text-sm text-gray-600'>per employee {billingCycle}</p>
-              </div>
-
-              <div className='bg-green-50 p-4 rounded-lg'>
-                <h3 className='text-lg font-semibold text-green-800 mb-2'>
-                  Company Financial Investment
-                </h3>
-                <p className='text-3xl font-bold text-green-600'>
-                  ${currentPricing.company.toLocaleString()}
-                </p>
-                <p className='text-sm text-gray-600'>
-                  Estimated cost if employees use {utilizationRate}% of sessions
-                </p>
-              </div>
-            </div>
-
-            {/* Employee Contribution Section */}
-            <div className='mt-6 bg-gray-50 p-4 rounded-lg'>
-              <h3 className='text-lg font-semibold text-gray-800 mb-2'>
-                Employee Financial Wellness Contribution
-              </h3>
-              <p className='text-gray-600'>
-                Employees contribute{' '}
-                <span className='font-medium'>{100 - subsidyPercentage}% </span>
-                of financial therapy session costs
-              </p>
-              <p className='text-sm text-gray-500 mt-2'>
-                Individual Employee Contribution:{' '}
-                <span className='font-medium'>
-                  ${currentPricing.perEmployeeTotalCost.toLocaleString()}
-                </span>{' '}
-                {billingCycle}
-              </p>
-              <p className='text-sm text-gray-500 mt-1'>
-                Total Employee Contribution:{' '}
-                <span className='font-medium'>${currentPricing.employee.toLocaleString()}</span>{' '}
-                {billingCycle}
-              </p>
-              <p className='text-sm text-gray-500 mt-1'>
-                Company Contribution per Employee:{' '}
-                <span className='font-medium'>
-                  ${currentPricing.perEmployeeCompanyCost.toLocaleString()}
-                </span>{' '}
-                {billingCycle}
-              </p>
-            </div>
-          </div>
-
-          {/* Performance Insights */}
-          <div className='bg-white rounded-lg p-6 shadow-md'>
-            <h3 className='text-xl font-semibold text-gray-900 mb-4 flex items-center'>
-              <TrendingUp className='w-6 h-6 mr-3 text-green-600' />
-              Performance & ROI Insights
-            </h3>
-
-            <div className='grid md:grid-cols-3 gap-4'>
-              <div className='bg-green-50 p-4 rounded-lg'>
-                <div className='flex items-center mb-2'>
-                  <Coins className='w-5 h-5 mr-2 text-green-600' />
-                  <h4 className='text-sm font-semibold text-gray-800'>Potential ROI</h4>
-                </div>
-                <p className='text-2xl font-bold text-green-700'>{performanceMetrics.roi}:1</p>
-                <p className='text-xs text-gray-600'>Return on investment in financial wellness</p>
-              </div>
-
-              <div className='bg-blue-50 p-4 rounded-lg'>
-                <div className='flex items-center mb-2'>
-                  <TrendingUp className='w-5 h-5 mr-2 text-blue-600' />
-                  <h4 className='text-sm font-semibold text-gray-800'>Productivity</h4>
-                </div>
-                <p className='text-2xl font-bold text-blue-700'>
-                  {performanceMetrics.productivity}%
-                </p>
-                <p className='text-xs text-gray-600'>Potential productivity improvement</p>
-              </div>
-
-              <div className='bg-purple-50 p-4 rounded-lg'>
-                <div className='flex items-center mb-2'>
-                  <Shield className='w-5 h-5 mr-2 text-purple-600' />
-                  <h4 className='text-sm font-semibold text-gray-800'>Retention Impact</h4>
-                </div>
-                <p className='text-2xl font-bold text-purple-700'>
-                  {performanceMetrics.retention}%
-                </p>
-                <p className='text-xs text-gray-600'>Potential employee retention improvement</p>
-              </div>
-            </div>
-          </div>
+          <PricingSummaryCards
+            billingCycle={billingCycle}
+            currentPricing={currentPricing}
+            sessionsPerYear={sessionsPerYear}
+          />
         </div>
       </div>
 
