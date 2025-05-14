@@ -3,13 +3,13 @@
 import { signal, effect } from '@preact-signals/safe-react';
 import { HeartHandshake, TrendingUp, BarChart3 } from 'lucide-react';
 import posthog from 'posthog-js';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Parallax } from 'react-scroll-parallax';
 
 // Card content components to reduce main component size
 const CardOne = () => (
-  <div className='bg-white rounded-xl shadow-lg p-8 md:p-10'>
-    <div className='flex flex-col md:flex-row gap-8 md:gap-16'>
+  <div className='bg-white rounded-xl shadow-lg p-8 md:p-12'>
+    <div className='flex flex-col md:flex-row gap-8 md:gap-20'>
       <div className='md:w-1/2'>
         <div className='flex items-center gap-3 mb-4'>
           <div className='w-8 h-8 bg-[#9071FF] rounded-full flex items-center justify-center text-white font-bold'>
@@ -58,8 +58,8 @@ const CardOne = () => (
 );
 
 const CardTwo = () => (
-  <div className='bg-white rounded-xl shadow-lg p-8 md:p-10'>
-    <div className='flex flex-col md:flex-row gap-8 md:gap-16'>
+  <div className='bg-white rounded-xl shadow-lg p-8 md:p-12'>
+    <div className='flex flex-col md:flex-row gap-8 md:gap-20'>
       <div className='md:w-1/2'>
         <div className='flex items-center gap-3 mb-4'>
           <div className='w-8 h-8 bg-[#9071FF] rounded-full flex items-center justify-center text-white font-bold'>
@@ -105,8 +105,8 @@ const CardTwo = () => (
 );
 
 const CardThree = () => (
-  <div className='bg-white rounded-xl shadow-lg p-8 md:p-10'>
-    <div className='flex flex-col md:flex-row gap-8 md:gap-16'>
+  <div className='bg-white rounded-xl shadow-lg p-8 md:p-12'>
+    <div className='flex flex-col md:flex-row gap-8 md:gap-20'>
       <div className='md:w-1/2'>
         <div className='flex items-center gap-3 mb-4'>
           <div className='w-8 h-8 bg-[#9071FF] rounded-full flex items-center justify-center text-white font-bold'>
@@ -160,7 +160,6 @@ function WhatWeDoSection() {
 
   // Effect to track section visibility with PostHog
   effect(() => {
-    console.log('Visibility changed:', isVisible.value);
     if (isVisible.value && typeof window !== 'undefined') {
       posthog.capture('section:viewed_v1', {
         section_name: 'what_we_do',
@@ -181,12 +180,6 @@ function WhatWeDoSection() {
       setActiveCard(cardNumber);
     }
   };
-
-  // Add useEffect for additional debugging
-  useEffect(() => {
-    console.log('WhatWeDoSection mounted');
-    return () => console.log('WhatWeDoSection unmounted');
-  }, []);
 
   // Render the active card based on state
   const renderActiveCard = () => {
@@ -209,7 +202,7 @@ function WhatWeDoSection() {
         <Parallax
           translateY={[-15, 15]}
           opacity={[0.8, 1]}
-          className='max-w-3xl mx-auto text-center mb-16'
+          className='max-w-4xl mx-auto text-center mb-16'
         >
           <h2 className='text-3xl md:text-4xl font-bold text-gray-900 mb-4'>
             What Renavest Delivers
@@ -219,7 +212,7 @@ function WhatWeDoSection() {
           </p>
         </Parallax>
 
-        <div className='max-w-4xl mx-auto mb-16'>
+        <div className='max-w-5xl mx-auto mb-16'>
           <div className='flex justify-center gap-4 mb-12'>
             {[1, 2, 3].map((num) => (
               <button

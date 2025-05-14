@@ -9,6 +9,7 @@ import { LogoutButton } from '@/src/features/auth/components/LogoutButton';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
+import companyInfo from '../../utm/companyInfo';
 import { companyNameSignal } from '../../utm/utmCustomDemo';
 import { isHeaderScrolledSignal, isMobileMenuOpenSignal } from '../state/dashboardState';
 
@@ -71,7 +72,7 @@ export default function EmployeeNavbar() {
     >
       <div className='flex items-center justify-between max-w-7xl mx-auto'>
         {/* Logo and Title Container */}
-        <div className='flex items-center'>
+        <div className='flex items-center w-full'>
           {/* Logo */}
           <div className='relative flex-shrink-0 w-10 h-10 md:w-12 md:h-12'>
             <Image
@@ -84,14 +85,27 @@ export default function EmployeeNavbar() {
             />
           </div>
           {/* Page Title */}
-          <h1 className='ml-3 md:ml-4 text-xl md:text-2xl font-semibold text-gray-800 transition-all duration-300'>
+          <h1 className='ml-3 md:ml-4 text-xl md:text-2xl font-semibold text-gray-800 transition-all duration-300 flex items-center flex-nowrap'>
             <span className='bg-clip-text text-transparent bg-gradient-to-r from-[#9071FF] to-[#6A4BFF]'>
               Renavest
             </span>
             {companyNameSignal.value && (
               <>
                 <span className='text-gray-400 mx-2'>×</span>
-                <span className='text-black'>{companyNameSignal.value}</span>
+                {companyInfo[companyNameSignal.value.toLowerCase()]?.logoSrc ? (
+                  <>
+                    <Image
+                      src={companyInfo[companyNameSignal.value.toLowerCase()].logoSrc}
+                      alt={companyNameSignal.value}
+                      width={56}
+                      height={56}
+                      className='w-14 h-14 mr-3 object-contain'
+                    />
+                    <span className='text-black min-w-0 truncate'>{companyNameSignal.value}</span>
+                  </>
+                ) : (
+                  <span className='text-black min-w-0 truncate'>{companyNameSignal.value}</span>
+                )}
               </>
             )}
           </h1>

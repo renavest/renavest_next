@@ -147,6 +147,13 @@ const companyInfo: Record<string, CompanyInfo> = {
     about:
       'Unlocking new opportunities in financial wellness and data. (Customize this entry as needed.)',
   },
+  redcon: {
+    logoSrc: '/logos/redcon.png',
+    title: 'Redcon Security',
+    headline: 'Welcome to the Renavest × Redcon Integration',
+    about:
+      'Redcon is a financial wellness platform that helps users manage their finances and improve their financial health.',
+  },
 };
 
 export default companyInfo;

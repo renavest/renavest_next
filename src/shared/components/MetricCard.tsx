@@ -9,6 +9,9 @@ interface MetricCardProps {
   trend?: number;
   className?: string;
   trendClassName?: string;
+  titleClassName?: string;
+  valueClassName?: string;
+  subtitleClassName?: string;
   icon?: LucideIcon;
   iconClassName?: string;
 }
@@ -20,6 +23,9 @@ export default function MetricCard({
   trend,
   className,
   trendClassName,
+  titleClassName,
+  valueClassName,
+  subtitleClassName,
   icon: Icon,
   iconClassName,
 }: MetricCardProps) {
@@ -40,9 +46,9 @@ export default function MetricCard({
           <Icon className='w-4 h-4' />
         </div>
       )}
-      <h3 className='text-sm font-medium mb-2'>{title}</h3>
+      <h3 className={cn('text-sm font-medium mb-2', titleClassName)}>{title}</h3>
       <div className='flex items-baseline gap-2'>
-        <p className='text-2xl md:text-3xl font-semibold'>{value}</p>
+        <p className={cn('text-2xl md:text-3xl font-semibold', valueClassName)}>{value}</p>
         {trend !== undefined && (
           <span
             className={cn(
@@ -55,7 +61,7 @@ export default function MetricCard({
           </span>
         )}
       </div>
-      <p className='text-sm mt-1 opacity-80'>{subtitle}</p>
+      <p className={cn('text-sm mt-1 opacity-80', subtitleClassName)}>{subtitle}</p>
     </div>
   );
 }

@@ -22,7 +22,7 @@ export const utmTermSignal = signal<string>('');
 export const utmContentSignal = signal<string>('');
 
 // Page content signals
-export const heroTitleSignal = signal<string>('Financial Therapy for Thriving, Stress-Free Teams');
+export const heroTitleSignal = signal<string>('Transform Your Workplace with Financial Therapy.');
 export const heroSubtitleSignal = signal<string>(
   "Your workforce's financial stress is costing you $2,500 per employee annually.",
 );

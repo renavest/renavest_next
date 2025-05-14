@@ -1,14 +1,14 @@
 'use client';
 
 import EngagementChart from '@/src/features/employer-dashboard/components/EngagementChart';
-import LoginFrequencyChart from '@/src/features/employer-dashboard/components/LoginFrequencyChart';
+import SessionAllocationChart from '@/src/features/employer-dashboard/components/SessionAllocationChart';
 
 export function ChartsSections() {
   return (
     <div className='space-y-8'>
-      {/* Main Charts (Sessions & Login Activity) */}
+      {/* Main Charts (Sessions & Engagement) */}
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
-        <LoginFrequencyChart />
+        <SessionAllocationChart />
         <EngagementChart />
       </div>
     </div>

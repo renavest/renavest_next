@@ -7,7 +7,7 @@ import posthog from 'posthog-js';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
-import { companyNameSignal } from '@/src/features/utm/utmCustomDemo';
+import { companyNameSignal, firstNameSignal } from '@/src/features/utm/utmCustomDemo';
 import { trackReferralShare } from '@/src/lib/referralTracking';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
@@ -75,16 +75,6 @@ export default function LimitedDashboardClient() {
         firstName: user?.firstName,
         lastName: user?.lastName,
       });
-
-      // Fetch referral count
-      // fetch('/api/referrals/count')
-      //   .then((res) => res.json())
-      //   .then((data) => {
-      //     if (data.count !== undefined) {
-      //       setReferralsCount(data.count);
-      //     }
-      //   })
-      // .catch((err) => console.error('Failed to fetch referral count:', err));
     }
   }, [user]);
 
@@ -133,7 +123,11 @@ export default function LimitedDashboardClient() {
         <div className='mb-8 md:mb-10 animate-fade-in-up'>
           <div className='bg-purple-100 rounded-2xl p-6 md:p-8 shadow-sm border border-purple-200'>
             <h2 className='text-3xl md:text-4xl font-bold text-black bg-clip-text'>
-              {user?.firstName ? `Welcome ${user?.firstName} 👋` : 'Welcome 👋'}
+              {firstNameSignal.value
+                ? `Welcome ${firstNameSignal.value} 👋`
+                : user?.firstName
+                  ? `Welcome ${user?.firstName} 👋`
+                  : 'Welcome 👋'}
             </h2>
             <p className='text-gray-600 mt-2 text-base md:text-lg max-w-2xl animate-fade-in'>
               Your financial wellness journey starts here. Explore resources and connect with expert
