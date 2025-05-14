@@ -236,3 +236,19 @@ export function processUtmParameters(searchParams: URLSearchParams): Record<stri
 
   return params;
 }
+
+/**
+ * Clears all UTM/company-related localStorage and other relevant keys
+ */
+export function clearAllCompanyLocalStorage(): void {
+  if (typeof window === 'undefined') return;
+  // Remove all UTM and custom params with prefix
+  TRACKED_PARAMS.forEach((param) => {
+    localStorage.removeItem(`${STORAGE_PREFIX}${param}`);
+  });
+  // Remove other relevant keys
+  localStorage.removeItem('companyIntegration');
+  localStorage.removeItem('onboardingState');
+  localStorage.removeItem('referrer_id');
+  localStorage.removeItem('role_from_oauth');
+}

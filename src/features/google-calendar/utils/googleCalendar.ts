@@ -234,14 +234,3 @@ export async function disconnectTherapistGoogleCalendar(
     })
     .where(eq(therapists.id, therapistId));
 }
-
-/**
- * Creates a new Google OAuth client with environment variables
- */
-function createGoogleOAuth2Client() {
-  return new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    process.env.GOOGLE_REDIRECT_URI,
-  );
-}

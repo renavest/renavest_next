@@ -37,3 +37,5 @@ export const db = drizzle(pool, { schema });
 
 // Optional: Add a method to end the pool when the application closes
 const closeDbConnection = () => pool.end();
+
+export { closeDbConnection };

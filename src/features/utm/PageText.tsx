@@ -5,7 +5,7 @@ import { useEffect, Suspense } from 'react';
 
 import { COLORS } from '@/src/styles/colors';
 
-import { processUtmParameters } from './utmCustomDemo';
+import { processUtmParameters, clearAllCompanyLocalStorage } from './utmCustomDemo';
 interface PageUtmHandlerProps {
   children: React.ReactNode;
 }
@@ -39,23 +39,19 @@ function UtmParameterProcessor({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // If ?reset is present, clear all relevant localStorage and reload without ?reset
+      if (searchParams.get('reset') !== null) {
+        clearAllCompanyLocalStorage();
+        // Remove ?reset from the URL and reload
+        const url = new URL(window.location.href);
+        url.searchParams.delete('reset');
+        window.location.replace(url.toString());
+        return;
+      }
       // Process and apply all UTM parameters
       processUtmParameters(searchParams);
     }
   }, [searchParams]);
 
   return <>{children}</>;
-}
-
-/**
- * HOC to wrap any component with UTM parameter handling
- */
-function withUtmCustomization<P extends object>(Component: React.ComponentType<P>) {
-  return function WithUtmCustomization(props: P) {
-    return (
-      <PageUtmHandler>
-        <Component {...props} />
-      </PageUtmHandler>
-    );
-  };
 }

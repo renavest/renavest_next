@@ -11,8 +11,6 @@ import { TimezoneIdentifier } from '@/src/features/booking/utils/dateTimeUtils';
 import { createAndStoreGoogleCalendarEvent } from '@/src/features/google-calendar/utils/googleCalendar';
 import { createDate } from '@/src/utils/timezone';
 
-import { UserType, TherapistType } from './types';
-
 // OAuth2 client configuration
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
@@ -144,6 +142,10 @@ export async function POST(req: NextRequest) {
         sessionStartTime: therapistStartTime,
         sessionEndTime: therapistEndTime,
         status: 'pending',
+        metadata: {
+          clientTimezone: validatedData.timezone,
+          therapistTimezone,
+        },
       })
       .returning();
 
@@ -175,7 +177,8 @@ export async function POST(req: NextRequest) {
         therapistEmail: therapist.googleCalendarEmail || '',
         sessionDate: createDate(booking.sessionDate).toFormat('yyyy-MM-dd'),
         sessionTime: createDate(booking.sessionStartTime).toFormat('HH:mm'),
-        timezone: validatedData.timezone as TimezoneIdentifier,
+        clientTimezone: validatedData.timezone as TimezoneIdentifier,
+        therapistTimezone,
         googleMeetLink: calendarResult?.googleMeetLink,
         therapistName: therapist.name,
         clientName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),

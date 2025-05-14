@@ -1,5 +1,6 @@
 import { signal } from '@preact-signals/safe-react';
 
+import { formatDateTime } from '@/src/features/booking/utils/dateTimeUtils';
 import { createDate } from '@/src/utils/timezone';
 
 // UI State Signals
@@ -74,7 +75,7 @@ export const weeklyMoneyBelief = {
   message:
     'Money is a tool for creating the life I want, not a source of stress. This week, I will approach my finances with curiosity and compassion. Each financial decision is an opportunity to align with my values and long-term goals.',
   author: 'Paige Williams',
-  weekOf: createDate().toFormat('MMMM d, yyyy'),
+  weekOf: formatDateTime(createDate(), 'America/New_York').date,
 };
 
 // Actionable insights with detailed impact

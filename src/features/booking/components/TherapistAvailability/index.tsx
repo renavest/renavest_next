@@ -5,6 +5,7 @@ import { DateTime } from 'luxon';
 import { useEffect, useMemo, useState } from 'react';
 import { useMediaQuery } from 'react-responsive';
 
+import { formatDateTime } from '@/src/features/booking/utils/dateTimeUtils';
 import { COLORS } from '@/src/styles/colors';
 
 import { CalendarGrid } from '../calendar/CalendarGrid';
@@ -143,7 +144,7 @@ export function TherapistAvailability({
               <div className='flex flex-col h-full'>
                 <div className='mb-4'>
                   <div className='text-xl font-semibold text-gray-800'>
-                    {calendarSelectedDate.toFormat('cccc, LLLL d, yyyy')}
+                    {formatDateTime(calendarSelectedDate, timezoneSignal.value).date}
                   </div>
                   <div className='text-sm text-gray-500'>Timezone: {timezoneSignal.value}</div>
                 </div>
@@ -174,7 +175,10 @@ export function TherapistAvailability({
                             }
                           `}
                         >
-                          <span className='font-bold'>{start.toFormat('h a')}</span>
+                          <span className='font-bold'>
+                            {formatDateTime(start, timezoneSignal.value).time}{' '}
+                            {formatDateTime(start, timezoneSignal.value).timezone}
+                          </span>
                           {isSelected && <span className='ml-1 text-white font-bold'>✓</span>}
                         </button>
                       );

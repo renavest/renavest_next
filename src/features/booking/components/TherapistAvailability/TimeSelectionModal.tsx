@@ -1,6 +1,7 @@
 import { ChevronLeft, Clock } from 'lucide-react';
 import { DateTime } from 'luxon';
 
+import { formatDateTime } from '@/src/features/booking/utils/dateTimeUtils';
 import { COLORS } from '@/src/styles/colors';
 
 interface TimeSlot {
@@ -37,7 +38,7 @@ export function TimeSelectionModal({
           <ChevronLeft className='h-6 w-6' />
         </button>
         <div className='text-center mb-4'>
-          <div className='text-xs text-gray-500'>{date.toFormat('cccc, LLLL d, yyyy')}</div>
+          <div className='text-xs text-gray-500'>{formatDateTime(date, timezone).date}</div>
           <div className='text-sm text-gray-700 mb-2'>Timezone: {timezone}</div>
         </div>
         <div className='flex flex-col gap-3'>
@@ -47,6 +48,8 @@ export function TimeSelectionModal({
             slots.map((slot: TimeSlot, idx: number) => {
               const start = DateTime.fromISO(slot.start, { zone: timezone });
               const end = DateTime.fromISO(slot.end, { zone: timezone });
+              const formattedStart = formatDateTime(start, timezone);
+              const formattedEnd = formatDateTime(end, timezone);
               const isSelected =
                 selectedSlot && selectedSlot.start === slot.start && selectedSlot.end === slot.end;
               return (
@@ -72,10 +75,10 @@ export function TimeSelectionModal({
                     <span
                       className={isSelected ? 'font-bold text-white' : 'font-bold text-gray-900'}
                     >
-                      {start.toFormat('h:mm')} - {end.toFormat('h:mm')}
+                      {formattedStart.time} - {formattedEnd.time} {formattedStart.timezone}
                     </span>
                     <span className={`text-xs ${isSelected ? 'text-purple-100' : 'text-gray-500'}`}>
-                      {start.toFormat('a')} - {end.toFormat('a')}
+                      {formattedStart.time} - {formattedEnd.time}
                     </span>
                   </span>
                   {isSelected && <span className='ml-2 text-white font-bold'>✓</span>}

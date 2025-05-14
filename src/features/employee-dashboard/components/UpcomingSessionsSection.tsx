@@ -5,6 +5,7 @@ import { DateTime } from 'luxon';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 
+import { formatDateTime } from '@/src/features/booking/utils/dateTimeUtils';
 import { trackUIInteraction } from '@/src/features/posthog/tracking';
 
 type UpcomingSession = {
@@ -15,6 +16,7 @@ type UpcomingSession = {
   sessionStartTime: string;
   status: string;
   googleMeetLink?: string;
+  timezone: string;
 };
 
 export function UpcomingSessionsSection() {
@@ -98,8 +100,7 @@ export function UpcomingSessionsSection() {
       <div className='space-y-4'>
         {upcomingSessions.map((session) => {
           const sessionDateTime = DateTime.fromISO(session.sessionDate);
-          const formattedDate = sessionDateTime.toFormat('MMMM dd, yyyy');
-          const formattedTime = sessionDateTime.toFormat('h:mm a');
+          const formatted = formatDateTime(sessionDateTime, session.timezone);
 
           return (
             <div
@@ -123,9 +124,11 @@ export function UpcomingSessionsSection() {
                 <h3 className='font-medium text-gray-800'>{session.therapistName}</h3>
                 <div className='flex items-center space-x-2 text-gray-600 text-sm'>
                   <Calendar className='h-4 w-4' />
-                  <span>{formattedDate}</span>
+                  <div className='text-sm text-gray-700'>{formatted.date}</div>
                   <Clock className='h-4 w-4' />
-                  <span>{formattedTime}</span>
+                  <div className='text-xs text-gray-500'>
+                    {formatted.time} {formatted.timezone}
+                  </div>
                 </div>
                 {session.googleMeetLink && (
                   <div className='mt-2'>
