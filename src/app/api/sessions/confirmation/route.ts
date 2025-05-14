@@ -2,6 +2,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
+import { SUPPORTED_TIMEZONES } from '@/src/features/booking/utils/dateTimeUtils';
 
 // Define a type for booking metadata
 type BookingMetadata = {
@@ -67,6 +68,15 @@ export async function GET(req: NextRequest) {
     if (meta) {
       clientTimezone = meta.clientTimezone || 'UTC';
       therapistTimezone = meta.therapistTimezone || 'UTC';
+    }
+
+    // Only allow supported timezones for frontend display
+    const supportedTimezones = Object.keys(SUPPORTED_TIMEZONES);
+    if (!supportedTimezones.includes(clientTimezone)) {
+      clientTimezone = 'America/New_York';
+    }
+    if (!supportedTimezones.includes(therapistTimezone)) {
+      therapistTimezone = 'America/New_York';
     }
 
     return NextResponse.json({

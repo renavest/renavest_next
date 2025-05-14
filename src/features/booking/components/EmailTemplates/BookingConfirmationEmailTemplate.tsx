@@ -38,18 +38,23 @@ export const BookingConfirmationEmailTemplate: React.FC<
   googleMeetLink,
 }) => {
   // Use clientTimezone for display
-  const dateObj =
-    typeof sessionDate === 'string' && typeof sessionTime === 'string'
-      ? formatDateTime(
-          // Combine date and time into a DateTime object
-          // sessionDate is expected as 'yyyy-MM-dd', sessionTime as 'HH:mm'
-          // Use Luxon to parse
-          DateTime.fromFormat(`${sessionDate} ${sessionTime}`, 'yyyy-MM-dd HH:mm', {
-            zone: clientTimezone,
-          }),
-          clientTimezone,
-        )
-      : { date: sessionDate, time: sessionTime, timezone: clientTimezone };
+  let dateObj: { date: string; time: string; timezone: string };
+  let parseError = '';
+  if (typeof sessionDate === 'string' && typeof sessionTime === 'string') {
+    const dt = DateTime.fromFormat(`${sessionDate} ${sessionTime}`, 'yyyy-MM-dd HH:mm', {
+      zone: clientTimezone,
+    });
+    if (dt.isValid) {
+      dateObj = formatDateTime(dt, clientTimezone);
+    } else {
+      dateObj = { date: 'Invalid DateTime', time: 'Invalid DateTime', timezone: clientTimezone };
+      parseError = `Invalid DateTime: ${sessionDate} ${sessionTime} (${clientTimezone})`;
+
+      if (typeof window === 'undefined') console.error(parseError);
+    }
+  } else {
+    dateObj = { date: sessionDate, time: sessionTime, timezone: clientTimezone };
+  }
 
   return (
     <Html>
@@ -102,6 +107,7 @@ export const BookingConfirmationEmailTemplate: React.FC<
               <Text className='text-gray-800 my-2'>
                 <strong className={COLORS.WARM_PURPLE.DEFAULT}>Timezone:</strong> {dateObj.timezone}
               </Text>
+              {parseError && <Text className='text-red-600 my-2'>{parseError}</Text>}
             </Section>
 
             {googleMeetLink && (
