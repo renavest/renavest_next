@@ -8,7 +8,7 @@ interface PricingCalculatorProps {
   initialSessionsPerYear?: number;
   initialSubsidyPercentage?: number;
   initialUtilizationRate?: number;
-  averageSessionCost?: number;
+  initialAverageSessionCost?: number;
 }
 
 interface PerformanceMetrics {
@@ -30,13 +30,14 @@ export default function PricingCalculator({
   initialSessionsPerYear = 2,
   initialSubsidyPercentage = 75,
   initialUtilizationRate = 50,
-  averageSessionCost = 150,
+  initialAverageSessionCost = 150,
 }: PricingCalculatorProps) {
   const [employeeCount, setEmployeeCount] = useState(initialEmployeeCount);
   const [sessionsPerYear, setSessionsPerYear] = useState(initialSessionsPerYear);
   const [subsidyPercentage, setSubsidyPercentage] = useState(initialSubsidyPercentage);
   const [utilizationRate, setUtilizationRate] = useState(initialUtilizationRate);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  const [averageSessionCost, setAverageSessionCost] = useState(initialAverageSessionCost);
 
   const performanceMetrics: PerformanceMetrics = useMemo(
     () => ({
@@ -56,19 +57,30 @@ export default function PricingCalculator({
     const companyCost = totalSessionCost * (subsidyPercentage / 100);
     const employeeCost = totalSessionCost * ((100 - subsidyPercentage) / 100);
 
+    // Per employee calculations
+    const perEmployeeTotalCost = employeeCost / employeeCount;
+    const perEmployeeCompanyCost = companyCost / employeeCount;
+    const perEmployeeUtilizedSessions = sessionsPerYear * (utilizationRate / 100);
+
     // Monthly vs Yearly adjustments
     return {
       monthly: {
         total: totalSessionCost / 12,
         company: companyCost / 12,
         employee: employeeCost / 12,
+        perEmployeeTotalCost: perEmployeeTotalCost / 12,
+        perEmployeeCompanyCost: perEmployeeCompanyCost / 12,
         totalUtilizedSessions: totalUtilizedSessions / 12,
+        perEmployeeUtilizedSessions: perEmployeeUtilizedSessions / 12,
       },
       yearly: {
         total: totalSessionCost,
         company: companyCost,
         employee: employeeCost,
+        perEmployeeTotalCost,
+        perEmployeeCompanyCost,
         totalUtilizedSessions,
+        perEmployeeUtilizedSessions,
       },
     };
   }, [employeeCount, sessionsPerYear, averageSessionCost, subsidyPercentage, utilizationRate]);
@@ -253,11 +265,24 @@ export default function PricingCalculator({
           <div className='bg-white rounded-xl p-6 shadow-md border border-gray-100'>
             <div className='flex items-center mb-4'>
               <Coins className='w-6 h-6 text-yellow-600 mr-3' />
-              <label className='block text-lg font-semibold text-gray-800'>
+              <label
+                htmlFor='averageSessionCost'
+                className='block text-lg font-semibold text-gray-800'
+              >
                 Average Session Cost
               </label>
             </div>
-            <p className='text-3xl font-bold text-yellow-700'>${averageSessionCost}</p>
+            <input
+              type='number'
+              id='averageSessionCost'
+              value={averageSessionCost || ''}
+              onChange={(e) => {
+                const value = e.target.value === '' ? '' : Number(e.target.value);
+                setAverageSessionCost(value as number);
+              }}
+              min={0}
+              className='block w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 text-lg'
+            />
             <p className='mt-2 text-sm text-gray-600'>
               Cost per financial therapy session used in calculations
             </p>
@@ -273,13 +298,17 @@ export default function PricingCalculator({
             <div className='grid md:grid-cols-3 gap-4'>
               <div className='bg-purple-50 p-4 rounded-lg'>
                 <h3 className='text-lg font-semibold text-purple-800 mb-2'>
-                  Total Utilized Sessions
+                  Company-Wide Financial Therapy Sessions
                 </h3>
                 <p className='text-3xl font-bold text-purple-600'>
-                  {currentPricing.totalUtilizedSessions.toLocaleString()}
+                  {currentPricing.totalUtilizedSessions.toFixed(1)}
                 </p>
                 <p className='text-sm text-gray-600'>
-                  {utilizationRate}% of {employeeCount} employees
+                  {utilizationRate}% of {employeeCount} employees participating
+                </p>
+                <p className='text-sm text-gray-600 mt-1'>
+                  Average Sessions per Participating Employee:{' '}
+                  {currentPricing.perEmployeeUtilizedSessions.toFixed(1)}
                 </p>
               </div>
 
@@ -318,12 +347,21 @@ export default function PricingCalculator({
               </p>
               <p className='text-sm text-gray-500 mt-2'>
                 Individual Employee Contribution:{' '}
-                <span className='font-medium'>${currentPricing.employee.toLocaleString()}</span>{' '}
+                <span className='font-medium'>
+                  ${currentPricing.perEmployeeTotalCost.toLocaleString()}
+                </span>{' '}
                 {billingCycle}
               </p>
               <p className='text-sm text-gray-500 mt-1'>
                 Total Employee Contribution:{' '}
                 <span className='font-medium'>${currentPricing.employee.toLocaleString()}</span>{' '}
+                {billingCycle}
+              </p>
+              <p className='text-sm text-gray-500 mt-1'>
+                Company Contribution per Employee:{' '}
+                <span className='font-medium'>
+                  ${currentPricing.perEmployeeCompanyCost.toLocaleString()}
+                </span>{' '}
                 {billingCycle}
               </p>
             </div>
