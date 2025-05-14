@@ -1,6 +1,7 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
+import { computed } from '@preact-signals/safe-react';
 import { ArrowRight, Play, Share2 } from 'lucide-react';
 import Image from 'next/image';
 import posthog from 'posthog-js';
@@ -12,11 +13,22 @@ import { trackReferralShare } from '@/src/lib/referralTracking';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
+import OnboardingModal from '../../onboarding/components/OnboardingModal';
+import { onboardingSignal } from '../../onboarding/state/onboardingState';
+
 import ComingSoon from './ComingSoon';
 import EmployeeNavbar from './EmployeeNavbar';
 import FinancialTherapyModal from './FinancialTherapyModal';
 import TherapistRecommendations from './insights/TherapistRecommendations';
+import WeeklyMoneyBelief from './insights/WeeklyFinancialReport';
 import { UpcomingSessionsSection } from './UpcomingSessionsSection';
+
+const showOnboardingSignal = computed(() => {
+  return (
+    !onboardingSignal.value.isComplete &&
+    (typeof window !== 'undefined' ? window.location.pathname !== '/explore' : false)
+  );
+});
 
 const SharePanel = ({ onShareClick }: { onShareClick: () => void; referralLink: string }) => {
   return (
@@ -99,7 +111,6 @@ export default function LimitedDashboardClient() {
         .then(() => {
           // Track successful share with tracking utility
           trackReferralShare(user?.id, 'native_share', referralLink);
-
           // Show toast notification
           toast.success('Renavest shared successfully!');
         })
@@ -134,6 +145,11 @@ export default function LimitedDashboardClient() {
               financial therapists.
             </p>
           </div>
+        </div>
+
+        {/* Weekly Money Belief Section */}
+        <div className='mb-8 md:mb-10 animate-fade-in-up'>
+          <WeeklyMoneyBelief />
         </div>
 
         {/* Two-column layout */}
@@ -184,7 +200,7 @@ export default function LimitedDashboardClient() {
                       <path d='M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z' />
                     </svg>
                   </span>
-                  Expert Financial Therapists
+                  Recommended Financial Therapists
                 </h3>
                 <TherapistRecommendations />
               </div>
@@ -259,6 +275,7 @@ export default function LimitedDashboardClient() {
         </div>
         <ComingSoon />
       </main>
+      {showOnboardingSignal.value && <OnboardingModal />}
     </div>
   );
 }

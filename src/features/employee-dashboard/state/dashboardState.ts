@@ -1,5 +1,7 @@
 import { signal } from '@preact-signals/safe-react';
 
+import { createDate } from '@/src/utils/timezone';
+
 // UI State Signals
 export const isHeaderScrolledSignal = signal(false);
 export const selectedGoalSignal = signal<number | null>(null);
@@ -33,11 +35,11 @@ export const insightData = [
 ];
 
 export const comparisonData = [
-  { name: 'Monthly Dining Out', past: 850, current: 650 },
-  { name: 'Automated Savings', past: 200, current: 500 },
-  { name: 'Entertainment Spending', past: 300, current: 180 },
-  { name: 'Utility Bills', past: 250, current: 220 },
-  { name: 'Subscription Services', past: 120, current: 75 },
+  { name: 'Monthly Dining Out', past: 45, current: 30 },
+  { name: 'Automated Savings', past: 15, current: 35 },
+  { name: 'Entertainment Spending', past: 25, current: 15 },
+  { name: 'Utility Bills', past: 20, current: 18 },
+  { name: 'Subscription Services', past: 10, current: 6 },
 ];
 
 export const therapists = [
@@ -70,9 +72,9 @@ export const therapists = [
 // Current week's money belief from the therapist
 export const weeklyMoneyBelief = {
   message:
-    "I recognize that my financial decisions are influenced by my childhood experiences of scarcity. This week, I will pause and reflect when I feel those past fears driving my decisions. Before making financial choices, I'll practice my grounding techniques to ensure I'm acting from my present reality, not my past.",
-  author: 'Dr. Sarah Chen',
-  weekOf: 'March 18, 2024',
+    'Money is a tool for creating the life I want, not a source of stress. This week, I will approach my finances with curiosity and compassion. Each financial decision is an opportunity to align with my values and long-term goals.',
+  author: 'Paige Williams',
+  weekOf: createDate().toFormat('MMMM d, yyyy'),
 };
 
 // Actionable insights with detailed impact

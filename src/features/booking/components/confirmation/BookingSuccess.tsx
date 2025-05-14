@@ -28,9 +28,19 @@ function LoadingState() {
 }
 
 function ErrorState({ message }: { message: string }) {
+  const router = useRouter();
+
   return (
-    <div className='min-h-screen bg-gray-50 flex items-center justify-center'>
-      <div className='text-red-600'>{message}</div>
+    <div className='min-h-screen bg-gray-50 flex flex-col items-center justify-center space-y-6 px-4 text-center'>
+      <div className='bg-white shadow-md rounded-lg p-8 max-w-md w-full'>
+        <div className='text-red-600 mb-6'>{message}</div>
+        <button
+          onClick={() => router.push('/employee')}
+          className='w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500'
+        >
+          Back to Dashboard
+        </button>
+      </div>
     </div>
   );
 }

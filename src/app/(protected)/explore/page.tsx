@@ -16,7 +16,7 @@ export default async function Home() {
     auth.protect();
     // Fetch all therapists except Seth Morton from the database
     const dbTherapists = await db.select().from(therapists);
-
+      
     // Transform the database records into the Advisor type
     const advisors: Advisor[] = dbTherapists
       .map((therapist) => {
