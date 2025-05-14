@@ -12,15 +12,22 @@ export default async function DashboardPage() {
   if (!user) {
     redirect('/login');
   }
-  await (
-    await clerkClient()
-  ).users.updateUserMetadata(user.id, {
-    publicMetadata: {
-      role: 'employee',
-    },
-  });
+
+  // Check if metadata already exists and is correct
+  const existingMetadata = user.publicMetadata as { role?: string };
+  if (!existingMetadata.role) {
+    await (
+      await clerkClient()
+    ).users.updateUserMetadata(user.id, {
+      publicMetadata: {
+        role: 'employee',
+      },
+    });
+  }
+
   // Clear onboarding state if needed
   clearOnboardingState();
+
   // Render specific view based on email
   if (email === 'stanley@renavestapp.com' || email === 'sethmorton05@gmail.com') {
     return <DashboardClient />; // TODO: Remove this once we have a full employee dashboard

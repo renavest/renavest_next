@@ -1,23 +1,23 @@
+'use client';
+
 import Navbar from '@/src/features/home/components/Navbar';
-import { PricingCard, PricingHeader, WhyChooseUs } from '@/src/features/pricing/components';
-import { plans, Plan } from '@/src/features/pricing/data/pricing-data';
+import PricingCalculator from '@/src/features/pricing/components/PricingCalculator';
 
 export default function PricingPage() {
   return (
     <div className='bg-white py-24'>
       <Navbar />
       <div className='mx-auto max-w-7xl px-6 lg:px-8 pt-16'>
-        <PricingHeader />
-
-        <div className='isolate mx-auto mt-16 grid max-w-md grid-cols-1 gap-8 lg:mx-0 lg:max-w-none lg:grid-cols-3'>
-          {plans.map((plan: Plan) => (
-            <PricingCard key={plan.name} plan={plan} />
-          ))}
+        <div className='text-center mb-16'>
+          <h1 className='text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl'>
+            Financial Wellness Investment Calculator
+          </h1>
+          <p className='mt-6 text-lg leading-8 text-gray-600'>
+            Discover the impact and affordability of providing financial therapy for your team
+          </p>
         </div>
 
-        <div className='mt-20 flex flex-col items-center'>
-          <WhyChooseUs />
-        </div>
+        <PricingCalculator />
       </div>
     </div>
   );
