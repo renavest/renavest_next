@@ -1,12 +1,12 @@
 'use client';
 
 import { Calendar, Check, Clock, User } from 'lucide-react';
-import { DateTime } from 'luxon';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { formatDateTime } from '@/src/features/booking/utils/dateTimeUtils';
 import { COLORS } from '@/src/styles/colors';
+import { createDate } from '@/src/utils/timezone';
 
 interface BookingDetails {
   id: number;
@@ -50,9 +50,9 @@ function ErrorState({ message }: { message: string }) {
 
 function BookingDetailsDisplay({ booking }: { booking: BookingDetails }) {
   // Use clientTimezone for display
-  const dateObj = DateTime.fromISO(booking.sessionStartTime);
+  const dateObj = createDate(booking.sessionStartTime, booking.clientTimezone);
   const formatted = formatDateTime(dateObj, booking.clientTimezone);
-  const endTime = DateTime.fromISO(booking.sessionEndTime).setZone(booking.clientTimezone);
+  const endTime = createDate(booking.sessionEndTime, booking.clientTimezone);
 
   return (
     <dl className='grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2'>

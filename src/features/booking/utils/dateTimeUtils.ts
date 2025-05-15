@@ -1,5 +1,7 @@
 import { DateTime } from 'luxon';
 
+import { createDate } from '@/src/utils/timezone';
+
 export const SUPPORTED_TIMEZONES = {
   'America/New_York': 'EST',
   'America/Chicago': 'CST',
@@ -19,10 +21,12 @@ function validateTimezone(timezone: string): asserts timezone is TimezoneIdentif
 
 export function parseDateTime(date: string, time: string, timezone: string): DateTime {
   try {
-    // Handle ISO 8601 formatted time or separate date and time
-    const parsedTime = time.includes('T')
-      ? DateTime.fromISO(time).setZone(timezone)
-      : DateTime.fromFormat(`${date} ${time}`, 'yyyy-MM-dd HH:mm', { zone: timezone });
+    // If time is ISO, use createDate directly
+    if (time.includes('T')) {
+      return createDate(time, timezone);
+    }
+    // Otherwise, combine date and time and use createDate
+    const parsedTime = createDate(`${date}T${time}:00`, timezone);
 
     if (!parsedTime.isValid) {
       throw new Error(`Invalid date/time: ${parsedTime.invalidReason}`);
@@ -56,7 +60,7 @@ export function formatDateTime(date: DateTime, timezone: string) {
 
 function isValidFutureDate(date: string): boolean {
   try {
-    const selectedDate = DateTime.fromISO(date);
+    const selectedDate = createDate(date, 'America/New_York');
     const today = DateTime.now().startOf('day');
 
     return selectedDate >= today;
