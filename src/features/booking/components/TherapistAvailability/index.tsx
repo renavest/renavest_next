@@ -7,6 +7,7 @@ import { useMediaQuery } from 'react-responsive';
 
 import { formatDateTime } from '@/src/features/booking/utils/dateTimeUtils';
 import { COLORS } from '@/src/styles/colors';
+import { createDate } from '@/src/utils/timezone';
 
 import { CalendarGrid } from '../calendar/CalendarGrid';
 
@@ -72,7 +73,8 @@ export function TherapistAvailability({
   const availableDates = useMemo(() => {
     const set = new Set<string>();
     allAvailableSlots.forEach((slot: TimeSlot) => {
-      set.add(DateTime.fromISO(slot.start, { zone: timezoneSignal.value }).toISODate()!);
+      const tz = timezoneSignal.value || 'America/New_York';
+      set.add(createDate(slot.start, tz).toISODate()!);
     });
     return set;
   }, [allAvailableSlots, timezoneSignal.value]);
@@ -81,8 +83,9 @@ export function TherapistAvailability({
   const now = DateTime.now().setZone(timezoneSignal.value);
   const slotsForSelectedDate = useMemo(() => {
     if (!calendarSelectedDate) return [];
+    const tz = timezoneSignal.value || 'America/New_York';
     const filteredSlots = allAvailableSlots.filter((slot: TimeSlot) => {
-      const slotDate = DateTime.fromISO(slot.start, { zone: timezoneSignal.value });
+      const slotDate = createDate(slot.start, tz);
       // Only include slots for the selected date
       if (slotDate.toISODate() !== calendarSelectedDate.toISODate()) return false;
       // If today is selected, only show future slots
@@ -155,7 +158,8 @@ export function TherapistAvailability({
                     </div>
                   ) : (
                     slotsForSelectedDate.map((slot: TimeSlot, idx: number) => {
-                      const start = DateTime.fromISO(slot.start, { zone: timezoneSignal.value });
+                      const tz = timezoneSignal.value || 'America/New_York';
+                      const start = createDate(slot.start, tz);
                       const isSelected =
                         selectedSlotSignal.value &&
                         selectedSlotSignal.value.start === slot.start &&

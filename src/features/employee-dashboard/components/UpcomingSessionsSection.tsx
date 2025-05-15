@@ -1,12 +1,12 @@
 'use client';
 
 import { Calendar, Clock } from 'lucide-react';
-import { DateTime } from 'luxon';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 
 import { formatDateTime } from '@/src/features/booking/utils/dateTimeUtils';
 import { trackUIInteraction } from '@/src/features/posthog/tracking';
+import { createDate } from '@/src/utils/timezone';
 
 type UpcomingSession = {
   id: number;
@@ -99,8 +99,9 @@ export function UpcomingSessionsSection() {
       <h2 className='text-lg font-semibold mb-4'>Upcoming Sessions</h2>
       <div className='space-y-4'>
         {upcomingSessions.map((session) => {
-          const sessionDateTime = DateTime.fromISO(session.sessionDate);
-          const formatted = formatDateTime(sessionDateTime, session.timezone);
+          const timezone = session.timezone || 'America/New_York';
+          const sessionDateTime = createDate(session.sessionDate, timezone);
+          const formatted = formatDateTime(sessionDateTime, timezone);
 
           return (
             <div

@@ -1,8 +1,8 @@
 import { ChevronLeft, Clock } from 'lucide-react';
-import { DateTime } from 'luxon';
 
 import { formatDateTime } from '@/src/features/booking/utils/dateTimeUtils';
 import { COLORS } from '@/src/styles/colors';
+import { createDate } from '@/src/utils/timezone';
 
 interface TimeSlot {
   start: string;
@@ -46,8 +46,9 @@ export function TimeSelectionModal({
             <div className='text-gray-400 text-center'>No available slots for this date</div>
           ) : (
             slots.map((slot: TimeSlot, idx: number) => {
-              const start = DateTime.fromISO(slot.start, { zone: timezone });
-              const end = DateTime.fromISO(slot.end, { zone: timezone });
+              const tz = timezone || 'America/New_York';
+              const start = createDate(slot.start, tz);
+              const end = createDate(slot.end, tz);
               const formattedStart = formatDateTime(start, timezone);
               const formattedEnd = formatDateTime(end, timezone);
               const isSelected =
