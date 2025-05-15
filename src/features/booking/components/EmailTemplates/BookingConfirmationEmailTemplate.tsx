@@ -55,6 +55,7 @@ export const BookingConfirmationEmailTemplate: React.FC<
   } else {
     dateObj = { date: sessionDate, time: sessionTime, timezone: clientTimezone };
   }
+  // TODO: Extract date/time parsing logic to a shared helper for all email templates
 
   return (
     <Html>
@@ -107,7 +108,12 @@ export const BookingConfirmationEmailTemplate: React.FC<
               <Text className='text-gray-800 my-2'>
                 <strong className={COLORS.WARM_PURPLE.DEFAULT}>Timezone:</strong> {dateObj.timezone}
               </Text>
-              {parseError && <Text className='text-red-600 my-2'>{parseError}</Text>}
+              {parseError && (
+                <Text className='text-red-600 my-2'>
+                  There was an issue displaying the session time. Please check your dashboard for
+                  details.
+                </Text>
+              )}
             </Section>
 
             {googleMeetLink && (
