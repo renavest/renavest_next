@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
-import { therapists } from '@/src/db/schema';
+import { therapists, users } from '@/src/db/schema';
 
 export async function GET() {
   try {
@@ -22,19 +22,24 @@ export async function GET() {
 
     // Find the therapist ID associated with the current user's email
     const userEmail = user.emailAddresses[0]?.emailAddress;
+    const userResult = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, userEmail))
+      .limit(1);
+    if (!userResult.length) {
+      console.error('User not found for email:', { userEmail });
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
     const therapistResult = await db
       .select({ id: therapists.id })
       .from(therapists)
-      .where(eq(therapists.email, userEmail))
+      .where(eq(therapists.userId, userResult[0].id))
       .limit(1);
-
     if (!therapistResult.length) {
-      console.error('Therapist not found for email:', {
-        userEmail: userEmail,
-      });
+      console.error('Therapist not found for userId:', { userId: userResult[0].id });
       return NextResponse.json({ error: 'Therapist not found' }, { status: 404 });
     }
-
     return NextResponse.json({ therapistId: therapistResult[0].id });
   } catch (error) {
     console.error('Error fetching therapist ID:', error);

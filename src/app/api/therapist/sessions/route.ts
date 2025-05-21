@@ -12,25 +12,31 @@ export async function GET() {
     if (!userId || metadata?.role !== 'therapist') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
+
     // Only fetch full user if needed (for email)
     const user = await currentUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Find the therapist ID associated with the current user's email
+    // Find the user ID associated with the current user's email
     const userEmail = user.emailAddresses[0]?.emailAddress;
+    const userResult = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, userEmail))
+      .limit(1);
+    if (!userResult.length) {
+      console.error('User not found for email:', { userEmail });
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
     const therapistResult = await db
       .select({ id: therapists.id })
       .from(therapists)
-      .where(eq(therapists.email, userEmail))
+      .where(eq(therapists.userId, userResult[0].id))
       .limit(1);
-
     if (!therapistResult.length) {
-      console.error('Therapist not found for email:', {
-        userEmail: userEmail,
-      });
+      console.error('Therapist not found for userId:', { userId: userResult[0].id });
       return NextResponse.json({ error: 'Therapist not found' }, { status: 404 });
     }
 
@@ -46,7 +52,7 @@ export async function GET() {
         status: bookingSessions.status,
       })
       .from(bookingSessions)
-      .leftJoin(users, eq(bookingSessions.userId, users.clerkId))
+      .leftJoin(users, eq(bookingSessions.userId, users.id))
       .where(eq(bookingSessions.therapistId, therapistResult[0].id))
       .orderBy(desc(bookingSessions.sessionDate))
       .limit(10);

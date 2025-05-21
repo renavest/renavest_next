@@ -28,10 +28,17 @@ export async function POST(request: Request) {
     }
 
     // Find the therapist's ID
+    const userResult = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, userEmail))
+      .limit(1);
+    if (!userResult.length) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
     const therapist = await db.query.therapists.findFirst({
-      where: eq(therapists.email, userEmail),
+      where: eq(therapists.userId, userResult[0].id),
     });
-
     if (!therapist) {
       return NextResponse.json({ error: 'Therapist not found' }, { status: 404 });
     }
@@ -72,7 +79,6 @@ export async function POST(request: Request) {
         firstName: validatedInput.firstName,
         lastName: validatedInput.lastName,
         email: validatedInput.email,
-        therapistId: therapist.id,
       })
       .returning();
 

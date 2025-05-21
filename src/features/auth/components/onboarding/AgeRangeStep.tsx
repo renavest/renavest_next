@@ -6,14 +6,12 @@ import { firstName, selectedAgeRange, currentStep } from '../../state/authState'
 import { OnboardingStep } from '../../types';
 
 const AGE_RANGE_OPTIONS = [
-  { value: 'under_18', label: 'Under 18' },
   { value: '18_24', label: '18-24' },
   { value: '25_34', label: '25-34' },
   { value: '35_44', label: '35-44' },
   { value: '45_54', label: '45-54' },
   { value: '55_64', label: '55-64' },
   { value: '65_plus', label: '65+' },
-  { value: 'prefer_not_to_say', label: 'Prefer not to say' },
 ];
 
 export function AgeRangeStep() {

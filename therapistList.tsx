@@ -158,32 +158,6 @@ export const therapistList = [
   },
   {
     id: 7,
-    name: 'Tiffany Grant',
-    title: 'Financial Coach ',
-    booking_url: 'https://calendly.com/moneytalkwitht/coaching',
-    expertise: 'Personal Finance, Side hustles, Business growth, Money Management',
-    certifications: 'MBA, AFC, SHRM-CP',
-    favorite_song: '"Lean on Me" by Bill Withers',
-    years_of_experience: 8,
-    ideal_clientele:
-      '25-45, any gender. Income up to $150,000. Looking for help with budgeting and goal setting.',
-    long_bio:
-      "Tiffany Grant, AFC®, is a dedicated Accredited Financial Counselor, sought-after speaker, and founder of Money Talk With Tiff. Renowned for her ability to make personal finance approachable and relatable, Tiffany has made significant contributions as a financial educator, coach, blogger, and podcaster. Her expert advice on side hustles, business growth, and money management has been featured on platforms like Forbes, CNBC, Yahoo Finance, Business Insider, MSN, and ESSENCE. Tiffany's passion lies in empowering others to gain control over their finances through practical education and down-to-earth insights. Her engaging style and actionable guidance have helped countless individuals build financial confidence and clarity. Beyond her professional accolades, Tiffany's academic background includes a Bachelor of Business Administration and Management from the University of North Carolina at Pembroke and a Master of Business Administration (MBA) from the University of North Carolina at Greensboro. She also holds the SHRM-CP credential and is a certified Lean Six Sigma Yellow Belt, reflecting her diverse expertise and dedication to continuous learning.",
-    preview_blurb:
-      'Empowering financial freedom through practical education and relatable money management insights!',
-    profile_image_url: 'therapists/tiffany-grant.jpg',
-    hourly_rate: 150.0,
-    google_calendar_access_token: null,
-    google_calendar_refresh_token: null,
-    google_calendar_email: null,
-    google_calendar_integration_status: 'not_connected',
-    google_calendar_integration_date: null,
-    created_at: '2025-04-20 01:08:52.212',
-    updated_at: '2025-04-20 01:08:52.212',
-    email: 'tiffany@moneytalkwitht.com',
-  },
-  {
-    id: 8,
     name: 'Tyana Ingram',
     title: 'Financial Social Worker',
     booking_url: 'https://calendly.com/tingram-xdc/financial-wellness-counsulting',
@@ -210,7 +184,7 @@ export const therapistList = [
     email: 'ingram.tyana@gmail.com',
   },
   {
-    id: 9,
+    id: 8,
     name: 'Vince Hollerman',
     title: 'Financial Coach ',
     booking_url: 'https://app.acuityscheduling.com/schedule/8d3ad975',
@@ -236,7 +210,7 @@ export const therapistList = [
     email: 'vince@iamyourmoneycoach.com',
   },
   {
-    id: 10,
+    id: 9,
     name: 'Jaelyn Vickery',
     title: 'Financial Therapist',
     booking_url:
@@ -265,7 +239,7 @@ export const therapistList = [
     email: 'vickeryjaelyn@gmail.com',
   },
   {
-    id: 11,
+    id: 10,
     name: 'Shani Tené',
     title: 'Financial Coach',
     booking_url: 'https://shanitene.com/levelup',
@@ -290,7 +264,7 @@ export const therapistList = [
     email: 'hello@shanitene.com',
   },
   {
-    id: 12,
+    id: 11,
     name: 'BreAnna Plummer',
     title: 'Financial Social Worker',
     booking_url: 'https://calendly.com/bplummerconsciouschoicestherapy/financialwellness',
@@ -317,7 +291,7 @@ export const therapistList = [
     email: 'breanna.plummer18@gmail.com',
   },
   {
-    id: 13,
+    id: 12,
     name: 'Monica Bradshaw ',
     title: 'Financial Coach ',
     booking_url: 'https://calendly.com/mbradshaw-2/rpcoaching',
@@ -342,7 +316,7 @@ export const therapistList = [
     email: 'monica@patriotfinancialcoaching.com',
   },
   {
-    id: 14,
+    id: 13,
     name: 'Haylie Castillo',
     title: 'Financial Therapist',
     booking_url: 'https://calendly.com/hayliecastillo/20-minute-intital-consultation',
@@ -368,7 +342,7 @@ export const therapistList = [
     email: 'haylie@castillofinancialtherapy.com',
   },
   {
-    id: 15,
+    id: 14,
     name: 'Sarah Carr',
     title: 'Financial Therapist',
     booking_url: 'https://sarahcarr.as.me/schedule.php',
@@ -393,7 +367,7 @@ export const therapistList = [
     email: 'sarahcarrfp@gmail.com',
   },
   {
-    id: 16,
+    id: 15,
     name: 'LaQueshia Clemons',
     title: 'Financial Therapist',
     booking_url: 'https://calendly.com/lclemonslcsw/meeting',
@@ -418,7 +392,7 @@ export const therapistList = [
     email: 'lclemons@freedomlifetherapy.com',
   },
   {
-    id: 17,
+    id: 16,
     name: 'Kelly Reddy-Heffner',
     title: 'Financial Therapist',
     booking_url: 'https://calendly.com/kelly-steelcitywc/hello',
@@ -444,7 +418,7 @@ export const therapistList = [
     email: 'kelly@steelcitywealthcollaborative.com',
   },
   {
-    id: 18,
+    id: 17,
     name: 'George Blount',
     title: 'Financial Therapist',
     booking_url: 'https://calendly.com/georgeblount',
@@ -469,7 +443,7 @@ export const therapistList = [
     email: 'george.blount@nbalancefinancial.com',
   },
   {
-    id: 19,
+    id: 18,
     name: 'Tamoa Danielle Smith',
     title: 'Financial Therapist',
     booking_url: 'https://api.leadconnectorhq.com/widget/booking/fQXXP7vrPawH8NQguqXR',
@@ -496,7 +470,7 @@ export const therapistList = [
     email: 'daniellesmith54@att.net',
   },
   {
-    id: 20,
+    id: 19,
     name: 'Jennifer Calder',
     title: 'Financial Therapist',
     booking_url: 'https://calendly.com/jennifer-a6qh/30minute',
@@ -523,7 +497,7 @@ export const therapistList = [
     email: 'jennifer@moneymindsetconsulting.com',
   },
   {
-    id: 21,
+    id: 20,
     name: 'Nathan Astle',
     title: 'Financial Therapist',
     booking_url: 'https://calendly.com/admin-yvmw/initial-consultation',
@@ -550,7 +524,7 @@ export const therapistList = [
     email: 'nate@financialtherapyclinicalinstitute.com',
   },
   {
-    id: 22,
+    id: 21,
     name: 'Seth Morton',
     title: 'Financial Therapist',
     booking_url: 'https://calendly.com/seth-morton/30minute',

@@ -13,7 +13,7 @@ export async function GET() {
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
+              
     const now = DateTime.now().toJSDate();
 
     const upcomingSessions = await db

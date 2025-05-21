@@ -10,7 +10,7 @@ export async function GET(req: Request) {
 
     const url = new URL(req.url);
     const therapistId = url.searchParams.get('therapistId');
-    
+
     if (!therapistId) {
       return NextResponse.json(
         { success: false, message: 'Missing therapist ID' },
@@ -22,7 +22,6 @@ export async function GET(req: Request) {
       where: (therapists, { eq }) => eq(therapists.id, parseInt(therapistId)),
       columns: {
         id: true,
-        email: true,
         googleCalendarEmail: true,
         googleCalendarIntegrationStatus: true,
         googleCalendarIntegrationDate: true,
@@ -54,7 +53,7 @@ export async function GET(req: Request) {
     // Format the last synced date if available
     let lastSynced = null;
     if (therapist.googleCalendarIntegrationDate) {
-      lastSynced = createDate(therapist.googleCalendarIntegrationDate).toLocaleString('en-US', {
+      lastSynced = createDate(therapist.googleCalendarIntegrationDate).toLocaleString({
         month: 'short',
         day: 'numeric',
         year: 'numeric',
@@ -67,7 +66,6 @@ export async function GET(req: Request) {
     const response = {
       success: true,
       therapistId: therapist.id,
-      email: therapist.email,
       isConnected,
       calendarEmail: therapist.googleCalendarEmail || null,
       integrationStatus: therapist.googleCalendarIntegrationStatus,
