@@ -8,6 +8,7 @@ export const ALLOWED_EMPLOYEE_SIGNUP_EMAILS = [
   'alice@acmecorp.com', // Example for Acme Corp
   'bob@acmecorp.com',
   'charlie@globex.com', // Example for Globex Corp
+  'seth@renavestapp.com',
   // Add other allowed employee emails here
 ];
 
@@ -17,6 +18,7 @@ export const ALLOWED_EMAILS = [
   'admin@renavest.com',
   'sethmorton05@gmail.com',
   'stanley@renavestapp.com',
+  'seth@renavestapp.com',
 ];
 
 // --- NEW: Employer Email Domain/Email to Name Mapping ---
@@ -27,5 +29,4 @@ export const EMPLOYER_EMAIL_MAP: { [emailOrDomain: string]: string } = {
   'acmecorp.com': 'Acme Corp', // Map domain to employer name
   'globex.com': 'Globex Corporation',
   'anotheremployee@specificcompany.com': 'Specific Company Inc.', // Map specific email
-  
 };

@@ -21,55 +21,63 @@ export default async function TherapistPage() {
     redirect('/login');
   }
   try {
-    // Get the user's email
-    const email = user.emailAddresses[0]?.emailAddress;
-
-    if (!email) {
-      console.log('No email found for user');
+    // Get the user's clerkId
+    const clerkId = user.id;
+    if (!clerkId) {
+      console.log('No Clerk ID found for user');
       redirect('/therapist-signup/error');
     }
 
-    // Directly check if the therapist exists in the database
+    // Get the user's row in the users table
+    const userResult = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.clerkId, clerkId));
+    const userRow = userResult[0];
+    if (!userRow) {
+      console.log('No user found in DB for Clerk ID');
+      redirect('/therapist-signup/error');
+    }
+
+    // Get the therapist's id from the therapists table
     const therapistResult = await db
       .select({ id: therapists.id })
       .from(therapists)
-      .where(eq(therapists.email, email))
-      .limit(1);
-
-    // If no therapist found, redirect to error page
-    if (!therapistResult.length) {
-      console.log('No pre-approved therapist found');
+      .where(eq(therapists.userId, userRow.id));
+    const therapist = therapistResult[0];
+    if (!therapist) {
+      console.log('No therapist profile found for user');
       redirect('/therapist-signup/error');
-    } else {
-      // Update user metadata to mark as therapist
-      await (
-        await clerkClient()
-      ).users.updateUserMetadata(user.id, {
-        publicMetadata: {
-          role: 'therapist',
-        },
-      });
     }
+    const therapistId = therapist.id;
 
-    const therapistId = therapistResult[0].id;
-
-    // Fetch clients for this therapist
-    const clientsResult = await db
-      .select({
-        id: users.clerkId,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        email: users.email,
-      })
-      .from(users)
-      .where(eq(users.therapistId, therapistId));
-
-    const clients: Client[] = clientsResult.map((client) => ({
-      id: client.id,
-      firstName: client.firstName || '',
-      lastName: client.lastName || undefined,
-      email: client.email || '',
-    }));
+    // Fetch clients for this therapist (users who have booked with this therapist)
+    const clientUserIdsResult = await db
+      .select({ userId: bookingSessions.userId })
+      .from(bookingSessions)
+      .where(eq(bookingSessions.therapistId, therapistId));
+    const uniqueClientUserIds = [...new Set(clientUserIdsResult.map((row) => row.userId))];
+    let clients: Client[] = [];
+    if (uniqueClientUserIds.length > 0) {
+      const clientsResult = await db
+        .select({
+          id: users.clerkId,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+        })
+        .from(users)
+        .where(
+          // @ts-ignore
+          users.id.in(uniqueClientUserIds),
+        );
+      clients = clientsResult.map((client) => ({
+        id: client.id,
+        firstName: client.firstName || '',
+        lastName: client.lastName || undefined,
+        email: client.email || '',
+      }));
+    }
 
     // Fetch upcoming sessions for this therapist
     const sessionsResult = await db
@@ -83,14 +91,14 @@ export default async function TherapistPage() {
         status: bookingSessions.status,
       })
       .from(bookingSessions)
-      .leftJoin(users, eq(bookingSessions.userId, users.clerkId))
+      .leftJoin(users, eq(bookingSessions.userId, users.id))
       .where(eq(bookingSessions.therapistId, therapistId))
       .orderBy(desc(bookingSessions.sessionDate))
       .limit(10);
 
     const upcomingSessions: UpcomingSession[] = sessionsResult.map((session) => ({
       id: session.id.toString(),
-      clientId: session.clientId,
+      clientId: session.clientId?.toString() ?? '',
       clientName: `${session.clientName || ''} ${session.clientLastName || ''}`.trim(),
       sessionDate: session.sessionDate.toISOString(),
       sessionStartTime: session.sessionStartTime.toISOString(),
@@ -104,7 +112,7 @@ export default async function TherapistPage() {
       .where(eq(bookingSessions.therapistId, therapistId));
 
     const totalClientsResult = await db
-      .selectDistinct({ count: count() })
+      .select({ count: count() })
       .from(bookingSessions)
       .where(eq(bookingSessions.therapistId, therapistId));
 

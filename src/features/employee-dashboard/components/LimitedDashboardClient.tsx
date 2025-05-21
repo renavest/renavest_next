@@ -13,8 +13,8 @@ import { trackReferralShare } from '@/src/lib/referralTracking';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
-import OnboardingModal from '../../onboarding/components/OnboardingModal';
-import { onboardingSignal } from '../../onboarding/state/onboardingState';
+// import OnboardingModal from '../../onboarding/components/OnboardingModal';
+// import { onboardingSignal } from '../../onboarding/state/onboardingState';
 
 import ComingSoon from './ComingSoon';
 import EmployeeNavbar from './EmployeeNavbar';
@@ -22,12 +22,12 @@ import FinancialTherapyModal from './FinancialTherapyModal';
 import TherapistRecommendations from './insights/TherapistRecommendations';
 import { UpcomingSessionsSection } from './UpcomingSessionsSection';
 
-const showOnboardingSignal = computed(() => {
-  return (
-    !onboardingSignal.value.isComplete &&
-    (typeof window !== 'undefined' ? window.location.pathname !== '/explore' : false)
-  );
-});
+// const showOnboardingSignal = computed(() => {
+//   return (
+//     !onboardingSignal.value.isComplete &&
+//     (typeof window !== 'undefined' ? window.location.pathname !== '/explore' : false)
+//   );
+// });
 
 const SharePanel = ({ onShareClick }: { onShareClick: () => void; referralLink: string }) => {
   return (
@@ -158,7 +158,6 @@ export default function LimitedDashboardClient() {
   const [isFinancialTherapyModalOpen, setIsFinancialTherapyModalOpen] = useState(false);
   useEffect(() => {
     if (user && user.id) {
-      
       // Generate personalized referral link
       const baseUrl = window.location.origin;
       const link = `${baseUrl}?ref=${user.id}`;
@@ -347,7 +346,7 @@ export default function LimitedDashboardClient() {
         </div>
         <ComingSoon />
       </main>
-      {showOnboardingSignal.value && <OnboardingModal />}
+      {/* {showOnboardingSignal.value && <OnboardingModal />} */}
     </div>
   );
 }

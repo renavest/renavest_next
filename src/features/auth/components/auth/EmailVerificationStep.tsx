@@ -24,7 +24,7 @@ const pollForUser = async (
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ clerkId }),
       credentials: 'include',
-    }); 
+    });
 
     const result = await response.json();
 
@@ -89,12 +89,12 @@ export function EmailVerificationStep() {
           await setActive({ session: result.createdSessionId });
           const userPollResult = await pollForUser(signUp.createdUserId);
 
-          const response = await fetch('/api/auth/finalize-user-onboarding', {
+          const response = await fetch('/api/auth/update-user-metadata', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               clerkId: signUp.createdUserId,
-              onboardingData: onboardingData,
+              metadata: onboardingData,
               role: onboardingData?.role,
             }),
             credentials: 'include',

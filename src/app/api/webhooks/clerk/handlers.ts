@@ -187,6 +187,19 @@ async function promotePendingTherapist(
   pendingTherapistMatch: any, // You may want to type this more strictly
   dbOrTx: any,
 ) {
+  // Check if therapist already exists for this user
+  const existingTherapist = (
+    await dbOrTx.select().from(therapists).where(eq(therapists.userId, user.id)).limit(1)
+  )[0];
+  if (existingTherapist) {
+    console.info('promotePendingTherapist: Therapist already exists for user', { userId: user.id });
+    // Still update the user's role in case it changed
+    await dbOrTx
+      .update(users)
+      .set({ role: 'therapist', updatedAt: createDate().toJSDate() })
+      .where(eq(users.id, user.id));
+    return;
+  }
   await dbOrTx.insert(therapists).values({
     userId: user.id,
     name: pendingTherapistMatch.name,
@@ -228,7 +241,7 @@ export async function handleUserCreateOrUpdate(
   const clerkProvidedRole = (unsafeMetadata?.role || publicMetadata?.role) as
     | (typeof userRoleEnum.enumValues)[number]
     | undefined;
-
+  console.log('Webhook: Clerk provided role', { clerkProvidedRole });
   const emailResult = getPrimaryEmail(emailAddresses, id);
   if (emailResult.isErr()) {
     console.error('Webhook: No valid email found for user', { userId: id, eventType });
@@ -259,6 +272,8 @@ export async function handleUserCreateOrUpdate(
       } else {
         finalUser = await createUser(tx, data, primaryEmail, now, clerkProvidedRole);
       }
+
+      console.log('Webhook: Final user', { finalUser });
       // If user is a pending therapist and role is therapist, promote them
       if (finalUser && clerkProvidedRole === 'therapist') {
         const pendingTherapistMatch = (

@@ -12,14 +12,14 @@ export async function POST(req: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  if (!body.onboardingData) {
-    return NextResponse.json({ error: 'Onboarding data not found' }, { status: 400 });
+  if (!body.metadata) {
+    return NextResponse.json({ error: 'Metadata not found' }, { status: 400 });
   }
   const existingMetadata = user.unsafeMetadata;
   await clerk.users.updateUserMetadata(user.id, {
     publicMetadata: {
       ...existingMetadata,
-      onboardingData: body.onboardingData,
+      ...body.metadata,
       onboardingComplete: true,
       role: body.role,
     },
