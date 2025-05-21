@@ -13,7 +13,17 @@ export async function GET() {
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-              
+
+    // Map Clerk userId to users.id
+    const userResult = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.clerkId, userId))
+      .limit(1);
+    if (!userResult.length) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+    const dbUserId = userResult[0].id;
     const now = DateTime.now().toJSDate();
 
     const upcomingSessions = await db
@@ -28,10 +38,10 @@ export async function GET() {
       })
       .from(bookingSessions)
       .leftJoin(therapists, eq(bookingSessions.therapistId, therapists.id))
-      .leftJoin(users, eq(bookingSessions.userId, users.clerkId))
+      .leftJoin(users, eq(bookingSessions.userId, users.id))
       .where(
         and(
-          eq(bookingSessions.userId, userId),
+          eq(bookingSessions.userId, dbUserId),
           or(eq(bookingSessions.status, 'confirmed'), eq(bookingSessions.status, 'scheduled')),
           gt(bookingSessions.sessionDate, now),
         ),
