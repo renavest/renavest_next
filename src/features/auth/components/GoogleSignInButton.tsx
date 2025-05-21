@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 
-import { OAuthButton } from './OAuthButton';
+import { OAuthButton } from './auth/OAuthButton';
 
 export default function GoogleSignInButton() {
   const googleIcon = (

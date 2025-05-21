@@ -1,13 +1,18 @@
-import { clerkClient } from '@clerk/nextjs/server';
+import { createClerkClient } from '@clerk/backend';
 import { eq } from 'drizzle-orm';
 import { Result, ok, err } from 'neverthrow';
+import { type PgTransaction } from 'drizzle-orm/pg-core'; // Import PgTransaction
 
 import { db } from '@/src/db';
-import { users, therapists } from '@/src/db/schema';
-import { UserType } from '@/src/features/auth/types/auth';
+import {
+  users,
+  userRoleEnum,
+  therapists,
+  pendingTherapists, // Make sure to import pendingTherapists if it's a schema
+} from '@/src/db/schema';
+import type { users as usersTable } from '@/src/db/schema';
 import { createDate } from '@/src/utils/timezone';
 
-// User-related webhook data
 export interface WebhookUserData {
   id: string;
   email_addresses: Array<{ email_address: string; id: string; verification?: { status: string } }>;
@@ -16,37 +21,198 @@ export interface WebhookUserData {
   image_url: string | null;
   public_metadata?: Record<string, unknown>;
   private_metadata?: Record<string, unknown>;
+  unsafe_metadata?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
 
-// Custom error types for user handling
 type UserHandlingError =
   | { type: 'NoValidEmail'; userId: string }
   | { type: 'DatabaseError'; message: string; originalError: unknown };
 
 /**
- * Get primary email from user data
+ * Extracts the primary email from an array of email addresses.
  */
 function getPrimaryEmail(
   emailAddresses: WebhookUserData['email_addresses'],
+  clerkUserId: string,
 ): Result<string, UserHandlingError> {
-  const verifiedEmail = emailAddresses?.find(
+  const verifiedEmail = emailAddresses.find(
     (email) => email.verification?.status === 'verified',
   )?.email_address;
 
-  const primaryEmail = verifiedEmail || emailAddresses?.[0]?.email_address;
+  const primaryEmail = verifiedEmail || emailAddresses[0]?.email_address;
 
-  return primaryEmail
-    ? ok(primaryEmail)
-    : (err({ type: 'NoValidEmail', userId: emailAddresses?.[0]?.id || 'unknown' }) as Result<
-        string,
-        UserHandlingError
-      >);
+  return primaryEmail ? ok(primaryEmail) : err({ type: 'NoValidEmail', userId: clerkUserId });
 }
 
 /**
- * Handle user created or updated events
+ * Safely converts a timestamp string or number to a Date object.
+ */
+function safelyParseDate(timestamp: string | number | null, fallbackDate: Date): Date {
+  if (!timestamp) return fallbackDate;
+  try {
+    const dateArg = typeof timestamp === 'number' ? new Date(timestamp) : timestamp;
+    return createDate(dateArg).toJSDate();
+  } catch (error) {
+    console.error('Webhook: Error converting date', { timestamp, error });
+    return fallbackDate;
+  }
+}
+
+/**
+ * Handles the creation of a new user in the database.
+ */
+async function createUser(
+  tx: PgTransaction<any, any, any>,
+  data: WebhookUserData,
+  primaryEmail: string,
+  now: Date,
+  clerkProvidedRole: (typeof userRoleEnum.enumValues)[number] | undefined,
+): Promise<typeof usersTable.$inferSelect | undefined> {
+  const {
+    id,
+    first_name: firstName,
+    last_name: lastName,
+    image_url: imageUrl,
+    created_at: createdAt,
+    updated_at: updatedAt,
+  } = data;
+
+  const userCreatedAt = safelyParseDate(createdAt, now);
+  const userUpdatedAt = safelyParseDate(updatedAt, now);
+
+  await tx.insert(users).values({
+    clerkId: id,
+    email: primaryEmail,
+    firstName: firstName || null,
+    lastName: lastName || null,
+    imageUrl: imageUrl || null,
+    createdAt: userCreatedAt,
+    updatedAt: userUpdatedAt,
+    role: clerkProvidedRole,
+  });
+
+  const newUser = (await tx.select().from(users).where(eq(users.clerkId, id)).limit(1))[0];
+  console.info('Webhook: Created new user in DB', { userId: id });
+  return newUser;
+}
+
+/**
+ * Handles updating an existing user in the database.
+ */
+async function updateUser(
+  tx: PgTransaction<any, any, any>,
+  existingUser: typeof usersTable.$inferSelect,
+  data: WebhookUserData,
+  primaryEmail: string,
+  now: Date,
+  clerkProvidedRole: (typeof userRoleEnum.enumValues)[number] | undefined,
+): Promise<typeof usersTable.$inferSelect | undefined> {
+  const {
+    id,
+    first_name: firstName,
+    last_name: lastName,
+    image_url: imageUrl,
+    updated_at: updatedAt,
+  } = data;
+
+  const userUpdatedAt = safelyParseDate(updatedAt, now);
+
+  await tx
+    .update(users)
+    .set({
+      email: primaryEmail,
+      firstName: firstName || null,
+      lastName: lastName || null,
+      imageUrl: imageUrl || null,
+      updatedAt: userUpdatedAt,
+      role: clerkProvidedRole ?? existingUser.role,
+    })
+    .where(eq(users.clerkId, id));
+
+  const updatedUser = (await tx.select().from(users).where(eq(users.clerkId, id)).limit(1))[0];
+  console.info('Webhook: Updated existing user in DB', { userId: id });
+  return updatedUser;
+}
+
+/**
+ * Handles updating a user by email with a new Clerk ID.
+ */
+async function updateUserWithClerkId(
+  tx: PgTransaction<any, any, any>,
+  userWithEmail: typeof usersTable.$inferSelect,
+  data: WebhookUserData,
+  primaryEmail: string,
+  now: Date,
+  clerkProvidedRole: (typeof userRoleEnum.enumValues)[number] | undefined,
+): Promise<typeof usersTable.$inferSelect | undefined> {
+  const {
+    id,
+    first_name: firstName,
+    last_name: lastName,
+    image_url: imageUrl,
+    updated_at: updatedAt,
+  } = data;
+
+  const userUpdatedAt = safelyParseDate(updatedAt, now);
+
+  await tx
+    .update(users)
+    .set({
+      clerkId: id,
+      firstName: firstName || userWithEmail.firstName || null,
+      lastName: lastName || userWithEmail.lastName || null,
+      imageUrl: imageUrl || userWithEmail.imageUrl || null,
+      updatedAt: userUpdatedAt,
+      role: clerkProvidedRole ?? userWithEmail.role,
+    })
+    .where(eq(users.email, primaryEmail));
+
+  const updatedUser = (
+    await tx.select().from(users).where(eq(users.email, primaryEmail)).limit(1)
+  )[0];
+  console.info('Webhook: Updated user with new Clerk ID in DB', {
+    userId: id,
+    previousId: userWithEmail.clerkId,
+  });
+  return updatedUser;
+}
+
+/**
+ * Restore promotePendingTherapist function for DB promotion only
+ */
+async function promotePendingTherapist(
+  user: typeof usersTable.$inferSelect,
+  pendingTherapistMatch: any, // You may want to type this more strictly
+  dbOrTx: any,
+) {
+  await dbOrTx.insert(therapists).values({
+    userId: user.id,
+    name: pendingTherapistMatch.name,
+    title: pendingTherapistMatch.title,
+    bookingURL: pendingTherapistMatch.bookingURL,
+    expertise: pendingTherapistMatch.expertise,
+    certifications: pendingTherapistMatch.certifications,
+    song: pendingTherapistMatch.song,
+    yoe: pendingTherapistMatch.yoe,
+    clientele: pendingTherapistMatch.clientele,
+    longBio: pendingTherapistMatch.longBio,
+    previewBlurb: pendingTherapistMatch.previewBlurb,
+    profileUrl: pendingTherapistMatch.profileUrl,
+    hourlyRate: pendingTherapistMatch.hourlyRate,
+    googleCalendarIntegrationStatus: 'not_connected',
+    createdAt: createDate().toJSDate(),
+    updatedAt: createDate().toJSDate(),
+  });
+  await dbOrTx
+    .update(users)
+    .set({ role: 'therapist', updatedAt: createDate().toJSDate() })
+    .where(eq(users.id, user.id));
+}
+
+/**
+ * Main function to handle user creation or update events from Clerk webhooks.
  */
 export async function handleUserCreateOrUpdate(
   eventType: 'user.created' | 'user.updated',
@@ -55,156 +221,77 @@ export async function handleUserCreateOrUpdate(
   const {
     id,
     email_addresses: emailAddresses,
-    first_name: firstName,
-    last_name: lastName,
-    image_url: imageUrl,
-    created_at: createdAt,
-    updated_at: updatedAt,
+    public_metadata: publicMetadata,
+    unsafe_metadata: unsafeMetadata,
   } = data;
-  // Get primary email
-  const emailResult = getPrimaryEmail(emailAddresses);
+
+  const clerkProvidedRole = (unsafeMetadata?.role || publicMetadata?.role) as
+    | (typeof userRoleEnum.enumValues)[number]
+    | undefined;
+
+  const emailResult = getPrimaryEmail(emailAddresses, id);
   if (emailResult.isErr()) {
-    console.error('No valid email found for user', {
-      userId: id,
-      eventType,
-    });
-    return err({
-      type: 'NoValidEmail',
-      userId: id,
-    });
+    console.error('Webhook: No valid email found for user', { userId: id, eventType });
+    return err(emailResult.error);
   }
 
-  const primaryEmail = emailResult.value;
+  const primaryEmail = emailResult.value.toLowerCase();
+  const now = createDate().toJSDate();
 
   try {
-    // Check if user exists by either clerkId or email
-    const [existingUserByClerkId, existingUserByEmail, therapistRecord] = await Promise.all([
-      db.select().from(users).where(eq(users.clerkId, id)).limit(1),
-      db.select().from(users).where(eq(users.email, primaryEmail)).limit(1),
-      db.select().from(therapists).where(eq(therapists.email, primaryEmail.toLowerCase())).limit(1),
-    ]);
-
-    const existingUser = existingUserByClerkId[0];
-    const userWithEmail = existingUserByEmail[0];
-    const matchedTherapist = therapistRecord[0];
-
-    // Determine user role and set public metadata
-    let userRole = 'employee';
-    if (matchedTherapist) {
-      userRole = 'therapist';
-    }
-
-    // Add public metadata to Clerk user
-    (await clerkClient()).users.updateUserMetadata(id, {
-      publicMetadata: {
-        role: userRole as UserType,
-      },
-    });
-
-    const now = createDate().toJSDate();
-    // Handle date conversions safely to prevent "Invalid time value" errors
-    let userCreatedAt;
-    let userUpdatedAt;
-
-    try {
-      // Convert timestamps to ISO dates if they're numbers
-      const createdAtDate = typeof createdAt === 'number' ? new Date(createdAt) : createdAt;
-      const updatedAtDate = typeof updatedAt === 'number' ? new Date(updatedAt) : updatedAt;
-
-      userCreatedAt = createdAt ? createDate(createdAtDate).toJSDate() : now;
-      userUpdatedAt = updatedAt ? createDate(updatedAtDate).toJSDate() : now;
-    } catch (error) {
-      console.error('Error converting dates', { createdAt, updatedAt, error });
-      userCreatedAt = now;
-      userUpdatedAt = now;
-    }
-    // TODO: add employer table
-
-    if (existingUser) {
-      // Update existing user
-      await db
-        .update(users)
-        .set({
-          email: primaryEmail,
-          firstName: firstName || null,
-          lastName: lastName || null,
-          imageUrl: imageUrl || null,
-          updatedAt: userUpdatedAt || now,
-          therapistId: matchedTherapist?.id || null,
-        })
-        .where(eq(users.clerkId, id));
-
-      console.info('Updated existing user', {
-        userId: id,
-        eventType,
-        isTherapist: !!matchedTherapist,
-        publicMetadata: { role: userRole },
-      });
-    } else if (eventType === 'user.created') {
-      if (userWithEmail) {
-        // Handle case where email exists but with different Clerk ID
-        await db
-          .update(users)
-          .set({
-            clerkId: id,
-            firstName: firstName || userWithEmail.firstName,
-            lastName: lastName || userWithEmail.lastName,
-            imageUrl: imageUrl || userWithEmail.imageUrl,
-            updatedAt: userUpdatedAt || now,
-            therapistId: matchedTherapist?.id || null,
-          })
-          .where(eq(users.email, primaryEmail));
-
-        console.info('Updated user with new Clerk ID', {
-          userId: id,
-          eventType,
-          previousId: userWithEmail.clerkId,
-          isTherapist: !!matchedTherapist,
-          therapistId: matchedTherapist?.id,
-          publicMetadata: { role: userRole },
-        });
+    await db.transaction(async (tx) => {
+      const existingUser = (await tx.select().from(users).where(eq(users.clerkId, id)).limit(1))[0];
+      const userWithEmail = (
+        await tx.select().from(users).where(eq(users.email, primaryEmail)).limit(1)
+      )[0];
+      let finalUser: typeof usersTable.$inferSelect | undefined = undefined;
+      if (existingUser) {
+        finalUser = await updateUser(tx, existingUser, data, primaryEmail, now, clerkProvidedRole);
+      } else if (userWithEmail) {
+        finalUser = await updateUserWithClerkId(
+          tx,
+          userWithEmail,
+          data,
+          primaryEmail,
+          now,
+          clerkProvidedRole,
+        );
       } else {
-        // Create new user
-        await db.insert(users).values({
-          clerkId: id,
-          email: primaryEmail,
-          firstName: firstName || null,
-          lastName: lastName || null,
-          imageUrl: imageUrl || null,
-          createdAt: userCreatedAt || now,
-          updatedAt: userUpdatedAt || now,
-          therapistId: matchedTherapist?.id || null,
-        });
-
-        console.info('Created new user', {
-          userId: id,
-          eventType,
-          isTherapist: !!matchedTherapist,
-          publicMetadata: { role: userRole },
-        });
+        finalUser = await createUser(tx, data, primaryEmail, now, clerkProvidedRole);
       }
-    }
-
+      // If user is a pending therapist and role is therapist, promote them
+      if (finalUser && clerkProvidedRole === 'therapist') {
+        const pendingTherapistMatch = (
+          await tx
+            .select()
+            .from(pendingTherapists)
+            .where(eq(pendingTherapists.clerkEmail, primaryEmail))
+            .limit(1)
+        )[0];
+        if (pendingTherapistMatch) {
+          await promotePendingTherapist(finalUser, pendingTherapistMatch, tx);
+        }
+      }
+      console.info('Webhook: Basic user sync complete for', { userId: id, eventType });
+    });
     return ok(true);
   } catch (error) {
     const errorDetails: UserHandlingError = {
       type: 'DatabaseError',
-      message: `Error ${eventType === 'user.created' ? 'creating' : 'updating'} user`,
+      message: `Error ${eventType === 'user.created' ? 'creating' : 'updating'} user during basic sync`,
       originalError: error,
     };
-
-    console.error('User handling error', {
+    console.error('Webhook: User handling error during basic sync', {
       userId: id,
       eventType,
       error,
     });
-
     return err(errorDetails);
   }
 }
 
 /**
- * Handle user deletion events
+ * Handles user deletion events by marking the user as inactive.
  */
 export async function handleUserDeletion(
   data: WebhookUserData,
@@ -212,7 +299,6 @@ export async function handleUserDeletion(
   const { id } = data;
 
   try {
-    // Mark user as inactive instead of deleting
     await db
       .update(users)
       .set({
@@ -221,27 +307,21 @@ export async function handleUserDeletion(
       })
       .where(eq(users.clerkId, id));
 
-    console.info('Marked user as inactive', { userId: id });
-
+    console.info('Webhook: Marked user as inactive', { userId: id });
     return ok(true);
   } catch (error) {
     const errorDetails: UserHandlingError = {
       type: 'DatabaseError',
-      message: 'Error handling user deletion',
+      message: 'Webhook: Error handling user deletion',
       originalError: error,
     };
-
-    console.error('User deletion error', {
-      userId: id,
-      error,
-    });
-
+    console.error('Webhook: User deletion error', { userId: id, error });
     return err(errorDetails);
   }
 }
 
 /**
- * Handle user activity events (sign in, sign out)
+ * Handles user activity events (e.g., sign in, sign out) by updating the user's timestamp.
  */
 export async function handleUserActivity(
   data: WebhookUserData,
@@ -249,7 +329,6 @@ export async function handleUserActivity(
   const { id } = data;
 
   try {
-    // Update user's last activity timestamp
     await db
       .update(users)
       .set({
@@ -257,21 +336,15 @@ export async function handleUserActivity(
       })
       .where(eq(users.clerkId, id));
 
-    console.info('Updated user activity', { userId: id });
-
+    console.info('Webhook: Updated user activity', { userId: id });
     return ok(true);
   } catch (error) {
     const errorDetails: UserHandlingError = {
       type: 'DatabaseError',
-      message: 'Error handling user activity',
+      message: 'Webhook: Error handling user activity',
       originalError: error,
     };
-
-    console.error('User activity update error', {
-      userId: id,
-      error,
-    });
-
+    console.error('Webhook: User activity update error', { userId: id, error });
     return err(errorDetails);
   }
 }

@@ -2,7 +2,7 @@
 
 import { useUser } from '@clerk/nextjs';
 import { computed } from '@preact-signals/safe-react';
-import { ArrowRight, Play, Share2 } from 'lucide-react';
+import { ArrowRight, Play, Share2, ClipboardList } from 'lucide-react';
 import Image from 'next/image';
 import posthog from 'posthog-js';
 import { useState, useEffect } from 'react';
@@ -20,7 +20,6 @@ import ComingSoon from './ComingSoon';
 import EmployeeNavbar from './EmployeeNavbar';
 import FinancialTherapyModal from './FinancialTherapyModal';
 import TherapistRecommendations from './insights/TherapistRecommendations';
-import WeeklyMoneyBelief from './insights/WeeklyFinancialReport';
 import { UpcomingSessionsSection } from './UpcomingSessionsSection';
 
 const showOnboardingSignal = computed(() => {
@@ -60,14 +59,106 @@ const SharePanel = ({ onShareClick }: { onShareClick: () => void; referralLink: 
   );
 };
 
+const ConsultationBanner = ({ onTakeQuizClick }: { onTakeQuizClick: () => void }) => {
+  return (
+    <div className='bg-gradient-to-r from-purple-500 to-purple-700 rounded-2xl p-6 md:p-8 shadow-sm border border-purple-200 mb-8 md:mb-10 animate-fade-in-up'>
+      <div className='flex flex-col md:flex-row items-center justify-between'>
+        <div className='mb-4 md:mb-0 md:mr-6'>
+          <h2 className='text-2xl md:text-3xl font-bold text-white mb-2'>
+            Take Our Quick Quiz & Get a Free Consultation
+          </h2>
+          <p className='text-purple-50 md:text-lg max-w-2xl'>
+            Answer a few questions about your financial goals and we'll match you with the perfect
+            financial therapist for a free consultation.
+          </p>
+        </div>
+        <button
+          onClick={onTakeQuizClick}
+          className='bg-white hover:bg-gray-50 text-purple-700 px-6 py-3 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 font-semibold flex items-center whitespace-nowrap'
+        >
+          <ClipboardList className='w-5 h-5 mr-2' />
+          Take the Quiz
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const TherapistRecommendationsWithOverlay = ({
+  onTakeQuizClick,
+}: {
+  onTakeQuizClick: () => void;
+}) => {
+  return (
+    <div className='relative rounded-lg overflow-hidden'>
+      {/* The actual recommendations component with reduced opacity */}
+      <div className='opacity-25 pointer-events-none'>
+        <TherapistRecommendations />
+      </div>
+
+      {/* Overlay content */}
+      <div className='absolute inset-0 flex flex-col items-center justify-center bg-white/60 backdrop-blur-[2px] p-8 text-center'>
+        <ClipboardList className='h-10 w-10 text-purple-600 mb-4' />
+        <h4 className='text-xl font-semibold text-gray-800 mb-2'>
+          Want to See Your Recommended Therapists?
+        </h4>
+        <p className='text-gray-600 mb-5 max-w-md'>
+          Take our short quiz to get personalized therapist recommendations based on your unique
+          financial goals.
+        </p>
+        <button
+          onClick={onTakeQuizClick}
+          className='bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 font-medium'
+        >
+          Take the Quiz Now
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Component for video library to reduce main component's line count
+const VideoLibrary = () => (
+  <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-100'>
+    <h3 className='font-semibold text-gray-800 mb-3'>Video Library</h3>
+    <div className='flex space-x-4 items-stretch'>
+      <div className='relative h-[250px] w-[150px] md:h-[300px] md:w-[200px] lg:h-[250px] lg:w-[150px]'>
+        <Image
+          src='https://d2qcuj7ucxw61o.cloudfront.net/atia_demo.jpg'
+          alt='Financial Therapy Video 1'
+          fill
+          className='object-cover rounded-lg'
+        />
+        <div className='absolute inset-0 flex items-center justify-center'>
+          <Play className='w-8 h-8 text-white bg-black/50 rounded-full p-2' />
+        </div>
+      </div>
+      <div className='relative h-[250px] w-[150px]  md:hidden lg:block'>
+        <Image
+          src='https://d2qcuj7ucxw61o.cloudfront.net/shani_demo.jpg'
+          alt='Financial Therapy Video 2'
+          fill
+          className='object-cover rounded-lg'
+        />
+        <div className='absolute inset-0 flex items-center justify-center'>
+          <Play className='w-8 h-8 text-white bg-black/50 rounded-full p-2' />
+        </div>
+      </div>
+      <button className='text-purple-600 hover:text-purple-800 text-sm flex items-center gap-1'>
+        View All
+        <ArrowRight className='h-3 w-3 md:h-4 md:w-4' />
+      </button>
+    </div>
+  </div>
+);
+
 export default function LimitedDashboardClient() {
   const { user } = useUser();
   const [referralLink, setReferralLink] = useState('');
   const [isFinancialTherapyModalOpen, setIsFinancialTherapyModalOpen] = useState(false);
-  // const [referralsCount, setReferralsCount] = useState(0);
-
   useEffect(() => {
     if (user && user.id) {
+      
       // Generate personalized referral link
       const baseUrl = window.location.origin;
       const link = `${baseUrl}?ref=${user.id}`;
@@ -120,6 +211,17 @@ export default function LimitedDashboardClient() {
     }
   };
 
+  const handleTakeQuizClick = () => {
+    // Track quiz start event
+    posthog.capture('quiz_started', {
+      userId: user?.id,
+      userEmail: user?.emailAddresses[0]?.emailAddress,
+    });
+
+    // Future implementation: navigate to quiz or open quiz modal
+    toast.info('Quiz feature coming soon!');
+  };
+
   return (
     <div className={`min-h-screen ${COLORS.WARM_WHITE.bg} font-sans`}>
       {/* Render toast notification */}
@@ -147,10 +249,8 @@ export default function LimitedDashboardClient() {
           </div>
         </div>
 
-        {/* Weekly Money Belief Section */}
-        <div className='mb-8 md:mb-10 animate-fade-in-up'>
-          <WeeklyMoneyBelief />
-        </div>
+        {/* Take Quiz Banner (Replaces Weekly Money Belief) */}
+        <ConsultationBanner onTakeQuizClick={handleTakeQuizClick} />
 
         {/* Two-column layout */}
         <div className='grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8'>
@@ -183,7 +283,7 @@ export default function LimitedDashboardClient() {
               </div>
             </div>
 
-            {/* Therapist recommendations  with enhanced styling */}
+            {/* Therapist recommendations with overlay */}
             <div
               className='bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 
               overflow-hidden border border-gray-100 animate-fade-in-up delay-200'
@@ -202,7 +302,7 @@ export default function LimitedDashboardClient() {
                   </span>
                   Recommended Financial Therapists
                 </h3>
-                <TherapistRecommendations />
+                <TherapistRecommendationsWithOverlay onTakeQuizClick={handleTakeQuizClick} />
               </div>
             </div>
           </div>
@@ -240,37 +340,9 @@ export default function LimitedDashboardClient() {
                 Learn More About Financial Therapy
               </button>
             </div>
-            <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-100'>
-              <h3 className='font-semibold text-gray-800 mb-3'>Video Library</h3>
-              <div className='flex space-x-4 items-stretch'>
-                <div className='relative h-[250px] w-[150px] md:h-[300px] md:w-[200px] lg:h-[250px] lg:w-[150px]'>
-                  <Image
-                    src='https://d2qcuj7ucxw61o.cloudfront.net/atia_demo.jpg'
-                    alt='Financial Therapy Video 1'
-                    fill
-                    className='object-cover rounded-lg'
-                  />
-                  <div className='absolute inset-0 flex items-center justify-center'>
-                    <Play className='w-8 h-8 text-white bg-black/50 rounded-full p-2' />
-                  </div>
-                </div>
-                <div className='relative h-[250px] w-[150px]  md:hidden lg:block'>
-                  <Image
-                    src='https://d2qcuj7ucxw61o.cloudfront.net/shani_demo.jpg'
-                    alt='Financial Therapy Video 2'
-                    fill
-                    className='object-cover rounded-lg'
-                  />
-                  <div className='absolute inset-0 flex items-center justify-center'>
-                    <Play className='w-8 h-8 text-white bg-black/50 rounded-full p-2' />
-                  </div>
-                </div>
-                <button className='text-purple-600 hover:text-purple-800 text-sm flex items-center gap-1'>
-                  View All
-                  <ArrowRight className='h-3 w-3 md:h-4 md:w-4' />
-                </button>
-              </div>
-            </div>
+
+            {/* Video Library - Extracted to a separate component */}
+            <VideoLibrary />
           </div>
         </div>
         <ComingSoon />

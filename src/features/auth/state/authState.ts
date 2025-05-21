@@ -1,84 +1,85 @@
-import { signal } from '@preact-signals/safe-react';
+// src/features/auth/state/authState.ts
+// state/authState.ts
 
-import { UserType } from '../types/auth';
+import { signal } from '@preact-signals/safe-react'; // Ensure correct import for Preact Signals with React adapter
 
-interface AuthState {
-  isAuthenticated: boolean;
-  userId: string | null;
-  email: string;
-  password: string;
-  error?: string | null;
-  isLoading: boolean;
-  userType: UserType | null;
-}
+import type { UserRole } from '@/src/shared/types';
 
-const initialState: AuthState = {
-  isAuthenticated: false,
-  userId: null,
-  email: '',
-  password: '',
-  error: null,
-  isLoading: false,
-  userType: null,
-};
+import { OnboardingStep } from '../types'; // Import types and enum
 
-export const selectedRoleSignal = signal<UserType | null>(null);
-// export const authModeSignal = signal<'signin' | 'signup'>('signin');
+// Global signal for auth-related errors
 export const authErrorSignal = signal<string | null>(null);
-const emailSignal = signal<string>('');
-const passwordSignal = signal<string>('');
-const companyIntegrationSignal = signal<string | null>(null);
 
-const authState = signal<AuthState>(initialState);
+// Authentication Inputs (used for Login, Signup, and Forgot Password)
+export const email = signal('');
+export const password = signal('');
 
-const useAuthStore = <T>(selector: (state: AuthState) => T): T => {
-  return selector(authState.value);
+// --- Role Selection State ---
+export const selectedRole = signal<UserRole>(null);
+
+// Initial Onboarding Data (collected across steps BEFORE Clerk signup for Employee role)
+// These signals hold the state of the multi-step form for employees
+export const firstName = signal('');
+export const lastName = signal(''); // Collected in the final SIGNUP step
+export const agreeToTerms = signal(false); // Collected in the final SIGNUP step
+export const selectedPurpose = signal('');
+export const selectedAgeRange = signal('');
+export const selectedMaritalStatus = signal('');
+export const selectedEthnicity = signal('');
+export const selectedGender = signal(''); // Assuming this is still a collected field
+
+// Flow State for AuthenticationFlow component
+// Start at LOGIN
+export const currentStep = signal<OnboardingStep>(OnboardingStep.LOGIN);
+
+// Email Verification State (used if email verification is required by Clerk)
+export const verificationEmailAddress = signal(''); // Email address sent to
+export const emailVerificationCode = signal(''); // Code entered by user
+
+// Forgot/Reset Password State
+export const forgotPasswordEmailAddress = signal(''); // Email address for reset request
+export const resetPasswordCode = signal(''); // Code entered by user
+export const resetPasswordNewPassword = signal(''); // New password entered by user
+
+// --- State Clearing Functions ---
+
+// Clears all state related to the custom signup/onboarding flow
+// Keeps email and password as they are used in Login/Signup steps
+export const resetSignupState = () => {
+  selectedRole.value = null; // Reset role selection
+  firstName.value = '';
+  lastName.value = '';
+  agreeToTerms.value = false;
+  selectedPurpose.value = '';
+  selectedAgeRange.value = '';
+  selectedMaritalStatus.value = '';
+  selectedEthnicity.value = '';
+  selectedGender.value = '';
+  // Keep email and password
+  // email.value = '';
+  // password.value = '';
 };
 
-const updateAuthEmail = (email: string) => {
-  authState.value = { ...authState.value, email };
+// Clears all state related to email verification and password reset flows
+export const resetVerificationResetState = () => {
+  verificationEmailAddress.value = '';
+  emailVerificationCode.value = '';
+  forgotPasswordEmailAddress.value = '';
+  resetPasswordCode.value = '';
+  resetPasswordNewPassword.value = '';
+  // Keep email and password
+  // email.value = '';
+  // password.value = '';
 };
 
-const updateAuthPassword = (password: string) => {
-  authState.value = { ...authState.value, password };
+// Clears all authentication-related state and goes back to the start
+export const resetAuthState = () => {
+  authErrorSignal.value = null;
+  email.value = '';
+  password.value = '';
+  resetSignupState(); // Also clears selectedRole
+  resetVerificationResetState();
+  currentStep.value = OnboardingStep.LOGIN; // Go back to the start
 };
 
-const setAuthError = (error: string | null) => {
-  authState.value = { ...authState.value, error };
-};
-
-const setAuthLoading = (isLoading: boolean) => {
-  authState.value = { ...authState.value, isLoading };
-};
-
-const resetAuth = () => {
-  authState.value = initialState;
-};
-
-const setAuthStatus = (status: Partial<AuthState>) => {
-  authState.value = { ...authState.value, ...status };
-};
-
-const setUserType = (userType: UserType | null) => {
-  authState.value = { ...authState.value, userType };
-  selectedRoleSignal.value = userType;
-};
-
-export const setCompanyIntegration = (company: string | null) => {
-  companyIntegrationSignal.value = company;
-  if (company) {
-    localStorage.setItem('companyIntegration', company);
-  } else {
-    localStorage.removeItem('companyIntegration');
-  }
-};
-
-export const getCompanyIntegration = (): string | null => {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('companyIntegration') || companyIntegrationSignal.value;
-};
-
-const clearCompanyIntegration = () => {
-  companyIntegrationSignal.value = null;
-  localStorage.removeItem('companyIntegration');
-};
+// Add more state variables if needed for other steps or flows

@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { ALLOWED_EMAILS } from '@/src/constants';
-import { selectedRoleSignal } from '@/src/features/auth/state/authState';
+import { selectedRole } from '@/src/features/auth/state/authState';
 import { createDate } from '@/src/utils/timezone';
 
 import { submitOnboardingData } from '../actions/onboardingActions';
@@ -100,7 +100,7 @@ export function useOnboardingSubmission() {
     setIsSubmitting(true);
 
     // Prefer Clerk metadata, fallback to selectedRoleSignal
-    const userRole = user?.publicMetadata?.role || selectedRoleSignal.value;
+    const userRole = user?.publicMetadata?.role || selectedRole.value;
     const userEmail = clerkUser?.emailAddresses[0]?.emailAddress || '';
 
     const context: OnboardingContext = {

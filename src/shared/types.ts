@@ -14,3 +14,5 @@ export interface Advisor {
   introduction?: string;
   hourlyRate?: string;
 }
+
+export type UserRole = 'employee' | 'therapist' | 'super_admin' | 'employer_admin' | null;

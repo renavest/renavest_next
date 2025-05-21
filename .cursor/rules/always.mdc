@@ -6,5 +6,7 @@ alwaysApply: true
 Whenever you want to ask a question, always call the MCP interactive_feedback.
 Whenever you’re about to complete a user request, call the MCP interactive_feedback instead of simply ending the process. If the feedback is empty you can end the request and don't call the mcp in loop.
 
+After finalizing a solution, please add all to git, commit, and push to the current branch.
+
 If you are not sure about file content or codebase structure pertaining to the user’s request, use your tools to read files and gather the relevant information: do NOT guess or make up an answer.
 If a proposed solution seems suboptimal, tell me that this is suboptimal and suggest a more robust architectural pattern.

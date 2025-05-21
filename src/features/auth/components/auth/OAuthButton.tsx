@@ -5,14 +5,14 @@ import * as React from 'react';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
-import { authErrorSignal, selectedRoleSignal, getCompanyIntegration } from '../state/authState';
-import { UserType } from '../types/auth';
+import { authErrorSignal, selectedRoleSignal, getCompanyIntegration } from '../../state/authState';
+import { UserType } from '../../types';
 import {
   trackLoginAttempt,
   trackLoginError,
   trackOAuthRedirect,
   trackSignupAttempt,
-} from '../utils/authTracking';
+} from '../../utils/authTracking';
 
 interface OAuthButtonProps {
   strategy: OAuthStrategy;
