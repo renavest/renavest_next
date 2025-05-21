@@ -42,9 +42,9 @@ const MobileNavigation = () => (
 const DesktopNavigation = () => (
   <div className='hidden md:flex items-center gap-3 lg:gap-4'>
     <div className='h-6 w-px bg-gray-200 mx-1'></div>
-    <span className='px-4 py-1 rounded-full bg-[#F3F0FF] text-[#9071FF] font-semibold text-sm shadow-sm mr-2'>
+    {/* <span className='px-4 py-1 rounded-full bg-[#F3F0FF] text-[#9071FF] font-semibold text-sm shadow-sm mr-2'>
       400 credits left
-    </span>
+    </span> */}
     <LogoutButton />
     <div className='ml-1 lg:ml-2'>
       <UserButton afterSignOutUrl='/login' />
