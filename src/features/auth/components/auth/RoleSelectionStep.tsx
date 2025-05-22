@@ -10,12 +10,12 @@ const ROLE_OPTIONS = [
   {
     value: 'employee',
     label: 'Employee',
-    description: 'Access mental health resources and connect with therapists',
+    description: 'Access financial resources and connect with financial therapists',
   },
   {
     value: 'therapist',
-    label: 'Therapist',
-    description: 'Provide therapy services to employees',
+    label: 'Financial Therapist',
+    description: 'Provide financial therapy services to employees',
   },
   {
     value: 'employer_admin',
