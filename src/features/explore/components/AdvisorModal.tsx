@@ -11,24 +11,42 @@ import { Advisor } from '@/src/shared/types';
 import { COLORS } from '@/src/styles/colors';
 
 import { advisorSignal, isOpenSignal } from './state/advisorSignals';
+import { useMarketplaceIntegration } from './utils/useMarketplaceIntegration';
 
 const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
   const { user } = useUser();
   const router = useRouter();
   const [hasError, setHasError] = useState(false);
+  const { isConnected, isChecking, bookingMode } = useMarketplaceIntegration(advisor);
 
   const handleBookSession = () => {
     // Track booking event with enhanced context
     posthog.capture('therapist_session_booked', {
-      therapist_id: advisor.id,
+      therapist_id: advisor.therapistId || advisor.id,
       therapist_name: advisor.name,
+      booking_mode: bookingMode,
+      has_google_calendar: isConnected,
     });
     posthog.identify(user?.id, {
       current_therapist: advisor.name,
     });
 
-    // Navigate to the booking page for this specific advisor
-    router.push(`/book/${advisor.id}`);
+    // Navigate based on the therapist's integration status
+    if (isConnected && advisor.therapistId) {
+      // Use therapist ID for internal booking
+      router.push(`/book/${advisor.therapistId}`);
+    } else if (advisor.bookingURL) {
+      // Use external booking URL
+      window.open(advisor.bookingURL, '_blank');
+    } else {
+      console.error('No booking method available for this therapist');
+    }
+  };
+
+  const getBookingButtonText = () => {
+    if (isChecking) return 'Loading...';
+    if (isConnected) return 'Book a Session';
+    return 'Book via External Calendar';
   };
 
   return (
@@ -47,7 +65,7 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
           onClick={() => {
             // Track profile view event
             posthog.capture('therapist_profile_viewed', {
-              therapist_id: advisor.id,
+              therapist_id: advisor.therapistId || advisor.id,
               therapist_name: advisor.name,
               therapist_title: advisor.title,
               therapist_expertise: advisor.expertise,
@@ -58,14 +76,26 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
       <div className='mt-6 space-y-4'>
         <button
           onClick={handleBookSession}
+          disabled={isChecking}
           className={cn(
             'block w-full py-3 px-4 text-center text-white rounded-lg transition-colors font-medium',
-            COLORS.WARM_PURPLE.bg,
-            COLORS.WARM_PURPLE.hover,
+            isChecking
+              ? 'bg-gray-400 cursor-not-allowed'
+              : cn(COLORS.WARM_PURPLE.bg, COLORS.WARM_PURPLE.hover),
           )}
         >
-          Book a Session
+          {getBookingButtonText()}
         </button>
+
+        {/* Integration status indicator */}
+        <div className='text-center text-xs text-gray-500'>
+          {isConnected ? (
+            <span className='text-green-600'>✓ Direct booking available</span>
+          ) : (
+            <span className='text-orange-600'>External calendar booking</span>
+          )}
+        </div>
+
         <div className='p-4 bg-gray-50 rounded-lg'>
           <h4 className='font-medium mb-2'>Certifications</h4>
           <p className='text-sm text-gray-600'>{advisor.certifications || 'Not specified'}</p>

@@ -1,12 +1,12 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { google } from 'googleapis';
+import { calendar_v3, google } from 'googleapis';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { db } from '@/src/db';
 import { bookingSessions } from '@/src/db/schema';
 import { sendBookingConfirmationEmail } from '@/src/features/booking/actions/sendBookingConfirmationEmail';
-import { timezoneManager, SupportedTimezone } from '@/src/features/booking/utils/timezoneManager';
+import { TimezoneManager } from '@/src/features/booking/utils/timezoneManager';
 
 // OAuth2 client configuration
 const oauth2Client = new google.auth.OAuth2(
@@ -15,53 +15,38 @@ const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_REDIRECT_URI,
 );
 
-// Enhanced validation schema with timezone support
+// Validation schema for booking creation
 const CreateBookingSchema = z.object({
   therapistId: z.number(),
-  sessionDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)'),
-  sessionTime: z.string().regex(/^\d{2}:\d{2}$/, 'Invalid time format (HH:MM)'),
-  clientTimezone: z
-    .string()
-    .refine(
-      (tz) => timezoneManager.getSupportedTimezones().some((t) => t.value === tz),
-      'Unsupported timezone',
-    ),
+  sessionDate: z.string(),
+  sessionTime: z.string(),
+  clientTimezone: z.string(),
 });
 
 // Helper function to get therapist's timezone from Google Calendar
-async function getTherapistTimezone(
-  calendar: ReturnType<typeof google.calendar>,
-): Promise<SupportedTimezone> {
+async function getTherapistTimezone(calendar: calendar_v3.Calendar): Promise<string> {
   try {
     const calendarSettings = await calendar.settings.get({
       setting: 'timezone',
     });
-    const detectedTimezone = calendarSettings.data.value || 'UTC';
-
-    // Map to supported timezone
-    const supportedTimezones = timezoneManager.getSupportedTimezones();
-    const matchedTimezone = supportedTimezones.find((tz) => tz.value === detectedTimezone);
-
-    return matchedTimezone?.value || 'America/New_York';
+    return calendarSettings.data.value || 'UTC';
   } catch (error) {
     console.error('Error getting therapist timezone:', error);
-    return 'America/New_York';
+    return 'UTC';
   }
 }
 
 // Helper function to check slot availability
 async function checkSlotAvailability(
-  calendar: ReturnType<typeof google.calendar>,
+  calendar: calendar_v3.Calendar,
   startTime: Date,
   endTime: Date,
-  timezone: SupportedTimezone,
 ): Promise<boolean> {
   try {
     const freeBusyResponse = await calendar.freebusy.query({
       requestBody: {
         timeMin: startTime.toISOString(),
         timeMax: endTime.toISOString(),
-        timeZone: timezone,
         items: [{ id: 'primary' }],
       },
     });
@@ -74,7 +59,6 @@ async function checkSlotAvailability(
   }
 }
 
-// Create a new booking with robust timezone handling
 export async function POST(req: NextRequest) {
   try {
     auth.protect();
@@ -104,18 +88,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Therapist not found' }, { status: 404 });
     }
 
-    // Validate Google Calendar integration
-    if (
-      !therapist.googleCalendarAccessToken ||
-      therapist.googleCalendarIntegrationStatus !== 'connected'
-    ) {
+    // Get timezone manager instance
+    const timezoneManager = TimezoneManager.getInstance();
+
+    // Validate client timezone by checking if it's in supported list
+    const supportedTimezones = timezoneManager.getSupportedTimezones();
+    const clientTimezone = supportedTimezones.find(
+      (tz) => tz.value === validatedData.clientTimezone,
+    )?.value;
+    if (!clientTimezone) {
+      return NextResponse.json({ error: 'Invalid client timezone' }, { status: 400 });
+    }
+
+    // Set up Google Calendar client
+    if (!therapist.googleCalendarAccessToken) {
       return NextResponse.json(
-        { error: 'Therapist does not have Google Calendar integration enabled' },
+        { error: 'Therapist Google Calendar not connected' },
         { status: 400 },
       );
     }
 
-    // Set up Google Calendar client
     oauth2Client.setCredentials({
       access_token: therapist.googleCalendarAccessToken,
       refresh_token: therapist.googleCalendarRefreshToken,
@@ -123,23 +115,28 @@ export async function POST(req: NextRequest) {
 
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
-    // Get therapist's timezone
+    // Get therapist's timezone from Google Calendar
     const therapistTimezone = await getTherapistTimezone(calendar);
+    const validatedTherapistTimezone =
+      supportedTimezones.find((tz) => tz.value === therapistTimezone)?.value || 'UTC';
 
-    // Convert booking slot using timezone manager
+    // Convert booking slot for storage using TimezoneManager
     const bookingSlot = timezoneManager.convertBookingSlotForStorage(
       validatedData.sessionDate,
       validatedData.sessionTime,
-      validatedData.clientTimezone as SupportedTimezone,
-      therapistTimezone,
+      clientTimezone,
+      validatedTherapistTimezone,
     );
 
-    // Verify the slot is still available
+    if (!bookingSlot) {
+      return NextResponse.json({ error: 'Invalid booking time' }, { status: 400 });
+    }
+
+    // Check slot availability
     const isSlotAvailable = await checkSlotAvailability(
       calendar,
       bookingSlot.startTime.toJSDate(),
       bookingSlot.endTime.toJSDate(),
-      therapistTimezone,
     );
 
     if (!isSlotAvailable) {
@@ -152,45 +149,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create Google Calendar event first
-    let googleMeetLink = '';
-    let googleEventId = '';
-
-    try {
-      const eventRequestBody = {
-        summary: `Therapy Session with ${user.firstName || ''} ${user.lastName || ''}`.trim(),
-        description: 'Therapy session booked through Renavest',
-        start: {
-          dateTime: bookingSlot.startTime.toISO(),
-          timeZone: therapistTimezone,
-        },
-        end: {
-          dateTime: bookingSlot.endTime.toISO(),
-          timeZone: therapistTimezone,
-        },
-        attendees: [{ email: therapist.googleCalendarEmail || '' }, { email: user.email }],
-        conferenceData: {
-          createRequest: { requestId: `renavest-${Date.now()}` },
-        },
-      };
-
-      const event = await calendar.events.insert({
-        calendarId: 'primary',
-        conferenceDataVersion: 1,
-        requestBody: eventRequestBody,
-      });
-
-      googleEventId = event.data.id || '';
-      googleMeetLink =
-        event.data.conferenceData?.entryPoints?.find(
-          (ep) => ep.entryPointType === 'video' && ep.uri?.includes('meet.google.com'),
-        )?.uri || '';
-    } catch (error) {
-      console.error('Error creating Google Calendar event:', error);
-      return NextResponse.json({ error: 'Failed to create calendar event' }, { status: 500 });
-    }
-
-    // Create booking session with proper timezone metadata
+    // Create booking session
     const bookingResult = await db
       .insert(bookingSessions)
       .values({
@@ -199,37 +158,75 @@ export async function POST(req: NextRequest) {
         sessionDate: bookingSlot.startTime.toJSDate(),
         sessionStartTime: bookingSlot.startTime.toJSDate(),
         sessionEndTime: bookingSlot.endTime.toJSDate(),
-        status: 'confirmed',
-        googleEventId,
+        status: 'pending',
         metadata: {
-          clientTimezone: bookingSlot.clientTimezone,
-          therapistTimezone: bookingSlot.therapistTimezone,
-          originalClientDate: validatedData.sessionDate,
-          originalClientTime: validatedData.sessionTime,
-          googleMeetLink,
+          clientTimezone,
+          therapistTimezone: validatedTherapistTimezone,
         },
       })
       .returning();
 
     const booking = bookingResult[0];
 
-    // Send confirmation emails with proper timezone formatting
-    const clientEmailData = timezoneManager.formatForEmail(
-      bookingSlot.startTime,
-      bookingSlot.clientTimezone,
-    );
+    // Create Google Calendar event
+    let calendarResult = null;
+    if (therapist.googleCalendarIntegrationStatus === 'connected') {
+      try {
+        const eventRequestBody = {
+          summary: `Therapy Session with ${user.firstName || ''} ${user.lastName || ''}`.trim(),
+          description: 'Therapy session booked through Renavest',
+          start: {
+            dateTime: bookingSlot.startTime.toISO(),
+            timeZone: validatedTherapistTimezone,
+          },
+          end: {
+            dateTime: bookingSlot.endTime.toISO(),
+            timeZone: validatedTherapistTimezone,
+          },
+          attendees: [{ email: therapist.googleCalendarEmail || '' }, { email: user.email }],
+          conferenceData: {
+            createRequest: { requestId: `renavest-${Date.now()}` },
+          },
+        };
 
-    await sendBookingConfirmationEmail({
-      clientEmail: user.email,
-      therapistEmail: therapist.googleCalendarEmail || '',
-      sessionDate: clientEmailData.date,
-      sessionTime: clientEmailData.time,
-      clientTimezone: bookingSlot.clientTimezone,
-      therapistTimezone: bookingSlot.therapistTimezone,
-      googleMeetLink,
-      therapistName: therapist.name || 'Therapist',
-      clientName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
-    });
+        const event = await calendar.events.insert({
+          calendarId: 'primary',
+          conferenceDataVersion: 1,
+          requestBody: eventRequestBody,
+        });
+
+        calendarResult = {
+          eventId: event.data.id || '',
+          eventLink: event.data.htmlLink || '',
+          googleMeetLink:
+            event.data.conferenceData?.entryPoints?.find(
+              (ep) => ep.entryPointType === 'video' && ep.uri?.includes('meet.google.com'),
+            )?.uri || '',
+        };
+      } catch (error) {
+        console.error('Error creating Google Calendar event:', error);
+        // Continue without calendar event
+      }
+    }
+
+    // Send confirmation emails
+    try {
+      const emailData = timezoneManager.formatForEmail(booking.sessionDate, clientTimezone);
+      await sendBookingConfirmationEmail({
+        clientEmail: user.email,
+        therapistEmail: therapist.googleCalendarEmail || '',
+        sessionDate: emailData.date,
+        sessionTime: emailData.time,
+        clientTimezone,
+        therapistTimezone: validatedTherapistTimezone,
+        googleMeetLink: calendarResult?.googleMeetLink,
+        therapistName: therapist.name,
+        clientName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+      });
+    } catch (error) {
+      console.error('Error sending confirmation email:', error);
+      // Continue without email
+    }
 
     return NextResponse.json({
       success: true,
@@ -239,10 +236,11 @@ export async function POST(req: NextRequest) {
         sessionStartTime: booking.sessionStartTime,
         sessionEndTime: booking.sessionEndTime,
         status: booking.status,
-        clientTimezone: bookingSlot.clientTimezone,
-        therapistTimezone: bookingSlot.therapistTimezone,
-        googleEventId,
-        googleMeetLink,
+        clientTimezone,
+        therapistTimezone: validatedTherapistTimezone,
+        googleCalendarEventId: calendarResult?.eventId || null,
+        googleCalendarEventLink: calendarResult?.eventLink || null,
+        googleMeetLink: calendarResult?.googleMeetLink || null,
       },
     });
   } catch (error) {
@@ -252,7 +250,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: 'Invalid booking data',
+          message: 'Invalid request data',
           errors: error.errors,
         },
         { status: 400 },

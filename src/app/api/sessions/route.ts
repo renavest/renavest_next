@@ -33,42 +33,15 @@ const UpdateBookingSchema = z.object({
   cancellationReason: z.string().optional(),
 });
 
-// Types for the API (matching Google Calendar utility expectations)
-type UserType = {
-  id: number;
-  clerkId: string;
-  email: string;
-  firstName: string | null;
-  lastName: string | null;
-  imageUrl: string | null;
-  isActive: boolean;
-  therapistId: number | null;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-type TherapistType = {
-  id: number;
-  name: string;
-  email: string | null;
-  googleCalendarAccessToken: string | null;
-  googleCalendarRefreshToken: string | null;
-  googleCalendarEmail: string | null;
-  googleCalendarIntegrationStatus: string;
-};
-
 // Helper function to get user and therapist details
-async function getUserAndTherapist(
-  userId: string,
-  therapistId: number,
-): Promise<[UserType | null, TherapistType | null]> {
+async function getUserAndTherapist(clerkUserId: string, therapistId: number) {
   const [user, therapist] = await Promise.all([
     db.query.users.findFirst({
-      where: (users, { eq }) => eq(users.clerkId, userId),
-    }) as Promise<UserType | null>,
+      where: (users, { eq }) => eq(users.clerkId, clerkUserId),
+    }),
     db.query.therapists.findFirst({
       where: (therapists, { eq }) => eq(therapists.id, therapistId),
-    }) as Promise<TherapistType | null>,
+    }),
   ]);
 
   return [user, therapist];
@@ -106,8 +79,8 @@ async function checkSlotAvailability(
 export async function POST(req: NextRequest) {
   try {
     auth.protect();
-    const userId = (await currentUser())?.id;
-    if (!userId) {
+    const currentUserData = await currentUser();
+    if (!currentUserData?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -115,7 +88,10 @@ export async function POST(req: NextRequest) {
     const validatedData = CreateBookingSchema.parse(body);
 
     // Get user and therapist details
-    const [user, therapist] = await getUserAndTherapist(userId, validatedData.therapistId);
+    const [user, therapist] = await getUserAndTherapist(
+      currentUserData.id,
+      validatedData.therapistId,
+    );
     if (!user || !therapist) {
       return NextResponse.json({ error: 'User or therapist not found' }, { status: 404 });
     }
@@ -183,14 +159,17 @@ export async function POST(req: NextRequest) {
     ) {
       try {
         calendarResult = await createAndStoreGoogleCalendarEvent({
-          booking,
+          booking: {
+            ...booking,
+            userId: booking.userId.toString(), // Convert to string if needed
+          },
           therapist,
           user,
           db,
         });
       } catch (error) {
         console.error('Error creating Google Calendar event:', error);
-        // Optionally: return error or continue
+        // Continue without calendar event
       }
     }
 
@@ -282,8 +261,6 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
-    // TODO: Send email notifications about booking status change
-
     return NextResponse.json({
       success: true,
       status: validatedData.status,
@@ -312,10 +289,19 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const role = searchParams.get('role'); // 'client' or 'therapist'
 
+    // Get the user's database ID from their Clerk ID
+    const user = await db.query.users.findFirst({
+      where: (users, { eq }) => eq(users.clerkId, userId),
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     let bookings;
     if (role === 'therapist') {
       const therapist = await db.query.therapists.findFirst({
-        where: (therapists, { eq }) => eq(therapists.userId, userId),
+        where: (therapists, { eq }) => eq(therapists.userId, user.id),
       });
 
       if (!therapist) {
@@ -329,7 +315,7 @@ export async function GET(req: NextRequest) {
     } else {
       // Default to client role
       bookings = await db.query.bookingSessions.findMany({
-        where: (bookings, { eq }) => eq(bookings.userId, userId),
+        where: (bookings, { eq }) => eq(bookings.userId, user.id),
         orderBy: (bookings, { desc }) => [desc(bookings.sessionDate)],
       });
     }

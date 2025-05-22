@@ -1,13 +1,13 @@
 'use client';
 
 import posthog from 'posthog-js';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useCalendlyEventListener } from 'react-calendly';
 
 import AlternativeBooking from '@/src/features/booking/components/AlternativeBooking';
 import { BookingForm } from '@/src/features/booking/components/form/BookingForm';
 import { getInitials } from '@/src/features/booking/utils/stringUtils';
-import { fetchGoogleCalendarStatus } from '@/src/features/google-calendar/utils/googleCalendarIntegration';
+
 interface BookingFlowProps {
   advisor: {
     id: string;
@@ -20,23 +20,6 @@ interface BookingFlowProps {
   userEmail: string;
 }
 
-// Custom hook to check Google Calendar integration
-function useGoogleCalendarIntegration(advisorId: string) {
-  const [isGoogleCalendarConnected, setIsGoogleCalendarConnected] = useState<null | boolean>(null);
-  useEffect(() => {
-    async function checkIntegration() {
-      try {
-        const res = await fetchGoogleCalendarStatus(advisorId);
-        setIsGoogleCalendarConnected(!!res.isConnected);
-      } catch {
-        setIsGoogleCalendarConnected(false);
-      }
-    }
-    checkIntegration();
-  });
-  return isGoogleCalendarConnected;
-}
-
 export default function UnifiedBookingFlow({ advisor, userId, userEmail }: BookingFlowProps) {
   // Identify user in PostHog on mount
   useEffect(() => {
@@ -45,7 +28,6 @@ export default function UnifiedBookingFlow({ advisor, userId, userEmail }: Booki
     }
   }, [userId, userEmail]);
 
-  const isGoogleCalendarConnected = useGoogleCalendarIntegration(advisor.id);
   // Track Calendly events
   const trackCalendlyEvent = async (eventType: string, eventData?: Record<string, unknown>) => {
     try {
@@ -110,22 +92,16 @@ export default function UnifiedBookingFlow({ advisor, userId, userEmail }: Booki
   useCalendlyEventListener({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onEventScheduled: (e: any) => {
-      // setIsBookingConfirmed(true);
       trackCalendlyEvent('calendly_event_scheduled', e);
     },
   });
 
-  // Loading state
-  if (isGoogleCalendarConnected === null) {
-    return (
-      <div className='flex items-center justify-center min-h-[300px]'>
-        Loading booking options...
-      </div>
-    );
-  }
+  // Since we're reaching this component, it means the therapist has Google Calendar integration
+  // The marketplace flow already determined this before routing here
+  const hasGoogleCalendar = true;
 
   // If Google Calendar is not connected, show AlternativeBooking
-  if (!isGoogleCalendarConnected) {
+  if (!hasGoogleCalendar) {
     return <AlternativeBooking advisor={advisor} bookingURL={advisor.bookingURL} />;
   }
 
