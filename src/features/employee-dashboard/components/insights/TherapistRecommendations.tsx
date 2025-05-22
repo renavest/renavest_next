@@ -25,6 +25,7 @@ export default function TherapistRecommendations({
   const [therapists, setTherapists] = useState<Therapist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
   const router = useRouter();
 
   useEffect(() => {
@@ -68,6 +69,10 @@ export default function TherapistRecommendations({
     router.push('/explore');
   };
 
+  const handleImageError = (therapistId: number) => {
+    setImageErrors((prev) => ({ ...prev, [therapistId]: true }));
+  };
+
   return (
     <div className='bg-white rounded-xl p-4 md:p-8 border border-gray-100 shadow-sm'>
       <div className='flex items-center justify-between mb-4 md:mb-6'>
@@ -99,11 +104,16 @@ export default function TherapistRecommendations({
               <div className='flex items-start gap-4 md:gap-6'>
                 <div className='flex-shrink-0 w-16 h-16 md:w-20 md:h-20'>
                   <Image
-                    src={therapist.profileUrl || '/default-profile.png'}
+                    src={
+                      imageErrors[therapist.id]
+                        ? '/experts/placeholderexp.png'
+                        : therapist.profileUrl || '/experts/placeholderexp.png'
+                    }
                     alt={therapist.name}
                     width={80}
                     height={80}
                     className='rounded-full object-cover w-full h-full border-2 border-purple-100'
+                    onError={() => handleImageError(therapist.id)}
                   />
                 </div>
                 <div className='flex-1 min-w-0'>
