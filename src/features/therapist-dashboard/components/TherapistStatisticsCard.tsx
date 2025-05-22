@@ -1,6 +1,6 @@
 'use client';
 
-import { Clock, Users, CheckCircle2, BookOpen } from 'lucide-react';
+import { Clock, Users, CheckCircle2 } from 'lucide-react';
 
 import { TherapistStatistics } from '@/src/features/therapist-dashboard/types';
 
@@ -23,12 +23,6 @@ export function TherapistStatisticsCard({ statistics }: { statistics: TherapistS
       title: 'Completed Sessions',
       value: statistics.completedSessions,
       subtitle: 'All time',
-    },
-    {
-      icon: <BookOpen className='h-5 w-5 text-purple-600' />,
-      title: 'Resource Library',
-      value: 24,
-      subtitle: 'Worksheets',
     },
   ];
 

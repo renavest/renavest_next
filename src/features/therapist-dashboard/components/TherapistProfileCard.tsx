@@ -3,6 +3,8 @@ import { Loader2, Pencil, Save, X } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
+import { useGoogleCalendarIntegration } from '@/src/features/google-calendar/utils/googleCalendarIntegration';
+import { therapistIdSignal } from '@/src/features/therapist-dashboard/state/therapistDashboardState';
 import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
 
 interface TherapistProfile {
@@ -61,6 +63,10 @@ export default function TherapistProfileCard() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
+
+  // Check Google Calendar integration status
+  const { status: calendarStatus } = useGoogleCalendarIntegration(therapistIdSignal.value || 0);
+  const isCalendarConnected = !!calendarStatus.isConnected;
 
   useEffect(() => {
     setLoading(true);
@@ -394,16 +400,36 @@ export default function TherapistProfileCard() {
                   className='block text-sm font-semibold text-gray-700 mb-1'
                 >
                   Booking URL
+                  {isCalendarConnected && (
+                    <span className='ml-2 text-xs text-green-600 font-medium'>
+                      (Disabled - Google Calendar Connected)
+                    </span>
+                  )}
                 </label>
                 <input
                   id='bookingURL'
-                  className='w-full bg-gray-50 rounded-lg px-4 py-2.5 text-gray-800 border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition duration-200 ease-in-out'
+                  className={`w-full rounded-lg px-4 py-2.5 border transition duration-200 ease-in-out ${
+                    isCalendarConnected
+                      ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed'
+                      : 'bg-gray-50 text-gray-800 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200'
+                  }`}
                   name='bookingURL'
                   value={form.bookingURL || ''}
                   onChange={handleChange}
-                  placeholder='e.g., https://yourbookinglink.com'
+                  placeholder={
+                    isCalendarConnected
+                      ? 'Booking managed through Google Calendar'
+                      : 'e.g., https://yourbookinglink.com'
+                  }
                   type='url'
+                  disabled={isCalendarConnected}
                 />
+                {isCalendarConnected && (
+                  <p className='text-xs text-gray-500 mt-1'>
+                    Since Google Calendar is connected, bookings are managed through your calendar
+                    integration. Disconnect Google Calendar to use a custom booking URL.
+                  </p>
+                )}
               </div>
               <div className='flex gap-3 mt-6 justify-center'>
                 <button
