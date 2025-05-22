@@ -1,7 +1,6 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { computed } from '@preact-signals/safe-react';
 import { ArrowRight, Play, Share2, ClipboardList } from 'lucide-react';
 import Image from 'next/image';
 import posthog from 'posthog-js';
@@ -20,6 +19,7 @@ import ComingSoon from './ComingSoon';
 import EmployeeNavbar from './EmployeeNavbar';
 import FinancialTherapyModal from './FinancialTherapyModal';
 import TherapistRecommendations from './insights/TherapistRecommendations';
+import { QuizModal } from './QuizModal';
 import { UpcomingSessionsSection } from './UpcomingSessionsSection';
 
 // const showOnboardingSignal = computed(() => {
@@ -156,7 +156,7 @@ export default function LimitedDashboardClient() {
   const { user } = useUser();
   const [referralLink, setReferralLink] = useState('');
   const [isFinancialTherapyModalOpen, setIsFinancialTherapyModalOpen] = useState(false);
-  const [takeQuiz, setTakeQuiz] = useState(false);
+  const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
   useEffect(() => {
     if (user && user.id) {
       // Generate personalized referral link
@@ -218,9 +218,7 @@ export default function LimitedDashboardClient() {
       userEmail: user?.emailAddresses[0]?.emailAddress,
     });
 
-    setTakeQuiz(true);
-    // Future implementation: navigate to quiz or open quiz modal
-    toast.info('Quiz feature coming soon!');
+    setIsQuizModalOpen(true);
   };
 
   return (
@@ -346,7 +344,7 @@ export default function LimitedDashboardClient() {
             <VideoLibrary />
           </div>
         </div>
-        {takeQuiz ? (
+        {isQuizModalOpen ? (
           <div className='flex justify-center mt-8'>
             <a
               href='/explore'
@@ -360,6 +358,9 @@ export default function LimitedDashboardClient() {
         )}
       </main>
       {/* {showOnboardingSignal.value && <OnboardingModal />} */}
+
+      {/* Render modals */}
+      <QuizModal isOpen={isQuizModalOpen} onClose={() => setIsQuizModalOpen(false)} />
     </div>
   );
 }
