@@ -148,136 +148,53 @@ export default function TherapistProfileCard() {
             priority
           />
         </div>
-        <div className='w-full flex flex-col items-center'>
-          {editMode ? (
-            <>
-              <input
-                className='text-2xl font-bold text-center text-gray-800 mb-1 bg-gray-50 rounded px-2 py-1 w-full'
-                name='name'
-                value={form.name || ''}
-                onChange={handleChange}
-                placeholder='Full Name'
-              />
-              <input
-                className='text-lg text-center text-gray-500 mb-2 bg-gray-50 rounded px-2 py-1 w-full'
-                name='title'
-                value={form.title || ''}
-                onChange={handleChange}
-                placeholder='Title'
-              />
-            </>
-          ) : (
-            <>
-              <h2 className='text-2xl font-bold text-center text-gray-800 mb-1'>
-                {therapist.name || user.firstName + ' ' + user.lastName}
-              </h2>
-              <p className='text-lg text-center text-gray-500 mb-2 font-medium'>
-                {therapist.title}
-              </p>
-            </>
-          )}
-          <p className='text-sm text-gray-400 mb-2'>{user.email}</p>
-        </div>
+        <h2 className='text-2xl font-bold text-center text-gray-900 mb-1'>
+          {therapist.name || user.firstName + ' ' + user.lastName}
+        </h2>
+        <p className='text-lg text-center text-gray-600 mb-1 font-medium'>{therapist.title}</p>
+        <p className='text-sm text-gray-400 mb-2'>{user.email}</p>
       </div>
-      <div className='w-full flex flex-col gap-3 mb-4'>
-        {editMode ? (
-          <>
-            <textarea
-              className='w-full bg-gray-50 rounded px-3 py-2 text-gray-700'
-              name='longBio'
-              value={form.longBio || ''}
-              onChange={handleChange}
-              placeholder='Bio'
-              rows={3}
-            />
-            <input
-              className='w-full bg-gray-50 rounded px-3 py-2 text-gray-700'
-              name='expertise'
-              value={form.expertise || ''}
-              onChange={handleChange}
-              placeholder='Expertise (comma separated)'
-            />
-            <input
-              className='w-full bg-gray-50 rounded px-3 py-2 text-gray-700'
-              name='certifications'
-              value={form.certifications || ''}
-              onChange={handleChange}
-              placeholder='Certifications'
-            />
-            <input
-              className='w-full bg-gray-50 rounded px-3 py-2 text-gray-700'
-              name='yoe'
-              value={form.yoe || ''}
-              onChange={handleChange}
-              placeholder='Years of Experience'
-              type='number'
-              min={0}
-            />
-            <input
-              className='w-full bg-gray-50 rounded px-3 py-2 text-gray-700'
-              name='clientele'
-              value={form.clientele || ''}
-              onChange={handleChange}
-              placeholder='Ideal Clientele'
-            />
-            <input
-              className='w-full bg-gray-50 rounded px-3 py-2 text-gray-700'
-              name='hourlyRate'
-              value={form.hourlyRate || ''}
-              onChange={handleChange}
-              placeholder='Hourly Rate (USD)'
-              type='number'
-              min={0}
-            />
-            <input
-              className='w-full bg-gray-50 rounded px-3 py-2 text-gray-700'
-              name='bookingURL'
-              value={form.bookingURL || ''}
-              onChange={handleChange}
-              placeholder='Booking URL'
-            />
-          </>
-        ) : (
-          <>
-            {therapist.longBio && (
-              <p className='text-gray-700 whitespace-pre-line mb-2 text-base leading-relaxed'>
-                {therapist.longBio}
-              </p>
-            )}
-            <ExpertiseTags tags={expertiseTags} />
-            <div className='flex flex-wrap gap-2 mb-2 mt-2'>
-              {therapist.certifications && (
-                <span className='bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium'>
-                  {therapist.certifications}
-                </span>
-              )}
-              {therapist.clientele && (
-                <span className='bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-medium'>
-                  {therapist.clientele}
-                </span>
-              )}
-              {therapist.yoe && (
-                <span className='bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-medium'>
-                  {therapist.yoe} yrs exp
-                </span>
-              )}
-              {therapist.hourlyRate && (
-                <span className='bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium'>
-                  ${therapist.hourlyRate}/hr
-                </span>
-              )}
-            </div>
-            {therapist.bookingURL && (
-              <a
-                href={therapist.bookingURL}
-                target='_blank'
-                rel='noopener noreferrer'
-                className='text-purple-600 underline text-sm font-medium mt-2'
-              >
-                Book a session
-              </a>
-            )}
-          </>
+      <div className='w-full flex flex-col gap-4 mb-4'>
+        <div>
+          <h3 className='text-sm font-semibold text-gray-700 mb-1'>Years of Experience</h3>
+          <span className='bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-medium'>
+            {therapist.yoe ? `${therapist.yoe} years` : 'N/A'}
+          </span>
+        </div>
+        <div>
+          <h3 className='text-sm font-semibold text-gray-700 mb-1'>Areas of Expertise</h3>
+          <ExpertiseTags tags={expertiseTags} />
+        </div>
+        <div>
+          <h3 className='text-sm font-semibold text-gray-700 mb-1'>Certifications</h3>
+          <span className='bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium'>
+            {therapist.certifications || 'Not specified'}
+          </span>
+        </div>
+        <div>
+          <h3 className='text-sm font-semibold text-gray-700 mb-1'>Who I Work With</h3>
+          <span className='bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-medium'>
+            {therapist.clientele || 'Not specified'}
+          </span>
+        </div>
+        <div>
+          <h3 className='text-sm font-semibold text-gray-700 mb-1'>About Me</h3>
+          <p className='text-gray-700 whitespace-pre-line text-base leading-relaxed'>
+            {therapist.longBio || 'No bio provided.'}
+          </p>
+        </div>
+        {therapist.bookingURL && (
+          <div>
+            <h3 className='text-sm font-semibold text-gray-700 mb-1'>Booking Link</h3>
+            <a
+              href={therapist.bookingURL}
+              target='_blank'
+              rel='noopener noreferrer'
+              className='text-purple-600 underline text-sm font-medium mt-2'
+            >
+              Book a session
+            </a>
+          </div>
         )}
       </div>
       <div className='flex gap-3 mt-4'>

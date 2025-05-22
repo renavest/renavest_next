@@ -132,7 +132,7 @@ const FutureInsightsCards = () => {
       description: 'Gain deep insights into client progress and patterns',
       icon: (
         <svg
-          className='w-8 h-8 text-purple-600'
+          className='w-12 h-12 text-purple-600'
           fill='none'
           stroke='currentColor'
           viewBox='0 0 24 24'
@@ -145,14 +145,13 @@ const FutureInsightsCards = () => {
           />
         </svg>
       ),
-      comingSoon: true,
     },
     {
       title: 'Treatment Effectiveness Tracker',
       description: 'Monitor and evaluate treatment outcomes',
       icon: (
         <svg
-          className='w-8 h-8 text-green-600'
+          className='w-12 h-12 text-green-600'
           fill='none'
           stroke='currentColor'
           viewBox='0 0 24 24'
@@ -165,14 +164,13 @@ const FutureInsightsCards = () => {
           />
         </svg>
       ),
-      comingSoon: true,
     },
     {
       title: 'Client Communication Insights',
       description: 'Analyze communication patterns and engagement',
       icon: (
         <svg
-          className='w-8 h-8 text-blue-600'
+          className='w-12 h-12 text-blue-600'
           fill='none'
           stroke='currentColor'
           viewBox='0 0 24 24'
@@ -185,27 +183,24 @@ const FutureInsightsCards = () => {
           />
         </svg>
       ),
-      comingSoon: true,
     },
   ];
 
   return (
-    <div className='grid md:grid-cols-3 gap-4'>
+    <div className='flex flex-col gap-6 w-full'>
       {futureFeatures.map((feature, index) => (
         <div
           key={index}
-          className='bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all relative overflow-hidden'
+          className='flex items-center bg-white border border-gray-200 rounded-2xl p-6 shadow-md hover:shadow-lg transition-all relative overflow-hidden gap-6'
         >
-          <div className='flex items-center mb-4'>
-            {feature.icon}
-            <h3 className='ml-3 text-lg font-semibold text-gray-800'>{feature.title}</h3>
-          </div>
-          <p className='text-gray-500 text-sm mb-4'>{feature.description}</p>
-          {feature.comingSoon && (
-            <div className='absolute top-2 right-2 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full'>
+          <div className='flex-shrink-0'>{feature.icon}</div>
+          <div className='flex-1'>
+            <h3 className='text-xl font-semibold text-gray-800 mb-1'>{feature.title}</h3>
+            <p className='text-gray-500 text-base mb-1'>{feature.description}</p>
+            <span className='inline-block bg-yellow-100 text-yellow-800 text-xs px-3 py-1 rounded-full mt-2'>
               Coming Soon
-            </div>
-          )}
+            </span>
+          </div>
         </div>
       ))}
     </div>
