@@ -1,9 +1,9 @@
-// eslint.config.js
 import eslint from '@eslint/js';
 import nextPlugin from '@next/eslint-plugin-next';
 import prettier from 'eslint-config-prettier';
 import importPlugin from 'eslint-plugin-import';
 import reactHooks from 'eslint-plugin-react-hooks';
+import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default [
@@ -20,24 +20,30 @@ export default [
       ...reactHooks.configs.recommended.rules,
     },
   },
+  
   // Import plugin configuration
   {
     plugins: {
       import: importPlugin,
     },
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+      parserOptions: {
+        project: './tsconfig.json',
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
     settings: {
       'import/resolver': {
-        typescript: {},
-        node: {
-          extensions: ['.js', '.jsx', '.ts', '.tsx'],
+        typescript: {
+          project: './tsconfig.json',
         },
       },
     },
     rules: {
-      'import/no-unresolved': 'error',
-      'import/named': 'error',
-      'import/default': 'error',
-      'import/namespace': 'error',
       'import/order': [
         'error',
         {
@@ -97,7 +103,10 @@ export default [
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
+      parser: tseslint.parser,
       parserOptions: {
+        project: './tsconfig.json',
+        tsconfigRootDir: import.meta.dirname,
         ecmaFeatures: {
           jsx: true,
         },
@@ -145,7 +154,7 @@ export default [
     },
   },
 
-  // Apply Prettier as config (if you want to include it)
+  // Apply Prettier as config
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     rules: {

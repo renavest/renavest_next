@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 
 import { trackSessionSearch } from '@/src/app/api/track/calendly/route';
 import { db } from '@/src/db';
-import { therapists } from '@/src/db/schema';
+import { therapists, users, pendingTherapists } from '@/src/db/schema';
 
 import UnifiedBookingFlow from '../../../features/booking/components/BookingFlow';
 
@@ -20,31 +20,49 @@ export default async function TherapistCalendlyPage({ params }: { params: { advi
     redirect('/explore');
   }
   // Fetch therapist data server-side
-  const advisor = await db.query.therapists.findFirst({
-    where: eq(therapists.id, parseInt(advisorId)),
+  let therapistUser = await db.query.users.findFirst({
+    where: eq(users.id, parseInt(advisorId)),
+  });
+  let therapist = await db.query.therapists.findFirst({
+    where: eq(therapists.userId, therapistUser?.id || 0),
+  });
+  let pendingTherapist = await db.query.pendingTherapists.findFirst({
+    where: eq(pendingTherapists.id, parseInt(advisorId)),
   });
 
-  // Redirect if no user or advisor
-  if (!user || !advisor?.id || !advisor?.bookingURL) {
+  // If found in pendingTherapists, use that for bookingURL and details
+  let advisorData;
+  if (pendingTherapist) {
+    advisorData = {
+      id: pendingTherapist.id.toString(),
+      name: pendingTherapist.name,
+      bookingURL: pendingTherapist.bookingURL || '',
+      email: user.emailAddresses[0]?.emailAddress || undefined,
+      profileUrl: pendingTherapist.profileUrl || undefined,
+    };
+  } else if (therapist && therapistUser) {
+    advisorData = {
+      id: therapist.id.toString(),
+      name: therapist.name,
+      bookingURL: therapist.bookingURL || '',
+      email: therapistUser.email || undefined,
+      profileUrl: therapist.profileUrl || undefined,
+    };
+  } else {
     redirect('/explore');
   }
 
   // Track session search
   await trackSessionSearch({
-    therapistId: advisor.id.toString(),
-    therapistName: advisor.name,
+    therapistId: advisorData.id,
+    therapistName: advisorData.name,
     userId: user.id,
     userEmail: user.emailAddresses[0]?.emailAddress || '',
   });
 
   return (
     <UnifiedBookingFlow
-      advisor={{
-        id: advisor.id.toString(),
-        name: advisor.name,
-        bookingURL: advisor.bookingURL,
-        email: advisor.email || undefined,
-      }}
+      advisor={advisorData}
       userId={user.id}
       userEmail={user.emailAddresses[0]?.emailAddress || ''}
     />

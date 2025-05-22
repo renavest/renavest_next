@@ -5,7 +5,8 @@ import { Pool } from 'pg';
 import * as schema from './schema';
 
 // Load environment variables from .env.local or .env.production based on NODE_ENV
-const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local';
+// const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local';
+const envFile = '.env.local';
 dotenv.config({ path: envFile });
 
 // Create a connection pool

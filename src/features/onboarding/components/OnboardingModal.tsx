@@ -4,7 +4,7 @@ import { useClerk } from '@clerk/nextjs';
 import posthog from 'posthog-js';
 import { useState, useEffect } from 'react';
 
-import { selectedRoleSignal } from '../../auth/state/authState';
+import { selectedRole } from '../../auth/state/authState';
 import { useOnboardingSubmission } from '../hooks/useOnboardingSubmission';
 import { onboardingSignal, onboardingQuestions } from '../state/onboardingState';
 
@@ -29,7 +29,7 @@ export default function OnboardingModal() {
           signup_date: new Date().toISOString(),
         },
         $set: {
-          role: clerkUser?.publicMetadata?.role || selectedRoleSignal.value,
+          role: clerkUser?.publicMetadata?.role || selectedRole.value,
           last_seen: new Date().toISOString(),
         },
       });
@@ -93,7 +93,7 @@ export default function OnboardingModal() {
   const handleNext = () => {
     const nextStep = currentStep + 1;
     const isLastStep = nextStep >= onboardingQuestions.length;
-    
+
     // Track progress through onboarding steps
     posthog.capture('onboarding_step_progress', {
       user_id: clerkUser?.id,

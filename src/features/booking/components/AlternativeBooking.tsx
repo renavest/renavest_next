@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import { sendTherapistCalendlyEmail } from '@/src/features/booking/actions/sendBookingConfirmationEmail';
 import { COLORS } from '@/src/styles/colors';
 
-import { selectedRoleSignal } from '../../auth/state/authState';
+import { selectedRole } from '../../auth/state/authState';
 
 interface AlternativeBookingProps {
   advisor: {
@@ -42,7 +42,7 @@ export default function AlternativeBooking({ advisor, bookingURL }: AlternativeB
         email: clerkUser?.emailAddresses[0]?.emailAddress,
       },
       $set: {
-        role: user?.publicMetadata?.role || selectedRoleSignal.value,
+        role: user?.publicMetadata?.role || selectedRole.value,
       },
     });
   }
@@ -61,7 +61,7 @@ export default function AlternativeBooking({ advisor, bookingURL }: AlternativeB
             therapistName: advisor.name,
             therapistEmail: advisor.email,
             clientName: clerkUser?.fullName || 'Client',
-            clientEmail: clerkUser?.emailAddresses[0]?.emailAddress,
+            clientEmail: clerkUser?.emailAddresses[0]?.emailAddress || '',
           });
 
           if (!emailResult.success) {
@@ -111,8 +111,9 @@ export default function AlternativeBooking({ advisor, bookingURL }: AlternativeB
       if (advisor.email) {
         const emailResult = await sendTherapistCalendlyEmail({
           therapistName: advisor.name,
-          therapistEmail: advisor.email,
+          therapistEmail: advisor.email || '',
           clientName: formData.name,
+          clientEmail: formData.email,
         });
 
         if (!emailResult.success) {
@@ -267,7 +268,7 @@ export default function AlternativeBooking({ advisor, bookingURL }: AlternativeB
 
   return bookingURL ? (
     <div className='flex items-center justify-center min-h-screen bg-warm-white bg-opacity-100 p-4'>
-      <InlineWidget url={'https://calendly.com/seth-renavestapp'} />
+      <InlineWidget url={bookingURL} />
     </div>
   ) : (
     renderForm()

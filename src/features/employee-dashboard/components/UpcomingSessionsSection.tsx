@@ -28,7 +28,9 @@ export function UpcomingSessionsSection() {
     async function fetchUpcomingSessions() {
       try {
         setIsLoading(true);
-        const response = await fetch('/api/employee/upcoming-sessions');
+        const response = await fetch('/api/employee/upcoming-sessions', {
+          credentials: 'include',
+        });
 
         if (!response.ok) {
           throw new Error('Failed to fetch upcoming sessions');

@@ -1,7 +1,8 @@
 import { auth } from '@clerk/nextjs/server';
 
 import { db } from '@/src/db';
-import { therapists } from '@/src/db/schema';
+import { sql } from 'drizzle-orm';
+import { pendingTherapists } from '@/src/db/schema';
 import AdvisorGrid from '@/src/features/explore/components/AdvisorGrid';
 import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
 import { Advisor } from '@/src/shared/types';
@@ -15,8 +16,11 @@ export default async function Home() {
   try {
     auth.protect();
     // Fetch all therapists except Seth Morton from the database
-    const dbTherapists = await db.select().from(therapists);
-      
+    const dbTherapists = await db
+      .select()
+      .from(pendingTherapists)
+      .where(sql`name != 'Seth Morton'`);
+
     // Transform the database records into the Advisor type
     const advisors: Advisor[] = dbTherapists
       .map((therapist) => {
