@@ -69,8 +69,11 @@ export default async function Home() {
     const activeTherapistUserIds = dbTherapists.map((t) => t.userId);
     const activeTherapistEmails = dbUsers
       .filter((user) => activeTherapistUserIds.includes(user.id))
-      .map((user) => user.email)
-      .filter((email) => email !== null);
+      .map((user) => user.email?.toLowerCase())
+      .filter((email) => email !== null && email !== undefined);
+
+    console.log('Active therapist emails:', activeTherapistEmails);
+    console.log('Pending therapists count before filtering:', dbPendingTherapists.length);
 
     // Transform active therapists
     const activeAdvisors: Advisor[] = dbTherapists.map((therapist) => {
@@ -109,8 +112,11 @@ export default async function Home() {
 
     // Filter out pending therapists who already exist as active therapists
     const filteredPendingTherapists = dbPendingTherapists.filter(
-      (pendingTherapist) => !activeTherapistEmails.includes(pendingTherapist.clerkEmail),
+      (pendingTherapist) =>
+        !activeTherapistEmails.includes(pendingTherapist.clerkEmail?.toLowerCase()),
     );
+
+    console.log('Pending therapists count after filtering:', filteredPendingTherapists.length);
 
     // Transform filtered pending therapists
     const pendingAdvisors: Advisor[] = filteredPendingTherapists.map((pendingTherapist) => {

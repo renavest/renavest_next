@@ -77,7 +77,13 @@ export default function ExploreNavbar({
   };
 
   const handleBackClick = () => {
-    router.back();
+    // Check if there's history to go back to
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      // Fallback to a default route if no history
+      router.push('/employee');
+    }
   };
 
   return (
