@@ -4,148 +4,51 @@
 import React from 'react'; // Import React
 
 import { cn } from '@/src/lib/utils';
-
+import {
+  LucideArrowLeft,
+  Scale,
+  HeartPulse,
+  Rocket,
+  TrendingUp,
+  CircleDollarSign,
+  Ellipsis,
+} from 'lucide-react';
 // Removed direct signal import, use global signal instead
 import { authErrorSignal } from '../../state/authState';
 import { firstName, selectedPurpose, currentStep } from '../../state/authState';
 import { OnboardingStep } from '../../types';
 
-// Define Renavest purpose options (Keep as before - adjust labels/icons if needed)
+// Define Renavest purpose options with Lucide icons
 const RENAVEST_PURPOSE_OPTIONS = [
   {
     value: 'improve_financial_habits',
     label: 'Improve my financial habits',
-    icon: (
-      <svg
-        xmlns='http://www.w3.org/2000/svg'
-        width='24'
-        height='24'
-        viewBox='0 0 24 24'
-        fill='none'
-        stroke='currentColor'
-        strokeWidth='2'
-        strokeLinecap='round'
-        strokeLinejoin='round'
-        className='lucide lucide-scale'
-      >
-        <path d='m16 16 3-8 3 8c-.87.65-2.87 1.99-6 2z' />
-        <path d='m2 16 3-8 3 8c-.87.65-2.87 1.99-6 2z' />
-        <path d='M7 21h10' />
-        <path d='M12 3v18' />
-      </svg>
-    ),
+    icon: <Scale />,
   },
   {
     value: 'reduce_financial_stress',
     label: 'Reduce financial stress',
-    icon: (
-      <svg
-        xmlns='http://www.w3.org/2000/svg'
-        width='24'
-        height='24'
-        viewBox='0 0 24 24'
-        fill='none'
-        stroke='currentColor'
-        strokeWidth='2'
-        strokeLinecap='round'
-        strokeLinejoin='round'
-        className='lucide lucide-heart-pulse'
-      >
-        <path d='M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z' />
-        <path d='M3.2 12.8H6a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5.6a2 2 0 0 1-2-2v-10a2 2 0 0 1 2-2Z' />
-        <path d='M10.4 19.2H13a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-.4a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2Z' />
-      </svg>
-    ),
+    icon: <HeartPulse />,
   },
   {
     value: 'plan_for_future',
     label: 'Plan for future goals',
-    icon: (
-      <svg
-        xmlns='http://www.w3.org/2000/svg'
-        width='24'
-        height='24'
-        viewBox='0 0 24 24'
-        fill='none'
-        stroke='currentColor'
-        strokeWidth='2'
-        strokeLinecap='round'
-        strokeLinejoin='round'
-        className='lucide lucide-rocket'
-      >
-        <path d='M4.5 16.5c-1.5 1.5-1.5 3 0 4.5s3 1.5 4.5 0' />
-        <path d='M12 12l-4 4' />
-        <path d='m19 12-6-6' />
-        <path d='M15 5l-3-3' />
-        <path d='M14 22v-4c0-.5-.5-1-1-1H9c-.5 0-1 .5-1 1v4' />
-        <path d='M8 10V7c0-.5.5-1 1-1h4c.5 0 1 .5 1 1v3' />
-      </svg>
-    ),
+    icon: <Rocket />,
   },
   {
     value: 'investing_help',
     label: 'Learn about investing',
-    icon: (
-      <svg
-        xmlns='http://www.w3.org/2000/svg'
-        width='24'
-        height='24'
-        viewBox='0 0 24 24'
-        fill='none'
-        stroke='currentColor'
-        strokeWidth='2'
-        strokeLinecap='round'
-        strokeLinejoin='round'
-        className='lucide lucide-trending-up'
-      >
-        <polyline points='22 7 13.5 15.5 8.5 10.5 2 17' />
-        <polyline points='16 7 22 7 22 13' />
-      </svg>
-    ),
+    icon: <TrendingUp />,
   },
   {
     value: 'debt_help',
     label: 'Get help with debt',
-    icon: (
-      <svg
-        xmlns='http://www.w3.org/2000/svg'
-        width='24'
-        height='24'
-        viewBox='0 0 24 24'
-        fill='none'
-        stroke='currentColor'
-        strokeWidth='2'
-        strokeLinecap='round'
-        strokeLinejoin='round'
-        className='lucide lucide-circle-dollar-sign'
-      >
-        <circle cx='12' cy='12' r='10' />
-        <path d='M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4h-6' />
-        <path d='M12 17V7' />
-      </svg>
-    ),
+    icon: <CircleDollarSign />,
   },
   {
     value: 'other',
     label: 'Other',
-    icon: (
-      <svg
-        xmlns='http://www.w3.org/2000/svg'
-        width='24'
-        height='24'
-        viewBox='0 0 24 24'
-        fill='none'
-        stroke='currentColor'
-        strokeWidth='2'
-        strokeLinecap='round'
-        strokeLinejoin='round'
-        className='lucide lucide-ellipsis'
-      >
-        <circle cx='12' cy='12' r='1' />
-        <circle cx='19' cy='12' r='1' />
-        <circle cx='5' cy='12' r='1' />
-      </svg>
-    ),
+    icon: <Ellipsis />,
   },
 ];
 

@@ -301,11 +301,6 @@ export default function TherapistDashboardPage({
     );
   }
 
-  // Show empty state if no clients
-  if (clients.length === 0 && therapistIdSignal.value !== null) {
-    return renderEmptyState(isOnboarded, refreshData);
-  }
-
   // Render main dashboard
   return renderDashboard(
     isOnboarded,
@@ -319,38 +314,6 @@ export default function TherapistDashboardPage({
     setIsAddClientOpen,
     upcomingSessions,
     refreshData,
-  );
-}
-
-// Helper function to render empty state
-function renderEmptyState(isOnboarded: boolean, refreshData: () => Promise<void>) {
-  return (
-    <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-gradient-to-br from-purple-50 to-white min-h-screen flex flex-col'>
-      <TherapistNavbar showBackButton={false} isOnboarded={isOnboarded} />
-      <div className='flex-grow flex items-center justify-center'>
-        <div className='w-full max-w-lg p-8 bg-white rounded-2xl shadow-xl border border-purple-100 space-y-6 text-center'>
-          <div className='w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-md'>
-            <Image
-              src='/renavestlogo.png'
-              alt='Renavest Logo'
-              width={80}
-              height={80}
-              className='p-2 animate-pulse-slow'
-            />
-          </div>
-          <h1 className='text-4xl font-extrabold text-purple-900 mb-4 tracking-tight'>
-            Welcome to Renavest
-          </h1>
-          <p className='text-gray-700 text-xl font-medium leading-relaxed max-w-md mx-auto'>
-            You don't have any clients yet. Let's embark on your financial therapy journey!
-          </p>
-          <div className='space-y-4'>
-            <AddNewClientSection onClientAdded={refreshData} />
-            <GoogleCalendarIntegration />
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }
 

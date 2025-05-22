@@ -15,7 +15,7 @@ import { getOnboardingData } from '../../utils/onboardingStorage';
 // Helper function for polling the user endpoint
 const pollForUser = async (
   clerkId: string,
-  retries = 5,
+  retries = 10,
   delay = 1000,
 ): Promise<{ exists: boolean }> => {
   try {
