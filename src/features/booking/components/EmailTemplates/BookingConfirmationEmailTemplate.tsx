@@ -11,7 +11,7 @@ import {
 import { Tailwind } from '@react-email/tailwind';
 import * as React from 'react';
 
-import { timezoneManager, SupportedTimezone } from '@/src/features/booking/utils/timezoneManager';
+import { SupportedTimezone } from '@/src/features/booking/utils/timezoneManager';
 import { COLORS } from '@/src/styles/colors';
 
 interface BookingConfirmationEmailProps {
@@ -35,27 +35,13 @@ export const BookingConfirmationEmailTemplate: React.FC<
   therapistTimezone: _therapistTimezone,
   googleMeetLink,
 }) => {
-  // Use clientTimezone for display
-  let dateObj: { date: string; time: string; timezone: string };
-  let parseError = '';
-  if (typeof sessionDate === 'string' && typeof sessionTime === 'string') {
-    try {
-      const dt = timezoneManager.parseDateTime(sessionDate, sessionTime, clientTimezone);
-      const emailFormat = timezoneManager.formatForEmail(dt, clientTimezone);
-      dateObj = {
-        date: emailFormat.date,
-        time: emailFormat.time,
-        timezone: emailFormat.timezone,
-      };
-    } catch {
-      dateObj = { date: 'Invalid DateTime', time: 'Invalid DateTime', timezone: clientTimezone };
-      parseError = `Invalid DateTime: ${sessionDate} ${sessionTime} (${clientTimezone})`;
-      if (typeof window === 'undefined') console.error(parseError);
-    }
-  } else {
-    dateObj = { date: sessionDate, time: sessionTime, timezone: clientTimezone };
-  }
-  // TODO: Extract date/time parsing logic to a shared helper for all email templates
+  // The sessionDate and sessionTime are already formatted strings from the API
+  // No need to re-parse them, just use them directly
+  const dateObj = {
+    date: sessionDate,
+    time: sessionTime,
+    timezone: clientTimezone,
+  };
 
   return (
     <Html>
@@ -108,12 +94,6 @@ export const BookingConfirmationEmailTemplate: React.FC<
               <Text className='text-gray-800 my-2'>
                 <strong className={COLORS.WARM_PURPLE.DEFAULT}>Timezone:</strong> {dateObj.timezone}
               </Text>
-              {parseError && (
-                <Text className='text-red-600 my-2'>
-                  There was an issue displaying the session time. Please check your dashboard for
-                  details.
-                </Text>
-              )}
             </Section>
 
             {googleMeetLink && (

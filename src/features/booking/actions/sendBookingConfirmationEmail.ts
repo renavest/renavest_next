@@ -16,6 +16,8 @@ interface BookingEmailParams {
   therapistEmail: string;
   sessionDate: string;
   sessionTime: string;
+  therapistSessionDate?: string;
+  therapistSessionTime?: string;
   clientTimezone: SupportedTimezone;
   therapistTimezone: SupportedTimezone;
   googleMeetLink?: string;
@@ -28,6 +30,8 @@ export async function sendBookingConfirmationEmail({
   therapistEmail,
   sessionDate,
   sessionTime,
+  therapistSessionDate,
+  therapistSessionTime,
   clientTimezone,
   therapistTimezone,
   googleMeetLink,
@@ -74,8 +78,8 @@ export async function sendBookingConfirmationEmail({
       react: await TherapistBookingNotificationEmailTemplate({
         therapistName,
         clientName,
-        sessionDate,
-        sessionTime,
+        sessionDate: therapistSessionDate || sessionDate,
+        sessionTime: therapistSessionTime || sessionTime,
         clientTimezone,
         therapistTimezone,
         googleMeetLink,

@@ -222,12 +222,19 @@ export async function POST(req: NextRequest) {
 
     // Send confirmation emails
     try {
-      const emailData = timezoneManager.formatForEmail(booking.sessionDate, clientTimezone);
+      const clientEmailData = timezoneManager.formatForEmail(booking.sessionDate, clientTimezone);
+      const therapistEmailData = timezoneManager.formatForEmail(
+        booking.sessionDate,
+        validatedTherapistTimezone,
+      );
+
       await sendBookingConfirmationEmail({
         clientEmail: user.email,
         therapistEmail: therapist.googleCalendarEmail || '',
-        sessionDate: emailData.date,
-        sessionTime: emailData.time,
+        sessionDate: clientEmailData.date,
+        sessionTime: clientEmailData.time,
+        therapistSessionDate: therapistEmailData.date,
+        therapistSessionTime: therapistEmailData.time,
         clientTimezone,
         therapistTimezone: validatedTherapistTimezone,
         googleMeetLink: calendarResult?.googleMeetLink,
