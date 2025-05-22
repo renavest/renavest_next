@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { trackSessionSearch } from '@/src/app/api/track/calendly/route';
 import { db } from '@/src/db';
 import { therapists, users, pendingTherapists } from '@/src/db/schema';
+import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
 
 import UnifiedBookingFlow from '../../../features/booking/components/BookingFlow';
 
@@ -67,7 +68,7 @@ export default async function TherapistBookingPage({ params }: { params: { advis
       name: pendingTherapist.name,
       bookingURL: pendingTherapist.bookingURL || '',
       email: pendingTherapist.clerkEmail || undefined,
-      profileUrl: pendingTherapist.profileUrl || undefined,
+      profileUrl: getTherapistImageUrl(pendingTherapist.profileUrl),
       isPending: true,
     };
 
@@ -111,7 +112,7 @@ export default async function TherapistBookingPage({ params }: { params: { advis
       name: therapist.name,
       bookingURL: therapist.bookingURL || '',
       email: therapistUser.email || undefined,
-      profileUrl: therapist.profileUrl || undefined,
+      profileUrl: getTherapistImageUrl(therapist.profileUrl),
       isPending: false,
     };
 

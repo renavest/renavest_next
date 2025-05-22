@@ -170,7 +170,7 @@ export default function TherapistProfileCard() {
             alt={therapist.name || user.firstName || 'Profile'}
             fill
             className='object-cover object-center rounded-2xl border-4 border-purple-100'
-            onLoadingComplete={() => setImgLoaded(true)}
+            onLoad={() => setImgLoaded(true)}
             onError={() => setImgError(true)}
             priority
           />

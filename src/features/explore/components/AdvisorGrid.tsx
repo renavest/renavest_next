@@ -121,7 +121,7 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
             )}
             placeholder='blur'
             blurDataURL='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
-            onLoadingComplete={handleImageLoad}
+            onLoad={handleImageLoad}
             onError={handleImageError}
           />
         )}
