@@ -11,53 +11,71 @@ interface QuizModalProps {
   onClose: () => void;
 }
 
+const QUIZ_QUESTIONS = [
+  {
+    id: 0,
+    question:
+      'Thinking about your finances, which of these topics currently feels like the heaviest weight or biggest source of stress for you?',
+    options: [
+      { value: 'daily_expenses', label: 'Managing day-to-day expenses' },
+      { value: 'debt_amount', label: 'The amount of debt I have' },
+      { value: 'saving_goals', label: 'Saving for important goals' },
+      { value: 'unexpected_bills', label: 'Dealing with unexpected bills' },
+      { value: 'money_anxiety', label: 'Feeling anxious or worried about money generally' },
+      { value: 'not_enough', label: 'Not enough to meet my needs' },
+    ],
+  },
+  {
+    id: 1,
+    question:
+      "Looking ahead at your financial life over the next one to three years, what's your most important financial goal?",
+    options: [
+      { value: 'debt_free', label: 'Becoming debt-free' },
+      { value: 'emergency_fund', label: 'Building an emergency fund' },
+      { value: 'home_purchase', label: 'Saving for a home purchase' },
+      { value: 'retirement_planning', label: 'Planning for retirement' },
+      { value: 'investment_growth', label: 'Growing my investments' },
+      { value: 'financial_stability', label: 'Achieving overall financial stability' },
+    ],
+  },
+  {
+    id: 2,
+    question:
+      'On a scale of one to five, where one is not at all confident and five is very confident, how confident do you feel about managing your finances right now?',
+    options: [
+      { value: '1', label: '1 - Not at all confident' },
+      { value: '2', label: '2 - Slightly confident' },
+      { value: '3', label: '3 - Moderately confident' },
+      { value: '4', label: '4 - Very confident' },
+      { value: '5', label: '5 - Extremely confident' },
+    ],
+  },
+  {
+    id: 3,
+    question:
+      'Are there any specific therapist qualities or communication styles that are important to you?',
+    options: [
+      { value: 'direct_concise', label: 'Short and direct communication' },
+      { value: 'detailed_thorough', label: 'Detailed and thorough explanations' },
+      { value: 'empathetic_supportive', label: 'Empathetic and emotionally supportive' },
+      { value: 'practical_actionable', label: 'Practical and action-oriented' },
+      { value: 'experienced_credentials', label: 'Strong credentials and experience' },
+      { value: 'no_preference', label: 'No specific preference' },
+    ],
+  },
+];
+
 export const QuizModal = ({ isOpen, onClose }: QuizModalProps) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [isCompleted, setIsCompleted] = useState(false);
-
-  const questions = [
-    {
-      id: 0,
-      question: "What's your biggest financial challenge right now?",
-      options: [
-        { value: 'debt', label: 'Managing debt and payments' },
-        { value: 'saving', label: 'Building savings and emergency fund' },
-        { value: 'investing', label: 'Learning about investing' },
-        { value: 'budgeting', label: 'Creating and sticking to a budget' },
-        { value: 'stress', label: 'Reducing financial stress and anxiety' },
-      ],
-    },
-    {
-      id: 1,
-      question: 'How would you describe your relationship with money?',
-      options: [
-        { value: 'anxious', label: 'Anxious and stressful' },
-        { value: 'confused', label: 'Confused and overwhelming' },
-        { value: 'neutral', label: 'Neutral and practical' },
-        { value: 'confident', label: 'Confident and in control' },
-        { value: 'avoidant', label: 'I prefer to avoid thinking about it' },
-      ],
-    },
-    {
-      id: 2,
-      question: "What's your primary financial goal for the next year?",
-      options: [
-        { value: 'emergency_fund', label: 'Build an emergency fund' },
-        { value: 'pay_debt', label: 'Pay off debt' },
-        { value: 'invest', label: 'Start investing' },
-        { value: 'buy_home', label: 'Save for a major purchase (home, car, etc.)' },
-        { value: 'retirement', label: 'Plan for retirement' },
-      ],
-    },
-  ];
 
   const handleAnswerSelect = (questionId: number, answer: string) => {
     setAnswers((prev) => ({ ...prev, [questionId]: answer }));
   };
 
   const handleNext = () => {
-    if (currentQuestion < questions.length - 1) {
+    if (currentQuestion < QUIZ_QUESTIONS.length - 1) {
       setCurrentQuestion((prev) => prev + 1);
     } else {
       // Quiz completed
@@ -65,7 +83,7 @@ export const QuizModal = ({ isOpen, onClose }: QuizModalProps) => {
       // Track quiz completion
       posthog.capture('quiz_completed', {
         answers,
-        totalQuestions: questions.length,
+        totalQuestions: QUIZ_QUESTIONS.length,
       });
     }
   };
@@ -83,15 +101,15 @@ export const QuizModal = ({ isOpen, onClose }: QuizModalProps) => {
     onClose();
   };
 
-  const currentQuestionData = questions[currentQuestion];
+  const currentQuestionData = QUIZ_QUESTIONS[currentQuestion];
   const hasAnswer = answers[currentQuestion] !== undefined;
-  const progress = ((currentQuestion + 1) / questions.length) * 100;
+  const progress = ((currentQuestion + 1) / QUIZ_QUESTIONS.length) * 100;
 
   if (!isOpen) return null;
 
   return (
     <div className='fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4'>
-      <div className='bg-white rounded-2xl shadow-xl w-full max-w-2xl mx-auto animate-in fade-in zoom-in duration-200'>
+      <div className='bg-white rounded-2xl shadow-xl w-full max-w-4xl mx-auto animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto'>
         {/* Header */}
         <div className='flex items-center justify-between p-6 border-b border-gray-200'>
           <div className='flex items-center space-x-3'>
@@ -115,25 +133,25 @@ export const QuizModal = ({ isOpen, onClose }: QuizModalProps) => {
             />
           </div>
           <p className='text-sm text-gray-500 mt-2'>
-            Question {currentQuestion + 1} of {questions.length}
+            Question {currentQuestion + 1} of {QUIZ_QUESTIONS.length}
           </p>
         </div>
 
         {/* Content */}
-        <div className='p-6'>
+        <div className='p-8'>
           {!isCompleted ? (
-            <div className='space-y-6'>
-              <h3 className='text-lg font-medium text-gray-900 mb-6'>
+            <div className='space-y-8'>
+              <h3 className='text-xl font-medium text-gray-900 mb-8 text-center leading-relaxed'>
                 {currentQuestionData.question}
               </h3>
 
-              <div className='grid grid-cols-1 gap-3'>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                 {currentQuestionData.options.map((option) => (
                   <button
                     key={option.value}
                     onClick={() => handleAnswerSelect(currentQuestion, option.value)}
                     className={cn(
-                      'w-full p-4 rounded-xl text-left transition-all duration-300 ease-out',
+                      'w-full p-6 rounded-xl text-left transition-all duration-300 ease-out min-h-[80px]',
                       'hover:shadow-md hover:-translate-y-0.5',
                       'flex items-center justify-start text-left border-2',
                       answers[currentQuestion] === option.value
@@ -141,7 +159,7 @@ export const QuizModal = ({ isOpen, onClose }: QuizModalProps) => {
                         : 'bg-white text-gray-900 border-gray-200 hover:border-purple-300',
                     )}
                   >
-                    <span className='font-medium'>{option.label}</span>
+                    <span className='font-medium text-base leading-relaxed'>{option.label}</span>
                   </button>
                 ))}
               </div>
@@ -213,8 +231,8 @@ export const QuizModal = ({ isOpen, onClose }: QuizModalProps) => {
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed',
               )}
             >
-              <span>{currentQuestion === questions.length - 1 ? 'Complete' : 'Next'}</span>
-              {currentQuestion < questions.length - 1 && <ChevronRight className='w-4 h-4' />}
+              <span>{currentQuestion === QUIZ_QUESTIONS.length - 1 ? 'Complete' : 'Next'}</span>
+              {currentQuestion < QUIZ_QUESTIONS.length - 1 && <ChevronRight className='w-4 h-4' />}
             </button>
           </div>
         )}

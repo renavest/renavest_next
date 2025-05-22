@@ -72,9 +72,6 @@ export default async function Home() {
       .map((user) => user.email?.toLowerCase())
       .filter((email) => email !== null && email !== undefined);
 
-    console.log('Active therapist emails:', activeTherapistEmails);
-    console.log('Pending therapists count before filtering:', dbPendingTherapists.length);
-
     // Transform active therapists
     const activeAdvisors: Advisor[] = dbTherapists.map((therapist) => {
       const profileUrl = therapist.profileUrl
@@ -115,8 +112,6 @@ export default async function Home() {
       (pendingTherapist) =>
         !activeTherapistEmails.includes(pendingTherapist.clerkEmail?.toLowerCase()),
     );
-
-    console.log('Pending therapists count after filtering:', filteredPendingTherapists.length);
 
     // Transform filtered pending therapists
     const pendingAdvisors: Advisor[] = filteredPendingTherapists.map((pendingTherapist) => {
