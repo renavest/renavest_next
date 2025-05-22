@@ -26,6 +26,29 @@ interface TherapistProfile {
   };
 }
 
+const PLACEHOLDER = '/experts/placeholderexp.png';
+
+function ExpertiseTags({ tags }: { tags: string[] }) {
+  if (!tags.length) return null;
+  return (
+    <div className='mt-2 flex items-start flex-wrap gap-1 min-h-[1.5rem] overflow-hidden'>
+      {tags.slice(0, 3).map((exp, index) => (
+        <span
+          key={index}
+          className='px-2 py-1 rounded-full text-xs bg-purple-50 text-purple-700 font-medium'
+        >
+          {exp.trim()}
+        </span>
+      ))}
+      {tags.length > 3 && (
+        <span className='px-2 py-1 rounded-full text-xs bg-purple-50 text-purple-700 font-medium'>
+          +{tags.length - 3}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export default function TherapistProfileCard() {
   const [profile, setProfile] = useState<TherapistProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -34,6 +57,8 @@ export default function TherapistProfileCard() {
   const [form, setForm] = useState<any>({});
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -95,47 +120,64 @@ export default function TherapistProfileCard() {
   if (!profile) return null;
 
   const { user, therapist } = profile;
-  const displayImage = getTherapistImageUrl(
-    form.profileUrl || therapist.name || user.firstName || '',
-  );
+  const expertiseTags = (form.expertise || therapist.expertise || '')
+    .split(',')
+    .map((t: string) => t.trim())
+    .filter(Boolean);
+  const displayImage = !imgError
+    ? getTherapistImageUrl(form.profileUrl || therapist.name || user.firstName || '')
+    : PLACEHOLDER;
 
   return (
-    <div className='w-full h-full bg-white rounded-3xl shadow-xl p-10 flex flex-col items-center max-w-2xl mx-auto min-h-[500px]'>
-      <div className='flex flex-col items-center mb-6'>
-        <div className='relative w-28 h-28 mb-3'>
+    <div className='w-full h-full bg-white rounded-3xl shadow-2xl p-8 flex flex-col items-center max-w-xl mx-auto min-h-[540px] border border-purple-100'>
+      <div className='flex flex-col items-center mb-6 w-full'>
+        <div className='relative w-32 h-32 mb-3 rounded-2xl overflow-hidden bg-gray-100 flex items-center justify-center'>
+          {!imgLoaded && !imgError && (
+            <div
+              className='absolute inset-0 bg-gray-200 animate-pulse rounded-2xl'
+              aria-label='Image loading placeholder'
+            />
+          )}
           <Image
             src={displayImage}
-            alt='Profile'
+            alt={therapist.name || user.firstName || 'Profile'}
             fill
-            className='rounded-full object-cover border-4 border-purple-200'
+            className='object-cover object-center rounded-2xl border-4 border-purple-100'
+            onLoadingComplete={() => setImgLoaded(true)}
+            onError={() => setImgError(true)}
+            priority
           />
         </div>
-        {editMode ? (
-          <>
-            <input
-              className='text-2xl font-bold text-center text-gray-800 mb-1 bg-gray-50 rounded px-2 py-1'
-              name='name'
-              value={form.name || ''}
-              onChange={handleChange}
-              placeholder='Full Name'
-            />
-            <input
-              className='text-lg text-center text-gray-500 mb-2 bg-gray-50 rounded px-2 py-1'
-              name='title'
-              value={form.title || ''}
-              onChange={handleChange}
-              placeholder='Title'
-            />
-          </>
-        ) : (
-          <>
-            <h2 className='text-2xl font-bold text-center text-gray-800 mb-1'>
-              {therapist.name || user.firstName + ' ' + user.lastName}
-            </h2>
-            <p className='text-lg text-center text-gray-500 mb-2'>{therapist.title}</p>
-          </>
-        )}
-        <p className='text-sm text-gray-400'>{user.email}</p>
+        <div className='w-full flex flex-col items-center'>
+          {editMode ? (
+            <>
+              <input
+                className='text-2xl font-bold text-center text-gray-800 mb-1 bg-gray-50 rounded px-2 py-1 w-full'
+                name='name'
+                value={form.name || ''}
+                onChange={handleChange}
+                placeholder='Full Name'
+              />
+              <input
+                className='text-lg text-center text-gray-500 mb-2 bg-gray-50 rounded px-2 py-1 w-full'
+                name='title'
+                value={form.title || ''}
+                onChange={handleChange}
+                placeholder='Title'
+              />
+            </>
+          ) : (
+            <>
+              <h2 className='text-2xl font-bold text-center text-gray-800 mb-1'>
+                {therapist.name || user.firstName + ' ' + user.lastName}
+              </h2>
+              <p className='text-lg text-center text-gray-500 mb-2 font-medium'>
+                {therapist.title}
+              </p>
+            </>
+          )}
+          <p className='text-sm text-gray-400 mb-2'>{user.email}</p>
+        </div>
       </div>
       <div className='w-full flex flex-col gap-3 mb-4'>
         {editMode ? (
@@ -153,7 +195,7 @@ export default function TherapistProfileCard() {
               name='expertise'
               value={form.expertise || ''}
               onChange={handleChange}
-              placeholder='Expertise'
+              placeholder='Expertise (comma separated)'
             />
             <input
               className='w-full bg-gray-50 rounded px-3 py-2 text-gray-700'
@@ -198,33 +240,29 @@ export default function TherapistProfileCard() {
         ) : (
           <>
             {therapist.longBio && (
-              <p className='text-gray-700 whitespace-pre-line mb-2'>{therapist.longBio}</p>
+              <p className='text-gray-700 whitespace-pre-line mb-2 text-base leading-relaxed'>
+                {therapist.longBio}
+              </p>
             )}
-            <div className='flex flex-wrap gap-2 mb-2'>
-              {therapist.expertise && (
-                <span className='bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs'>
-                  {therapist.expertise}
-                </span>
-              )}
+            <ExpertiseTags tags={expertiseTags} />
+            <div className='flex flex-wrap gap-2 mb-2 mt-2'>
               {therapist.certifications && (
-                <span className='bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs'>
+                <span className='bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium'>
                   {therapist.certifications}
                 </span>
               )}
               {therapist.clientele && (
-                <span className='bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs'>
+                <span className='bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-medium'>
                   {therapist.clientele}
                 </span>
               )}
-            </div>
-            <div className='flex flex-wrap gap-2 mb-2'>
               {therapist.yoe && (
-                <span className='bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs'>
+                <span className='bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-medium'>
                   {therapist.yoe} yrs exp
                 </span>
               )}
               {therapist.hourlyRate && (
-                <span className='bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs'>
+                <span className='bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium'>
                   ${therapist.hourlyRate}/hr
                 </span>
               )}
@@ -234,7 +272,7 @@ export default function TherapistProfileCard() {
                 href={therapist.bookingURL}
                 target='_blank'
                 rel='noopener noreferrer'
-                className='text-purple-600 underline text-sm'
+                className='text-purple-600 underline text-sm font-medium mt-2'
               >
                 Book a session
               </a>
