@@ -225,222 +225,54 @@ export default function TherapistDashboardPage({
   initialTherapistId,
 }: TherapistDashboardPageProps) {
   const { user, isLoaded: isUserLoaded } = useUser();
-  // State initialized with server data but can be updated by client actions
-  const [clients, setClients] = useState<Client[]>(initialClients);
-  const [upcomingSessions, setUpcomingSessions] =
-    useState<UpcomingSession[]>(initialUpcomingSessions);
-  const [statistics, setStatistics] = useState<TherapistStatistics>(initialStatistics);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [isAddClientOpen, setIsAddClientOpen] = useState(false);
-  const [showOnboardingBanner, setShowOnboardingBanner] = useState(true);
-  const [isOnboarded, setIsOnboarded] = useState(false);
 
-  // Set therapist ID from props
-  useEffect(() => {
-    if (initialTherapistId) {
-      therapistIdSignal.value = initialTherapistId;
-      therapistPageLoadedSignal.value = true;
-    }
-  }, [initialTherapistId]);
-
-  // Check if user is fully onboarded
-  useEffect(() => {
-    if (user) {
-      // Check if profile is complete and Google Calendar is connected
-      const profileComplete = !!(user.firstName && user.lastName);
-      const calendarConnected = !!user.publicMetadata?.googleCalendarConnected;
-      setIsOnboarded(profileComplete && calendarConnected);
-    }
-  }, [user]);
-
-  // Function to refresh data from the server
-  const refreshData = useCallback(async () => {
-    if (!therapistIdSignal.value) return;
-
-    try {
-      // Fetch updated data
-      const fetchWithErrorHandling = async (url: string) => {
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch data from ${url}`);
-        }
-        return response.json();
-      };
-
-      // Fetch all data in parallel
-      const [clientsResponse, sessionsResponse, statisticsResponse] = await Promise.all([
-        fetchWithErrorHandling('/api/therapist/clients'),
-        fetchWithErrorHandling('/api/therapist/sessions'),
-        fetchWithErrorHandling('/api/therapist/statistics'),
-      ]);
-
-      // Update state with fetched data
-      setClients(clientsResponse.clients || []);
-      setUpcomingSessions(sessionsResponse.sessions || []);
-      setStatistics(
-        statisticsResponse.statistics || {
-          totalSessions: 0,
-          totalClients: 0,
-          completedSessions: 0,
-        },
-      );
-    } catch (error) {
-      console.error('Error refreshing data:', error);
-    }
-  }, []);
-
-  // If still loading initial data, show a loading state
   if (!isUserLoaded) {
     return (
       <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen flex items-center justify-center'>
         <div className='text-center'>
           <div className='animate-spin rounded-full h-16 w-16 border-t-2 border-purple-600 mx-auto mb-4'></div>
-          <p className={`${COLORS.WARM_PURPLE.DEFAULT} text-lg`}>Loading...</p>
+          <p className='text-purple-700 text-lg'>Loading...</p>
         </div>
       </div>
     );
   }
 
-  // Render main dashboard
-  return renderDashboard(
-    isOnboarded,
-    showOnboardingBanner,
-    setShowOnboardingBanner,
-    statistics,
-    clients,
-    selectedClient,
-    setSelectedClient,
-    isAddClientOpen,
-    setIsAddClientOpen,
-    upcomingSessions,
-    refreshData,
-  );
-}
-
-// Helper function to render main dashboard
-function renderDashboard(
-  isOnboarded: boolean,
-  showOnboardingBanner: boolean,
-  setShowOnboardingBanner: (show: boolean) => void,
-  statistics: TherapistStatistics,
-  clients: Client[],
-  selectedClient: Client | null,
-  setSelectedClient: (client: Client | null) => void,
-  isAddClientOpen: boolean,
-  setIsAddClientOpen: (open: boolean) => void,
-  upcomingSessions: UpcomingSession[],
-  refreshData: () => Promise<void>,
-) {
   return (
     <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen relative'>
-      <TherapistNavbar showBackButton={false} isOnboarded={isOnboarded} />
-
-      {/* Onboarding Banner */}
-      {!isOnboarded && showOnboardingBanner && (
-        <div className='mt-6 bg-gradient-to-r from-purple-600 to-purple-800 text-white p-4 rounded-xl shadow-md'>
-          <div className='flex items-center justify-between'>
-            <div className='flex items-center space-x-3'>
-              <div className='rounded-full bg-white/20 p-2'>
-                <svg className='w-6 h-6' viewBox='0 0 24 24' fill='none'>
-                  <path
-                    d='M9 12l2 2 4-4'
-                    stroke='currentColor'
-                    strokeWidth='2'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                  />
-                </svg>
-              </div>
-              <div>
-                <h3 className='font-semibold'>Complete your setup</h3>
-                <p className='text-sm text-white/80'>
-                  Finish setting up your therapist account for the best experience
-                </p>
-              </div>
-            </div>
-            <div className='flex items-center space-x-2'>
-              <Link
-                href='/therapist/onboarding'
-                className='px-4 py-2 bg-white text-purple-700 rounded-lg shadow-sm hover:bg-purple-50 transition font-medium'
-              >
-                Complete Setup
-              </Link>
-              <button
-                onClick={() => setShowOnboardingBanner(false)}
-                className='p-2 text-white/80 hover:text-white rounded-full'
-                aria-label='Dismiss'
-              >
-                <svg className='w-5 h-5' viewBox='0 0 24 24' fill='none'>
-                  <path
-                    d='M6 18L18 6M6 6l12 12'
-                    stroke='currentColor'
-                    strokeWidth='2'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
+      <TherapistNavbar pageTitle='Therapist Dashboard' />
+      <div className='mt-10 grid grid-cols-1 md:grid-cols-3 gap-8'>
+        {/* Google Calendar Integration Card */}
+        <div>
+          <GoogleCalendarIntegration />
         </div>
-      )}
-
-      <div className='mt-6'>
-        <TherapistStatisticsCard statistics={statistics} />
-      </div>
-
-      {/* New section for Future Insights */}
-      <div className='mt-6'>
-        <h2 className='text-xl font-semibold text-gray-800 mb-4'>Future Insights</h2>
-        <FutureInsightsCards />
-      </div>
-
-      <div className='grid grid-cols-12 gap-6 mt-6'>
-        <div className='col-span-4 bg-white rounded-xl border border-gray-100 shadow-sm'>
-          <ClientSidebar
-            clients={clients}
-            selectedClient={selectedClient}
-            onClientSelect={setSelectedClient}
-            onAddClientClick={() => setIsAddClientOpen(true)}
-          />
+        {/* Therapist Profile Card */}
+        <div className='w-full max-w-md mx-auto bg-white shadow-md rounded-lg overflow-hidden flex flex-col items-center justify-center p-8'>
+          <Image src='/renavestlogo.png' alt='Profile' width={48} height={48} className='mb-2' />
+          <h3 className='text-lg font-semibold text-purple-700 mb-2'>Your Profile</h3>
+          <p className='text-gray-600 mb-4 text-center'>
+            View and edit your therapist profile information.
+          </p>
+          <Link href='/therapist/profile'>
+            <button className='bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-2 rounded-lg shadow transition-colors'>
+              View/Edit Profile
+            </button>
+          </Link>
         </div>
-        <div className='col-span-8 bg-white rounded-xl border border-gray-100 shadow-sm'>
-          <ClientDetailView client={selectedClient} upcomingSessions={upcomingSessions} />
+        {/* Coming Soon Card */}
+        <div className='w-full max-w-md mx-auto bg-white shadow-md rounded-lg overflow-hidden flex flex-col items-center justify-center p-8'>
+          <h3 className='text-lg font-semibold text-gray-800 mb-2'>Coming Soon</h3>
+          <ul className='text-gray-600 text-sm mb-4 list-disc list-inside text-left'>
+            <li>Invite clients to the platform</li>
+            <li>Client behavior analysis</li>
+            <li>Treatment effectiveness tracker</li>
+            <li>Client communication insights</li>
+            <li>And more!</li>
+          </ul>
+          <span className='inline-block bg-yellow-100 text-yellow-800 text-xs px-3 py-1 rounded-full'>
+            Stay tuned for updates
+          </span>
         </div>
       </div>
-
-      {/* Add Client Modal */}
-      {isAddClientOpen && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center'>
-          {/* Backdrop */}
-          <div
-            className='fixed inset-0 bg-black/25 backdrop-blur-sm'
-            onClick={() => setIsAddClientOpen(false)}
-          />
-          {/* Modal */}
-          <div className='relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6 animate-in fade-in zoom-in duration-200'>
-            {/* Header */}
-            <div className='mb-6 flex justify-between items-center'>
-              <h2 className='text-2xl font-semibold text-gray-900'>Invite a Client</h2>
-              <button
-                onClick={() => setIsAddClientOpen(false)}
-                className='text-gray-400 hover:text-gray-600 p-2 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-400'
-                aria-label='Close Add Client Modal'
-              >
-                <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M6 18L18 6M6 6l12 12'
-                  />
-                </svg>
-              </button>
-            </div>
-            <AddNewClientSection onClientAdded={refreshData} />
-          </div>
-        </div>
-      )}
     </div>
   );
 }
