@@ -1,7 +1,6 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { ClipboardList } from 'lucide-react';
 import posthog from 'posthog-js';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
@@ -17,9 +16,9 @@ import ComingSoon from './ComingSoon';
 import ConsultationBanner from './ConsultationBanner';
 import EmployeeNavbar from './EmployeeNavbar';
 import FinancialTherapyModal from './FinancialTherapyModal';
-import TherapistRecommendations from './insights/TherapistRecommendations';
 import { QuizModal } from './QuizModal';
 import SharePanel from './SharePanel';
+import TherapistRecommendationsWithOverlay from './TherapistRecommendationsWithOverlay';
 import { UpcomingSessionsSection } from './UpcomingSessionsSection';
 import VideoLibrary from './VideoLibrary';
 
@@ -30,46 +29,6 @@ import VideoLibrary from './VideoLibrary';
 //   );
 // });
 
-const TherapistRecommendationsWithOverlay = ({
-  onTakeQuizClick,
-  hasCompletedQuiz,
-}: {
-  onTakeQuizClick: () => void;
-  hasCompletedQuiz: boolean;
-}) => {
-  if (hasCompletedQuiz) {
-    // Show enhanced recommendations without overlay
-    return <TherapistRecommendations showViewAllButton={true} />;
-  }
-
-  return (
-    <div className='relative rounded-lg overflow-hidden'>
-      {/* The actual recommendations component with reduced opacity */}
-      <div className='opacity-25 pointer-events-none'>
-        <TherapistRecommendations />
-      </div>
-
-      {/* Overlay content */}
-      <div className='absolute inset-0 flex flex-col items-center justify-center bg-white/60 backdrop-blur-[2px] p-8 text-center'>
-        <ClipboardList className='h-10 w-10 text-purple-600 mb-4' />
-        <h4 className='text-xl font-semibold text-gray-800 mb-2'>
-          Want to See Your Recommended Therapists?
-        </h4>
-        <p className='text-gray-600 mb-5 max-w-md'>
-          Take our short quiz to get personalized therapist recommendations based on your unique
-          financial goals.
-        </p>
-        <button
-          onClick={onTakeQuizClick}
-          className='bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 font-medium'
-        >
-          Take the Quiz Now
-        </button>
-      </div>
-    </div>
-  );
-};
-
 export default function LimitedDashboardClient() {
   const { user } = useUser();
   const [referralLink, setReferralLink] = useState('');
@@ -78,19 +37,16 @@ export default function LimitedDashboardClient() {
   const [hasCompletedQuiz, setHasCompletedQuiz] = useState(false);
   useEffect(() => {
     if (user && user.id) {
-      // Generate personalized referral link
       const baseUrl = window.location.origin;
       const link = `${baseUrl}?ref=${user.id}`;
       setReferralLink(link);
 
-      // Track user in PostHog with proper identification
       posthog.identify(user.id, {
         email: user?.emailAddresses[0]?.emailAddress,
         firstName: user?.firstName,
         lastName: user?.lastName,
       });
 
-      // Track page view
       posthog.capture('employee_dashboard_viewed', {
         userId: user.id,
         userEmail: user?.emailAddresses[0]?.emailAddress,
@@ -102,11 +58,7 @@ export default function LimitedDashboardClient() {
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(referralLink);
-
-    // Track sharing event with PostHog using the tracking utility
     trackReferralShare(user?.id, 'copy_link', referralLink);
-
-    // Show toast notification
     toast.success('Renavest link copied to clipboard!');
   };
 
