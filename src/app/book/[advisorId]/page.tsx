@@ -67,11 +67,7 @@ export default async function TherapistBookingPage({ params }: { params: { advis
       name: pendingTherapist.name,
       bookingURL: pendingTherapist.bookingURL || '',
       email: pendingTherapist.clerkEmail || undefined,
-      profileUrl: pendingTherapist.profileUrl?.startsWith('http')
-        ? pendingTherapist.profileUrl
-        : pendingTherapist.profileUrl
-          ? `/${pendingTherapist.profileUrl}`
-          : undefined,
+      profileUrl: pendingTherapist.profileUrl || undefined,
       isPending: true,
     };
 
@@ -115,11 +111,7 @@ export default async function TherapistBookingPage({ params }: { params: { advis
       name: therapist.name,
       bookingURL: therapist.bookingURL || '',
       email: therapistUser.email || undefined,
-      profileUrl: therapist.profileUrl?.startsWith('http')
-        ? therapist.profileUrl
-        : therapist.profileUrl
-          ? `/${therapist.profileUrl}`
-          : undefined,
+      profileUrl: therapist.profileUrl || undefined,
       isPending: false,
     };
 
