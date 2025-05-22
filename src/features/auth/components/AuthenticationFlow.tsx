@@ -1,7 +1,7 @@
 // components/AuthenticationFlow.tsx
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { currentStep, authErrorSignal } from '../state/authState';
 import { OnboardingStep } from '../types';
@@ -16,7 +16,13 @@ import { AgeRangeStep } from './onboarding/AgeRangeStep';
 import { EthnicityStep } from './onboarding/EthnicityStep';
 import { MaritalStatusStep } from './onboarding/MaritalStatusStep';
 import { RenavestPurposeStep } from './onboarding/PurposeStep';
+
 export default function AuthenticationFlow() {
+  // Add useEffect to reset authErrorSignal when currentStep changes
+  useEffect(() => {
+    authErrorSignal.value = null;
+  }, [currentStep.value]);
+
   function AuthErrorMessage() {
     if (!authErrorSignal.value) return null;
     return (
@@ -31,9 +37,6 @@ export default function AuthenticationFlow() {
 
   // Step navigation logic
   const renderCurrentStep = () => {
-    // Reset auth error signal before rendering each step
-    authErrorSignal.value = null;
-
     switch (currentStep.value) {
       case OnboardingStep.LOGIN:
         return <LoginStep />;
