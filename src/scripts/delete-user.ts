@@ -9,7 +9,7 @@ import { users, therapists, bookingSessions, clientNotes, userOnboarding } from 
 
 // Load environment variables
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local';
-dotenv.config({ path: envFile });
+dotenv.config({ path: '.env.local' });
 
 // Validate Clerk Secret Key
 const CLERK_API_KEY = process.env.CLERK_SECRET_KEY;
