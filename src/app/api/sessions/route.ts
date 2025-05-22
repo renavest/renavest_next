@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { db } from '@/src/db';
 import { bookingSessions } from '@/src/db/schema';
 import { sendBookingConfirmationEmail } from '@/src/features/booking/actions/sendBookingConfirmationEmail';
-import { timezoneManager, SupportedTimezone } from '@/src/features/booking/utils/timezoneManager';
+import { SupportedTimezone } from '@/src/features/booking/utils/timezoneManager';
 import { createAndStoreGoogleCalendarEvent } from '@/src/features/google-calendar/utils/googleCalendar';
 import { createDate } from '@/src/utils/timezone';
 
@@ -32,6 +32,30 @@ const UpdateBookingSchema = z.object({
   status: z.enum(['confirmed', 'cancelled', 'rescheduled']),
   cancellationReason: z.string().optional(),
 });
+
+// Types for the API (matching Google Calendar utility expectations)
+type UserType = {
+  id: number;
+  clerkId: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  imageUrl: string | null;
+  isActive: boolean;
+  therapistId: number | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type TherapistType = {
+  id: number;
+  name: string;
+  email: string | null;
+  googleCalendarAccessToken: string | null;
+  googleCalendarRefreshToken: string | null;
+  googleCalendarEmail: string | null;
+  googleCalendarIntegrationStatus: string;
+};
 
 // Helper function to get user and therapist details
 async function getUserAndTherapist(
@@ -136,7 +160,7 @@ export async function POST(req: NextRequest) {
     const bookingResult = await db
       .insert(bookingSessions)
       .values({
-        userId: user.clerkId,
+        userId: user.id,
         therapistId: therapist.id,
         sessionDate: therapistStartTime,
         sessionStartTime: therapistStartTime,

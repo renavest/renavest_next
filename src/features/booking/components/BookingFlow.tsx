@@ -4,7 +4,6 @@ import posthog from 'posthog-js';
 import { useEffect, useState } from 'react';
 import { useCalendlyEventListener } from 'react-calendly';
 
-import { createBookingSession } from '@/src/features/booking/actions/bookingActions';
 import AlternativeBooking from '@/src/features/booking/components/AlternativeBooking';
 import { BookingForm } from '@/src/features/booking/components/form/BookingForm';
 import { getInitials } from '@/src/features/booking/utils/stringUtils';
@@ -74,16 +73,33 @@ export default function UnifiedBookingFlow({ advisor, userId, userEmail }: Booki
   }) => {
     if (!userId) throw new Error('No user ID found');
     try {
-      const result = await createBookingSession({
-        userId,
-        therapistId: details.therapistId,
-        sessionDate: details.date,
-        sessionStartTime: `${details.date}T${details.startTime}`,
-        timezone: details.timezone,
-        userEmail,
+      const response = await fetch('/api/sessions/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          therapistId: parseInt(details.therapistId),
+          sessionDate: details.date,
+          sessionTime: details.startTime,
+          clientTimezone: details.timezone,
+        }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create booking');
+      }
+
+      const result = await response.json();
       await trackCalendlyEvent('booking_details_confirmed', details);
-      return result;
+
+      return {
+        sessionId: result.booking.id,
+        success: result.success,
+        message: 'Booking created successfully',
+        emailSent: true,
+      };
     } catch (error) {
       console.error('Error saving booking session:', error);
       throw error;
