@@ -9,20 +9,18 @@ import {
   Text,
 } from '@react-email/components';
 import { Tailwind } from '@react-email/tailwind';
-import { DateTime } from 'luxon';
 import * as React from 'react';
 
-import { formatDateTime } from '@/src/features/booking/utils/dateTimeUtils';
+import { timezoneManager, SupportedTimezone } from '@/src/features/booking/utils/timezoneManager';
 import { COLORS } from '@/src/styles/colors';
-import { createDate } from '@/src/utils/timezone';
 
 interface TherapistBookingNotificationEmailProps {
   therapistName: string;
   clientName: string;
   sessionDate: string;
   sessionTime: string;
-  clientTimezone: string;
-  therapistTimezone: string;
+  clientTimezone: SupportedTimezone;
+  therapistTimezone: SupportedTimezone;
   googleMeetLink?: string;
 }
 
@@ -41,15 +39,17 @@ export const TherapistBookingNotificationEmailTemplate: React.FC<
   let dateObj: { date: string; time: string; timezone: string };
   let parseError = '';
   if (typeof sessionDate === 'string' && typeof sessionTime === 'string') {
-    const dt = DateTime.fromFormat(`${sessionDate} ${sessionTime}`, 'yyyy-MM-dd HH:mm', {
-      zone: therapistTimezone,
-    });
-    if (dt.isValid) {
-      dateObj = formatDateTime(dt, therapistTimezone);
-    } else {
+    try {
+      const dt = timezoneManager.parseDateTime(sessionDate, sessionTime, therapistTimezone);
+      const emailFormat = timezoneManager.formatForEmail(dt, therapistTimezone);
+      dateObj = {
+        date: emailFormat.date,
+        time: emailFormat.time,
+        timezone: emailFormat.timezone,
+      };
+    } catch {
       dateObj = { date: 'Invalid DateTime', time: 'Invalid DateTime', timezone: therapistTimezone };
       parseError = `Invalid DateTime: ${sessionDate} ${sessionTime} (${therapistTimezone})`;
-
       if (typeof window === 'undefined') console.error(parseError);
     }
   } else {
@@ -141,7 +141,7 @@ export const TherapistBookingNotificationEmailTemplate: React.FC<
 
             <Section className={`${COLORS.WARM_PURPLE['10']} p-3 rounded-lg text-center mt-6`}>
               <Text className={`${COLORS.WARM_PURPLE.DEFAULT} text-xs m-0`}>
-                © {createDate().year} Renavest. All rights reserved.
+                © {new Date().getFullYear()} Renavest. All rights reserved.
               </Text>
             </Section>
           </Container>

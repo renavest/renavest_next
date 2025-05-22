@@ -8,7 +8,6 @@ import { createBookingSession } from '@/src/features/booking/actions/bookingActi
 import AlternativeBooking from '@/src/features/booking/components/AlternativeBooking';
 import { BookingForm } from '@/src/features/booking/components/form/BookingForm';
 import { getInitials } from '@/src/features/booking/utils/stringUtils';
-import { timezoneManager } from '@/src/features/booking/utils/timezoneManager';
 import { fetchGoogleCalendarStatus } from '@/src/features/google-calendar/utils/googleCalendarIntegration';
 interface BookingFlowProps {
   advisor: {

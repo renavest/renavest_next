@@ -5,7 +5,7 @@ import { Resend } from 'resend';
 import { BookingConfirmationEmailTemplate } from '../components/EmailTemplates/BookingConfirmationEmailTemplate';
 import { TherapistBookingNotificationEmailTemplate } from '../components/EmailTemplates/TherapistBookingNotificationEmailTemplate';
 import { TherapistCalendlyEmail } from '../components/EmailTemplates/TherapistCalendlyEmail';
-import { timezoneManager, SupportedTimezone } from '../utils/timezoneManager';
+import { SupportedTimezone } from '../utils/timezoneManager';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 

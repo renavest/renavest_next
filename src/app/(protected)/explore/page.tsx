@@ -19,7 +19,7 @@ export default async function Home() {
     const dbTherapists = await db
       .select()
       .from(pendingTherapists)
-      .where(sql`name != 'Seth Morton'`);
+      // .where(sql`name != 'Seth Morton'`);
 
     // Transform the database records into the Advisor type
     const advisors: Advisor[] = dbTherapists

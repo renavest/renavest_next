@@ -9,10 +9,9 @@ import {
   Text,
 } from '@react-email/components';
 import { Tailwind } from '@react-email/tailwind';
-import { DateTime } from 'luxon';
 import * as React from 'react';
 
-import { timezoneManager } from '@/src/features/booking/utils/timezoneManager';
+import { timezoneManager, SupportedTimezone } from '@/src/features/booking/utils/timezoneManager';
 import { COLORS } from '@/src/styles/colors';
 
 interface BookingConfirmationEmailProps {
@@ -20,8 +19,8 @@ interface BookingConfirmationEmailProps {
   therapistName: string;
   sessionDate: string;
   sessionTime: string;
-  clientTimezone: string;
-  therapistTimezone: string;
+  clientTimezone: SupportedTimezone;
+  therapistTimezone: SupportedTimezone;
   googleMeetLink?: string;
 }
 
@@ -40,15 +39,17 @@ export const BookingConfirmationEmailTemplate: React.FC<
   let dateObj: { date: string; time: string; timezone: string };
   let parseError = '';
   if (typeof sessionDate === 'string' && typeof sessionTime === 'string') {
-    const dt = DateTime.fromFormat(`${sessionDate} ${sessionTime}`, 'yyyy-MM-dd HH:mm', {
-      zone: clientTimezone,
-    });
-    if (dt.isValid) {
-      dateObj = formatDateTime(dt, clientTimezone);
-    } else {
+    try {
+      const dt = timezoneManager.parseDateTime(sessionDate, sessionTime, clientTimezone);
+      const emailFormat = timezoneManager.formatForEmail(dt, clientTimezone);
+      dateObj = {
+        date: emailFormat.date,
+        time: emailFormat.time,
+        timezone: emailFormat.timezone,
+      };
+    } catch {
       dateObj = { date: 'Invalid DateTime', time: 'Invalid DateTime', timezone: clientTimezone };
       parseError = `Invalid DateTime: ${sessionDate} ${sessionTime} (${clientTimezone})`;
-
       if (typeof window === 'undefined') console.error(parseError);
     }
   } else {
@@ -141,7 +142,7 @@ export const BookingConfirmationEmailTemplate: React.FC<
 
             <Section className={`${COLORS.WARM_PURPLE['10']} p-3 rounded-lg text-center mt-6`}>
               <Text className={`${COLORS.WARM_PURPLE.DEFAULT} text-xs m-0`}>
-                © {createDate().year} Renavest. All rights reserved.
+                © {new Date().getFullYear()} Renavest. All rights reserved.
               </Text>
             </Section>
           </Container>
