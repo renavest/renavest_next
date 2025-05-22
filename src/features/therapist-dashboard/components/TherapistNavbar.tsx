@@ -80,10 +80,24 @@ export default function TherapistNavbar({
             {pageTitle}
           </h1>
         </div>
-        {/* Right: Profile link, Logout, Avatar */}
+        {/* Right: Profile link, Marketplace link, Logout, Avatar */}
         <div className='flex items-center gap-3'>
           <Link
-            href='/therapist/'
+            href='/explore'
+            className='flex items-center gap-1.5 text-gray-700 hover:text-gray-900 transition-colors text-sm px-2 py-1 rounded-md hover:bg-gray-100'
+          >
+            <svg className='h-4 w-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth={2}
+                d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
+              />
+            </svg>
+            <span>View Marketplace</span>
+          </Link>
+          <Link
+            href='/therapist/profile'
             className='flex items-center gap-1.5 text-gray-700 hover:text-gray-900 transition-colors text-sm px-2 py-1 rounded-md hover:bg-gray-100'
           >
             <User className='h-4 w-4' />

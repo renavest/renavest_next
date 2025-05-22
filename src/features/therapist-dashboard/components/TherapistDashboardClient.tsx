@@ -5,7 +5,6 @@ import { UserCircle2, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
 
-import { GoogleCalendarIntegration } from '@/src/features/google-calendar/components/GoogleCalendarIntegration';
 import { AddNewClientSection } from '@/src/features/therapist-dashboard/components/AddNewClientSection';
 import ClientNotesSection from '@/src/features/therapist-dashboard/components/ClientNotesSection';
 import TherapistNavbar from '@/src/features/therapist-dashboard/components/TherapistNavbar';
@@ -21,8 +20,6 @@ import {
   TherapistStatistics,
 } from '@/src/features/therapist-dashboard/types';
 import { COLORS } from '@/src/styles/colors';
-
-import TherapistProfileCard from './TherapistProfileCard';
 
 const ClientSidebar = ({
   clients,
@@ -390,13 +387,62 @@ function renderDashboard(
         <TherapistStatisticsCard statistics={statistics} />
       </div>
 
-      {/* Top section with Google Calendar Integration and Therapist Profile */}
-      <div className='mt-6 grid grid-cols-1 md:grid-cols-2 gap-6'>
-        <div className='flex flex-col justify-center h-full'>
-          <GoogleCalendarIntegration />
-        </div>
-        <div className='flex flex-col justify-center h-full'>
-          <TherapistProfileCard />
+      {/* Quick Actions Section */}
+      <div className='mt-6'>
+        <h2 className='text-xl font-semibold text-gray-800 mb-4'>Quick Actions</h2>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+          <Link
+            href='/therapist/profile'
+            className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all group'
+          >
+            <div className='flex items-center gap-4'>
+              <div className='w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center group-hover:bg-purple-200 transition-colors'>
+                <svg
+                  className='w-6 h-6 text-purple-600'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'
+                  />
+                </svg>
+              </div>
+              <div>
+                <h3 className='text-lg font-semibold text-gray-800'>View & Edit Profile</h3>
+                <p className='text-gray-500 text-sm'>Manage your professional information</p>
+              </div>
+            </div>
+          </Link>
+          <Link
+            href='/therapist/integrations'
+            className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all group'
+          >
+            <div className='flex items-center gap-4'>
+              <div className='w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200 transition-colors'>
+                <svg
+                  className='w-6 h-6 text-blue-600'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'
+                  />
+                </svg>
+              </div>
+              <div>
+                <h3 className='text-lg font-semibold text-gray-800'>Calendar Integration</h3>
+                <p className='text-gray-500 text-sm'>Connect your Google Calendar</p>
+              </div>
+            </div>
+          </Link>
         </div>
       </div>
 
