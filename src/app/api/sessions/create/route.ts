@@ -1,4 +1,5 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
 import { calendar_v3, google } from 'googleapis';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -169,7 +170,7 @@ export async function POST(req: NextRequest) {
         sessionDate: bookingSlot.startTime.toJSDate(),
         sessionStartTime: bookingSlot.startTime.toJSDate(),
         sessionEndTime: bookingSlot.endTime.toJSDate(),
-        status: 'pending',
+        status: 'confirmed',
         metadata: {
           clientTimezone,
           therapistTimezone: validatedTherapistTimezone,
@@ -214,6 +215,21 @@ export async function POST(req: NextRequest) {
               (ep) => ep.entryPointType === 'video' && ep.uri?.includes('meet.google.com'),
             )?.uri || '',
         };
+
+        // Update booking with Google Meet link
+        if (calendarResult.googleMeetLink) {
+          await db
+            .update(bookingSessions)
+            .set({
+              metadata: {
+                clientTimezone,
+                therapistTimezone: validatedTherapistTimezone,
+                googleMeetLink: calendarResult.googleMeetLink,
+                googleCalendarEventId: calendarResult.eventId,
+              },
+            })
+            .where(eq(bookingSessions.id, booking.id));
+        }
       } catch (error) {
         console.error('Error creating Google Calendar event:', error);
         // Continue without calendar event

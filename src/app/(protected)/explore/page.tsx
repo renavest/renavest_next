@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 
 import { db } from '@/src/db';
-import { therapists, pendingTherapists } from '@/src/db/schema';
+import { therapists, pendingTherapists, users } from '@/src/db/schema';
 import AdvisorGrid from '@/src/features/explore/components/AdvisorGrid';
 import ExploreNavbar from '@/src/features/explore/components/ExploreNavbar';
 import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
@@ -13,7 +13,7 @@ export default async function Home() {
     auth.protect();
 
     // Fetch both active therapists and pending therapists
-    const [dbTherapists, dbPendingTherapists] = await Promise.all([
+    const [dbTherapists, dbPendingTherapists, dbUsers] = await Promise.all([
       db
         .select({
           id: therapists.id,
@@ -55,7 +55,22 @@ export default async function Home() {
           googleCalendarAccessToken: pendingTherapists.googleCalendarAccessToken,
         })
         .from(pendingTherapists),
+
+      // Fetch users to get emails of active therapists
+      db
+        .select({
+          id: users.id,
+          email: users.email,
+        })
+        .from(users),
     ]);
+
+    // Get emails of active therapists by joining with users table
+    const activeTherapistUserIds = dbTherapists.map((t) => t.userId);
+    const activeTherapistEmails = dbUsers
+      .filter((user) => activeTherapistUserIds.includes(user.id))
+      .map((user) => user.email)
+      .filter((email) => email !== null);
 
     // Transform active therapists
     const activeAdvisors: Advisor[] = dbTherapists.map((therapist) => {
@@ -92,8 +107,13 @@ export default async function Home() {
       };
     });
 
-    // Transform pending therapists
-    const pendingAdvisors: Advisor[] = dbPendingTherapists.map((pendingTherapist) => {
+    // Filter out pending therapists who already exist as active therapists
+    const filteredPendingTherapists = dbPendingTherapists.filter(
+      (pendingTherapist) => !activeTherapistEmails.includes(pendingTherapist.clerkEmail),
+    );
+
+    // Transform filtered pending therapists
+    const pendingAdvisors: Advisor[] = filteredPendingTherapists.map((pendingTherapist) => {
       const profileUrl = pendingTherapist.profileUrl
         ? getTherapistImageUrl(pendingTherapist.profileUrl)
         : '/experts/placeholderexp.png';
@@ -149,7 +169,7 @@ export default async function Home() {
 
     return (
       <div className='min-h-screen bg-gradient-to-br from-purple-50 to-white'>
-        <ExploreNavbar />
+        <ExploreNavbar showBackButton={true} />
         <section className='pt-20 pb-6 px-4 sm:px-6'>
           <h2 className='text-2xl sm:text-3xl font-bold text-center text-gray-900'>
             Financial Therapists
