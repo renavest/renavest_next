@@ -26,12 +26,23 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
       therapist_name: advisor.name,
       booking_mode: bookingMode,
       has_google_calendar: isConnected,
+      is_pending: advisor.isPending,
     });
     posthog.identify(user?.id, {
       current_therapist: advisor.name,
     });
 
-    // Navigate based on the therapist's integration status
+    // Handle pending therapists - always use external booking
+    if (advisor.isPending) {
+      if (advisor.bookingURL) {
+        window.open(advisor.bookingURL, '_blank');
+      } else {
+        console.error('No booking URL available for pending therapist');
+      }
+      return;
+    }
+
+    // Navigate based on the therapist's integration status for active therapists
     if (isConnected && advisor.therapistId) {
       // Use therapist ID for internal booking
       router.push(`/book/${advisor.therapistId}`);
@@ -45,6 +56,7 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
 
   const getBookingButtonText = () => {
     if (isChecking) return 'Loading...';
+    if (advisor.isPending) return 'Book via External Calendar';
     if (isConnected) return 'Book a Session';
     return 'Book via External Calendar';
   };
@@ -89,7 +101,9 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
 
         {/* Integration status indicator */}
         <div className='text-center text-xs text-gray-500'>
-          {isConnected ? (
+          {advisor.isPending ? (
+            <span className='text-blue-600'>⏳ Pending therapist - External booking</span>
+          ) : isConnected ? (
             <span className='text-green-600'>✓ Direct booking available</span>
           ) : (
             <span className='text-orange-600'>External calendar booking</span>

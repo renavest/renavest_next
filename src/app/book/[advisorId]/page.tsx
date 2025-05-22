@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 
 import { trackSessionSearch } from '@/src/app/api/track/calendly/route';
 import { db } from '@/src/db';
-import { therapists, users } from '@/src/db/schema';
+import { therapists, users, pendingTherapists } from '@/src/db/schema';
 
 import UnifiedBookingFlow from '../../../features/booking/components/BookingFlow';
 
@@ -21,49 +21,85 @@ export default async function TherapistBookingPage({ params }: { params: { advis
     redirect('/explore');
   }
 
-  // Parse the advisor ID as therapist ID (from the enhanced marketplace flow)
-  const therapistId = parseInt(advisorId);
-  if (isNaN(therapistId)) {
-    redirect('/explore');
+  let advisorData;
+
+  // Check if this is a pending therapist (prefixed with "pending-")
+  if (advisorId.startsWith('pending-')) {
+    const pendingId = parseInt(advisorId.replace('pending-', ''));
+    if (isNaN(pendingId)) {
+      redirect('/explore');
+    }
+
+    // Fetch pending therapist data
+    const pendingTherapist = await db.query.pendingTherapists.findFirst({
+      where: eq(pendingTherapists.id, pendingId),
+    });
+
+    if (!pendingTherapist) {
+      redirect('/explore');
+    }
+
+    advisorData = {
+      id: advisorId, // Keep the full ID with prefix
+      name: pendingTherapist.name,
+      bookingURL: pendingTherapist.bookingURL || '',
+      email: pendingTherapist.clerkEmail || undefined,
+      profileUrl: pendingTherapist.profileUrl || undefined,
+      isPending: true,
+    };
+
+    // Track session search for pending therapist
+    await trackSessionSearch({
+      therapistId: advisorId,
+      therapistName: pendingTherapist.name,
+      userId: user.id,
+      userEmail: user.emailAddresses[0]?.emailAddress || '',
+    });
+  } else {
+    // Handle active therapist
+    const therapistId = parseInt(advisorId);
+    if (isNaN(therapistId)) {
+      redirect('/explore');
+    }
+
+    // Fetch therapist data with user information
+    const therapist = await db.query.therapists.findFirst({
+      where: eq(therapists.id, therapistId),
+      with: {
+        user: true, // Get the associated user data
+      },
+    });
+
+    if (!therapist) {
+      redirect('/explore');
+    }
+
+    // Get the user data for the therapist
+    const therapistUser = await db.query.users.findFirst({
+      where: eq(users.id, therapist.userId),
+    });
+
+    if (!therapistUser) {
+      redirect('/explore');
+    }
+
+    advisorData = {
+      id: therapist.id.toString(), // Use therapist ID
+      name: therapist.name,
+      bookingURL: therapist.bookingURL || '',
+      email: therapistUser.email || undefined,
+      profileUrl: therapist.profileUrl || undefined,
+      isPending: false,
+    };
+
+    // Track session search with correct IDs
+    await trackSessionSearch({
+      therapistId: therapist.id.toString(),
+      therapistName: therapist.name,
+      userId: user.id,
+      userEmail: user.emailAddresses[0]?.emailAddress || '',
+    });
   }
-
-  // Fetch therapist data with user information
-  const therapist = await db.query.therapists.findFirst({
-    where: eq(therapists.id, therapistId),
-    with: {
-      user: true, // Get the associated user data
-    },
-  });
-
-  if (!therapist) {
-    redirect('/explore');
-  }
-
-  // Get the user data for the therapist
-  const therapistUser = await db.query.users.findFirst({
-    where: eq(users.id, therapist.userId),
-  });
-
-  if (!therapistUser) {
-    redirect('/explore');
-  }
-
-  // Prepare advisor data for the booking flow
-  const advisorData = {
-    id: therapist.id.toString(), // Use therapist ID
-    name: therapist.name,
-    bookingURL: therapist.bookingURL || '',
-    email: therapistUser.email || undefined,
-    profileUrl: therapist.profileUrl || undefined,
-  };
-
-  // Track session search with correct IDs
-  await trackSessionSearch({
-    therapistId: therapist.id.toString(),
-    therapistName: therapist.name,
-    userId: user.id,
-    userEmail: user.emailAddresses[0]?.emailAddress || '',
-  });
 
   return (
     <UnifiedBookingFlow

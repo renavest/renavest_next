@@ -15,6 +15,7 @@ interface BookingFlowProps {
     bookingURL: string;
     profileUrl?: string;
     email?: string;
+    isPending?: boolean;
   };
   userId: string;
   userEmail: string;
@@ -96,16 +97,15 @@ export default function UnifiedBookingFlow({ advisor, userId, userEmail }: Booki
     },
   });
 
-  // Since we're reaching this component, it means the therapist has Google Calendar integration
-  // The marketplace flow already determined this before routing here
-  const hasGoogleCalendar = true;
+  // Check if this is a pending therapist or if they don't have Google Calendar integration
+  const shouldUseExternalBooking = advisor.isPending || !advisor.bookingURL;
 
-  // If Google Calendar is not connected, show AlternativeBooking
-  if (!hasGoogleCalendar) {
+  // If pending therapist or no Google Calendar integration, show AlternativeBooking
+  if (shouldUseExternalBooking) {
     return <AlternativeBooking advisor={advisor} bookingURL={advisor.bookingURL} />;
   }
 
-  // If Google Calendar is connected, show internal booking
+  // If active therapist with Google Calendar integration, show internal booking
   return (
     <BookingForm
       advisorId={advisor.id}
