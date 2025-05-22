@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
+import { sql } from 'drizzle-orm';
 
 import { db } from '@/src/db';
-import { sql } from 'drizzle-orm';
 import { pendingTherapists } from '@/src/db/schema';
 import AdvisorGrid from '@/src/features/explore/components/AdvisorGrid';
 import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';

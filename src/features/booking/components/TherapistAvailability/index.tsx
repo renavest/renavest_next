@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useMediaQuery } from 'react-responsive';
 
 import { formatDateTime } from '@/src/features/booking/utils/dateTimeUtils';
+import { timezoneManager } from '@/src/features/booking/utils/timezoneManager';
 import { COLORS } from '@/src/styles/colors';
 import { createDate } from '@/src/utils/timezone';
 

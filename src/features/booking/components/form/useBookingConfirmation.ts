@@ -2,12 +2,8 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { createDate } from '@/src/utils/timezone';
-
-import {
-  selectedSlotSignal,
-  timezoneSignal,
-} from '../TherapistAvailability/useTherapistAvailability';
+import { timezoneManager } from '../../utils/timezoneManager';
+import { selectedSlotSignal } from '../TherapistAvailability/useTherapistAvailability';
 
 interface BookingDetails {
   date: string;
@@ -33,7 +29,7 @@ export function useBookingConfirmation(
     setIsBooking(true);
     setError(null);
     try {
-      const startDateTime = createDate(selectedSlotSignal.value?.start, timezoneSignal.value);
+      const startDateTime = timezoneManager.createDateTime(selectedSlotSignal.value?.start);
       const date = startDateTime.toISODate() || '';
       const startTime = startDateTime.toFormat('HH:mm') || '';
 
@@ -41,7 +37,7 @@ export function useBookingConfirmation(
         date,
         startTime,
         therapistId: advisorId,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timezone: timezoneManager.getUserTimezone(),
       });
 
       toast.success('Session booked successfully!');

@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { db } from '@/src/db';
 import { bookingSessions } from '@/src/db/schema';
 import { sendBookingConfirmationEmail } from '@/src/features/booking/actions/sendBookingConfirmationEmail';
-import { TimezoneIdentifier } from '@/src/features/booking/utils/dateTimeUtils';
+import { timezoneManager, SupportedTimezone } from '@/src/features/booking/utils/timezoneManager';
 import { createAndStoreGoogleCalendarEvent } from '@/src/features/google-calendar/utils/googleCalendar';
 import { createDate } from '@/src/utils/timezone';
 

@@ -28,9 +28,9 @@ export function TherapistStatisticsCard({ statistics }: { statistics: TherapistS
 
   return (
     <div className='bg-white rounded-xl p-6 border border-purple-100 shadow-sm'>
-      <div className='grid md:grid-cols-4 gap-4'>
+      <div className='grid md:grid-cols-3 gap-4'>
         {statisticsItems.map((item, index) => (
-          <div key={index} className='flex items-center gap-4 bg-gray-50 p-4 rounded-lg'>
+          <div key={index} className='flex items-center gap-3 bg-gray-50 p-4 rounded-lg'>
             {item.icon}
             <div>
               <p className='text-xs text-gray-500'>{item.title}</p>
