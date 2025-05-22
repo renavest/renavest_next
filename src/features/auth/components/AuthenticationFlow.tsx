@@ -31,6 +31,9 @@ export default function AuthenticationFlow() {
 
   // Step navigation logic
   const renderCurrentStep = () => {
+    // Reset auth error signal before rendering each step
+    authErrorSignal.value = null;
+
     switch (currentStep.value) {
       case OnboardingStep.LOGIN:
         return <LoginStep />;
