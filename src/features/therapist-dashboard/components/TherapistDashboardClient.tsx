@@ -22,6 +22,7 @@ import {
   TherapistStatistics,
 } from '@/src/features/therapist-dashboard/types';
 import { COLORS } from '@/src/styles/colors';
+import TherapistProfileCard from './TherapistProfileCard';
 
 const ClientSidebar = ({
   clients,
@@ -240,37 +241,18 @@ export default function TherapistDashboardPage({
   return (
     <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen relative'>
       <TherapistNavbar pageTitle='Therapist Dashboard' />
-      <div className='mt-10 grid grid-cols-1 md:grid-cols-3 gap-8'>
+      <div className='mt-12 grid grid-cols-1 md:grid-cols-3 gap-10 items-stretch min-h-[60vh]'>
         {/* Google Calendar Integration Card */}
-        <div>
+        <div className='flex flex-col justify-center h-full'>
           <GoogleCalendarIntegration />
         </div>
         {/* Therapist Profile Card */}
-        <div className='w-full max-w-md mx-auto bg-white shadow-md rounded-lg overflow-hidden flex flex-col items-center justify-center p-8'>
-          <Image src='/renavestlogo.png' alt='Profile' width={48} height={48} className='mb-2' />
-          <h3 className='text-lg font-semibold text-purple-700 mb-2'>Your Profile</h3>
-          <p className='text-gray-600 mb-4 text-center'>
-            View and edit your therapist profile information.
-          </p>
-          <Link href='/therapist/profile'>
-            <button className='bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-2 rounded-lg shadow transition-colors'>
-              View/Edit Profile
-            </button>
-          </Link>
+        <div className='flex flex-col justify-center h-full'>
+          <TherapistProfileCard />
         </div>
-        {/* Coming Soon Card */}
-        <div className='w-full max-w-md mx-auto bg-white shadow-md rounded-lg overflow-hidden flex flex-col items-center justify-center p-8'>
-          <h3 className='text-lg font-semibold text-gray-800 mb-2'>Coming Soon</h3>
-          <ul className='text-gray-600 text-sm mb-4 list-disc list-inside text-left'>
-            <li>Invite clients to the platform</li>
-            <li>Client behavior analysis</li>
-            <li>Treatment effectiveness tracker</li>
-            <li>Client communication insights</li>
-            <li>And more!</li>
-          </ul>
-          <span className='inline-block bg-yellow-100 text-yellow-800 text-xs px-3 py-1 rounded-full'>
-            Stay tuned for updates
-          </span>
+        {/* Coming Soon: Future Insights Cards */}
+        <div className='flex flex-col justify-center h-full'>
+          <FutureInsightsCards />
         </div>
       </div>
     </div>
