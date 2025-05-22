@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import posthog from 'posthog-js';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { cn } from '@/src/lib/utils';
 import { Advisor } from '@/src/shared/types';
@@ -17,9 +17,39 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
   const { user } = useUser();
   const router = useRouter();
   const [hasError, setHasError] = useState(false);
+  const [currentUserTherapistId, setCurrentUserTherapistId] = useState<number | null>(null);
   const { isConnected, isChecking, bookingMode } = useMarketplaceIntegration(advisor);
 
+  // Check if current user is a therapist and get their therapist ID
+  useEffect(() => {
+    const fetchCurrentUserTherapistId = async () => {
+      if (user?.publicMetadata?.role === 'therapist') {
+        try {
+          const response = await fetch('/api/therapist/id');
+          const data = await response.json();
+          if (data.therapistId) {
+            setCurrentUserTherapistId(data.therapistId);
+          }
+        } catch (error) {
+          console.error('Failed to fetch current user therapist ID:', error);
+        }
+      }
+    };
+    fetchCurrentUserTherapistId();
+  }, [user]);
+
+  // Check if user is trying to book themselves
+  const isBookingSelf = !!(
+    currentUserTherapistId && advisor.therapistId === currentUserTherapistId
+  );
+
   const handleBookSession = () => {
+    // Prevent self-booking
+    if (isBookingSelf) {
+      alert('You cannot book a session with yourself!');
+      return;
+    }
+
     // Track booking event with enhanced context
     posthog.capture('therapist_session_booked', {
       therapist_id: advisor.therapistId || advisor.id,
@@ -55,6 +85,7 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
   };
 
   const getBookingButtonText = () => {
+    if (isBookingSelf) return 'Cannot Book Yourself';
     if (isChecking) return 'Loading...';
     if (advisor.isPending) return 'Book via External Calendar';
     if (isConnected) return 'Book a Session';
@@ -88,10 +119,10 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
       <div className='mt-6 space-y-4'>
         <button
           onClick={handleBookSession}
-          disabled={isChecking}
+          disabled={isChecking || isBookingSelf}
           className={cn(
             'block w-full py-3 px-4 text-center text-white rounded-lg transition-colors font-medium',
-            isChecking
+            isChecking || isBookingSelf
               ? 'bg-gray-400 cursor-not-allowed'
               : cn(COLORS.WARM_PURPLE.bg, COLORS.WARM_PURPLE.hover),
           )}
@@ -101,7 +132,9 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
 
         {/* Integration status indicator */}
         <div className='text-center text-xs text-gray-500'>
-          {advisor.isPending ? (
+          {isBookingSelf ? (
+            <span className='text-red-600'>⚠️ This is your own profile</span>
+          ) : advisor.isPending ? (
             <span className='text-blue-600'>⏳ Pending therapist - External booking</span>
           ) : isConnected ? (
             <span className='text-green-600'>✓ Direct booking available</span>

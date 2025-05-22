@@ -21,6 +21,29 @@ export default async function TherapistBookingPage({ params }: { params: { advis
     redirect('/explore');
   }
 
+  // Check if user is a therapist and prevent self-booking
+  const userRole = user.publicMetadata?.role;
+  if (userRole === 'therapist') {
+    // Get the user's database record to find their therapist ID
+    const userRecord = await db.query.users.findFirst({
+      where: eq(users.clerkId, user.id),
+    });
+
+    if (userRecord) {
+      const therapistRecord = await db.query.therapists.findFirst({
+        where: eq(therapists.userId, userRecord.id),
+      });
+
+      // If this is an active therapist trying to book themselves, redirect
+      if (therapistRecord && !advisorId.startsWith('pending-')) {
+        const targetTherapistId = parseInt(advisorId);
+        if (therapistRecord.id === targetTherapistId) {
+          redirect('/explore?error=cannot-book-self');
+        }
+      }
+    }
+  }
+
   let advisorData;
 
   // Check if this is a pending therapist (prefixed with "pending-")

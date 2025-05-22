@@ -88,6 +88,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Therapist not found' }, { status: 404 });
     }
 
+    // Prevent therapists from booking themselves
+    if (therapist.userId === user.id) {
+      return NextResponse.json(
+        {
+          error: 'Therapists cannot book sessions with themselves',
+          message: 'You cannot book a session with yourself',
+        },
+        { status: 400 },
+      );
+    }
+
     // Get timezone manager instance
     const timezoneManager = TimezoneManager.getInstance();
 
