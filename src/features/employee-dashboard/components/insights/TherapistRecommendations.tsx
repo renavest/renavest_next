@@ -1,11 +1,10 @@
 'use client';
 
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Calendar, Star } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import posthog from 'posthog-js';
 import { useEffect, useState } from 'react';
-
-import { COLORS } from '@/src/styles/colors';
 
 interface Therapist {
   id: number;
@@ -13,12 +12,20 @@ interface Therapist {
   title: string;
   profileUrl: string;
   previewBlurb: string;
+  bookingURL?: string;
 }
 
-export default function TherapistRecommendations() {
+interface TherapistRecommendationsProps {
+  showViewAllButton?: boolean;
+}
+
+export default function TherapistRecommendations({
+  showViewAllButton = false,
+}: TherapistRecommendationsProps) {
   const [therapists, setTherapists] = useState<Therapist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     async function fetchTherapists() {
@@ -38,51 +45,111 @@ export default function TherapistRecommendations() {
     fetchTherapists();
   }, []);
 
+  const handleBookFreeSession = (therapist: Therapist) => {
+    // Track booking intent
+    posthog.capture('free_session_booking_clicked', {
+      therapist_id: therapist.id,
+      therapist_name: therapist.name,
+      source: 'dashboard_recommendations',
+    });
+
+    // Navigate to booking page or external URL
+    if (therapist.bookingURL) {
+      window.open(therapist.bookingURL, '_blank');
+    } else {
+      router.push(`/book/${therapist.id}`);
+    }
+  };
+
+  const handleViewAll = () => {
+    posthog.capture('view_all_therapists_clicked', {
+      source: 'dashboard_recommendations',
+    });
+    router.push('/explore');
+  };
+
   return (
     <div className='bg-white rounded-xl p-4 md:p-8 border border-gray-100 shadow-sm'>
       <div className='flex items-center justify-between mb-4 md:mb-6'>
-        <h3 className='text-lg md:text-2xl font-semibold text-gray-800'>Explore More Experts</h3>
-        <Link
-          href='/explore'
-          className={`${COLORS.WARM_PURPLE.DEFAULT} hover:opacity-80 font-medium flex items-center gap-1 text-sm md:text-base`}
-        >
-          View All
-          <ArrowRight className='h-3 w-3 md:h-4 md:w-4' />
-        </Link>
+        <div>
+          <h3 className='text-lg md:text-2xl font-semibold text-gray-800 mb-1'>
+            Your Recommended Financial Therapists
+          </h3>
+          <p className='text-sm text-purple-600 font-medium flex items-center'>
+            <Star className='w-4 h-4 mr-1' />
+            Book a FREE consultation with any of these experts
+          </p>
+        </div>
       </div>
+
       <div className='space-y-4'>
-        {isLoading && <div className='text-gray-500 text-center py-6'>Loading therapists...</div>}
+        {isLoading && (
+          <div className='text-gray-500 text-center py-6'>
+            Loading your personalized recommendations...
+          </div>
+        )}
         {error && <div className='text-red-500 text-center py-6'>{error}</div>}
         {!isLoading &&
           !error &&
           therapists.map((therapist) => (
             <div
               key={therapist.id}
-              className='p-3 md:p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer'
+              className='p-4 md:p-6 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors group'
             >
-              <div className='flex items-center gap-3 md:gap-4'>
-                <div className='flex-shrink-0 w-10 h-10 md:w-12 md:h-12'>
+              <div className='flex items-start gap-4 md:gap-6'>
+                <div className='flex-shrink-0 w-16 h-16 md:w-20 md:h-20'>
                   <Image
                     src={therapist.profileUrl || '/default-profile.png'}
                     alt={therapist.name}
-                    width={48}
-                    height={48}
-                    className='rounded-full object-cover w-full h-full'
+                    width={80}
+                    height={80}
+                    className='rounded-full object-cover w-full h-full border-2 border-purple-100'
                   />
                 </div>
                 <div className='flex-1 min-w-0'>
-                  <h4 className='text-base md:text-lg font-medium text-gray-800 truncate'>
-                    {therapist.name}
-                  </h4>
-                  <p className='text-xs md:text-sm text-gray-500'>{therapist.title}</p>
-                  <p className='text-xs md:text-sm text-gray-600 mt-1'>{therapist.previewBlurb}</p>
+                  <div className='flex flex-col md:flex-row md:items-start md:justify-between gap-3'>
+                    <div className='flex-1'>
+                      <h4 className='text-lg md:text-xl font-semibold text-gray-800 mb-1'>
+                        {therapist.name}
+                      </h4>
+                      <p className='text-sm md:text-base text-purple-600 font-medium mb-2'>
+                        {therapist.title}
+                      </p>
+                      <p className='text-sm md:text-base text-gray-600 leading-relaxed'>
+                        {therapist.previewBlurb}
+                      </p>
+                    </div>
+                    <div className='flex-shrink-0'>
+                      <button
+                        onClick={() => handleBookFreeSession(therapist)}
+                        className='bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 md:px-6 md:py-3 rounded-lg font-medium transition-all duration-300 flex items-center gap-2 shadow-sm hover:shadow-md group-hover:scale-105'
+                      >
+                        <Calendar className='w-4 h-4' />
+                        Book FREE Session
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           ))}
       </div>
+
+      {showViewAllButton && !isLoading && !error && (
+        <div className='mt-6 pt-4 border-t border-gray-100'>
+          <button
+            onClick={handleViewAll}
+            className='w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2'
+          >
+            Don't like these therapists? View all
+            <ArrowRight className='w-4 h-4' />
+          </button>
+        </div>
+      )}
+
       <p className='mt-6 text-sm text-gray-500 text-center'>
-        Find the perfect financial therapist for your unique journey
+        🎯 Personalized matches based on your quiz responses • 💬 Free initial consultations
+        available
       </p>
     </div>
   );

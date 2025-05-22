@@ -9,6 +9,7 @@ import { cn } from '@/src/lib/utils';
 interface QuizModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onComplete?: () => void;
 }
 
 const QUIZ_QUESTIONS = [
@@ -65,7 +66,7 @@ const QUIZ_QUESTIONS = [
   },
 ];
 
-export const QuizModal = ({ isOpen, onClose }: QuizModalProps) => {
+export const QuizModal = ({ isOpen, onClose, onComplete }: QuizModalProps) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [isCompleted, setIsCompleted] = useState(false);
@@ -85,6 +86,10 @@ export const QuizModal = ({ isOpen, onClose }: QuizModalProps) => {
         answers,
         totalQuestions: QUIZ_QUESTIONS.length,
       });
+      // Call the completion callback if provided
+      if (onComplete) {
+        onComplete();
+      }
     }
   };
 
@@ -182,22 +187,17 @@ export const QuizModal = ({ isOpen, onClose }: QuizModalProps) => {
                 </svg>
               </div>
               <h3 className='text-xl font-semibold text-gray-900'>Quiz Complete!</h3>
-              <p className='text-gray-600'>
-                Thank you for completing our financial wellness quiz. Based on your responses, we'll
-                help you find the perfect financial therapist to support your goals.
+              <p className='text-gray-600 max-w-md mx-auto'>
+                Thank you for completing our financial wellness quiz! Based on your responses, we've
+                prepared personalized therapist recommendations just for you. Close this window to
+                view your matches and book a free consultation.
               </p>
-              <div className='flex flex-col sm:flex-row gap-3 justify-center'>
-                <button
-                  onClick={() => window.open('/explore', '_blank')}
-                  className='bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-colors'
-                >
-                  Explore Therapists
-                </button>
+              <div className='flex justify-center'>
                 <button
                   onClick={handleClose}
-                  className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium transition-colors'
+                  className='bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg font-medium transition-colors'
                 >
-                  Close
+                  View My Recommendations
                 </button>
               </div>
             </div>

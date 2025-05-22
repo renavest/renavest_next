@@ -1,26 +1,27 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { ArrowRight, Play, Share2, ClipboardList } from 'lucide-react';
-import Image from 'next/image';
+import { ClipboardList } from 'lucide-react';
 import posthog from 'posthog-js';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
-import { companyNameSignal, firstNameSignal } from '@/src/features/utm/utmCustomDemo';
+import { firstNameSignal } from '@/src/features/utm/utmCustomDemo';
 import { trackReferralShare } from '@/src/lib/referralTracking';
-import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
 // import OnboardingModal from '../../onboarding/components/OnboardingModal';
 // import { onboardingSignal } from '../../onboarding/state/onboardingState';
 
 import ComingSoon from './ComingSoon';
+import ConsultationBanner from './ConsultationBanner';
 import EmployeeNavbar from './EmployeeNavbar';
 import FinancialTherapyModal from './FinancialTherapyModal';
 import TherapistRecommendations from './insights/TherapistRecommendations';
 import { QuizModal } from './QuizModal';
+import SharePanel from './SharePanel';
 import { UpcomingSessionsSection } from './UpcomingSessionsSection';
+import VideoLibrary from './VideoLibrary';
 
 // const showOnboardingSignal = computed(() => {
 //   return (
@@ -29,66 +30,18 @@ import { UpcomingSessionsSection } from './UpcomingSessionsSection';
 //   );
 // });
 
-const SharePanel = ({ onShareClick }: { onShareClick: () => void; referralLink: string }) => {
-  return (
-    <div
-      className={cn(
-        'rounded-xl p-6 shadow-sm border animate-fade-in-up',
-        'bg-purple-100',
-        'border-blue-100 hover:shadow-md transition-shadow duration-300',
-        'group', // Added for subtle hover interactions
-      )}
-    >
-      <h3 className='text-xl font-semibold text-gray-800 mb-4 flex items-center'>
-        <Share2 className='w-5 h-5 mr-2 text-purple-600 group-hover:scale-110 transition-transform' />
-        Share Renavest
-      </h3>
-      <p className='text-gray-600 mb-4 text-sm'>
-        Help your colleagues {companyNameSignal.value ? `at ${companyNameSignal.value}` : ''}{' '}
-        discover financial wellness with Renavest. Share the link and track your impact!
-      </p>
-
-      <button
-        onClick={onShareClick}
-        className='w-full flex items-center justify-center bg-purple-600 hover:bg-purple-700 text-white rounded-lg py-3 px-4 transition-colors font-medium group'
-      >
-        <Share2 className='w-4 h-4 mr-2 group-hover:rotate-6 transition-transform' />
-        Share Now
-      </button>
-    </div>
-  );
-};
-
-const ConsultationBanner = ({ onTakeQuizClick }: { onTakeQuizClick: () => void }) => {
-  return (
-    <div className='bg-gradient-to-r from-purple-500 to-purple-700 rounded-2xl p-6 md:p-8 shadow-sm border border-purple-200 mb-8 md:mb-10 animate-fade-in-up'>
-      <div className='flex flex-col md:flex-row items-center justify-between'>
-        <div className='mb-4 md:mb-0 md:mr-6'>
-          <h2 className='text-2xl md:text-3xl font-bold text-white mb-2'>
-            Take Our Quick Quiz & Get a Free Consultation
-          </h2>
-          <p className='text-purple-50 md:text-lg max-w-2xl'>
-            Answer a few questions about your financial goals and we'll match you with the perfect
-            financial therapist for a free consultation.
-          </p>
-        </div>
-        <button
-          onClick={onTakeQuizClick}
-          className='bg-white hover:bg-gray-50 text-purple-700 px-6 py-3 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 font-semibold flex items-center whitespace-nowrap'
-        >
-          <ClipboardList className='w-5 h-5 mr-2' />
-          Take the Quiz
-        </button>
-      </div>
-    </div>
-  );
-};
-
 const TherapistRecommendationsWithOverlay = ({
   onTakeQuizClick,
+  hasCompletedQuiz,
 }: {
   onTakeQuizClick: () => void;
+  hasCompletedQuiz: boolean;
 }) => {
+  if (hasCompletedQuiz) {
+    // Show enhanced recommendations without overlay
+    return <TherapistRecommendations showViewAllButton={true} />;
+  }
+
   return (
     <div className='relative rounded-lg overflow-hidden'>
       {/* The actual recommendations component with reduced opacity */}
@@ -117,46 +70,12 @@ const TherapistRecommendationsWithOverlay = ({
   );
 };
 
-// Component for video library to reduce main component's line count
-const VideoLibrary = () => (
-  <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-100'>
-    <h3 className='font-semibold text-gray-800 mb-3'>Video Library</h3>
-    <div className='flex space-x-4 items-stretch'>
-      <div className='relative h-[250px] w-[150px] md:h-[300px] md:w-[200px] lg:h-[250px] lg:w-[150px]'>
-        <Image
-          src='https://d2qcuj7ucxw61o.cloudfront.net/atia_demo.jpg'
-          alt='Financial Therapy Video 1'
-          fill
-          className='object-cover rounded-lg'
-        />
-        <div className='absolute inset-0 flex items-center justify-center'>
-          <Play className='w-8 h-8 text-white bg-black/50 rounded-full p-2' />
-        </div>
-      </div>
-      <div className='relative h-[250px] w-[150px]  md:hidden lg:block'>
-        <Image
-          src='https://d2qcuj7ucxw61o.cloudfront.net/shani_demo.jpg'
-          alt='Financial Therapy Video 2'
-          fill
-          className='object-cover rounded-lg'
-        />
-        <div className='absolute inset-0 flex items-center justify-center'>
-          <Play className='w-8 h-8 text-white bg-black/50 rounded-full p-2' />
-        </div>
-      </div>
-      <button className='text-purple-600 hover:text-purple-800 text-sm flex items-center gap-1'>
-        View All
-        <ArrowRight className='h-3 w-3 md:h-4 md:w-4' />
-      </button>
-    </div>
-  </div>
-);
-
 export default function LimitedDashboardClient() {
   const { user } = useUser();
   const [referralLink, setReferralLink] = useState('');
   const [isFinancialTherapyModalOpen, setIsFinancialTherapyModalOpen] = useState(false);
   const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
+  const [hasCompletedQuiz, setHasCompletedQuiz] = useState(false);
   useEffect(() => {
     if (user && user.id) {
       // Generate personalized referral link
@@ -219,6 +138,15 @@ export default function LimitedDashboardClient() {
     });
 
     setIsQuizModalOpen(true);
+  };
+
+  const handleQuizComplete = () => {
+    setHasCompletedQuiz(true);
+    // Track quiz completion
+    posthog.capture('quiz_completed_dashboard', {
+      userId: user?.id,
+      userEmail: user?.emailAddresses[0]?.emailAddress,
+    });
   };
 
   return (
@@ -301,7 +229,10 @@ export default function LimitedDashboardClient() {
                   </span>
                   Recommended Financial Therapists
                 </h3>
-                <TherapistRecommendationsWithOverlay onTakeQuizClick={handleTakeQuizClick} />
+                <TherapistRecommendationsWithOverlay
+                  onTakeQuizClick={handleTakeQuizClick}
+                  hasCompletedQuiz={hasCompletedQuiz}
+                />
               </div>
             </div>
           </div>
@@ -360,7 +291,11 @@ export default function LimitedDashboardClient() {
       {/* {showOnboardingSignal.value && <OnboardingModal />} */}
 
       {/* Render modals */}
-      <QuizModal isOpen={isQuizModalOpen} onClose={() => setIsQuizModalOpen(false)} />
+      <QuizModal
+        isOpen={isQuizModalOpen}
+        onClose={() => setIsQuizModalOpen(false)}
+        onComplete={handleQuizComplete}
+      />
     </div>
   );
 }
