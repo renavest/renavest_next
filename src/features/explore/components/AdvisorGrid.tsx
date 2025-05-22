@@ -142,7 +142,7 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
                 <>
                   <span className='text-gray-300 text-xs'>•</span>
                   <span className='text-xs sm:text-sm font-semibold text-purple-600'>
-                    {advisor.hourlyRate.replace('$', '')} credits / hr
+                    {advisor.hourlyRate} / hr
                   </span>
                 </>
               )}

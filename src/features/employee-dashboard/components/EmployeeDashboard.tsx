@@ -14,16 +14,8 @@ export default async function EmployeeDashboard() {
   if (!user) {
     redirect('/login');
   }
-  // Get the user object for additional information
-  const email = user?.emailAddresses[0]?.emailAddress;
-
   // Clear onboarding state if needed
   clearOnboardingState();
-
-  // Render specific view based on email
-  if (email === 'stanley@renavestapp.com' || email === 'sethmorton05@gmail.com') {
-    return <LimitedDashboardClient />; // TODO: Remove this once we have a full employee dashboard
-  }
 
   return <LimitedDashboardClient />;
 }

@@ -156,6 +156,7 @@ export default function LimitedDashboardClient() {
   const { user } = useUser();
   const [referralLink, setReferralLink] = useState('');
   const [isFinancialTherapyModalOpen, setIsFinancialTherapyModalOpen] = useState(false);
+  const [takeQuiz, setTakeQuiz] = useState(false);
   useEffect(() => {
     if (user && user.id) {
       // Generate personalized referral link
@@ -217,6 +218,7 @@ export default function LimitedDashboardClient() {
       userEmail: user?.emailAddresses[0]?.emailAddress,
     });
 
+    setTakeQuiz(true);
     // Future implementation: navigate to quiz or open quiz modal
     toast.info('Quiz feature coming soon!');
   };
@@ -344,6 +346,18 @@ export default function LimitedDashboardClient() {
             <VideoLibrary />
           </div>
         </div>
+        {/* Show View More Therapists button if quiz taken */}
+        {takeQuiz && (
+          <div className='flex justify-center mt-8'>
+            <a
+              href='/explore'
+              className='bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg shadow-md font-semibold transition-colors duration-300 flex items-center gap-2'
+            >
+              View More Therapists
+              <ArrowRight className='h-5 w-5' />
+            </a>
+          </div>
+        )}
         <ComingSoon />
       </main>
       {/* {showOnboardingSignal.value && <OnboardingModal />} */}
