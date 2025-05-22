@@ -199,26 +199,157 @@ export default function TherapistProfileCard() {
       </div>
       <div className='flex gap-3 mt-4'>
         {editMode ? (
-          <>
-            <button
-              className='flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-2 rounded-lg shadow transition-colors disabled:opacity-60'
-              onClick={handleSave}
-              disabled={saving}
-            >
-              {saving ? <Loader2 className='animate-spin h-5 w-5' /> : <Save className='h-5 w-5' />}
-              {saving ? 'Saving...' : 'Save'}
-            </button>
-            <button
-              className='flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold px-6 py-2 rounded-lg shadow transition-colors'
-              onClick={() => {
-                setEditMode(false);
-                setForm({ ...user, ...therapist });
-              }}
-              disabled={saving}
-            >
-              <X className='h-5 w-5' /> Cancel
-            </button>
-          </>
+          <form
+            className='w-full flex flex-col gap-4 mt-2'
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSave();
+            }}
+          >
+            <div>
+              <label className='block text-xs font-semibold text-gray-600 mb-1'>Full Name</label>
+              <input
+                className='w-full bg-gray-50 rounded-lg px-3 py-2 text-gray-800 border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition'
+                name='name'
+                value={form.name || ''}
+                onChange={handleChange}
+                placeholder='Full Name'
+                required
+              />
+            </div>
+            <div>
+              <label className='block text-xs font-semibold text-gray-600 mb-1'>Title</label>
+              <input
+                className='w-full bg-gray-50 rounded-lg px-3 py-2 text-gray-800 border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition'
+                name='title'
+                value={form.title || ''}
+                onChange={handleChange}
+                placeholder='Title'
+              />
+            </div>
+            <div>
+              <label className='block text-xs font-semibold text-gray-600 mb-1'>Email</label>
+              <input
+                className='w-full bg-gray-50 rounded-lg px-3 py-2 text-gray-400 border border-gray-100 cursor-not-allowed'
+                name='email'
+                value={user.email}
+                disabled
+              />
+            </div>
+            <div className='flex gap-4'>
+              <div className='flex-1'>
+                <label className='block text-xs font-semibold text-gray-600 mb-1'>
+                  Years of Experience
+                </label>
+                <input
+                  className='w-full bg-gray-50 rounded-lg px-3 py-2 text-gray-800 border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition'
+                  name='yoe'
+                  value={form.yoe || ''}
+                  onChange={handleChange}
+                  placeholder='Years'
+                  type='number'
+                  min={0}
+                />
+              </div>
+              <div className='flex-1'>
+                <label className='block text-xs font-semibold text-gray-600 mb-1'>
+                  Hourly Rate (USD)
+                </label>
+                <input
+                  className='w-full bg-gray-50 rounded-lg px-3 py-2 text-gray-800 border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition'
+                  name='hourlyRate'
+                  value={form.hourlyRate || ''}
+                  onChange={handleChange}
+                  placeholder='Hourly Rate'
+                  type='number'
+                  min={0}
+                />
+              </div>
+            </div>
+            <div>
+              <label className='block text-xs font-semibold text-gray-600 mb-1'>
+                Areas of Expertise (comma separated)
+              </label>
+              <input
+                className='w-full bg-gray-50 rounded-lg px-3 py-2 text-gray-800 border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition'
+                name='expertise'
+                value={form.expertise || ''}
+                onChange={handleChange}
+                placeholder='e.g. Couples, Anxiety, Financial Therapy'
+              />
+            </div>
+            <div>
+              <label className='block text-xs font-semibold text-gray-600 mb-1'>
+                Certifications
+              </label>
+              <input
+                className='w-full bg-gray-50 rounded-lg px-3 py-2 text-gray-800 border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition'
+                name='certifications'
+                value={form.certifications || ''}
+                onChange={handleChange}
+                placeholder='Certifications'
+              />
+            </div>
+            <div>
+              <label className='block text-xs font-semibold text-gray-600 mb-1'>
+                Who I Work With
+              </label>
+              <input
+                className='w-full bg-gray-50 rounded-lg px-3 py-2 text-gray-800 border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition'
+                name='clientele'
+                value={form.clientele || ''}
+                onChange={handleChange}
+                placeholder='Ideal Clientele'
+              />
+            </div>
+            <div>
+              <label className='block text-xs font-semibold text-gray-600 mb-1'>About Me</label>
+              <textarea
+                className='w-full bg-gray-50 rounded-lg px-3 py-2 text-gray-800 border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition min-h-[80px]'
+                name='longBio'
+                value={form.longBio || ''}
+                onChange={handleChange}
+                placeholder='Bio'
+                rows={3}
+              />
+            </div>
+            <div>
+              <label className='block text-xs font-semibold text-gray-600 mb-1'>Booking URL</label>
+              <input
+                className='w-full bg-gray-50 rounded-lg px-3 py-2 text-gray-800 border border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 transition'
+                name='bookingURL'
+                value={form.bookingURL || ''}
+                onChange={handleChange}
+                placeholder='Booking URL'
+              />
+            </div>
+            <div className='flex gap-3 mt-4 justify-center'>
+              <button
+                type='submit'
+                className='flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-2 rounded-lg shadow transition-colors disabled:opacity-60'
+                disabled={saving}
+              >
+                {saving ? (
+                  <Loader2 className='animate-spin h-5 w-5' />
+                ) : (
+                  <Save className='h-5 w-5' />
+                )}
+                {saving ? 'Saving...' : 'Save'}
+              </button>
+              <button
+                type='button'
+                className='flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold px-6 py-2 rounded-lg shadow transition-colors'
+                onClick={() => {
+                  setEditMode(false);
+                  setForm({ ...user, ...therapist });
+                }}
+                disabled={saving}
+              >
+                <X className='h-5 w-5' /> Cancel
+              </button>
+              {saveSuccess && <span className='text-green-600 font-medium ml-2'>Saved!</span>}
+            </div>
+          </form>
         ) : (
           <button
             className='flex items-center gap-2 bg-purple-100 hover:bg-purple-200 text-purple-700 font-semibold px-6 py-2 rounded-lg shadow transition-colors'
@@ -227,7 +358,6 @@ export default function TherapistProfileCard() {
             <Pencil className='h-5 w-5' /> Edit Profile
           </button>
         )}
-        {saveSuccess && <span className='text-green-600 font-medium ml-2'>Saved!</span>}
       </div>
     </div>
   );
