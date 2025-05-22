@@ -60,10 +60,11 @@ export default function TherapistNavbar({
           {showBackButton && (
             <Link
               href={backButtonHref}
-              className='mr-3 flex items-center text-gray-600 hover:text-gray-800 transition-colors'
-              aria-label='Back'
+              className='mr-4 flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors bg-gray-50 hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-200'
+              aria-label='Back to Dashboard'
             >
-              <ChevronLeft className='h-6 w-6' />
+              <ChevronLeft className='h-5 w-5' />
+              <span className='text-sm font-medium hidden sm:inline'>Back</span>
             </Link>
           )}
           <div className='relative flex-shrink-0 w-8 h-8 md:w-10 md:h-10 mx-3'>
@@ -84,7 +85,7 @@ export default function TherapistNavbar({
         <div className='flex items-center gap-3'>
           <Link
             href='/explore'
-            className='flex items-center gap-1.5 text-gray-700 hover:text-gray-900 transition-colors text-sm px-2 py-1 rounded-md hover:bg-gray-100'
+            className='flex items-center gap-1.5 text-gray-700 hover:text-gray-900 transition-colors text-sm px-3 py-2 rounded-lg hover:bg-gray-100 border border-transparent hover:border-gray-200'
           >
             <svg className='h-4 w-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
               <path
@@ -94,14 +95,14 @@ export default function TherapistNavbar({
                 d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
               />
             </svg>
-            <span>View Marketplace</span>
+            <span className='hidden sm:inline'>Marketplace</span>
           </Link>
           <Link
             href='/therapist/profile'
-            className='flex items-center gap-1.5 text-gray-700 hover:text-gray-900 transition-colors text-sm px-2 py-1 rounded-md hover:bg-gray-100'
+            className='flex items-center gap-1.5 text-gray-700 hover:text-gray-900 transition-colors text-sm px-3 py-2 rounded-lg hover:bg-gray-100 border border-transparent hover:border-gray-200'
           >
             <User className='h-4 w-4' />
-            <span>View Profile</span>
+            <span className='hidden sm:inline'>Profile</span>
           </Link>
           <div className='h-6 w-px bg-gray-200 mx-1'></div>
           <LogoutButton />

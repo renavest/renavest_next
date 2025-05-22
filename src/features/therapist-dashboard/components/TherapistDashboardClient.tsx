@@ -3,8 +3,9 @@
 import { useUser } from '@clerk/nextjs';
 import { UserCircle2, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 
+import { useGoogleCalendarIntegration } from '@/src/features/google-calendar/utils/googleCalendarIntegration';
 import { AddNewClientSection } from '@/src/features/therapist-dashboard/components/AddNewClientSection';
 import ClientNotesSection from '@/src/features/therapist-dashboard/components/ClientNotesSection';
 import TherapistNavbar from '@/src/features/therapist-dashboard/components/TherapistNavbar';
@@ -13,6 +14,13 @@ import { UpcomingSessionsCard } from '@/src/features/therapist-dashboard/compone
 import {
   therapistIdSignal,
   therapistPageLoadedSignal,
+  clientsSignal,
+  upcomingSessionsSignal,
+  statisticsSignal,
+  selectedClientSignal,
+  isAddClientOpenSignal,
+  showOnboardingBannerSignal,
+  isOnboardedSignal,
 } from '@/src/features/therapist-dashboard/state/therapistDashboardState';
 import {
   Client,
@@ -20,6 +28,86 @@ import {
   TherapistStatistics,
 } from '@/src/features/therapist-dashboard/types';
 import { COLORS } from '@/src/styles/colors';
+
+const QuickActionsSection = () => {
+  const { status: calendarStatus } = useGoogleCalendarIntegration(therapistIdSignal.value || 0);
+
+  const calendarText = calendarStatus.isConnected
+    ? 'Manage Calendar Integration'
+    : 'Connect Google Calendar';
+
+  const calendarDescription = calendarStatus.isConnected
+    ? 'View and manage your calendar settings'
+    : 'Connect your Google Calendar to sync sessions';
+
+  return (
+    <div className='mt-6'>
+      <h2 className='text-xl font-semibold text-gray-800 mb-4'>Quick Actions</h2>
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+        <Link
+          href='/therapist/profile'
+          className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all group'
+        >
+          <div className='flex items-center gap-4'>
+            <div className='w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center group-hover:bg-purple-200 transition-colors'>
+              <svg
+                className='w-6 h-6 text-purple-600'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'
+                />
+              </svg>
+            </div>
+            <div>
+              <h3 className='text-lg font-semibold text-gray-800'>View & Edit Profile</h3>
+              <p className='text-gray-500 text-sm'>Manage your professional information</p>
+            </div>
+          </div>
+        </Link>
+        <Link
+          href='/therapist/integrations'
+          className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all group'
+        >
+          <div className='flex items-center gap-4'>
+            <div
+              className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+                calendarStatus.isConnected
+                  ? 'bg-green-100 group-hover:bg-green-200'
+                  : 'bg-blue-100 group-hover:bg-blue-200'
+              }`}
+            >
+              <svg
+                className={`w-6 h-6 ${
+                  calendarStatus.isConnected ? 'text-green-600' : 'text-blue-600'
+                }`}
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'
+                />
+              </svg>
+            </div>
+            <div>
+              <h3 className='text-lg font-semibold text-gray-800'>{calendarText}</h3>
+              <p className='text-gray-500 text-sm'>{calendarDescription}</p>
+            </div>
+          </div>
+        </Link>
+      </div>
+    </div>
+  );
+};
 
 const ClientSidebar = ({
   clients,
@@ -223,15 +311,13 @@ export default function TherapistDashboardPage({
   initialTherapistId,
 }: TherapistDashboardPageProps) {
   const { user, isLoaded: isUserLoaded } = useUser();
-  // State initialized with server data but can be updated by client actions
-  const [clients, setClients] = useState<Client[]>(initialClients);
-  const [upcomingSessions, setUpcomingSessions] =
-    useState<UpcomingSession[]>(initialUpcomingSessions);
-  const [statistics, setStatistics] = useState<TherapistStatistics>(initialStatistics);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [isAddClientOpen, setIsAddClientOpen] = useState(false);
-  const [showOnboardingBanner, setShowOnboardingBanner] = useState(true);
-  const [isOnboarded, setIsOnboarded] = useState(false);
+
+  // Initialize signals with server data
+  useEffect(() => {
+    clientsSignal.value = initialClients;
+    upcomingSessionsSignal.value = initialUpcomingSessions;
+    statisticsSignal.value = initialStatistics;
+  }, [initialClients, initialUpcomingSessions, initialStatistics]);
 
   // Set therapist ID from props
   useEffect(() => {
@@ -247,7 +333,7 @@ export default function TherapistDashboardPage({
       // Check if profile is complete and Google Calendar is connected
       const profileComplete = !!(user.firstName && user.lastName);
       const calendarConnected = !!user.publicMetadata?.googleCalendarConnected;
-      setIsOnboarded(profileComplete && calendarConnected);
+      isOnboardedSignal.value = profileComplete && calendarConnected;
     }
   }, [user]);
 
@@ -272,16 +358,14 @@ export default function TherapistDashboardPage({
         fetchWithErrorHandling('/api/therapist/statistics'),
       ]);
 
-      // Update state with fetched data
-      setClients(clientsResponse.clients || []);
-      setUpcomingSessions(sessionsResponse.sessions || []);
-      setStatistics(
-        statisticsResponse.statistics || {
-          totalSessions: 0,
-          totalClients: 0,
-          completedSessions: 0,
-        },
-      );
+      // Update signals with fetched data
+      clientsSignal.value = clientsResponse.clients || [];
+      upcomingSessionsSignal.value = sessionsResponse.sessions || [];
+      statisticsSignal.value = statisticsResponse.statistics || {
+        totalSessions: 0,
+        totalClients: 0,
+        completedSessions: 0,
+      };
     } catch (error) {
       console.error('Error refreshing data:', error);
     }
@@ -300,41 +384,17 @@ export default function TherapistDashboardPage({
   }
 
   // Render main dashboard
-  return renderDashboard(
-    isOnboarded,
-    showOnboardingBanner,
-    setShowOnboardingBanner,
-    statistics,
-    clients,
-    selectedClient,
-    setSelectedClient,
-    isAddClientOpen,
-    setIsAddClientOpen,
-    upcomingSessions,
-    refreshData,
-  );
+  return renderDashboard(refreshData);
 }
 
 // Helper function to render main dashboard
-function renderDashboard(
-  isOnboarded: boolean,
-  showOnboardingBanner: boolean,
-  setShowOnboardingBanner: (show: boolean) => void,
-  statistics: TherapistStatistics,
-  clients: Client[],
-  selectedClient: Client | null,
-  setSelectedClient: (client: Client | null) => void,
-  isAddClientOpen: boolean,
-  setIsAddClientOpen: (open: boolean) => void,
-  upcomingSessions: UpcomingSession[],
-  refreshData: () => Promise<void>,
-) {
+function renderDashboard(refreshData: () => Promise<void>) {
   return (
     <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen relative'>
       <TherapistNavbar showBackButton={false} />
 
       {/* Onboarding Banner */}
-      {!isOnboarded && showOnboardingBanner && (
+      {!isOnboardedSignal.value && showOnboardingBannerSignal.value && (
         <div className='mt-6 bg-gradient-to-r from-purple-600 to-purple-800 text-white p-4 rounded-xl shadow-md'>
           <div className='flex items-center justify-between'>
             <div className='flex items-center space-x-3'>
@@ -364,7 +424,7 @@ function renderDashboard(
                 Complete Setup
               </Link>
               <button
-                onClick={() => setShowOnboardingBanner(false)}
+                onClick={() => (showOnboardingBannerSignal.value = false)}
                 className='p-2 text-white/80 hover:text-white rounded-full'
                 aria-label='Dismiss'
               >
@@ -384,67 +444,10 @@ function renderDashboard(
       )}
 
       <div className='mt-6'>
-        <TherapistStatisticsCard statistics={statistics} />
+        <TherapistStatisticsCard statistics={statisticsSignal.value} />
       </div>
 
-      {/* Quick Actions Section */}
-      <div className='mt-6'>
-        <h2 className='text-xl font-semibold text-gray-800 mb-4'>Quick Actions</h2>
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-          <Link
-            href='/therapist/profile'
-            className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all group'
-          >
-            <div className='flex items-center gap-4'>
-              <div className='w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center group-hover:bg-purple-200 transition-colors'>
-                <svg
-                  className='w-6 h-6 text-purple-600'
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'
-                  />
-                </svg>
-              </div>
-              <div>
-                <h3 className='text-lg font-semibold text-gray-800'>View & Edit Profile</h3>
-                <p className='text-gray-500 text-sm'>Manage your professional information</p>
-              </div>
-            </div>
-          </Link>
-          <Link
-            href='/therapist/integrations'
-            className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all group'
-          >
-            <div className='flex items-center gap-4'>
-              <div className='w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200 transition-colors'>
-                <svg
-                  className='w-6 h-6 text-blue-600'
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'
-                  />
-                </svg>
-              </div>
-              <div>
-                <h3 className='text-lg font-semibold text-gray-800'>Calendar Integration</h3>
-                <p className='text-gray-500 text-sm'>Connect your Google Calendar</p>
-              </div>
-            </div>
-          </Link>
-        </div>
-      </div>
+      <QuickActionsSection />
 
       {/* New section for Future Insights */}
       <div className='mt-6'>
@@ -455,24 +458,27 @@ function renderDashboard(
       <div className='grid grid-cols-12 gap-6 mt-6'>
         <div className='col-span-4 bg-white rounded-xl border border-gray-100 shadow-sm'>
           <ClientSidebar
-            clients={clients}
-            selectedClient={selectedClient}
-            onClientSelect={setSelectedClient}
-            onAddClientClick={() => setIsAddClientOpen(true)}
+            clients={clientsSignal.value}
+            selectedClient={selectedClientSignal.value}
+            onClientSelect={(client) => (selectedClientSignal.value = client)}
+            onAddClientClick={() => (isAddClientOpenSignal.value = true)}
           />
         </div>
         <div className='col-span-8 bg-white rounded-xl border border-gray-100 shadow-sm'>
-          <ClientDetailView client={selectedClient} upcomingSessions={upcomingSessions} />
+          <ClientDetailView
+            client={selectedClientSignal.value}
+            upcomingSessions={upcomingSessionsSignal.value}
+          />
         </div>
       </div>
 
       {/* Add Client Modal */}
-      {isAddClientOpen && (
+      {isAddClientOpenSignal.value && (
         <div className='fixed inset-0 z-50 flex items-center justify-center'>
           {/* Backdrop */}
           <div
             className='fixed inset-0 bg-black/25 backdrop-blur-sm'
-            onClick={() => setIsAddClientOpen(false)}
+            onClick={() => (isAddClientOpenSignal.value = false)}
           />
           {/* Modal */}
           <div className='relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6 animate-in fade-in zoom-in duration-200'>
@@ -480,7 +486,7 @@ function renderDashboard(
             <div className='mb-6 flex justify-between items-center'>
               <h2 className='text-2xl font-semibold text-gray-900'>Invite a Client</h2>
               <button
-                onClick={() => setIsAddClientOpen(false)}
+                onClick={() => (isAddClientOpenSignal.value = false)}
                 className='text-gray-400 hover:text-gray-600 p-2 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-400'
                 aria-label='Close Add Client Modal'
               >
