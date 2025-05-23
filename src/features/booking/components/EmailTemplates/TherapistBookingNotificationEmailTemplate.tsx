@@ -9,20 +9,18 @@ import {
   Text,
 } from '@react-email/components';
 import { Tailwind } from '@react-email/tailwind';
-import { DateTime } from 'luxon';
 import * as React from 'react';
 
-import { formatDateTime } from '@/src/features/booking/utils/dateTimeUtils';
+import { SupportedTimezone } from '@/src/features/booking/utils/timezoneManager';
 import { COLORS } from '@/src/styles/colors';
-import { createDate } from '@/src/utils/timezone';
 
 interface TherapistBookingNotificationEmailProps {
   therapistName: string;
   clientName: string;
   sessionDate: string;
   sessionTime: string;
-  clientTimezone: string;
-  therapistTimezone: string;
+  clientTimezone: SupportedTimezone;
+  therapistTimezone: SupportedTimezone;
   googleMeetLink?: string;
 }
 
@@ -37,25 +35,13 @@ export const TherapistBookingNotificationEmailTemplate: React.FC<
   therapistTimezone,
   googleMeetLink,
 }) => {
-  // Use therapistTimezone for display
-  let dateObj: { date: string; time: string; timezone: string };
-  let parseError = '';
-  if (typeof sessionDate === 'string' && typeof sessionTime === 'string') {
-    const dt = DateTime.fromFormat(`${sessionDate} ${sessionTime}`, 'yyyy-MM-dd HH:mm', {
-      zone: therapistTimezone,
-    });
-    if (dt.isValid) {
-      dateObj = formatDateTime(dt, therapistTimezone);
-    } else {
-      dateObj = { date: 'Invalid DateTime', time: 'Invalid DateTime', timezone: therapistTimezone };
-      parseError = `Invalid DateTime: ${sessionDate} ${sessionTime} (${therapistTimezone})`;
-
-      if (typeof window === 'undefined') console.error(parseError);
-    }
-  } else {
-    dateObj = { date: sessionDate, time: sessionTime, timezone: therapistTimezone };
-  }
-  // TODO: Extract date/time parsing logic to a shared helper for all email templates
+  // The sessionDate and sessionTime are already formatted strings from the API
+  // No need to re-parse them, just use them directly
+  const dateObj = {
+    date: sessionDate,
+    time: sessionTime,
+    timezone: therapistTimezone,
+  };
 
   return (
     <Html>
@@ -106,12 +92,6 @@ export const TherapistBookingNotificationEmailTemplate: React.FC<
               <Text className='text-gray-800 my-2'>
                 <strong className={COLORS.WARM_PURPLE.DEFAULT}>Timezone:</strong> {dateObj.timezone}
               </Text>
-              {parseError && (
-                <Text className='text-red-600 my-2'>
-                  There was an issue displaying the session time. Please check your dashboard for
-                  details.
-                </Text>
-              )}
             </Section>
 
             {googleMeetLink && (
@@ -141,7 +121,7 @@ export const TherapistBookingNotificationEmailTemplate: React.FC<
 
             <Section className={`${COLORS.WARM_PURPLE['10']} p-3 rounded-lg text-center mt-6`}>
               <Text className={`${COLORS.WARM_PURPLE.DEFAULT} text-xs m-0`}>
-                © {createDate().year} Renavest. All rights reserved.
+                © {new Date().getFullYear()} Renavest. All rights reserved.
               </Text>
             </Section>
           </Container>

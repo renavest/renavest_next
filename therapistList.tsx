@@ -494,7 +494,7 @@ export const therapistList = [
     google_calendar_integration_date: null,
     created_at: '2025-04-20 01:08:56.954',
     updated_at: '2025-04-20 01:08:56.954',
-    email: 'jennifer@moneymindsetconsulting.com',
+    email: 'jennifer@jennifercalder.com',
   },
   {
     id: 20,

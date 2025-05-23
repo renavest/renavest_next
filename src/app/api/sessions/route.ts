@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { db } from '@/src/db';
 import { bookingSessions } from '@/src/db/schema';
 import { sendBookingConfirmationEmail } from '@/src/features/booking/actions/sendBookingConfirmationEmail';
-import { TimezoneIdentifier } from '@/src/features/booking/utils/dateTimeUtils';
+import { SupportedTimezone } from '@/src/features/booking/utils/timezoneManager';
 import { createAndStoreGoogleCalendarEvent } from '@/src/features/google-calendar/utils/googleCalendar';
 import { createDate } from '@/src/utils/timezone';
 
@@ -34,17 +34,14 @@ const UpdateBookingSchema = z.object({
 });
 
 // Helper function to get user and therapist details
-async function getUserAndTherapist(
-  userId: string,
-  therapistId: number,
-): Promise<[UserType | null, TherapistType | null]> {
+async function getUserAndTherapist(clerkUserId: string, therapistId: number) {
   const [user, therapist] = await Promise.all([
     db.query.users.findFirst({
-      where: (users, { eq }) => eq(users.clerkId, userId),
-    }) as Promise<UserType | null>,
+      where: (users, { eq }) => eq(users.clerkId, clerkUserId),
+    }),
     db.query.therapists.findFirst({
       where: (therapists, { eq }) => eq(therapists.id, therapistId),
-    }) as Promise<TherapistType | null>,
+    }),
   ]);
 
   return [user, therapist];
@@ -82,8 +79,8 @@ async function checkSlotAvailability(
 export async function POST(req: NextRequest) {
   try {
     auth.protect();
-    const userId = (await currentUser())?.id;
-    if (!userId) {
+    const currentUserData = await currentUser();
+    if (!currentUserData?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -91,9 +88,23 @@ export async function POST(req: NextRequest) {
     const validatedData = CreateBookingSchema.parse(body);
 
     // Get user and therapist details
-    const [user, therapist] = await getUserAndTherapist(userId, validatedData.therapistId);
+    const [user, therapist] = await getUserAndTherapist(
+      currentUserData.id,
+      validatedData.therapistId,
+    );
     if (!user || !therapist) {
       return NextResponse.json({ error: 'User or therapist not found' }, { status: 404 });
+    }
+
+    // Prevent therapists from booking themselves
+    if (therapist.userId === user.id) {
+      return NextResponse.json(
+        {
+          error: 'Therapists cannot book sessions with themselves',
+          message: 'You cannot book a session with yourself',
+        },
+        { status: 400 },
+      );
     }
 
     // Set up Google Calendar client
@@ -136,12 +147,12 @@ export async function POST(req: NextRequest) {
     const bookingResult = await db
       .insert(bookingSessions)
       .values({
-        userId: user.clerkId,
+        userId: user.id,
         therapistId: therapist.id,
         sessionDate: therapistStartTime,
         sessionStartTime: therapistStartTime,
         sessionEndTime: therapistEndTime,
-        status: 'pending',
+        status: 'confirmed',
         metadata: {
           clientTimezone: validatedData.timezone,
           therapistTimezone,
@@ -159,14 +170,17 @@ export async function POST(req: NextRequest) {
     ) {
       try {
         calendarResult = await createAndStoreGoogleCalendarEvent({
-          booking,
+          booking: {
+            ...booking,
+            userId: booking.userId.toString(), // Convert to string if needed
+          },
           therapist,
           user,
           db,
         });
       } catch (error) {
         console.error('Error creating Google Calendar event:', error);
-        // Optionally: return error or continue
+        // Continue without calendar event
       }
     }
 
@@ -177,8 +191,8 @@ export async function POST(req: NextRequest) {
         therapistEmail: therapist.googleCalendarEmail || '',
         sessionDate: createDate(booking.sessionDate).toFormat('yyyy-MM-dd'),
         sessionTime: createDate(booking.sessionStartTime).toFormat('HH:mm'),
-        clientTimezone: validatedData.timezone as TimezoneIdentifier,
-        therapistTimezone,
+        clientTimezone: validatedData.timezone as SupportedTimezone,
+        therapistTimezone: therapistTimezone as SupportedTimezone,
         googleMeetLink: calendarResult?.googleMeetLink,
         therapistName: therapist.name,
         clientName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
@@ -258,8 +272,6 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
-    // TODO: Send email notifications about booking status change
-
     return NextResponse.json({
       success: true,
       status: validatedData.status,
@@ -288,10 +300,19 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const role = searchParams.get('role'); // 'client' or 'therapist'
 
+    // Get the user's database ID from their Clerk ID
+    const user = await db.query.users.findFirst({
+      where: (users, { eq }) => eq(users.clerkId, userId),
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     let bookings;
     if (role === 'therapist') {
       const therapist = await db.query.therapists.findFirst({
-        where: (therapists, { eq }) => eq(therapists.userId, userId),
+        where: (therapists, { eq }) => eq(therapists.userId, user.id),
       });
 
       if (!therapist) {
@@ -305,7 +326,7 @@ export async function GET(req: NextRequest) {
     } else {
       // Default to client role
       bookings = await db.query.bookingSessions.findMany({
-        where: (bookings, { eq }) => eq(bookings.userId, userId),
+        where: (bookings, { eq }) => eq(bookings.userId, user.id),
         orderBy: (bookings, { desc }) => [desc(bookings.sessionDate)],
       });
     }

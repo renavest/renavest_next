@@ -1,9 +1,9 @@
 'use client';
 
 import { Calendar, Clock } from 'lucide-react';
-import Image from 'next/image';
 import { useState, useEffect } from 'react';
 
+import { TherapistImage } from '@/src/components/ui/TherapistImage';
 import { formatDateTime } from '@/src/features/booking/utils/dateTimeUtils';
 import { trackUIInteraction } from '@/src/features/posthog/tracking';
 import { createDate } from '@/src/utils/timezone';
@@ -111,12 +111,12 @@ export function UpcomingSessionsSection() {
               className='flex items-center space-x-4 p-3 hover:bg-gray-50 rounded-lg transition-colors'
             >
               {session.therapistProfileUrl ? (
-                <Image
-                  src={session.therapistProfileUrl}
-                  alt={`${session.therapistName}'s profile`}
+                <TherapistImage
+                  profileUrl={session.therapistProfileUrl}
+                  name={session.therapistName}
                   width={40}
                   height={40}
-                  className='rounded-full object-cover'
+                  className='rounded-full'
                 />
               ) : (
                 <div className='w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center'>

@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const userId = user.id;
+    const clerkUserId = user.id;
     const { searchParams } = new URL(req.url);
     const bookingId = searchParams.get('bookingId');
 
@@ -25,9 +25,19 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Booking ID is required' }, { status: 400 });
     }
 
+    // Get the database user ID from the Clerk user ID
+    const dbUser = await db.query.users.findFirst({
+      where: (users, { eq }) => eq(users.clerkId, clerkUserId),
+    });
+
+    if (!dbUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     console.log('Fetching booking with:', {
       bookingId: parseInt(bookingId),
-      userId,
+      clerkUserId,
+      dbUserId: dbUser.id,
     });
 
     const booking = await db.query.bookingSessions.findFirst({
@@ -36,7 +46,6 @@ export async function GET(req: NextRequest) {
         therapist: {
           columns: {
             name: true,
-            email: true,
           },
         },
         user: {
@@ -49,13 +58,15 @@ export async function GET(req: NextRequest) {
     });
 
     console.log('Booking found:', booking ? 'Yes' : 'No');
-    console.log('Booking user:', booking?.user?.clerkId);
+    console.log('Booking user ID:', booking?.userId);
+    console.log('Current user ID:', dbUser.id);
 
     if (!booking) {
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
     }
 
-    if (booking.userId !== userId) {
+    // Compare database user IDs
+    if (booking.userId !== dbUser.id) {
       console.warn('Booking does not belong to the current user');
       return NextResponse.json({ error: 'Unauthorized access to booking' }, { status: 403 });
     }
@@ -84,8 +95,8 @@ export async function GET(req: NextRequest) {
       booking: {
         id: booking.id,
         therapist: {
-          name: booking.therapist.name,
-          email: booking.therapist.email,
+          name: booking.therapist?.name || 'Unknown Therapist',
+          email: booking.user?.email || '',
         },
         sessionDate: booking.sessionDate,
         sessionStartTime: booking.sessionStartTime,

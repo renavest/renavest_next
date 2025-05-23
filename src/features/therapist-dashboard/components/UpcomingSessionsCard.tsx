@@ -1,12 +1,13 @@
 'use client';
 
-import { Calendar } from 'lucide-react';
+import { Calendar, Video } from 'lucide-react';
 
 import { UpcomingSession } from '@/src/features/therapist-dashboard/types';
 import { createDate } from '@/src/utils/timezone';
+
 export function UpcomingSessionsCard({
   sessions,
-  onSessionClick = () => {},
+  onSessionClick: _onSessionClick = () => {},
   title = 'Upcoming Sessions',
   showIcon = true,
 }: {
@@ -15,6 +16,14 @@ export function UpcomingSessionsCard({
   title?: string;
   showIcon?: boolean;
 }) {
+  const formatTime = (dateTimeString: string) => {
+    return createDate(dateTimeString).toFormat('h:mm a');
+  };
+
+  const formatDate = (dateTimeString: string) => {
+    return createDate(dateTimeString).toFormat('ccc, MMM d');
+  };
+
   return (
     <div className='bg-white rounded-xl p-6 border border-purple-100 shadow-sm'>
       <div className='flex items-center justify-between mb-4'>
@@ -30,23 +39,34 @@ export function UpcomingSessionsCard({
           sessions.map((session) => (
             <div
               key={session.id}
-              onClick={() => onSessionClick(session.clientId)}
-              className='flex flex-col gap-2 p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-purple-50 cursor-pointer transition-colors'
+              className='flex flex-col gap-3 p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-purple-50 transition-colors'
             >
               <div className='flex justify-between items-start'>
-                <div>
+                <div className='flex-1'>
                   <p className='font-medium text-gray-800'>
                     {session.clientName || 'Unknown Client'}
                   </p>
-                  <p className='text-sm text-gray-500'>
-                    {createDate(session.sessionDate).toLocaleString()}
+                  <p className='text-sm text-gray-500'>{formatDate(session.sessionDate)}</p>
+                  <p className='text-sm font-medium text-purple-600'>
+                    {formatTime(session.sessionStartTime)}
                   </p>
                 </div>
-                <p className='text-sm font-medium text-purple-600'>
-                  {createDate(session.sessionStartTime).toLocaleString()}
-                </p>
+                <div className='flex flex-col items-end gap-2'>
+                  <p className='text-xs text-gray-600 capitalize'>{session.status}</p>
+                  {session.googleMeetLink && (
+                    <a
+                      href={session.googleMeetLink}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='flex items-center gap-1 px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded-md transition-colors'
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Video className='h-3 w-3' />
+                      Join Meet
+                    </a>
+                  )}
+                </div>
               </div>
-              <p className='text-xs text-gray-600 capitalize'>{session.status}</p>
             </div>
           ))
         )}

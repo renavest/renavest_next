@@ -13,6 +13,12 @@ export interface Advisor {
   profileUrl?: string;
   introduction?: string;
   hourlyRate?: string;
+  therapistId?: number;
+  userId?: number;
+  isPending?: boolean;
+  hasGoogleCalendar?: boolean;
+  googleCalendarStatus?: 'connected' | 'not_connected' | 'error';
+  hasProfileImage?: boolean;
 }
 
 export type UserRole = 'employee' | 'therapist' | 'super_admin' | 'employer_admin' | null;

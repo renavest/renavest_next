@@ -4,31 +4,140 @@ import { X } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import posthog from 'posthog-js';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 
 import { cn } from '@/src/lib/utils';
 import { Advisor } from '@/src/shared/types';
 import { COLORS } from '@/src/styles/colors';
 
 import { advisorSignal, isOpenSignal } from './state/advisorSignals';
+import { useMarketplaceIntegration } from './utils/useMarketplaceIntegration';
 
 const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
   const { user } = useUser();
   const router = useRouter();
   const [hasError, setHasError] = useState(false);
+  const [currentUserTherapistId, setCurrentUserTherapistId] = useState<number | null>(null);
+  const { isConnected, isChecking, bookingMode } = useMarketplaceIntegration(advisor);
 
-  const handleBookSession = () => {
+  // Check if current user is a therapist and get their therapist ID
+  useEffect(() => {
+    const fetchCurrentUserTherapistId = async () => {
+      if (user?.publicMetadata?.role === 'therapist') {
+        try {
+          const response = await fetch('/api/therapist/id');
+          const data = await response.json();
+          if (data.therapistId) {
+            setCurrentUserTherapistId(data.therapistId);
+          }
+        } catch (error) {
+          console.error('Failed to fetch current user therapist ID:', error);
+        }
+      }
+    };
+    fetchCurrentUserTherapistId();
+  }, [user]);
+
+  // Check if user is trying to book themselves
+  const isBookingSelf = !!(
+    currentUserTherapistId && advisor.therapistId === currentUserTherapistId
+  );
+
+  const handleBookSession = async () => {
+    // Prevent self-booking
+    if (isBookingSelf) {
+      alert('You cannot book a session with yourself!');
+      return;
+    }
+
     // Track booking event with enhanced context
     posthog.capture('therapist_session_booked', {
-      therapist_id: advisor.id,
+      therapist_id: advisor.therapistId || advisor.id,
       therapist_name: advisor.name,
+      booking_mode: bookingMode,
+      has_google_calendar: isConnected,
+      is_pending: advisor.isPending,
     });
     posthog.identify(user?.id, {
       current_therapist: advisor.name,
     });
 
-    // Navigate to the booking page for this specific advisor
-    router.push(`/book/${advisor.id}`);
+    // Handle pending therapists - always use external booking
+    if (advisor.isPending) {
+      // Send notification email for pending therapists
+      await sendBookingNotification(advisor.id, 'Pending Therapist');
+
+      if (advisor.bookingURL) {
+        window.open(advisor.bookingURL, '_blank');
+      } else {
+        console.error('No booking URL available for pending therapist');
+      }
+      return;
+    }
+
+    // Navigate based on the therapist's integration status for active therapists
+    if (isConnected && advisor.therapistId) {
+      // Use therapist ID for internal booking
+      router.push(`/book/${advisor.therapistId}`);
+    } else if (advisor.bookingURL) {
+      // Send notification email for external booking
+      await sendBookingNotification(
+        advisor.therapistId?.toString() || advisor.id,
+        'External Calendar',
+      );
+
+      // Use external booking URL
+      window.open(advisor.bookingURL, '_blank');
+    } else {
+      console.error('No booking method available for this therapist');
+    }
+  };
+
+  const sendBookingNotification = async (therapistId: string, bookingType: string) => {
+    try {
+      // First get therapist details
+      const therapistResponse = await fetch(`/api/therapist/details/${therapistId}`);
+      if (!therapistResponse.ok) {
+        console.error('Failed to fetch therapist details');
+        return;
+      }
+
+      const therapistData = await therapistResponse.json();
+
+      // Send notification email using the unified API
+      const notificationResponse = await fetch('/api/booking/notify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          therapistName: therapistData.name,
+          therapistEmail: therapistData.email,
+          bookingType: bookingType,
+        }),
+      });
+
+      if (notificationResponse.ok) {
+        console.log('Booking notification sent successfully');
+        toast.success(`${therapistData.name} has been notified of your booking interest!`);
+      } else {
+        const errorData = await notificationResponse.json();
+        console.error('Failed to send booking notification:', errorData.error);
+        toast.error('Unable to notify therapist. Please contact them directly.');
+      }
+    } catch (error) {
+      console.error('Error sending booking notification:', error);
+      toast.error('Unable to notify therapist. Please contact them directly.');
+    }
+  };
+
+  const getBookingButtonText = () => {
+    if (isBookingSelf) return 'Cannot Book Yourself';
+    if (isChecking) return 'Loading...';
+    if (advisor.isPending) return 'Book via External Calendar';
+    if (isConnected) return 'Book a Session';
+    return 'Book via External Calendar';
   };
 
   return (
@@ -47,7 +156,7 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
           onClick={() => {
             // Track profile view event
             posthog.capture('therapist_profile_viewed', {
-              therapist_id: advisor.id,
+              therapist_id: advisor.therapistId || advisor.id,
               therapist_name: advisor.name,
               therapist_title: advisor.title,
               therapist_expertise: advisor.expertise,
@@ -58,14 +167,30 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
       <div className='mt-6 space-y-4'>
         <button
           onClick={handleBookSession}
+          disabled={isChecking || isBookingSelf}
           className={cn(
             'block w-full py-3 px-4 text-center text-white rounded-lg transition-colors font-medium',
-            COLORS.WARM_PURPLE.bg,
-            COLORS.WARM_PURPLE.hover,
+            isChecking || isBookingSelf
+              ? 'bg-gray-400 cursor-not-allowed'
+              : cn(COLORS.WARM_PURPLE.bg, COLORS.WARM_PURPLE.hover),
           )}
         >
-          Book a Session
+          {getBookingButtonText()}
         </button>
+
+        {/* Integration status indicator */}
+        <div className='text-center text-xs text-gray-500'>
+          {isBookingSelf ? (
+            <span className='text-red-600'>⚠️ This is your own profile</span>
+          ) : advisor.isPending ? (
+            <span className='text-blue-600'>⏳ Pending therapist - External booking</span>
+          ) : isConnected ? (
+            <span className='text-green-600'>✓ Direct booking available</span>
+          ) : (
+            <span className='text-orange-600'>External calendar booking</span>
+          )}
+        </div>
+
         <div className='p-4 bg-gray-50 rounded-lg'>
           <h4 className='font-medium mb-2'>Certifications</h4>
           <p className='text-sm text-gray-600'>{advisor.certifications || 'Not specified'}</p>

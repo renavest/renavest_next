@@ -4,9 +4,10 @@ import { toast } from 'sonner';
 
 import { TimeSlot } from '@/src/utils/timezone';
 
-import { TimezoneIdentifier } from '../../utils/dateTimeUtils';
+import { timezoneManager, SupportedTimezone } from '../../utils/timezoneManager';
+
 export const selectedSlotSignal = signal<TimeSlot | null>(null);
-export const timezoneSignal = signal<TimezoneIdentifier>('America/New_York');
+export const timezoneSignal = signal<SupportedTimezone>(timezoneManager.getUserTimezone());
 export const availableSlotsSignal = signal<Array<{ start: string; end: string }>>([]);
 const loadingSignal = signal(true);
 export const errorSignal = signal<string | null>(null);
@@ -52,7 +53,7 @@ export async function checkGoogleCalendarIntegration(therapistId: number) {
 export async function fetchAvailability(
   therapistId: number,
   selectedDate: DateTime,
-  timezone: TimezoneIdentifier,
+  timezone: SupportedTimezone,
 ) {
   // Only proceed if we know the calendar is integrated
   if (!isGoogleCalendarIntegratedSignal.value) {

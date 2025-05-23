@@ -1,5 +1,5 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { eq, desc } from 'drizzle-orm';
+import { eq, gt, and, or } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
@@ -41,6 +41,7 @@ export async function GET() {
     }
 
     // Fetch upcoming sessions for this therapist
+    const now = new Date();
     const sessions = await db
       .select({
         id: bookingSessions.id,
@@ -53,8 +54,18 @@ export async function GET() {
       })
       .from(bookingSessions)
       .leftJoin(users, eq(bookingSessions.userId, users.id))
-      .where(eq(bookingSessions.therapistId, therapistResult[0].id))
-      .orderBy(desc(bookingSessions.sessionDate))
+      .where(
+        and(
+          eq(bookingSessions.therapistId, therapistResult[0].id),
+          or(
+            eq(bookingSessions.status, 'pending'),
+            eq(bookingSessions.status, 'confirmed'),
+            eq(bookingSessions.status, 'scheduled'),
+          ),
+          gt(bookingSessions.sessionDate, now),
+        ),
+      )
+      .orderBy(bookingSessions.sessionDate)
       .limit(10);
 
     console.log('Fetched Sessions:', sessions);

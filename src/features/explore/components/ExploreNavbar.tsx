@@ -3,7 +3,7 @@
 import { UserButton } from '@clerk/nextjs';
 import { ChevronLeft, Menu, X } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 import { LogoutButton } from '@/src/features/auth/components/auth/LogoutButton';
@@ -61,6 +61,8 @@ export default function ExploreNavbar({
   showBackButton?: boolean;
   additionalActions?: React.ReactNode;
 }) {
+  const router = useRouter();
+
   useEffect(() => {
     const handleScroll = () => {
       isHeaderScrolledSignal.value = window.scrollY > 0;
@@ -72,6 +74,16 @@ export default function ExploreNavbar({
 
   const toggleMobileMenu = () => {
     isMobileMenuOpenSignal.value = !isMobileMenuOpenSignal.value;
+  };
+
+  const handleBackClick = () => {
+    // Check if there's history to go back to
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      // Fallback to a default route if no history
+      router.push('/employee');
+    }
   };
 
   return (
@@ -88,12 +100,14 @@ export default function ExploreNavbar({
         <div className='flex items-center'>
           {/* Optional Back Button */}
           {showBackButton && (
-            <Link
-              href='/dashboard'
-              className='mr-3 text-gray-600 hover:text-gray-800 transition-colors'
+            <button
+              onClick={handleBackClick}
+              className='mr-4 flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors bg-gray-50 hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-200'
+              aria-label='Back to Previous Page'
             >
-              <ChevronLeft className='h-6 w-6' />
-            </Link>
+              <ChevronLeft className='h-5 w-5' />
+              <span className='text-sm font-medium hidden sm:inline'>Back</span>
+            </button>
           )}
 
           {/* Logo */}

@@ -5,11 +5,13 @@ import { redirect } from 'next/navigation';
 import { trackSessionSearch } from '@/src/app/api/track/calendly/route';
 import { db } from '@/src/db';
 import { therapists, users, pendingTherapists } from '@/src/db/schema';
+import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
 
 import UnifiedBookingFlow from '../../../features/booking/components/BookingFlow';
 
-export default async function TherapistCalendlyPage({ params }: { params: { advisorId: string } }) {
+export default async function TherapistBookingPage({ params }: { params: { advisorId: string } }) {
   const { advisorId } = await params;
+
   // Validate and parse advisorId
   if (!advisorId) {
     redirect('/explore');
@@ -19,46 +21,109 @@ export default async function TherapistCalendlyPage({ params }: { params: { advi
   if (!user) {
     redirect('/explore');
   }
-  // Fetch therapist data server-side
-  let therapistUser = await db.query.users.findFirst({
-    where: eq(users.id, parseInt(advisorId)),
-  });
-  let therapist = await db.query.therapists.findFirst({
-    where: eq(therapists.userId, therapistUser?.id || 0),
-  });
-  let pendingTherapist = await db.query.pendingTherapists.findFirst({
-    where: eq(pendingTherapists.id, parseInt(advisorId)),
-  });
 
-  // If found in pendingTherapists, use that for bookingURL and details
+  // Check if user is a therapist and prevent self-booking
+  const userRole = user.publicMetadata?.role;
+  if (userRole === 'therapist') {
+    // Get the user's database record to find their therapist ID
+    const userRecord = await db.query.users.findFirst({
+      where: eq(users.clerkId, user.id),
+    });
+
+    if (userRecord) {
+      const therapistRecord = await db.query.therapists.findFirst({
+        where: eq(therapists.userId, userRecord.id),
+      });
+
+      // If this is an active therapist trying to book themselves, redirect
+      if (therapistRecord && !advisorId.startsWith('pending-')) {
+        const targetTherapistId = parseInt(advisorId);
+        if (therapistRecord.id === targetTherapistId) {
+          redirect('/explore?error=cannot-book-self');
+        }
+      }
+    }
+  }
+
   let advisorData;
-  if (pendingTherapist) {
+
+  // Check if this is a pending therapist (prefixed with "pending-")
+  if (advisorId.startsWith('pending-')) {
+    const pendingId = parseInt(advisorId.replace('pending-', ''));
+    if (isNaN(pendingId)) {
+      redirect('/explore');
+    }
+
+    // Fetch pending therapist data
+    const pendingTherapist = await db.query.pendingTherapists.findFirst({
+      where: eq(pendingTherapists.id, pendingId),
+    });
+
+    if (!pendingTherapist) {
+      redirect('/explore');
+    }
+
     advisorData = {
-      id: pendingTherapist.id.toString(),
+      id: advisorId, // Keep the full ID with prefix
       name: pendingTherapist.name,
       bookingURL: pendingTherapist.bookingURL || '',
-      email: user.emailAddresses[0]?.emailAddress || undefined,
-      profileUrl: pendingTherapist.profileUrl || undefined,
+      email: pendingTherapist.clerkEmail || undefined,
+      profileUrl: getTherapistImageUrl(pendingTherapist.profileUrl),
+      isPending: true,
     };
-  } else if (therapist && therapistUser) {
+
+    // Track session search for pending therapist
+    await trackSessionSearch({
+      therapistId: advisorId,
+      therapistName: pendingTherapist.name,
+      userId: user.id,
+      userEmail: user.emailAddresses[0]?.emailAddress || '',
+    });
+  } else {
+    // Handle active therapist
+    const therapistId = parseInt(advisorId);
+    if (isNaN(therapistId)) {
+      redirect('/explore');
+    }
+
+    // Fetch therapist data with user information
+    const therapist = await db.query.therapists.findFirst({
+      where: eq(therapists.id, therapistId),
+      with: {
+        user: true, // Get the associated user data
+      },
+    });
+
+    if (!therapist) {
+      redirect('/explore');
+    }
+
+    // Get the user data for the therapist
+    const therapistUser = await db.query.users.findFirst({
+      where: eq(users.id, therapist.userId),
+    });
+
+    if (!therapistUser) {
+      redirect('/explore');
+    }
+
     advisorData = {
-      id: therapist.id.toString(),
+      id: therapist.id.toString(), // Use therapist ID
       name: therapist.name,
       bookingURL: therapist.bookingURL || '',
       email: therapistUser.email || undefined,
-      profileUrl: therapist.profileUrl || undefined,
+      profileUrl: getTherapistImageUrl(therapist.profileUrl),
+      isPending: false,
     };
-  } else {
-    redirect('/explore');
-  }
 
-  // Track session search
-  await trackSessionSearch({
-    therapistId: advisorData.id,
-    therapistName: advisorData.name,
-    userId: user.id,
-    userEmail: user.emailAddresses[0]?.emailAddress || '',
-  });
+    // Track session search with correct IDs
+    await trackSessionSearch({
+      therapistId: therapist.id.toString(),
+      therapistName: therapist.name,
+      userId: user.id,
+      userEmail: user.emailAddresses[0]?.emailAddress || '',
+    });
+  }
 
   return (
     <UnifiedBookingFlow

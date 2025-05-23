@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 
 import { BookingConfirmationModal } from '../BookingConfirmation/BookingConfirmationModal';
@@ -31,10 +32,11 @@ export function BookingForm({
   onConfirm,
   advisorName,
   advisorImage,
-  advisorInitials,
+  advisorInitials: _advisorInitials,
 }: BookingConfirmationProps) {
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [hasImageError, setHasImageError] = useState(false);
 
   const { isBooking, error, handleConfirmBooking, setError } = useBookingConfirmation(
     onConfirm,
@@ -57,16 +59,23 @@ export function BookingForm({
       <div className='w-full max-w-6xl flex flex-col md:flex-row items-start justify-center gap-12'>
         {/* Left: Avatar and Header */}
         <div className='flex flex-col items-start w-full md:w-1/3 px-4 md:px-0'>
-          {advisorImage ? (
-            <img
+          {advisorImage && !hasImageError ? (
+            <Image
               src={advisorImage}
-              alt={advisorName}
+              alt={advisorName || 'Therapist'}
+              width={64}
+              height={64}
               className='w-16 h-16 rounded-full object-cover shadow-md mb-4'
+              onError={() => setHasImageError(true)}
             />
           ) : (
-            <div className='w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mb-4 shadow-md'>
-              <span className='text-2xl font-bold text-purple-700'>{advisorInitials || 'A'}</span>
-            </div>
+            <Image
+              src='/experts/placeholderexp.png'
+              alt={advisorName || 'Therapist'}
+              width={64}
+              height={64}
+              className='w-16 h-16 rounded-full object-cover shadow-md mb-4'
+            />
           )}
           <h2 className='text-2xl font-bold text-gray-900 mb-1 text-left'>
             Book a Session{advisorName ? ` with ${advisorName}` : ''}

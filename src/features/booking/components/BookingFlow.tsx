@@ -1,14 +1,13 @@
 'use client';
 
 import posthog from 'posthog-js';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useCalendlyEventListener } from 'react-calendly';
 
-import { createBookingSession } from '@/src/features/booking/actions/bookingActions';
 import AlternativeBooking from '@/src/features/booking/components/AlternativeBooking';
 import { BookingForm } from '@/src/features/booking/components/form/BookingForm';
 import { getInitials } from '@/src/features/booking/utils/stringUtils';
-import { fetchGoogleCalendarStatus } from '@/src/features/google-calendar/utils/googleCalendarIntegration';
+
 interface BookingFlowProps {
   advisor: {
     id: string;
@@ -16,26 +15,10 @@ interface BookingFlowProps {
     bookingURL: string;
     profileUrl?: string;
     email?: string;
+    isPending?: boolean;
   };
   userId: string;
   userEmail: string;
-}
-
-// Custom hook to check Google Calendar integration
-function useGoogleCalendarIntegration(advisorId: string) {
-  const [isGoogleCalendarConnected, setIsGoogleCalendarConnected] = useState<null | boolean>(null);
-  useEffect(() => {
-    async function checkIntegration() {
-      try {
-        const res = await fetchGoogleCalendarStatus(advisorId);
-        setIsGoogleCalendarConnected(!!res.isConnected);
-      } catch {
-        setIsGoogleCalendarConnected(false);
-      }
-    }
-    checkIntegration();
-  });
-  return isGoogleCalendarConnected;
 }
 
 export default function UnifiedBookingFlow({ advisor, userId, userEmail }: BookingFlowProps) {
@@ -46,7 +29,6 @@ export default function UnifiedBookingFlow({ advisor, userId, userEmail }: Booki
     }
   }, [userId, userEmail]);
 
-  const isGoogleCalendarConnected = useGoogleCalendarIntegration(advisor.id);
   // Track Calendly events
   const trackCalendlyEvent = async (eventType: string, eventData?: Record<string, unknown>) => {
     try {
@@ -74,16 +56,33 @@ export default function UnifiedBookingFlow({ advisor, userId, userEmail }: Booki
   }) => {
     if (!userId) throw new Error('No user ID found');
     try {
-      const result = await createBookingSession({
-        userId,
-        therapistId: details.therapistId,
-        sessionDate: details.date,
-        sessionStartTime: `${details.date}T${details.startTime}`,
-        timezone: details.timezone,
-        userEmail,
+      const response = await fetch('/api/sessions/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          therapistId: parseInt(details.therapistId),
+          sessionDate: details.date,
+          sessionTime: details.startTime,
+          clientTimezone: details.timezone,
+        }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create booking');
+      }
+
+      const result = await response.json();
       await trackCalendlyEvent('booking_details_confirmed', details);
-      return result;
+
+      return {
+        sessionId: result.booking.id,
+        success: result.success,
+        message: 'Booking created successfully',
+        emailSent: true,
+      };
     } catch (error) {
       console.error('Error saving booking session:', error);
       throw error;
@@ -94,26 +93,19 @@ export default function UnifiedBookingFlow({ advisor, userId, userEmail }: Booki
   useCalendlyEventListener({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onEventScheduled: (e: any) => {
-      // setIsBookingConfirmed(true);
       trackCalendlyEvent('calendly_event_scheduled', e);
     },
   });
 
-  // Loading state
-  if (isGoogleCalendarConnected === null) {
-    return (
-      <div className='flex items-center justify-center min-h-[300px]'>
-        Loading booking options...
-      </div>
-    );
-  }
+  // Check if this is a pending therapist or if they don't have Google Calendar integration
+  const shouldUseExternalBooking = advisor.isPending || !advisor.bookingURL;
 
-  // If Google Calendar is not connected, show AlternativeBooking
-  if (!isGoogleCalendarConnected) {
+  // If pending therapist or no Google Calendar integration, show AlternativeBooking
+  if (shouldUseExternalBooking) {
     return <AlternativeBooking advisor={advisor} bookingURL={advisor.bookingURL} />;
   }
 
-  // If Google Calendar is connected, show internal booking
+  // If active therapist with Google Calendar integration, show internal booking
   return (
     <BookingForm
       advisorId={advisor.id}

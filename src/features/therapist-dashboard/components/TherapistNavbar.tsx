@@ -1,39 +1,29 @@
 'use client';
 
 import { UserButton, useUser } from '@clerk/nextjs';
-import { ChevronLeft, Calendar, Check, AlertCircle, CheckCircle, User } from 'lucide-react';
+import { ChevronLeft, User } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect } from 'react';
 
 import { LogoutButton } from '@/src/features/auth/components/auth/LogoutButton';
-import {
-  useGoogleCalendarIntegration,
-  fetchTherapistId,
-} from '@/src/features/google-calendar/utils/googleCalendarIntegration';
+import { fetchTherapistId } from '@/src/features/google-calendar/utils/googleCalendarIntegration';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
 import { isHeaderScrolledSignal } from '../../employee-dashboard/state/dashboardState';
 import { therapistIdSignal } from '../state/therapistDashboardState';
 
-export default function TherapistDashboardHeader({
+export default function TherapistNavbar({
   pageTitle = 'Therapist Dashboard',
   showBackButton = false,
   backButtonHref = '/therapist',
-  isOnboarded = false,
 }: {
   pageTitle?: string;
   showBackButton?: boolean;
   backButtonHref?: string;
-  isOnboarded?: boolean;
 }) {
   const { user } = useUser();
-
-  // Use the Google Calendar integration hook with refresh capability
-  const { status: calendarStatus, refreshStatus } = useGoogleCalendarIntegration(
-    therapistIdSignal.value || 0,
-  );
 
   useEffect(() => {
     const handleScroll = () => {
@@ -70,10 +60,11 @@ export default function TherapistDashboardHeader({
           {showBackButton && (
             <Link
               href={backButtonHref}
-              className='mr-3 flex items-center text-gray-600 hover:text-gray-800 transition-colors'
-              aria-label='Back'
+              className='mr-4 flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors bg-gray-50 hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-200'
+              aria-label='Back to Dashboard'
             >
-              <ChevronLeft className='h-6 w-6' />
+              <ChevronLeft className='h-5 w-5' />
+              <span className='text-sm font-medium hidden sm:inline'>Back</span>
             </Link>
           )}
           <div className='relative flex-shrink-0 w-8 h-8 md:w-10 md:h-10 mx-3'>
@@ -90,42 +81,28 @@ export default function TherapistDashboardHeader({
             {pageTitle}
           </h1>
         </div>
-        {/* Right: Integration status, Logout, Avatar */}
+        {/* Right: Profile link, Marketplace link, Logout, Avatar */}
         <div className='flex items-center gap-3'>
-          {!isOnboarded && (
-            <Link
-              href='/therapist/onboarding'
-              className='flex items-center gap-1.5 text-gray-700 hover:text-gray-900 transition-colors text-sm px-2 py-1 rounded-md hover:bg-gray-100'
-            >
-              <CheckCircle className='h-4 w-4' />
-              <span>Onboarding</span>
-            </Link>
-          )}
           <Link
-            href='/therapist/'
-            className='flex items-center gap-1.5 text-gray-700 hover:text-gray-900 transition-colors text-sm px-2 py-1 rounded-md hover:bg-gray-100'
+            href='/explore'
+            className='flex items-center gap-1.5 text-gray-700 hover:text-gray-900 transition-colors text-sm px-3 py-2 rounded-lg hover:bg-gray-100 border border-transparent hover:border-gray-200'
+          >
+            <svg className='h-4 w-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth={2}
+                d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
+              />
+            </svg>
+            <span className='hidden sm:inline'>Marketplace</span>
+          </Link>
+          <Link
+            href='/therapist/profile'
+            className='flex items-center gap-1.5 text-gray-700 hover:text-gray-900 transition-colors text-sm px-3 py-2 rounded-lg hover:bg-gray-100 border border-transparent hover:border-gray-200'
           >
             <User className='h-4 w-4' />
-            <span>View Profile</span>
-          </Link>
-          <div className='h-6 w-px bg-gray-200 mx-1'></div>
-          <Link
-            href='/therapist/integrations'
-            className='flex items-center gap-1.5 text-gray-700 hover:text-gray-900 transition-colors text-sm px-2 py-1 rounded-md hover:bg-gray-100'
-            onClick={() => {
-              // Optional: Refresh status when clicking on integrations link
-              refreshStatus();
-            }}
-          >
-            <Calendar className='h-4 w-4' />
-            <span>Integrations</span>
-            {calendarStatus.isLoading ? (
-              <span className='h-2 w-2 rounded-full bg-gray-300 animate-pulse'></span>
-            ) : calendarStatus.isConnected ? (
-              <Check className='h-4 w-4 text-green-500' />
-            ) : (
-              <AlertCircle className='h-4 w-4 text-amber-500' />
-            )}
+            <span className='hidden sm:inline'>Profile</span>
           </Link>
           <div className='h-6 w-px bg-gray-200 mx-1'></div>
           <LogoutButton />
