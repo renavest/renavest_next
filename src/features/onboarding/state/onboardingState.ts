@@ -53,7 +53,7 @@ export const onboardingQuestions: OnboardingQuestion[] = [
     title: 'Life Stage',
     question: 'What is your age range?',
     supportiveText:
-      "Understanding your life stage helps us provide advice that's relevant to your journey.",
+      'Understanding where you are in life helps us connect you with a therapist who truly understands your unique financial journey and challenges.',
     options: [
       { id: '18-24', label: '18-24 years' },
       { id: '25-34', label: '25-34 years' },
@@ -66,7 +66,8 @@ export const onboardingQuestions: OnboardingQuestion[] = [
     id: 2,
     title: 'Location',
     question: 'What state do you currently reside in?',
-    supportiveText: 'We’re interested in how your state impacts your spending habits.',
+    supportiveText:
+      'Your location helps us understand the financial landscape you navigate daily and connect you with therapists familiar with your area.',
     type: 'dropdown',
     options: [
       { id: 'AL', label: 'Alabama' },
@@ -126,7 +127,7 @@ export const onboardingQuestions: OnboardingQuestion[] = [
     title: 'Relationships',
     question: 'What is your current relationship status?',
     supportiveText:
-      'Managing money within a relationship can be deeply impactful. Understanding your relationship status helps us navigate your financial journey more effectively.',
+      'Money and relationships are deeply connected. Understanding your relationship context helps us match you with a therapist who can address the unique dynamics you face.',
     options: [
       { id: 'single', label: 'Single' },
       { id: 'in_a_relationship', label: 'In a relationship' },
@@ -137,11 +138,11 @@ export const onboardingQuestions: OnboardingQuestion[] = [
   },
   {
     id: 4,
-    title: 'Your Goals',
-    question: 'What are your primary financial goals?',
-    description: 'Select all that apply',
+    title: 'Your Aspirations',
+    question: 'What financial goals are most important to you right now?',
+    description: 'Select all that resonate with you',
     supportiveText:
-      "Your goals matter. We'll help you develop a healthy relationship with money while working towards them.",
+      "Your goals reflect your values and dreams. We'll help you explore not just how to achieve them, but also understand the emotions and beliefs that drive them.",
     options: [
       { id: 'emergency', label: 'Build emergency fund' },
       { id: 'debt', label: 'Pay off debt' },
@@ -154,32 +155,31 @@ export const onboardingQuestions: OnboardingQuestion[] = [
   {
     id: 5,
     title: 'Your Challenges',
-    question: 'What financial challenges would you like to address?',
-    description: 'Select all that apply',
+    question: 'What aspects of your relationship with money would you like to explore?',
+    description: 'Select all that feel relevant to your experience',
     supportiveText:
-      'Many people face similar challenges. Sharing yours helps us provide the right support.',
+      'These challenges are more common than you might think. Sharing what resonates with you helps us connect you with a therapist who specializes in these areas.',
     options: [
-      { id: 'conflict', label: 'Conflict in relationships' },
-      { id: 'avoidance', label: 'Money avoidance' },
-      { id: 'anxiety', label: 'Financial anxiety' },
-      { id: 'spending', label: 'Compulsive spending' },
-      { id: 'frugality', label: 'Difficulty in enjoying financial resources' },
-      { id: 'guilt', label: 'Guilt related to financial decisions' },
-      { id: 'inheritance', label: 'Inheritance issues' },
+      { id: 'conflict', label: 'Money-related relationship conflicts' },
+      { id: 'avoidance', label: 'Avoiding financial decisions or conversations' },
+      { id: 'anxiety', label: 'Feeling anxious or stressed about money' },
+      { id: 'spending', label: 'Difficulty controlling spending habits' },
+      { id: 'frugality', label: 'Trouble enjoying money or feeling guilty about spending' },
+      { id: 'guilt', label: 'Shame or guilt around financial decisions' },
+      { id: 'inheritance', label: 'Navigating family money dynamics or inheritance' },
     ],
     multiSelect: true,
   },
   {
     id: 6,
-    title: 'Stress Level',
-    question: 'What is your current financial stress level?',
-    // description: 'This helps us understand your financial situation better',
+    title: 'Current Well-being',
+    question: 'How would you describe your current financial stress level?',
     supportiveText:
-      'Please rate your stress level to help us provide the most appropriate support.',
+      "There's no judgment here - we simply want to understand where you're starting from so we can provide the most supportive therapeutic experience.",
     options: [
-      { id: 'low', label: 'Low - Generally comfortable' },
-      { id: 'medium', label: 'Medium - Occasional worry' },
-      { id: 'high', label: 'High - Frequent concern' },
+      { id: 'low', label: 'Low - Generally comfortable and at peace with my finances' },
+      { id: 'medium', label: 'Medium - Some worry, but manageable most days' },
+      { id: 'high', label: 'High - Frequent stress that affects my daily life' },
     ],
   },
 ];

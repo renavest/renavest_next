@@ -1,6 +1,5 @@
 'use client';
 
-import { useUser } from '@clerk/nextjs';
 import { UserCircle2, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useCallback } from 'react';
@@ -18,8 +17,6 @@ import {
   statisticsSignal,
   selectedClientSignal,
   isAddClientOpenSignal,
-  showOnboardingBannerSignal,
-  isOnboardedSignal,
 } from '@/src/features/therapist-dashboard/state/therapistDashboardState';
 import {
   Client,
@@ -307,8 +304,6 @@ export default function TherapistDashboardPage({
   initialStatistics,
   initialTherapistId,
 }: TherapistDashboardPageProps) {
-  const { user, isLoaded: isUserLoaded } = useUser();
-
   // Initialize signals with server data
   useEffect(() => {
     clientsSignal.value = initialClients;
@@ -323,16 +318,6 @@ export default function TherapistDashboardPage({
       therapistPageLoadedSignal.value = true;
     }
   }, [initialTherapistId]);
-
-  // Check if user is fully onboarded
-  useEffect(() => {
-    if (user) {
-      // Check if profile is complete and Google Calendar is connected
-      const profileComplete = !!(user.firstName && user.lastName);
-      const calendarConnected = !!user.publicMetadata?.googleCalendarConnected;
-      isOnboardedSignal.value = profileComplete && calendarConnected;
-    }
-  }, [user]);
 
   // Function to refresh data from the server
   const refreshData = useCallback(async () => {
@@ -369,7 +354,7 @@ export default function TherapistDashboardPage({
   }, []);
 
   // If still loading initial data, show a loading state
-  if (!isUserLoaded) {
+  if (!therapistPageLoadedSignal.value) {
     return (
       <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen flex items-center justify-center'>
         <div className='text-center'>
@@ -389,56 +374,6 @@ function renderDashboard(refreshData: () => Promise<void>) {
   return (
     <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen relative'>
       <TherapistNavbar showBackButton={false} />
-
-      {/* Onboarding Banner */}
-      {!isOnboardedSignal.value && showOnboardingBannerSignal.value && (
-        <div className='mt-6 bg-gradient-to-r from-purple-600 to-purple-800 text-white p-4 rounded-xl shadow-md'>
-          <div className='flex items-center justify-between'>
-            <div className='flex items-center space-x-3'>
-              <div className='rounded-full bg-white/20 p-2'>
-                <svg className='w-6 h-6' viewBox='0 0 24 24' fill='none'>
-                  <path
-                    d='M9 12l2 2 4-4'
-                    stroke='currentColor'
-                    strokeWidth='2'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                  />
-                </svg>
-              </div>
-              <div>
-                <h3 className='font-semibold'>Complete your setup</h3>
-                <p className='text-sm text-white/80'>
-                  Finish setting up your therapist account for the best experience
-                </p>
-              </div>
-            </div>
-            <div className='flex items-center space-x-2'>
-              <Link
-                href='/therapist/onboarding'
-                className='px-4 py-2 bg-white text-purple-700 rounded-lg shadow-sm hover:bg-purple-50 transition font-medium'
-              >
-                Complete Setup
-              </Link>
-              <button
-                onClick={() => (showOnboardingBannerSignal.value = false)}
-                className='p-2 text-white/80 hover:text-white rounded-full'
-                aria-label='Dismiss'
-              >
-                <svg className='w-5 h-5' viewBox='0 0 24 24' fill='none'>
-                  <path
-                    d='M6 18L18 6M6 6l12 12'
-                    stroke='currentColor'
-                    strokeWidth='2'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className='mt-6'>
         <TherapistStatisticsCard statistics={statisticsSignal.value} />

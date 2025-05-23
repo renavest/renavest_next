@@ -42,5 +42,3 @@ export const statisticsSignal = signal<TherapistStatistics>({
 });
 export const selectedClientSignal = signal<Client | null>(null);
 export const isAddClientOpenSignal = signal<boolean>(false);
-export const showOnboardingBannerSignal = signal<boolean>(true);
-export const isOnboardedSignal = signal<boolean>(false);
