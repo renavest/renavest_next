@@ -1,7 +1,6 @@
 'use server';
 import { currentUser } from '@clerk/nextjs/server';
-import { clerkClient } from '@clerk/nextjs/server';
-import { eq, desc, count } from 'drizzle-orm';
+import { eq, desc, count, inArray } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
 
 import { db } from '@/src/db';
@@ -67,10 +66,7 @@ export default async function TherapistPage() {
           email: users.email,
         })
         .from(users)
-        .where(
-          // @ts-ignore
-          users.id.in(uniqueClientUserIds),
-        );
+        .where(inArray(users.id, uniqueClientUserIds));
       clients = clientsResult.map((client) => ({
         id: client.id,
         firstName: client.firstName || '',
