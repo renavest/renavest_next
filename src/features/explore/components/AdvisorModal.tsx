@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import posthog from 'posthog-js';
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 
 import { cn } from '@/src/lib/utils';
 import { Advisor } from '@/src/shared/types';
@@ -43,7 +44,7 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
     currentUserTherapistId && advisor.therapistId === currentUserTherapistId
   );
 
-  const handleBookSession = () => {
+  const handleBookSession = async () => {
     // Prevent self-booking
     if (isBookingSelf) {
       alert('You cannot book a session with yourself!');
@@ -64,6 +65,9 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
 
     // Handle pending therapists - always use external booking
     if (advisor.isPending) {
+      // Send notification email for pending therapists
+      await sendBookingNotification(advisor.id, 'Pending Therapist');
+
       if (advisor.bookingURL) {
         window.open(advisor.bookingURL, '_blank');
       } else {
@@ -77,10 +81,55 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
       // Use therapist ID for internal booking
       router.push(`/book/${advisor.therapistId}`);
     } else if (advisor.bookingURL) {
+      // Send notification email for external booking
+      await sendBookingNotification(
+        advisor.therapistId?.toString() || advisor.id,
+        'External Calendar',
+      );
+
       // Use external booking URL
       window.open(advisor.bookingURL, '_blank');
     } else {
       console.error('No booking method available for this therapist');
+    }
+  };
+
+  const sendBookingNotification = async (therapistId: string, bookingType: string) => {
+    try {
+      // First get therapist details
+      const therapistResponse = await fetch(`/api/therapist/details/${therapistId}`);
+      if (!therapistResponse.ok) {
+        console.error('Failed to fetch therapist details');
+        return;
+      }
+
+      const therapistData = await therapistResponse.json();
+
+      // Send notification email
+      const notificationResponse = await fetch('/api/booking/notify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          therapistName: therapistData.name,
+          therapistEmail: therapistData.email,
+          therapistId: therapistId,
+          bookingType: bookingType,
+        }),
+      });
+
+      if (notificationResponse.ok) {
+        console.log('Booking notification sent successfully');
+        toast.success(`${therapistData.name} has been notified of your booking interest!`);
+      } else {
+        const errorData = await notificationResponse.json();
+        console.error('Failed to send booking notification:', errorData.error);
+        toast.error('Unable to notify therapist. Please contact them directly.');
+      }
+    } catch (error) {
+      console.error('Error sending booking notification:', error);
+      toast.error('Unable to notify therapist. Please contact them directly.');
     }
   };
 
