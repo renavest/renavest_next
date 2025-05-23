@@ -73,45 +73,57 @@ export default async function Home() {
       .filter((email) => email !== null && email !== undefined);
 
     // Transform active therapists
-    const activeAdvisors: Advisor[] = dbTherapists.map((therapist) => {
-      const profileUrl = therapist.profileUrl
-        ? getTherapistImageUrl(therapist.profileUrl)
-        : '/experts/placeholderexp.png';
+    const activeAdvisors: Advisor[] = dbTherapists
+      .filter((therapist) => {
+        // In production, filter out Seth Morton
+        if (process.env.NODE_ENV === 'production' && therapist.name === 'Seth Morton') {
+          return false;
+        }
+        return true;
+      })
+      .map((therapist) => {
+        const profileUrl = therapist.profileUrl
+          ? getTherapistImageUrl(therapist.profileUrl)
+          : '/experts/placeholderexp.png';
 
-      const hasGoogleCalendar =
-        therapist.googleCalendarIntegrationStatus === 'connected' &&
-        !!therapist.googleCalendarAccessToken;
+        const hasGoogleCalendar =
+          therapist.googleCalendarIntegrationStatus === 'connected' &&
+          !!therapist.googleCalendarAccessToken;
 
-      return {
-        id: therapist.id.toString(), // This is the therapist table ID
-        therapistId: therapist.id, // Explicit therapist ID
-        userId: therapist.userId, // User table ID
-        name: therapist.name,
-        title: therapist.title || 'Financial Therapist',
-        bookingURL: therapist.bookingURL || '',
-        expertise: therapist.expertise || '',
-        certifications: therapist.certifications || '',
-        song: therapist.song || '',
-        yoe: therapist.yoe?.toString() || 'N/A',
-        clientele: therapist.clientele || '',
-        longBio: therapist.longBio || '',
-        previewBlurb: therapist.previewBlurb || 'Experienced financial therapist',
-        profileUrl: profileUrl,
-        hourlyRate: therapist.hourlyRate
-          ? `$${Math.round(Number(therapist.hourlyRate))}`
-          : undefined,
-        hasProfileImage: !!therapist.profileUrl,
-        isPending: false,
-        hasGoogleCalendar,
-        googleCalendarStatus: therapist.googleCalendarIntegrationStatus,
-      };
-    });
+        return {
+          id: therapist.id.toString(), // This is the therapist table ID
+          therapistId: therapist.id, // Explicit therapist ID
+          userId: therapist.userId, // User table ID
+          name: therapist.name,
+          title: therapist.title || 'Financial Therapist',
+          bookingURL: therapist.bookingURL || '',
+          expertise: therapist.expertise || '',
+          certifications: therapist.certifications || '',
+          song: therapist.song || '',
+          yoe: therapist.yoe?.toString() || 'N/A',
+          clientele: therapist.clientele || '',
+          longBio: therapist.longBio || '',
+          previewBlurb: therapist.previewBlurb || 'Experienced financial therapist',
+          profileUrl: profileUrl,
+          hourlyRate: therapist.hourlyRate
+            ? `$${Math.round(Number(therapist.hourlyRate))}`
+            : undefined,
+          hasProfileImage: !!therapist.profileUrl,
+          isPending: false,
+          hasGoogleCalendar,
+          googleCalendarStatus: therapist.googleCalendarIntegrationStatus,
+        };
+      });
 
     // Filter out pending therapists who already exist as active therapists
-    const filteredPendingTherapists = dbPendingTherapists.filter(
-      (pendingTherapist) =>
-        !activeTherapistEmails.includes(pendingTherapist.clerkEmail?.toLowerCase()),
-    );
+    const filteredPendingTherapists = dbPendingTherapists.filter((pendingTherapist) => {
+      // In production, filter out Seth Morton
+      if (process.env.NODE_ENV === 'production' && pendingTherapist.name === 'Seth Morton') {
+        return false;
+      }
+      // Filter out pending therapists who already exist as active therapists
+      return !activeTherapistEmails.includes(pendingTherapist.clerkEmail?.toLowerCase());
+    });
 
     // Transform filtered pending therapists
     const pendingAdvisors: Advisor[] = filteredPendingTherapists.map((pendingTherapist) => {
