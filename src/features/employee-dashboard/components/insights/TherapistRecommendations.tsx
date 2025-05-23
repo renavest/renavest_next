@@ -14,6 +14,7 @@ interface Therapist {
   profileUrl: string;
   previewBlurb: string;
   bookingURL?: string;
+  isPending?: boolean;
 }
 
 interface TherapistRecommendationsProps {
