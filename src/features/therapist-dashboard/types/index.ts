@@ -12,6 +12,7 @@ export type UpcomingSession = {
   sessionDate: string;
   sessionStartTime: string;
   status: 'scheduled' | 'completed' | 'cancelled' | 'rescheduled';
+  googleMeetLink?: string;
 };
 
 export type TherapistStatistics = {

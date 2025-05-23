@@ -86,6 +86,7 @@ export default async function TherapistPage() {
         sessionDate: bookingSessions.sessionDate,
         sessionStartTime: bookingSessions.sessionStartTime,
         status: bookingSessions.status,
+        metadata: bookingSessions.metadata,
       })
       .from(bookingSessions)
       .leftJoin(users, eq(bookingSessions.userId, users.id))
@@ -103,14 +104,21 @@ export default async function TherapistPage() {
       .orderBy(bookingSessions.sessionDate)
       .limit(10);
 
-    const upcomingSessions: UpcomingSession[] = sessionsResult.map((session) => ({
-      id: session.id.toString(),
-      clientId: session.clientId?.toString() ?? '',
-      clientName: `${session.clientName || ''} ${session.clientLastName || ''}`.trim(),
-      sessionDate: session.sessionDate.toISOString(),
-      sessionStartTime: session.sessionStartTime.toISOString(),
-      status: session.status as 'scheduled' | 'completed' | 'cancelled' | 'rescheduled',
-    }));
+    const upcomingSessions: UpcomingSession[] = sessionsResult.map((session) => {
+      // Extract Google Meet link from metadata
+      const metadata = session.metadata as { googleMeetLink?: string } | null;
+      const googleMeetLink = metadata?.googleMeetLink || '';
+
+      return {
+        id: session.id.toString(),
+        clientId: session.clientId?.toString() ?? '',
+        clientName: `${session.clientName || ''} ${session.clientLastName || ''}`.trim(),
+        sessionDate: session.sessionDate.toISOString(),
+        sessionStartTime: session.sessionStartTime.toISOString(),
+        status: session.status as 'scheduled' | 'completed' | 'cancelled' | 'rescheduled',
+        googleMeetLink,
+      };
+    });
 
     // Fetch statistics
     // Count upcoming sessions (same criteria as the upcoming sessions query)
