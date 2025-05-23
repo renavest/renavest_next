@@ -105,7 +105,7 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
 
       const therapistData = await therapistResponse.json();
 
-      // Send notification email
+      // Send notification email using the unified API
       const notificationResponse = await fetch('/api/booking/notify', {
         method: 'POST',
         headers: {
@@ -114,7 +114,6 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
         body: JSON.stringify({
           therapistName: therapistData.name,
           therapistEmail: therapistData.email,
-          therapistId: therapistId,
           bookingType: bookingType,
         }),
       });
