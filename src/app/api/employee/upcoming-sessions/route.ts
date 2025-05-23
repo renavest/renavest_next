@@ -43,7 +43,11 @@ export async function GET() {
       .where(
         and(
           eq(bookingSessions.userId, dbUserId),
-          or(eq(bookingSessions.status, 'confirmed'), eq(bookingSessions.status, 'scheduled')),
+          or(
+            eq(bookingSessions.status, 'pending'),
+            eq(bookingSessions.status, 'confirmed'),
+            eq(bookingSessions.status, 'scheduled'),
+          ),
           gt(bookingSessions.sessionDate, now),
         ),
       )
