@@ -1,6 +1,6 @@
 'use server';
 import { currentUser } from '@clerk/nextjs/server';
-import { eq, desc, count, inArray } from 'drizzle-orm';
+import { eq, count, inArray, gt, and, or } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
 
 import { db } from '@/src/db';
@@ -76,6 +76,7 @@ export default async function TherapistPage() {
     }
 
     // Fetch upcoming sessions for this therapist
+    const now = new Date();
     const sessionsResult = await db
       .select({
         id: bookingSessions.id,
@@ -88,8 +89,18 @@ export default async function TherapistPage() {
       })
       .from(bookingSessions)
       .leftJoin(users, eq(bookingSessions.userId, users.id))
-      .where(eq(bookingSessions.therapistId, therapistId))
-      .orderBy(desc(bookingSessions.sessionDate))
+      .where(
+        and(
+          eq(bookingSessions.therapistId, therapistId),
+          or(
+            eq(bookingSessions.status, 'pending'),
+            eq(bookingSessions.status, 'confirmed'),
+            eq(bookingSessions.status, 'scheduled'),
+          ),
+          gt(bookingSessions.sessionDate, now),
+        ),
+      )
+      .orderBy(bookingSessions.sessionDate)
       .limit(10);
 
     const upcomingSessions: UpcomingSession[] = sessionsResult.map((session) => ({
@@ -102,24 +113,40 @@ export default async function TherapistPage() {
     }));
 
     // Fetch statistics
-    const totalSessionsResult = await db
+    // Count upcoming sessions (same criteria as the upcoming sessions query)
+    const upcomingSessionsResult = await db
       .select({ count: count() })
       .from(bookingSessions)
-      .where(eq(bookingSessions.therapistId, therapistId));
+      .where(
+        and(
+          eq(bookingSessions.therapistId, therapistId),
+          or(
+            eq(bookingSessions.status, 'pending'),
+            eq(bookingSessions.status, 'confirmed'),
+            eq(bookingSessions.status, 'scheduled'),
+          ),
+          gt(bookingSessions.sessionDate, now),
+        ),
+      );
 
-    const totalClientsResult = await db
-      .select({ count: count() })
+    // Count unique clients (distinct user IDs who have booked with this therapist)
+    const uniqueClientsResult = await db
+      .select({ userId: bookingSessions.userId })
       .from(bookingSessions)
       .where(eq(bookingSessions.therapistId, therapistId));
+    const uniqueClientCount = [...new Set(uniqueClientsResult.map((row) => row.userId))].length;
 
+    // Count completed sessions
     const completedSessionsResult = await db
       .select({ count: count() })
       .from(bookingSessions)
-      .where(eq(bookingSessions.therapistId, therapistId));
+      .where(
+        and(eq(bookingSessions.therapistId, therapistId), eq(bookingSessions.status, 'completed')),
+      );
 
     const statistics: TherapistStatistics = {
-      totalSessions: totalSessionsResult[0]?.count ?? 0,
-      totalClients: totalClientsResult[0]?.count ?? 0,
+      totalSessions: upcomingSessionsResult[0]?.count ?? 0,
+      totalClients: uniqueClientCount,
       completedSessions: completedSessionsResult[0]?.count ?? 0,
     };
 
