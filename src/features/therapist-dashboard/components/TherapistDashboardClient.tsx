@@ -7,7 +7,6 @@ import { useEffect, useCallback } from 'react';
 
 import { useGoogleCalendarIntegration } from '@/src/features/google-calendar/utils/googleCalendarIntegration';
 import { AddNewClientSection } from '@/src/features/therapist-dashboard/components/AddNewClientSection';
-import ClientNotesSection from '@/src/features/therapist-dashboard/components/ClientNotesSection';
 import TherapistNavbar from '@/src/features/therapist-dashboard/components/TherapistNavbar';
 import { TherapistStatisticsCard } from '@/src/features/therapist-dashboard/components/TherapistStatisticsCard';
 import { UpcomingSessionsCard } from '@/src/features/therapist-dashboard/components/UpcomingSessionsCard';
@@ -204,8 +203,6 @@ const ClientDetailView = ({
           onSessionClick={() => {}} // Disable click functionality
         />
       </div>
-
-      {therapistIdSignal.value && <ClientNotesSection clientId={client.id} />}
     </div>
   );
 };
