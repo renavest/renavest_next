@@ -207,11 +207,11 @@ export async function sendBookingInterestNotification({
         error: 'Missing required email parameters',
       };
     }
-
+    // TODO REPLACE EMAIL
     // Send email to therapist
     const therapistEmailResult = await resend.emails.send({
       from: 'Renavest Booking <booking@booking.renavestapp.com>',
-      to: [therapistEmail],
+      to: ['seth@renavestapp.com'],
       subject: 'New Booking Interest - Renavest',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -256,7 +256,15 @@ export async function sendBookingInterestNotification({
             <p><strong>User:</strong> ${clientName} (${clientEmail})</p>
             <p><strong>Therapist:</strong> ${therapistName} (${therapistEmail})</p>
             <p><strong>Booking Type:</strong> ${bookingType}</p>
-            <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
+            <p><strong>Timestamp:</strong> ${new Date().toLocaleString('en-US', {
+              timeZone: 'America/New_York',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
+              hour12: true,
+            })} EST</p>
           </div>
           
           <p>The therapist has been notified and should reach out to the user directly.</p>
