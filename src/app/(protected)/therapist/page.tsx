@@ -60,7 +60,7 @@ export default async function TherapistPage() {
     if (uniqueClientUserIds.length > 0) {
       const clientsResult = await db
         .select({
-          id: users.clerkId,
+          id: users.id,
           firstName: users.firstName,
           lastName: users.lastName,
           email: users.email,
@@ -68,7 +68,7 @@ export default async function TherapistPage() {
         .from(users)
         .where(inArray(users.id, uniqueClientUserIds));
       clients = clientsResult.map((client) => ({
-        id: client.id,
+        id: client.id.toString(),
         firstName: client.firstName || '',
         lastName: client.lastName || undefined,
         email: client.email || '',
