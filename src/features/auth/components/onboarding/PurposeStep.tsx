@@ -1,18 +1,11 @@
 // src/features/auth/components/onboarding/PurposeStep.tsx
 'use client';
 
+import { Scale, HeartPulse, Rocket, TrendingUp, CircleDollarSign, Ellipsis } from 'lucide-react';
 import React from 'react'; // Import React
 
 import { cn } from '@/src/lib/utils';
-import {
-  LucideArrowLeft,
-  Scale,
-  HeartPulse,
-  Rocket,
-  TrendingUp,
-  CircleDollarSign,
-  Ellipsis,
-} from 'lucide-react';
+
 // Removed direct signal import, use global signal instead
 import { authErrorSignal } from '../../state/authState';
 import { firstName, selectedPurpose, currentStep } from '../../state/authState';
@@ -21,29 +14,29 @@ import { OnboardingStep } from '../../types';
 // Define Renavest purpose options with Lucide icons
 const RENAVEST_PURPOSE_OPTIONS = [
   {
-    value: 'improve_financial_habits',
-    label: 'Improve my financial habits',
-    icon: <Scale />,
-  },
-  {
-    value: 'reduce_financial_stress',
-    label: 'Reduce financial stress',
+    value: 'financial_stress_relief',
+    label: 'Reduce financial stress and anxiety',
     icon: <HeartPulse />,
   },
   {
-    value: 'plan_for_future',
-    label: 'Plan for future goals',
+    value: 'emotional_money_relationship',
+    label: 'Improve my relationship with money',
+    icon: <Scale />,
+  },
+  {
+    value: 'financial_confidence',
+    label: 'Build financial confidence and security',
     icon: <Rocket />,
   },
   {
-    value: 'investing_help',
-    label: 'Learn about investing',
-    icon: <TrendingUp />,
+    value: 'financial_therapy_support',
+    label: 'Get therapeutic support for money issues',
+    icon: <CircleDollarSign />,
   },
   {
-    value: 'debt_help',
-    label: 'Get help with debt',
-    icon: <CircleDollarSign />,
+    value: 'workplace_financial_wellness',
+    label: 'Access workplace financial wellness',
+    icon: <TrendingUp />,
   },
   {
     value: 'other',
