@@ -152,7 +152,7 @@ export async function POST(req: NextRequest) {
         sessionDate: therapistStartTime,
         sessionStartTime: therapistStartTime,
         sessionEndTime: therapistEndTime,
-        status: 'pending',
+        status: 'confirmed',
         metadata: {
           clientTimezone: validatedData.timezone,
           therapistTimezone,
