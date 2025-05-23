@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
 import { bookingSessions, therapists, users } from '@/src/db/schema';
+import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
 
 export async function GET() {
   try {
@@ -53,6 +54,7 @@ export async function GET() {
       const meta = s.metadata as { googleMeetLink?: string } | undefined;
       return {
         ...s,
+        therapistProfileUrl: getTherapistImageUrl(s.therapistProfileUrl),
         googleMeetLink: meta?.googleMeetLink || '',
       };
     });

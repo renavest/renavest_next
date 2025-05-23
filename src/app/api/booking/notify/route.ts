@@ -35,15 +35,15 @@ function isRateLimited(key: string): boolean {
 function getClientIP(request: NextRequest): string {
   const forwarded = request.headers.get('x-forwarded-for');
   const realIP = request.headers.get('x-real-ip');
-  
+
   if (forwarded) {
     return forwarded.split(',')[0].trim();
   }
-  
+
   if (realIP) {
     return realIP;
   }
-  
+
   return 'unknown';
 }
 
@@ -62,11 +62,11 @@ export async function POST(request: NextRequest) {
     // Rate limiting
     const clientIP = getClientIP(request);
     const rateLimitKey = getRateLimitKey(clientIP, userId);
-    
+
     if (isRateLimited(rateLimitKey)) {
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
@@ -76,14 +76,15 @@ export async function POST(request: NextRequest) {
     if (!therapistName || !therapistEmail) {
       return NextResponse.json(
         { error: 'Missing required fields: therapistName, therapistEmail' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const userEmail = user.emailAddresses[0]?.emailAddress;
-    const userName = user.firstName && user.lastName 
-      ? `${user.firstName} ${user.lastName}` 
-      : user.firstName || 'User';
+    const userName =
+      user.firstName && user.lastName
+        ? `${user.firstName} ${user.lastName}`
+        : user.firstName || 'User';
 
     // Use the existing email infrastructure
     const result = await sendBookingInterestNotification({
@@ -95,22 +96,15 @@ export async function POST(request: NextRequest) {
     });
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: 'Failed to send notification emails' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to send notification emails' }, { status: 500 });
     }
 
     return NextResponse.json({
       success: true,
       message: 'Booking interest notification sent successfully',
     });
-
   } catch (error) {
     console.error('Error sending booking notification:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
