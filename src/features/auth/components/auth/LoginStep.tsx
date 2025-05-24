@@ -2,6 +2,7 @@
 // components/auth/LoginStep.tsx
 'use client';
 
+import { useClerk, useUser, useSignIn } from '@clerk/nextjs';
 import React, { useEffect, useState } from 'react';
 
 import {
@@ -13,7 +14,6 @@ import {
 } from '../../state/authState';
 import { OnboardingStep } from '../../types';
 import { redirectBasedOnRole } from '../../utils/routerUtil';
-import { useClerk, useUser, useSignIn } from '@clerk/nextjs';
 // Validation utility
 const validateEmail = (emailValue: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

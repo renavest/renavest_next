@@ -1,6 +1,7 @@
 // app/login/LoginPageContent.tsx
 'use client';
 
+import { useUser } from '@clerk/nextjs';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect } from 'react';
@@ -11,8 +12,8 @@ import PageUtmHandler from '@/src/features/utm/PageText'; // Placeholder compone
 import { companyNameSignal } from '@/src/features/utm/utmCustomDemo'; // Placeholder signal // Assuming this signal exists
 
 import { trackAuthPageView } from '../utils/authTracking'; // Assuming this tracking utility exists
+
 import AuthenticationFlow from './AuthenticationFlow'; // The main component handling the flow
-import { useUser } from '@clerk/nextjs';
 function TestimonialSection() {
   // Testimonial/Quote - Keep as is from your provided code
   const quote =

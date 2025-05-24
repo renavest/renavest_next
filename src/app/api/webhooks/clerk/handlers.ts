@@ -1,7 +1,7 @@
 import { createClerkClient } from '@clerk/backend';
 import { eq } from 'drizzle-orm';
-import { Result, ok, err } from 'neverthrow';
 import { type PgTransaction } from 'drizzle-orm/pg-core'; // Import PgTransaction
+import { Result, ok, err } from 'neverthrow';
 
 import { db } from '@/src/db';
 import {

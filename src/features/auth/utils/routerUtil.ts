@@ -1,8 +1,8 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import type { UserResource } from '@clerk/types';
 import { User } from '@clerk/nextjs/server';
+import type { UserResource } from '@clerk/types';
+import { useRouter } from 'next/navigation';
 export const redirectBasedOnRole = (user: UserResource | User) => {
   const router = useRouter();
   if (user?.publicMetadata.role === 'therapist') {

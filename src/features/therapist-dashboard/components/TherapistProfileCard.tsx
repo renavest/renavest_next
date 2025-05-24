@@ -7,7 +7,6 @@ import { therapistIdSignal } from '@/src/features/therapist-dashboard/state/ther
 
 import { ProfileDisplay } from './ProfileDisplay';
 import { ProfileEditModal } from './ProfileEditModal';
-import { WorkingHoursManager } from './WorkingHoursManager';
 
 interface TherapistProfile {
   user: {
@@ -148,11 +147,6 @@ export default function TherapistProfileCard() {
   return (
     <div className='space-y-6'>
       <ProfileDisplay profile={displayProfile} onEditClick={openEditModal} />
-
-      <WorkingHoursManager
-        therapistId={therapistIdSignal.value || 0}
-        isCalendarConnected={isCalendarConnected}
-      />
 
       <ProfileEditModal
         isOpen={isModalOpen}

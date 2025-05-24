@@ -80,8 +80,8 @@ export async function POST(request: Request) {
       'profileUrl',
       'hourlyRate',
     ];
-    const userUpdates: any = {};
-    const therapistUpdates: any = {};
+    const userUpdates: Record<string, unknown> = {};
+    const therapistUpdates: Record<string, unknown> = {};
     for (const key of editableUserFields) {
       if (body[key] !== undefined) userUpdates[key] = body[key];
     }

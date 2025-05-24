@@ -2,9 +2,9 @@
 'use client';
 
 import { useSignUp } from '@clerk/nextjs';
+import { signal } from '@preact-signals/safe-react';
 import Link from 'next/link';
 import React from 'react';
-import { signal } from '@preact-signals/safe-react';
 
 import { ALLOWED_EMAILS } from '@/src/constants';
 import { cn } from '@/src/lib/utils'; // Assuming cn utility

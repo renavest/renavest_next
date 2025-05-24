@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { db } from '@/src/db';
-import { bookingSessions, therapists, therapistAvailability } from '@/src/db/schema';
+import { bookingSessions, therapists } from '@/src/db/schema';
 import {
   disconnectTherapistGoogleCalendar,
   isGoogleAuthError,

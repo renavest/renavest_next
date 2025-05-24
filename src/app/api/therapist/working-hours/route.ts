@@ -1,10 +1,10 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { db } from '@/src/db';
-import { therapists, therapistAvailability } from '@/src/db/schema';
+import { therapistAvailability } from '@/src/db/schema';
 
 // Validation schemas
 const WorkingHoursSchema = z.object({
@@ -40,14 +40,13 @@ export async function GET(req: NextRequest) {
 
     // Verify the therapist exists and belongs to the current user
     const therapist = await db.query.therapists.findFirst({
-      where: (therapists, { eq, and }) =>
-        and(
-          eq(therapists.id, therapistId),
-          eq(therapists.email, user.emailAddresses[0]?.emailAddress || ''),
-        ),
+      where: (therapists, { eq }) => eq(therapists.id, therapistId),
+      with: {
+        user: true,
+      },
     });
 
-    if (!therapist) {
+    if (!therapist || therapist.user?.email !== user.emailAddresses[0]?.emailAddress) {
       return NextResponse.json({ error: 'Therapist not found or unauthorized' }, { status: 404 });
     }
 
@@ -90,14 +89,13 @@ export async function POST(req: NextRequest) {
 
     // Verify the therapist exists and belongs to the current user
     const therapist = await db.query.therapists.findFirst({
-      where: (therapists, { eq, and }) =>
-        and(
-          eq(therapists.id, validatedData.therapistId),
-          eq(therapists.email, user.emailAddresses[0]?.emailAddress || ''),
-        ),
+      where: (therapists, { eq }) => eq(therapists.id, validatedData.therapistId),
+      with: {
+        user: true,
+      },
     });
 
-    if (!therapist) {
+    if (!therapist || therapist.user?.email !== user.emailAddresses[0]?.emailAddress) {
       return NextResponse.json({ error: 'Therapist not found or unauthorized' }, { status: 404 });
     }
 
