@@ -30,7 +30,7 @@ export function EthnicityStep() {
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedEthnicity.value) {
-      currentStep.value = OnboardingStep.SIGNUP;
+      currentStep.value = OnboardingStep.PRIVACY_PLEDGE;
     }
   };
   const handleBack = () => {
