@@ -1,4 +1,5 @@
 'use client';
+
 import { Clock, Plus, Save, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -8,11 +9,6 @@ interface WorkingHours {
   startTime: string;
   endTime: string;
   isRecurring: boolean;
-}
-
-interface WorkingHoursManagerProps {
-  therapistId: number;
-  isCalendarConnected: boolean;
 }
 
 const DAYS_OF_WEEK = [
@@ -25,10 +21,11 @@ const DAYS_OF_WEEK = [
   { value: 0, label: 'Sunday' },
 ];
 
-export function WorkingHoursManager({
-  therapistId,
-  isCalendarConnected,
-}: WorkingHoursManagerProps) {
+interface WorkingHoursSectionProps {
+  therapistId: number;
+}
+
+export function WorkingHoursSection({ therapistId }: WorkingHoursSectionProps) {
   const [workingHours, setWorkingHours] = useState<WorkingHours[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -36,10 +33,8 @@ export function WorkingHoursManager({
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    if (isCalendarConnected) {
-      fetchWorkingHours();
-    }
-  }, [therapistId, isCalendarConnected]);
+    fetchWorkingHours();
+  }, [therapistId]);
 
   const fetchWorkingHours = async () => {
     try {
@@ -115,16 +110,12 @@ export function WorkingHoursManager({
     }
   };
 
-  if (!isCalendarConnected) {
-    return null;
-  }
-
   if (loading) {
     return (
-      <div className='bg-white rounded-xl shadow-lg p-6 border border-purple-100'>
+      <div className='border-t border-gray-200 p-6'>
         <div className='flex items-center gap-3 mb-4'>
-          <Clock className='h-6 w-6 text-purple-600' />
-          <h3 className='text-lg font-semibold text-gray-900'>Working Hours</h3>
+          <Clock className='h-5 w-5 text-purple-600' />
+          <h4 className='text-md font-semibold text-gray-900'>Working Hours</h4>
         </div>
         <div className='animate-pulse'>
           <div className='h-4 bg-gray-200 rounded w-3/4 mb-2'></div>
@@ -135,15 +126,10 @@ export function WorkingHoursManager({
   }
 
   return (
-    <div className='bg-white rounded-xl shadow-lg p-6 border border-purple-100'>
-      <div className='flex items-center justify-between mb-4'>
-        <div className='flex items-center gap-3'>
-          <Clock className='h-6 w-6 text-purple-600' />
-          <h3 className='text-lg font-semibold text-gray-900'>Working Hours</h3>
-        </div>
-        <span className='text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium'>
-          Google Calendar Connected
-        </span>
+    <div className='border-t border-gray-200 p-6'>
+      <div className='flex items-center gap-3 mb-4'>
+        <Clock className='h-5 w-5 text-purple-600' />
+        <h4 className='text-md font-semibold text-gray-900'>Working Hours</h4>
       </div>
 
       <p className='text-sm text-gray-600 mb-4'>
