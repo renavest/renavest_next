@@ -8,8 +8,8 @@ import { db } from '@/src/db';
 import { users, therapists, bookingSessions, clientNotes, userOnboarding } from '@/src/db/schema'; // Added userOnboarding and clientNotes
 
 // Load environment variables
-const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local';
-dotenv.config({ path: '.env.local' });
+// const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local';
+dotenv.config({ path: '.env.production' });
 
 // Validate Clerk Secret Key
 const CLERK_API_KEY = process.env.CLERK_SECRET_KEY;
