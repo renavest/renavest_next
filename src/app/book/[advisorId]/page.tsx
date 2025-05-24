@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { trackSessionSearch } from '@/src/app/api/track/calendly/route';
 import { db } from '@/src/db';
 import { therapists, users, pendingTherapists } from '@/src/db/schema';
+import { hasRole } from '@/src/features/auth/utils/routerUtil';
 import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
 
 import UnifiedBookingFlow from '../../../features/booking/components/BookingFlow';
@@ -23,8 +24,7 @@ export default async function TherapistBookingPage({ params }: { params: { advis
   }
 
   // Check if user is a therapist and prevent self-booking
-  const userRole = user.publicMetadata?.role;
-  if (userRole === 'therapist') {
+  if (hasRole(user, 'therapist')) {
     // Get the user's database record to find their therapist ID
     const userRecord = await db.query.users.findFirst({
       where: eq(users.clerkId, user.id),

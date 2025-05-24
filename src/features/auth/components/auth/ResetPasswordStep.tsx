@@ -4,8 +4,7 @@
 
 import { useSignIn, useUser } from '@clerk/nextjs';
 import { useClerk } from '@clerk/nextjs';
-import { signal, computed, effect } from '@preact-signals/safe-react';
-import { redirect } from 'next/navigation';
+import { signal } from '@preact-signals/safe-react';
 import React, { useState, useEffect } from 'react';
 
 import {
@@ -15,6 +14,7 @@ import {
   currentStep,
 } from '../../state/authState'; // Use global error signal
 import { OnboardingStep } from '../../types'; // Import props type
+import { useRoleBasedRedirect } from '../../utils/routerUtil';
 
 export function ResetPasswordStep() {
   const { signIn } = useSignIn();
@@ -23,6 +23,8 @@ export function ResetPasswordStep() {
   const showResetPasswordStep = signal(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const { user } = useUser();
+  const { redirectToRole } = useRoleBasedRedirect();
+
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     resetPasswordCode.value = e.target.value;
   };
@@ -57,24 +59,13 @@ export function ResetPasswordStep() {
   const handleBackToLogin = () => {
     currentStep.value = OnboardingStep.LOGIN;
   };
-  const handleRedirectToDashboard = () => {
-    if (user) {
-      if (user.publicMetadata.role === 'employee') {
-        redirect('/employee');
-      } else if (user.publicMetadata.role === 'employer_admin') {
-        redirect('/employer');
-      } else if (user.publicMetadata.role === 'therapist') {
-        redirect('/therapist');
-      }
-    }
-  };
 
   // Use useEffect for redirect logic
   useEffect(() => {
     if (showResetPasswordStep.value && user) {
-      handleRedirectToDashboard();
+      redirectToRole(user);
     }
-  }, [showResetPasswordStep.value, user]);
+  }, [showResetPasswordStep.value, user, redirectToRole]);
 
   // Show spinner/message as soon as the user submits the form (isResettingPassword) or after reset (showResetPasswordStep)
   if (isResettingPassword || showResetPasswordStep.value) {

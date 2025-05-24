@@ -6,7 +6,7 @@ import { createDate } from '@/src/utils/timezone';
 // UI State Signals
 export const isHeaderScrolledSignal = signal(false);
 export const selectedGoalSignal = signal<number | null>(null);
-export const isScriptExpandedSignal = signal(false);
+const isScriptExpandedSignal = signal(false);
 const currentInsightIndexSignal = signal(0);
 export const isMobileMenuOpenSignal = signal(false);
 
@@ -43,7 +43,7 @@ export const comparisonData = [
   { name: 'Subscription Services', past: 10, current: 6 },
 ];
 
-export const therapists = [
+const therapists = [
   {
     id: 1,
     name: 'Dr. Lisa Smith',
@@ -71,7 +71,7 @@ export const therapists = [
 ];
 
 // Current week's money belief from the therapist
-export const weeklyMoneyBelief = {
+const weeklyMoneyBelief = {
   message:
     'Money is a tool for creating the life I want, not a source of stress. This week, I will approach my finances with curiosity and compassion. Each financial decision is an opportunity to align with my values and long-term goals.',
   author: 'Paige Williams',

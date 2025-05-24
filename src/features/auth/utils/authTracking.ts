@@ -7,19 +7,19 @@ interface TrackingProps {
   [key: string]: string | number | boolean | undefined;
 }
 
-export const trackLoginAttempt = (method: string, props?: TrackingProps) => {
+const trackLoginAttempt = (method: string, props?: TrackingProps) => {
 console.log('[Auth Tracking] Login Attempt:', method, props);
   // Implement your actual tracking call here
   // Example: analytics.track('Login Attempt', { method, ...props });
 };
 
-export const trackLoginSuccess = (method: string, props?: TrackingProps) => {
+const trackLoginSuccess = (method: string, props?: TrackingProps) => {
   console.log('[Auth Tracking] Login Success:', method, props);
   // Implement your actual tracking call here
   // Example: analytics.track('Login Success', { method, ...props });
 };
 
-export const trackLoginError = (method: string, error: any, props?: TrackingProps) => {
+const trackLoginError = (method: string, error: any, props?: TrackingProps) => {
   console.error('[Auth Tracking] Login Error:', method, error, props);
   // Implement your actual tracking call here
   // Example: analytics.track('Login Error', { method, error: error.message, ...props });
@@ -32,17 +32,17 @@ export const trackAuthPageView = (path: string, props?: TrackingProps) => {
 };
 
 // Add other tracking functions as needed for signup steps, etc.
-export const trackSignupStepComplete = (stepName: string, props?: TrackingProps) => {
+const trackSignupStepComplete = (stepName: string, props?: TrackingProps) => {
   console.log('[Auth Tracking] Signup Step Complete:', stepName, props);
   // Example: analytics.track(`Signup Step Complete - ${stepName}`, { ...props });
 };
 
-export const trackSignupComplete = (props?: TrackingProps) => {
+const trackSignupComplete = (props?: TrackingProps) => {
   console.log('[Auth Tracking] Signup Complete', props);
   // Example: analytics.track('Signup Complete', { ...props });
 };
 
-export const trackQuizComplete = (props?: TrackingProps) => {
+const trackQuizComplete = (props?: TrackingProps) => {
   console.log('[Auth Tracking] Quiz Complete', props);
   // Example: analytics.track('Quiz Complete', { ...props });
 };

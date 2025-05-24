@@ -22,7 +22,7 @@ const fetchedTherapistIds = new Set<string>();
 /**
  * Fetches the current Google Calendar integration status for a therapist
  */
-export async function fetchGoogleCalendarStatus(
+async function fetchGoogleCalendarStatus(
   therapistId: number | string,
 ): Promise<IntegrationStatus> {
   const idStr = String(therapistId);

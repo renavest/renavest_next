@@ -7,11 +7,11 @@ export const advisorSignal = signal<Advisor | null>(null);
 export const isOpenSignal = signal<boolean>(false);
 
 // Enhanced marketplace state
-export const selectedAdvisorIdSignal = signal<string | null>(null);
+const selectedAdvisorIdSignal = signal<string | null>(null);
 export const isGoogleCalendarConnectedSignal = signal<boolean | null>(null);
 export const isCheckingIntegrationSignal = signal<boolean>(false);
 export const marketplaceErrorSignal = signal<string | null>(null);
 
 // Booking flow state
-export const isBookingFlowActiveSignal = signal<boolean>(false);
+const isBookingFlowActiveSignal = signal<boolean>(false);
 export const bookingModeSignal = signal<'internal' | 'external' | null>(null);

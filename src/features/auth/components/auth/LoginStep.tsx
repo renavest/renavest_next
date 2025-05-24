@@ -3,7 +3,7 @@
 'use client';
 
 import { useClerk, useUser, useSignIn } from '@clerk/nextjs';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 import {
   email,
@@ -13,7 +13,8 @@ import {
   // Add any needed handler functions from authState or define here
 } from '../../state/authState';
 import { OnboardingStep } from '../../types';
-import { redirectBasedOnRole } from '../../utils/routerUtil';
+import { useRoleBasedRedirect } from '../../utils/routerUtil';
+
 // Validation utility
 const validateEmail = (emailValue: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -64,6 +65,7 @@ export function LoginStep() {
   const { signIn } = useSignIn();
   const { user } = useUser();
   const { setActive } = useClerk();
+  const { redirectToRole } = useRoleBasedRedirect();
 
   const onLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,7 +94,7 @@ export function LoginStep() {
           await setActive({ session: result.createdSessionId });
 
           if (user) {
-            redirectBasedOnRole(user);
+            redirectToRole(user);
           }
         }
       }

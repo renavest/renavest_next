@@ -21,7 +21,7 @@ export type TherapistStatistics = {
   completedSessions: number;
 };
 
-export type CreateClientNoteInput = {
+type CreateClientNoteInput = {
   userId: string;
   therapistId: number;
   sessionId?: number;

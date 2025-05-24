@@ -19,7 +19,7 @@ export type SupportedTimezone =
   | 'Australia/Sydney'
   | 'UTC';
 
-export const TIMEZONE_LABELS: Record<SupportedTimezone, string> = {
+const TIMEZONE_LABELS: Record<SupportedTimezone, string> = {
   'America/New_York': 'Eastern Time (ET)',
   'America/Chicago': 'Central Time (CT)',
   'America/Denver': 'Mountain Time (MT)',

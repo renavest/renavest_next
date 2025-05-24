@@ -12,8 +12,10 @@ import PageUtmHandler from '@/src/features/utm/PageText'; // Placeholder compone
 import { companyNameSignal } from '@/src/features/utm/utmCustomDemo'; // Placeholder signal // Assuming this signal exists
 
 import { trackAuthPageView } from '../utils/authTracking'; // Assuming this tracking utility exists
+import { useRoleBasedRedirect } from '../utils/routerUtil';
 
 import AuthenticationFlow from './AuthenticationFlow'; // The main component handling the flow
+
 function TestimonialSection() {
   // Testimonial/Quote - Keep as is from your provided code
   const quote =
@@ -48,16 +50,12 @@ export default function LoginPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user } = useUser();
+  const { redirectToRoleReplace } = useRoleBasedRedirect();
+
   useEffect(() => {
     console.log('user', user);
     if (user) {
-      if (user.publicMetadata.role === 'employee') {
-        router.push('/employee');
-      } else if (user.publicMetadata.role === 'employer_admin') {
-        router.push('/employer');
-      } else if (user.publicMetadata.role === 'therapist') {
-        router.push('/therapist');
-      }
+      redirectToRoleReplace(user);
     }
     // utm
     const company = searchParams?.get('company');
@@ -67,7 +65,7 @@ export default function LoginPageContent() {
     }
     // Track page view using the utility
     trackAuthPageView('/login', { company: company || 'none' });
-  }, [searchParams, router, user]);
+  }, [searchParams, router, user, redirectToRoleReplace]);
 
   return (
     // PageUtmHandler is assumed to be a context or wrapper component

@@ -1,7 +1,7 @@
 // src/constants.ts
 
 // List of email addresses allowed for employee signup via the /login route
-export const ALLOWED_EMPLOYEE_SIGNUP_EMAILS = [
+const ALLOWED_EMPLOYEE_SIGNUP_EMAILS = [
   'employee1@example.com',
   'employee2@example.com',
   'sethmorton05@gmail.com', // Keep for testing if needed
@@ -27,7 +27,7 @@ export const ALLOWED_EMAILS = [
 // This map helps you find the employer in your DB based on the user's email.
 // Keys can be full emails or domain names.
 // The value should correspond to the `name` field in your `employers` table.
-export const EMPLOYER_EMAIL_MAP: { [emailOrDomain: string]: string } = {
+const EMPLOYER_EMAIL_MAP: { [emailOrDomain: string]: string } = {
   'acmecorp.com': 'Acme Corp', // Map domain to employer name
   'globex.com': 'Globex Corporation',
   'anotheremployee@specificcompany.com': 'Specific Company Inc.', // Map specific email

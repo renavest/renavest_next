@@ -18,7 +18,7 @@ export const setOnboardingData = (data: OnboardingData) => {
   return null;
 };
 
-export const clearOnboardingData = () => {
+const clearOnboardingData = () => {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('onboardingData');
   }

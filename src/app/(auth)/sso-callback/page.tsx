@@ -3,6 +3,8 @@ import { AuthenticateWithRedirectCallback } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
+import { getRouteForRole, UserRole } from '@/src/features/auth/utils/routerUtil';
+
 export default function Page() {
   const router = useRouter();
   let redirectPath = '/';
@@ -12,17 +14,11 @@ export default function Page() {
   useEffect(() => {
     let isMounted = true;
 
-    const getRedirectPath = (role: string | null) => {
-      switch (role) {
-        case 'employee':
-          return '/employee';
-        case 'therapist':
-          return '/therapist';
-        case 'employer':
-          return '/employer';
-        default:
-          return '/';
+    const getRedirectPath = (role: string | null): string => {
+      if (role && (role === 'employee' || role === 'therapist' || role === 'employer_admin')) {
+        return getRouteForRole(role as UserRole);
       }
+      return getRouteForRole(null);
     };
 
     const pollUserReady = async () => {
@@ -40,7 +36,7 @@ export default function Page() {
     };
 
     const interval = setInterval(pollUserReady, 1500);
-    pollUserReady(); // Run immediately as well
+    pollUserReady();
 
     return () => {
       isMounted = false;
@@ -48,7 +44,6 @@ export default function Page() {
     };
   }, [router]);
 
-  // Render a loading indicator or placeholder
   return (
     <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen flex items-center justify-center'>
       <div className='text-center'>
