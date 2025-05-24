@@ -7,10 +7,12 @@ export default function IntegrationsPage() {
   return (
     <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen'>
       <TherapistNavbar pageTitle='Integrations' showBackButton={true} backButtonHref='/therapist' />
-      <div className='max-w-2xl mx-auto mt-10'>
+      <div className='max-w-4xl mx-auto mt-10'>
         <h2 className='text-2xl font-semibold text-gray-900 mb-6'>Connect Your Tools</h2>
         <div className='space-y-6'>
+          {/* Google Calendar Integration with Working Hours */}
           <GoogleCalendarIntegration />
+
           {/* Placeholder for future integrations */}
           <div className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm'>
             <div className='flex items-center gap-4 mb-4'>

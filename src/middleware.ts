@@ -13,7 +13,8 @@ const isPublicRoute = createRouteMatcher([
   '/sign-up(.*)',
   '/privacy(.*)',
   '/terms(.*)',
-  '/api(.*)', // All API routes are public in middleware
+  '/api(.*)',
+  '/pricing(.*)', // All API routes are public in middleware
 ]);
 
 const isTherapistRoute = createRouteMatcher(['/therapist(.*)']);

@@ -3,8 +3,11 @@
 'use client';
 
 import { useSignIn, useUser } from '@clerk/nextjs';
-import React, { useState, useEffect } from 'react';
+import { useClerk } from '@clerk/nextjs';
 import { signal, computed, effect } from '@preact-signals/safe-react';
+import { redirect } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+
 import {
   authErrorSignal,
   resetPasswordCode,
@@ -12,8 +15,7 @@ import {
   currentStep,
 } from '../../state/authState'; // Use global error signal
 import { OnboardingStep } from '../../types'; // Import props type
-import { redirect } from 'next/navigation';
-import { useClerk } from '@clerk/nextjs';
+
 export function ResetPasswordStep() {
   const { signIn } = useSignIn();
   const authError = authErrorSignal.value;

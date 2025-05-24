@@ -14,6 +14,8 @@ import { useState, useEffect } from 'react';
 
 import { useGoogleCalendarIntegration, fetchTherapistId } from '../utils/googleCalendarIntegration';
 
+import { WorkingHoursSection } from './WorkingHoursSection';
+
 // Google icon SVG
 const GoogleIcon = (
   <svg className='w-5 h-5 mr-2' width='20' height='20' viewBox='0 0 48 48'>
@@ -41,17 +43,11 @@ const GoogleIcon = (
 function WelcomeStep({ onNext }: { onNext: () => void }) {
   return (
     <div className='flex flex-col items-center text-center p-4'>
-      <Image
-        src='/renavestlogo.png'
-        alt='Renavest Butterfly'
-        width={48}
-        height={48}
-        className='mb-2'
-      />
-      <h2 className='text-xl font-bold text-purple-700 mb-2'>Connect Google Calendar</h2>
+      <Image src='/google-logo.svg' alt='Google Logo' width={40} height={40} className='mb-2' />
+      <h2 className='text-lg font-semibold text-gray-800 mb-2'>Welcome to Google Calendar</h2>
       <p className='text-gray-600 mb-4'>
-        Sync your Renavest sessions directly with your Google Calendar for seamless scheduling and
-        reminders.
+        Connect your Google Calendar to automatically sync your Renavest sessions and manage your
+        availability seamlessly.
       </p>
       <button
         className='bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-2 rounded-lg shadow mt-2 transition-colors'
@@ -98,28 +94,23 @@ function ConnectStep({
   return (
     <div className='flex flex-col items-center text-center p-4'>
       <Image src='/google-logo.svg' alt='Google Logo' width={40} height={40} className='mb-2' />
-      <h2 className='text-lg font-semibold text-gray-800 mb-2'>Connect to Google</h2>
+      <h2 className='text-lg font-semibold text-gray-800 mb-2'>Connect Your Calendar</h2>
       <p className='text-gray-600 mb-4'>
-        Sign in with your Google account to complete the integration.
+        Click the button below to securely connect your Google Calendar account.
       </p>
+      {error && (
+        <div className='mb-4 p-2 bg-red-50 rounded-md border border-red-100 w-full'>
+          <p className='text-xs text-red-600'>{error}</p>
+        </div>
+      )}
       <button
         onClick={onConnect}
         disabled={isLoading || !therapistId}
-        className='flex items-center justify-center gap-2 bg-white border border-gray-300 rounded-lg px-6 py-2 shadow hover:bg-gray-50 transition-colors text-gray-700 font-semibold disabled:opacity-50 mb-2'
-        style={{ minWidth: 220 }}
+        className='w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50'
       >
-        {GoogleIcon}
-        {isLoading ? (
-          <Loader2 className='animate-spin h-5 w-5 text-purple-600' />
-        ) : (
-          'Sign in with Google'
-        )}
+        {isLoading ? <Loader2 className='animate-spin h-4 w-4 mr-2' /> : GoogleIcon}
+        {isLoading ? 'Connecting...' : 'Connect Google Calendar'}
       </button>
-      {error && (
-        <div className='text-red-600 text-sm mt-2 flex items-center gap-1'>
-          <XCircle className='h-4 w-4' /> {error}
-        </div>
-      )}
     </div>
   );
 }
@@ -142,37 +133,33 @@ function ResultStep({
     <div className='flex flex-col items-center text-center p-4'>
       {isConnected ? (
         <>
-          <CheckCircle className='h-10 w-10 text-green-500 mb-2' />
-          <h2 className='text-lg font-semibold text-green-700 mb-2'>Connected!</h2>
-          <p className='text-gray-700 mb-2'>Your Google Calendar is now connected to Renavest.</p>
-          {calendarEmail && (
-            <p className='text-gray-600 text-sm mb-2'>
-              Account: <span className='font-medium'>{calendarEmail}</span>
-            </p>
-          )}
-          {lastSynced && <p className='text-xs text-gray-500 mb-2'>Last synced: {lastSynced}</p>}
-          <button
-            className='bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-2 rounded-lg shadow mt-2 transition-colors'
-            onClick={onClose}
-          >
-            Done
-          </button>
+          <CheckCircle className='h-12 w-12 text-green-500 mb-4' />
+          <h2 className='text-lg font-semibold text-gray-800 mb-2'>Successfully Connected!</h2>
+          <p className='text-gray-600 mb-2'>{calendarEmail}</p>
+          {lastSynced && <p className='text-xs text-gray-400 mb-4'>Last synced: {lastSynced}</p>}
+          <p className='text-gray-600 mb-4'>
+            Your Google Calendar is now connected. You can now manage your working hours and
+            availability.
+          </p>
         </>
       ) : (
         <>
-          <XCircle className='h-10 w-10 text-red-500 mb-2' />
-          <h2 className='text-lg font-semibold text-red-700 mb-2'>Something went wrong</h2>
-          <p className='text-gray-700 mb-2'>
+          <XCircle className='h-12 w-12 text-red-500 mb-4' />
+          <h2 className='text-lg font-semibold text-gray-800 mb-2'>Connection Failed</h2>
+          <p className='text-gray-600 mb-4'>
             We couldn't connect your Google Calendar. Please try again.
           </p>
           <button
-            className='bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-2 rounded-lg shadow mt-2 transition-colors'
             onClick={onRetry}
+            className='bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-2 rounded-lg shadow mb-2 transition-colors'
           >
             Try Again
           </button>
         </>
       )}
+      <button onClick={onClose} className='text-gray-500 hover:text-gray-700 font-medium text-sm'>
+        Close
+      </button>
     </div>
   );
 }
@@ -184,39 +171,46 @@ function ConnectedStatus({
   isLoading,
   onReconnect,
   onDisconnect,
+  therapistId,
 }: {
   calendarEmail: string | null | undefined;
   lastSynced: string | null | undefined;
   isLoading: boolean;
   onReconnect: () => void;
   onDisconnect: () => void;
+  therapistId: number;
 }) {
   return (
-    <div className='py-4 sm:px-6 flex flex-col items-center'>
-      <div className='flex items-center mb-2'>
-        <CheckCircle className='h-5 w-5 text-green-500 mr-2' />
-        <span className='text-sm font-medium text-gray-900'>Connected</span>
+    <div>
+      <div className='py-4 sm:px-6 flex flex-col items-center'>
+        <div className='flex items-center mb-2'>
+          <CheckCircle className='h-5 w-5 text-green-500 mr-2' />
+          <span className='text-sm font-medium text-gray-900'>Connected</span>
+        </div>
+        <p className='text-sm text-gray-500 mb-2'>{calendarEmail}</p>
+        {lastSynced && <p className='text-xs text-gray-400 mb-2'>Last synced: {lastSynced}</p>}
+        <div className='flex gap-2 mt-2'>
+          <button
+            onClick={onReconnect}
+            className='inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:opacity-50'
+            disabled={isLoading}
+          >
+            <ArrowRightLeft className='w-4 h-4 mr-2' />
+            Reconnect
+          </button>
+          <button
+            onClick={onDisconnect}
+            disabled={isLoading}
+            className='inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50'
+          >
+            <XCircle className='w-4 h-4 mr-2' />
+            Disconnect
+          </button>
+        </div>
       </div>
-      <p className='text-sm text-gray-500 mb-2'>{calendarEmail}</p>
-      {lastSynced && <p className='text-xs text-gray-400 mb-2'>Last synced: {lastSynced}</p>}
-      <div className='flex gap-2 mt-2'>
-        <button
-          onClick={onReconnect}
-          className='inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:opacity-50'
-          disabled={isLoading}
-        >
-          <ArrowRightLeft className='w-4 h-4 mr-2' />
-          Reconnect
-        </button>
-        <button
-          onClick={onDisconnect}
-          disabled={isLoading}
-          className='inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50'
-        >
-          <XCircle className='w-4 h-4 mr-2' />
-          Disconnect
-        </button>
-      </div>
+
+      {/* Working Hours Section */}
+      <WorkingHoursSection therapistId={therapistId} />
     </div>
   );
 }
@@ -243,7 +237,8 @@ function DisconnectedStatus({
         </div>
       ) : (
         <p className='text-sm text-gray-600 mb-4'>
-          Connect your Google Calendar to automatically add Renavest sessions
+          Connect your Google Calendar to automatically add Renavest sessions and manage your
+          working hours
         </p>
       )}
       <button
@@ -352,29 +347,32 @@ export function GoogleCalendarIntegration() {
 
   // Main card UI
   return (
-    <div className='w-full max-w-md mx-auto bg-white shadow-md rounded-lg overflow-hidden'>
-      <div className='px-4 py-5 sm:px-6 flex flex-col items-center'>
+    <div className='w-full bg-white shadow-lg rounded-xl overflow-hidden border border-purple-100'>
+      <div className='px-6 py-5 flex flex-col items-center'>
         <div className='flex items-center justify-center gap-2 mb-2'>
-          <Calendar className='h-5 w-5 text-purple-700' />
-          <h3 className='text-lg font-semibold leading-6 text-purple-700'>Google Calendar</h3>
+          <Calendar className='h-6 w-6 text-purple-700' />
+          <h3 className='text-xl font-semibold leading-6 text-purple-700'>
+            Google Calendar Integration
+          </h3>
         </div>
         <p className='mt-1 max-w-2xl text-sm text-gray-500 text-center'>
-          Sync your Renavest sessions directly with your Google Calendar
+          Sync your Renavest sessions and manage your availability
         </p>
       </div>
-      <div className='border-t border-gray-200 px-4 py-5 sm:p-0'>
-        <div className='sm:divide-y sm:divide-gray-200'>
+      <div className='border-t border-gray-200'>
+        <div className='divide-y divide-gray-200'>
           {isLoading && !isConnected ? (
             <div className='flex justify-center items-center py-8'>
               <Loader2 className='animate-spin h-6 w-6 text-purple-600' />
             </div>
-          ) : isConnected ? (
+          ) : isConnected && therapistId ? (
             <ConnectedStatus
               calendarEmail={safeCalendarEmail}
               lastSynced={safeLastSynced}
               isLoading={isLoading}
               onReconnect={handleReconnect}
               onDisconnect={handleDisconnect}
+              therapistId={parseInt(therapistId)}
             />
           ) : (
             <DisconnectedStatus

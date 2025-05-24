@@ -1,9 +1,11 @@
-import { db } from '@/src/db';
-import { NextRequest, NextResponse } from 'next/server';
 import { currentUser, clerkClient } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
+import { NextRequest, NextResponse } from 'next/server';
+
+import { db } from '@/src/db';
 import { userOnboarding } from '@/src/db/schema';
 import { createDate } from '@/src/utils/timezone';
-import { eq } from 'drizzle-orm';
+
 
 export async function POST(req: NextRequest) {
   const body = await req.json();

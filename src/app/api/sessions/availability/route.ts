@@ -161,25 +161,38 @@ export async function GET(req: NextRequest) {
         }))
         .filter((slot) => slot.start && slot.end); // Ensure we have start and end times
 
-      // Get working hours from Google Calendar
-      console.log('Fetching calendar details for therapist:', validatedData.therapistId);
-      const calendarResponse = await calendar.calendars.get({
-        calendarId: 'primary',
+      // Get working hours from database
+      console.log('Fetching working hours for therapist:', validatedData.therapistId);
+      const storedWorkingHours = await db.query.therapistAvailability.findMany({
+        where: (availability, { eq }) => eq(availability.therapistId, therapistId),
+        orderBy: (availability, { asc }) => [
+          asc(availability.dayOfWeek),
+          asc(availability.startTime),
+        ],
       });
 
-      const workingHours = calendarResponse.data.timeZone
-        ? {
-            timezone: calendarResponse.data.timeZone,
-            // Default working hours if not set in Google Calendar
-            hours: [
-              {
-                daysOfWeek: [1, 2, 3, 4, 5], // Monday to Friday
-                start: '09:00',
-                end: '17:00',
-              },
-            ],
-          }
-        : null;
+      // Convert stored working hours to the format expected by processAvailability
+      const workingHours =
+        storedWorkingHours.length > 0
+          ? {
+              timezone: therapistTimezone,
+              hours: storedWorkingHours.map((hour) => ({
+                daysOfWeek: [hour.dayOfWeek],
+                start: hour.startTime,
+                end: hour.endTime,
+              })),
+            }
+          : {
+              timezone: therapistTimezone,
+              // Default working hours if none are set
+              hours: [
+                {
+                  daysOfWeek: [1, 2, 3, 4, 5], // Monday to Friday
+                  start: '09:00',
+                  end: '17:00',
+                },
+              ],
+            };
 
       // Get existing bookings
       console.log('Fetching existing bookings for therapist:', validatedData.therapistId);
