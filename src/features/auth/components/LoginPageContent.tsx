@@ -55,7 +55,22 @@ export default function LoginPageContent() {
   useEffect(() => {
     console.log('user', user);
     if (user) {
-      redirectToRoleReplace(user);
+      // Check if user has completed onboarding (has role and onboardingComplete flag)
+      const userRole = user.publicMetadata?.role as string | undefined;
+      const onboardingComplete = user.publicMetadata?.onboardingComplete as boolean | undefined;
+
+      if (userRole && onboardingComplete) {
+        // User has completed onboarding, redirect to their dashboard
+        redirectToRoleReplace(user);
+      } else {
+        // User hasn't completed onboarding yet, redirect to auth-check to wait for webhook
+        console.log('User onboarding not complete, redirecting to auth-check', {
+          userRole,
+          onboardingComplete,
+          userId: user.id,
+        });
+        router.replace('/auth-check');
+      }
     }
     // utm
     const company = searchParams?.get('company');
