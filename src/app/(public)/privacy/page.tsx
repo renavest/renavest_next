@@ -166,7 +166,19 @@ export default function PrivacyPage() {
   const { user, isLoaded } = useUser();
 
   // Determine the back navigation path using the new utilities
-  const backPath = isLoaded && user ? getRouteForRole(getUserRoleFromUser(user)) : '/employee';
+  // If user hasn't completed onboarding, default to home page instead of employee
+  let backPath = '/';
+  if (isLoaded && user) {
+    const userRole = getUserRoleFromUser(user);
+    const onboardingComplete = user.publicMetadata?.onboardingComplete as boolean | undefined;
+
+    if (userRole && onboardingComplete) {
+      backPath = getRouteForRole(userRole);
+    } else {
+      // User hasn't completed onboarding, send them to auth-check or home
+      backPath = '/';
+    }
+  }
 
   return (
     <div className={`min-h-screen ${COLORS.WARM_WHITE.bg} font-sans`}>

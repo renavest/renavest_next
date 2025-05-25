@@ -169,9 +169,24 @@ export function SignupStep() {
   React.useEffect(() => {
     if (userLoaded && user) {
       console.warn('Authenticated user attempting to access signup - redirecting to dashboard');
-      const userRole = (user.publicMetadata?.role || user.unsafeMetadata?.role) as UserRole;
-      const redirectRoute = getRouteForRole(userRole);
-      router.replace(redirectRoute);
+
+      // Check if user has completed onboarding (has role and onboardingComplete flag)
+      const userRole = user.publicMetadata?.role as string | undefined;
+      const onboardingComplete = user.publicMetadata?.onboardingComplete as boolean | undefined;
+
+      if (userRole && onboardingComplete) {
+        // User has completed onboarding, redirect to their dashboard
+        const redirectRoute = getRouteForRole(userRole as UserRole);
+        router.replace(redirectRoute);
+      } else {
+        // User hasn't completed onboarding yet, redirect to auth-check to wait for webhook
+        console.log('User onboarding not complete, redirecting to auth-check', {
+          userRole,
+          onboardingComplete,
+          userId: user.id,
+        });
+        router.replace('/auth-check');
+      }
     }
   }, [userLoaded, user, router]);
 

@@ -81,8 +81,8 @@ export default function ExploreNavbar({
     if (window.history.length > 1) {
       router.back();
     } else {
-      // Fallback to a default route if no history
-      router.push('/employee');
+      // Fallback to home page instead of employee to avoid redirect loops
+      router.push('/');
     }
   };
 
