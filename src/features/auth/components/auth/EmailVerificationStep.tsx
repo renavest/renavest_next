@@ -1,7 +1,7 @@
 // src/features/auth/components/auth/EmailVerificationStep.tsx
 
 'use client';
-import { useSignUp, useClerk, useUser } from '@clerk/nextjs';
+import { useSignUp, useClerk } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
@@ -53,7 +53,6 @@ export function EmailVerificationStep() {
   const { signUp, isLoaded: isSignUpLoaded } = useSignUp();
   const [isLoading, setIsLoading] = useState(false);
   const { setActive } = useClerk();
-  const { user } = useUser();
   const onboardingData = getOnboardingData();
 
   if (!onboardingData) {
@@ -88,17 +87,13 @@ export function EmailVerificationStep() {
         if (signUp.createdUserId) {
           await setActive({ session: result.createdSessionId });
 
-          // Wait for webhook to process user creation
+          // Wait for webhook to process user creation and role assignment
           const userPollResult = await pollForUser(signUp.createdUserId);
 
           if (userPollResult.exists) {
-            // Let the webhook handle all metadata updates
-            // Just reload the user and redirect
-            if (user) {
-              await user.reload();
-            }
-            await setActive({ session: result.createdSessionId });
-            window.location.reload();
+            // Webhook has processed the user - redirect based on role
+            // The webhook is the single source of truth for role assignment
+            window.location.href = '/dashboard';
           } else {
             authErrorSignal.value = 'Account setup failed. Please contact support.';
           }

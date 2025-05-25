@@ -262,6 +262,17 @@ export async function handleUserCreateOrUpdate(
 
   try {
     await db.transaction(async (tx) => {
+      // Validate the requested role before processing - SINGLE SOURCE OF TRUTH
+      const requestedRole = (unsafeMetadata?.role || publicMetadata?.role) as string;
+      const validatedRole = await validateRoleAuthorization(primaryEmail, requestedRole, tx);
+
+      console.log('Webhook: Role validation result', {
+        requestedRole,
+        validatedRole,
+        email: primaryEmail,
+        eventType,
+      });
+
       const existingUser = (await tx.select().from(users).where(eq(users.clerkId, id)).limit(1))[0];
       const userWithEmail = (
         await tx.select().from(users).where(eq(users.email, primaryEmail)).limit(1)
@@ -269,7 +280,14 @@ export async function handleUserCreateOrUpdate(
       let finalUser: typeof usersTable.$inferSelect | undefined = undefined;
 
       if (existingUser) {
-        finalUser = await updateUser(tx, existingUser, data, primaryEmail, now, clerkProvidedRole);
+        finalUser = await updateUser(
+          tx,
+          existingUser,
+          data,
+          primaryEmail,
+          now,
+          validatedRole as any,
+        );
       } else if (userWithEmail) {
         finalUser = await updateUserWithClerkId(
           tx,
@@ -277,20 +295,25 @@ export async function handleUserCreateOrUpdate(
           data,
           primaryEmail,
           now,
-          clerkProvidedRole,
+          validatedRole as any,
         );
       } else {
-        finalUser = await createUser(tx, data, primaryEmail, now, clerkProvidedRole);
+        finalUser = await createUser(tx, data, primaryEmail, now, validatedRole as any);
       }
 
-      console.log('Webhook: Final user created/updated', {
-        userId: finalUser?.id,
-        clerkId: finalUser?.clerkId,
-        role: finalUser?.role,
+      if (!finalUser) {
+        throw new Error('Failed to create or update user');
+      }
+
+      console.log('Webhook: User created/updated with validated role', {
+        userId: finalUser.id,
+        clerkId: finalUser.clerkId,
+        role: finalUser.role,
+        email: finalUser.email,
       });
 
-      // Handle role-specific logic
-      if (finalUser && clerkProvidedRole === 'therapist') {
+      // Handle role-specific logic ONLY if role is therapist and validated
+      if (finalUser.role === 'therapist') {
         const pendingTherapistMatch = (
           await tx
             .select()
@@ -298,9 +321,18 @@ export async function handleUserCreateOrUpdate(
             .where(eq(pendingTherapists.clerkEmail, primaryEmail))
             .limit(1)
         )[0];
+
         if (pendingTherapistMatch) {
           await promotePendingTherapist(finalUser, pendingTherapistMatch, tx);
-          console.log('Webhook: Promoted pending therapist', { userId: finalUser.id });
+          console.log('Webhook: Successfully promoted pending therapist', {
+            userId: finalUser.id,
+            therapistName: pendingTherapistMatch.name,
+          });
+        } else {
+          console.error('Webhook: User has therapist role but no pendingTherapist record', {
+            userId: finalUser.id,
+            email: primaryEmail,
+          });
         }
       }
 
@@ -309,7 +341,12 @@ export async function handleUserCreateOrUpdate(
         await processOnboardingData(tx, finalUser, unsafeMetadata);
       }
 
-      console.info('Webhook: User sync complete', { userId: id, eventType, role: finalUser?.role });
+      console.info('Webhook: User sync complete', {
+        userId: id,
+        eventType,
+        finalRole: finalUser.role,
+        email: finalUser.email,
+      });
     });
     return ok(true);
   } catch (error) {
@@ -440,4 +477,63 @@ export async function handleUserActivity(
     console.error('Webhook: User activity update error', { userId: id, error });
     return err(errorDetails);
   }
+}
+
+/**
+ * Validates if a user is authorized for the requested role
+ * This is the SINGLE SOURCE OF TRUTH for role assignment
+ */
+async function validateRoleAuthorization(
+  email: string,
+  requestedRole: string,
+  tx: PgTransaction<any, any, any>,
+): Promise<string> {
+  const normalizedEmail = email.toLowerCase().trim();
+
+  console.log('Role validation:', { email: normalizedEmail, requestedRole });
+
+  // Default role for all users
+  if (!requestedRole || requestedRole === 'employee') {
+    return 'employee';
+  }
+
+  // Validate therapist role - ONLY authorized if in pendingTherapists table
+  if (requestedRole === 'therapist') {
+    const pendingTherapist = await tx
+      .select()
+      .from(pendingTherapists)
+      .where(eq(pendingTherapists.clerkEmail, normalizedEmail))
+      .limit(1);
+
+    if (pendingTherapist.length > 0) {
+      console.log('Therapist role authorized via pendingTherapists table', {
+        email: normalizedEmail,
+      });
+      return 'therapist';
+    } else {
+      console.warn('Unauthorized therapist role request - not in pendingTherapists', {
+        email: normalizedEmail,
+        requestedRole,
+      });
+      return 'employee'; // Fallback to employee if not pre-authorized
+    }
+  }
+
+  // Validate employer_admin role (you might have a similar authorization table)
+  if (requestedRole === 'employer_admin') {
+    // Add your employer admin validation logic here
+    // For now, fallback to employee unless specifically authorized
+    console.warn('Unauthorized employer_admin role request', {
+      email: normalizedEmail,
+      requestedRole,
+    });
+    return 'employee';
+  }
+
+  // Unknown role, fallback to employee
+  console.warn('Unknown role requested, defaulting to employee', {
+    email: normalizedEmail,
+    requestedRole,
+  });
+  return 'employee';
 }
