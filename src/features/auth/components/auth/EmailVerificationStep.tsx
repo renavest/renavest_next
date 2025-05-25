@@ -5,86 +5,12 @@ import { useSignUp, useClerk } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
-import type { UserRole } from '@/src/shared/types';
-
 import {
   authErrorSignal,
   verificationEmailAddress,
   emailVerificationCode,
 } from '../../state/authState';
 import { getOnboardingData } from '../../utils/onboardingStorage';
-import { getRouteForRole } from '../../utils/routerUtil';
-
-// Type for user validation response
-interface UserValidationResponse {
-  exists: boolean;
-  user?: {
-    id: number;
-    clerkId: string;
-    email: string;
-    role: string;
-    firstName: string | null;
-    lastName: string | null;
-    isActive: boolean;
-  };
-}
-
-// Helper function for polling the user endpoint
-// CRITICAL: This ensures webhook processing completes before redirect
-const pollForUser = async (
-  clerkId: string,
-  retries = 15,
-  delay = 2000,
-): Promise<UserValidationResponse> => {
-  console.log(`Polling for user (attempt ${16 - retries}/15):`, { clerkId, retries, delay });
-
-  try {
-    const response = await fetch('/api/auth/validate-user-db-entry', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clerkId }),
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-
-    console.log('Poll result:', {
-      exists: result.exists,
-      hasUser: !!result.user,
-      userRole: result.user?.role,
-      attempt: 16 - retries,
-    });
-
-    if (result.exists && result.user && result.user.role) {
-      console.log('✅ User found with role, webhook processing complete');
-      return result;
-    }
-
-    if (retries <= 0) {
-      console.error('❌ Polling exhausted, webhook may have failed');
-      return { exists: false };
-    }
-
-    console.log(`⏳ User not ready, retrying in ${delay}ms...`);
-    await new Promise((resolve) => setTimeout(resolve, delay));
-    return pollForUser(clerkId, retries - 1, delay);
-  } catch (error) {
-    console.error('Polling error:', error);
-
-    if (retries <= 0) {
-      console.error('❌ Polling failed after all retries');
-      return { exists: false };
-    }
-
-    console.log(`⚠️ Polling error, retrying in ${delay}ms...`);
-    await new Promise((resolve) => setTimeout(resolve, delay));
-    return pollForUser(clerkId, retries - 1, delay);
-  }
-};
 
 export function EmailVerificationStep() {
   const router = useRouter();
@@ -130,27 +56,11 @@ export function EmailVerificationStep() {
             },
           });
 
-          console.log('Active session set, waiting for webhook processing...');
+          console.log('Email verification complete, redirecting to auth-check...');
 
-          const userPollResult = await pollForUser(signUp.createdUserId, 15, 2000);
-
-          if (userPollResult.exists && userPollResult.user) {
-            const userRole = userPollResult.user.role as UserRole;
-            const redirectRoute = getRouteForRole(userRole);
-
-            console.log('Email verification complete, redirecting based on role:', {
-              userRole,
-              redirectRoute,
-              userId: userPollResult.user.id,
-              clerkId: userPollResult.user.clerkId,
-            });
-
-            router.replace(redirectRoute);
-          } else {
-            console.error('Webhook processing failed or user not found after polling');
-            authErrorSignal.value =
-              'Account setup failed. Please contact support or try logging in.';
-          }
+          // CRITICAL CHANGE: Redirect to an intermediate auth-check page
+          // This gives time for the webhook to complete and Clerk's session metadata to update
+          router.replace('/auth-check');
         } else {
           authErrorSignal.value = 'Account verification incomplete. Please log in.';
           router.push('/login');
@@ -219,7 +129,7 @@ export function EmailVerificationStep() {
           className='w-full py-3 px-6 rounded-full shadow-md text-sm font-medium text-white bg-black hover:bg-gray-800 transition-all duration-300 ease-in-out transform'
           disabled={isLoading || emailVerificationCode.value.length !== 6}
         >
-          {isLoading ? 'Verifying...' : 'Verify'}
+          {isLoading ? 'Verifying...' : 'Verify & Continue'}
         </button>
 
         <div className='text-center mt-4'>

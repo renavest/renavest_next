@@ -5,7 +5,7 @@ import { ChevronLeft, Download } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
 
-import { getRouteForRole, getUserRole } from '@/src/features/auth/utils/routerUtil';
+import { getRouteForRole, getUserRoleFromUser } from '@/src/features/auth/utils/routerUtil';
 import Navbar from '@/src/features/home/components/Navbar';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
@@ -166,7 +166,7 @@ export default function PrivacyPage() {
   const { user, isLoaded } = useUser();
 
   // Determine the back navigation path using the new utilities
-  const backPath = isLoaded && user ? getRouteForRole(getUserRole(user)) : '/employee';
+  const backPath = isLoaded && user ? getRouteForRole(getUserRoleFromUser(user)) : '/employee';
 
   return (
     <div className={`min-h-screen ${COLORS.WARM_WHITE.bg} font-sans`}>

@@ -8,35 +8,8 @@ import { useCallback } from 'react';
 
 import type { UserRole } from '@/src/shared/types';
 
-// Import shared route mapping utilities
-import {
-  ROLE_ROUTES,
-  UNAUTHORIZED_PATH,
-  getRouteForRole,
-  isValidUserRole,
-  getUserRoleFromUser,
-  hasRole,
-  hasAnyRole,
-  getRoleDisplayName,
-  getAllRoles,
-  isRoleRoute,
-  getRoleForPath,
-} from './routeMapping';
-
-// Re-export for backward compatibility
-export {
-  ROLE_ROUTES,
-  UNAUTHORIZED_PATH,
-  getRouteForRole,
-  isValidUserRole,
-  getUserRoleFromUser,
-  hasRole,
-  hasAnyRole,
-  getRoleDisplayName,
-  getAllRoles,
-  isRoleRoute,
-  getRoleForPath,
-};
+// Import shared route mapping utilities for client-side use
+import { getRouteForRole, getUserRoleFromUser } from './routeMapping';
 
 /**
  * Redirect user to their role-specific dashboard
@@ -129,3 +102,6 @@ export function useRoleBasedRedirect() {
 export function isUserReady(user: UserResource | User | null | undefined): boolean {
   return !!(user && user.publicMetadata?.onboardingComplete && getUserRoleFromUser(user));
 }
+
+// Re-export the functions that client components need
+export { getRouteForRole, getUserRoleFromUser };
