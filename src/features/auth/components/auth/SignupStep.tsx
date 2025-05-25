@@ -3,7 +3,6 @@
 
 import { useSignUp, useUser } from '@clerk/nextjs';
 import { signal } from '@preact-signals/safe-react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 
@@ -35,7 +34,7 @@ const isSignupLoading = signal(false);
 
 // CRITICAL: Prevent role changes by checking if user is already authenticated
 
-// Extracted form fields and checkbox into a separate component
+// Extracted form fields into a separate component (removed checkbox)
 function SignupFormFields() {
   return (
     <>
@@ -99,27 +98,6 @@ function SignupFormFields() {
           placeholder='Use at least 8 characters'
         />
       </div>
-
-      <div className='flex items-center mt-4'>
-        <input
-          id='agreeToTerms'
-          type='checkbox'
-          checked={agreeToTerms.value}
-          onChange={(e) => (agreeToTerms.value = e.target.checked)}
-          required
-          className='h-4 w-4 text-black focus:ring-black border-gray-300 rounded'
-        />
-        <label htmlFor='agreeToTerms' className='ml-2 block text-sm text-gray-700'>
-          * I agree to the{' '}
-          <Link href='/terms' className='text-gray-900 hover:underline'>
-            Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link href='/privacy' className='text-gray-900 hover:underline'>
-            Privacy Policy
-          </Link>
-        </label>
-      </div>
     </>
   );
 }
@@ -135,6 +113,35 @@ function isClerkAPIError(err: unknown): err is { errors: { message: string }[] }
     typeof (err as { errors: { message?: unknown }[] }).errors[0].message === 'string'
   );
 }
+
+// Validation helper functions
+const validateSignupForm = () => {
+  if (password.value.length < 8) {
+    return 'Password must be at least 8 characters long.';
+  }
+  if (firstName.value.length === 0) {
+    return 'First name is required.';
+  }
+  if (lastName.value.length === 0) {
+    return 'Last name is required.';
+  }
+  return null;
+};
+
+const handleSignupError = (err: unknown) => {
+  if (isClerkAPIError(err)) {
+    return err.errors[0].message;
+  } else if (
+    typeof err === 'object' &&
+    err !== null &&
+    'message' in err &&
+    typeof (err as { message: unknown }).message === 'string'
+  ) {
+    return (err as { message: string }).message;
+  } else {
+    return 'Signup failed. Please try again.';
+  }
+};
 
 // Utility to gather onboarding data from signals
 function getOnboardingDataFromSignals() {
@@ -181,21 +188,16 @@ export function SignupStep() {
     e.preventDefault();
     authErrorSignal.value = null;
     isSignupLoading.value = true; // Set loading state
+
+    // Set agreeToTerms to true since user already confirmed in PrivacyPledgeStep
+    agreeToTerms.value = true;
+
     // Store onboarding data in localStorage
     const onboardingData = getOnboardingDataFromSignals();
     try {
-      if (password.value.length < 8) {
-        authErrorSignal.value = 'Password must be at least 8 characters long.';
-        isSignupLoading.value = false;
-        return;
-      }
-      if (firstName.value.length === 0) {
-        authErrorSignal.value = 'First name is required.';
-        isSignupLoading.value = false;
-        return;
-      }
-      if (lastName.value.length === 0) {
-        authErrorSignal.value = 'Last name is required.';
+      const error = validateSignupForm();
+      if (error) {
+        authErrorSignal.value = error;
         isSignupLoading.value = false;
         return;
       }
@@ -238,18 +240,7 @@ export function SignupStep() {
         authErrorSignal.value = 'Signup requires further verification.';
       }
     } catch (err: unknown) {
-      if (isClerkAPIError(err)) {
-        authErrorSignal.value = err.errors[0].message;
-      } else if (
-        typeof err === 'object' &&
-        err !== null &&
-        'message' in err &&
-        typeof (err as { message: unknown }).message === 'string'
-      ) {
-        authErrorSignal.value = (err as { message: string }).message;
-      } else {
-        authErrorSignal.value = 'Signup failed. Please try again.';
-      }
+      authErrorSignal.value = handleSignupError(err);
     } finally {
       isSignupLoading.value = false; // Always reset loading state
     }
@@ -265,11 +256,7 @@ export function SignupStep() {
     currentStep.value = OnboardingStep.LOGIN;
   };
   const isFormValid =
-    firstName.value.trim() &&
-    lastName.value.trim() &&
-    email.value.trim() &&
-    password.value.trim() &&
-    agreeToTerms.value;
+    firstName.value.trim() && lastName.value.trim() && email.value.trim() && password.value.trim();
   return (
     <div className='space-y-6'>
       <div className='flex flex-col items-center mb-8'>
