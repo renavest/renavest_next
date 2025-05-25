@@ -1,33 +1,39 @@
 // src/features/auth/components/auth/SignupStep.tsx
 'use client';
 
-import { useSignUp } from '@clerk/nextjs';
+import { useSignUp, useUser } from '@clerk/nextjs';
 import { signal } from '@preact-signals/safe-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import React from 'react';
 
-import { cn } from '@/src/lib/utils'; // Assuming cn utility
+import { cn } from '@/src/lib/utils';
+import type { UserRole } from '@/src/shared/types';
 
 import {
-  selectedRole,
+  authErrorSignal,
+  verificationEmailAddress,
   firstName,
   lastName,
   email,
   password,
-  agreeToTerms,
-  currentStep,
-  authErrorSignal,
-  verificationEmailAddress,
+  selectedRole,
   selectedPurpose,
   selectedAgeRange,
   selectedMaritalStatus,
   selectedEthnicity,
+  agreeToTerms,
+  currentStep,
 } from '../../state/authState';
 import { OnboardingStep } from '../../types';
 import { checkEmailEligibility } from '../../utils/emailEligibilityUtil';
 import { setOnboardingData } from '../../utils/onboardingStorage';
+import { getRouteForRole } from '../../utils/routerUtil';
+
 // Add isSignupLoading signal
 const isSignupLoading = signal(false);
+
+// CRITICAL: Prevent role changes by checking if user is already authenticated
 
 // Extracted form fields and checkbox into a separate component
 function SignupFormFields() {
@@ -148,6 +154,29 @@ function getOnboardingDataFromSignals() {
 
 export function SignupStep() {
   const { signUp } = useSignUp();
+  const { user, isLoaded: userLoaded } = useUser();
+  const router = useRouter();
+
+  // CRITICAL: Prevent authenticated users from accessing signup
+  // This prevents role changes after initial signup
+  React.useEffect(() => {
+    if (userLoaded && user) {
+      console.warn('Authenticated user attempting to access signup - redirecting to dashboard');
+      const userRole = (user.publicMetadata?.role || user.unsafeMetadata?.role) as UserRole;
+      const redirectRoute = getRouteForRole(userRole);
+      router.replace(redirectRoute);
+    }
+  }, [userLoaded, user, router]);
+
+  // Don't render signup form if user is already authenticated
+  if (userLoaded && user) {
+    return (
+      <div className='text-center'>
+        <p className='text-gray-600'>You are already signed up. Redirecting to your dashboard...</p>
+      </div>
+    );
+  }
+
   const onSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     authErrorSignal.value = null;

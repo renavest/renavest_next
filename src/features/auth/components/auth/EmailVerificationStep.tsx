@@ -30,11 +30,14 @@ interface UserValidationResponse {
 }
 
 // Helper function for polling the user endpoint
+// CRITICAL: This ensures webhook processing completes before redirect
 const pollForUser = async (
   clerkId: string,
-  retries = 10,
-  delay = 1000,
+  retries = 15,
+  delay = 2000,
 ): Promise<UserValidationResponse> => {
+  console.log(`Polling for user (attempt ${16 - retries}/15):`, { clerkId, retries, delay });
+
   try {
     const response = await fetch('/api/auth/validate-user-db-entry', {
       method: 'POST',
@@ -43,23 +46,41 @@ const pollForUser = async (
       credentials: 'include',
     });
 
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
     const result = await response.json();
 
-    if (result.exists) {
+    console.log('Poll result:', {
+      exists: result.exists,
+      hasUser: !!result.user,
+      userRole: result.user?.role,
+      attempt: 16 - retries,
+    });
+
+    if (result.exists && result.user && result.user.role) {
+      console.log('✅ User found with role, webhook processing complete');
       return result;
     }
 
     if (retries <= 0) {
+      console.error('❌ Polling exhausted, webhook may have failed');
       return { exists: false };
     }
 
+    console.log(`⏳ User not ready, retrying in ${delay}ms...`);
     await new Promise((resolve) => setTimeout(resolve, delay));
     return pollForUser(clerkId, retries - 1, delay);
-  } catch {
+  } catch (error) {
+    console.error('Polling error:', error);
+
     if (retries <= 0) {
+      console.error('❌ Polling failed after all retries');
       return { exists: false };
     }
 
+    console.log(`⚠️ Polling error, retrying in ${delay}ms...`);
     await new Promise((resolve) => setTimeout(resolve, delay));
     return pollForUser(clerkId, retries - 1, delay);
   }
@@ -102,25 +123,33 @@ export function EmailVerificationStep() {
 
       if (result.status === 'complete') {
         if (signUp.createdUserId) {
-          await setActive({ session: result.createdSessionId });
+          await setActive({
+            session: result.createdSessionId,
+            beforeEmit: () => {
+              console.log('Setting active session with ID:', result.createdSessionId);
+            },
+          });
 
-          // Wait for webhook to process user creation and role assignment
-          const userPollResult = await pollForUser(signUp.createdUserId);
+          console.log('Active session set, waiting for webhook processing...');
 
-          if (userPollResult.exists) {
-            // Webhook has processed the user - redirect based on role using router utilities
-            const userRole = userPollResult.user?.role as UserRole;
+          const userPollResult = await pollForUser(signUp.createdUserId, 15, 2000);
+
+          if (userPollResult.exists && userPollResult.user) {
+            const userRole = userPollResult.user.role as UserRole;
             const redirectRoute = getRouteForRole(userRole);
 
             console.log('Email verification complete, redirecting based on role:', {
               userRole,
               redirectRoute,
+              userId: userPollResult.user.id,
+              clerkId: userPollResult.user.clerkId,
             });
 
-            // Use router.replace for a clean redirect without back button issues
             router.replace(redirectRoute);
           } else {
-            authErrorSignal.value = 'Account setup failed. Please contact support.';
+            console.error('Webhook processing failed or user not found after polling');
+            authErrorSignal.value =
+              'Account setup failed. Please contact support or try logging in.';
           }
         } else {
           authErrorSignal.value = 'Account verification incomplete. Please log in.';
@@ -129,7 +158,8 @@ export function EmailVerificationStep() {
       } else {
         authErrorSignal.value = `Verification failed. Please check the code and try again.`;
       }
-    } catch {
+    } catch (error) {
+      console.error('Email verification error:', error);
       authErrorSignal.value = 'Verification failed. Please try again.';
     } finally {
       setIsLoading(false);

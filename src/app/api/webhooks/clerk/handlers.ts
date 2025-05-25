@@ -1,3 +1,4 @@
+import { clerkClient } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 import { type PgTransaction } from 'drizzle-orm/pg-core';
 import { Result, ok, err } from 'neverthrow';
@@ -13,6 +14,8 @@ import {
 } from '@/src/db/schema';
 import type { users as usersTable } from '@/src/db/schema';
 import { createDate } from '@/src/utils/timezone';
+
+// Import clerkClient for role synchronization
 
 // Type for database transaction
 type DbTransaction = typeof db extends { transaction: (fn: (tx: infer T) => any) => any }
@@ -231,6 +234,26 @@ async function promotePendingTherapist(
 }
 
 /**
+ * Synchronize user role to Clerk's publicMetadata for session tokens
+ * This ensures middleware can read the role from sessionClaims
+ */
+async function synchronizeRoleToClerk(clerkUserId: string, role: string): Promise<void> {
+  try {
+    const client = await clerkClient();
+    await client.users.updateUserMetadata(clerkUserId, {
+      publicMetadata: {
+        role,
+        onboardingComplete: true,
+      },
+    });
+    console.log('Webhook: Successfully synchronized role to Clerk', { clerkUserId, role });
+  } catch (error) {
+    console.error('Webhook: Failed to synchronize role to Clerk', { clerkUserId, role, error });
+    // Don't throw - this shouldn't fail the entire webhook
+  }
+}
+
+/**
  * Main function to handle user creation or update events from Clerk webhooks.
  */
 export async function handleUserCreateOrUpdate(
@@ -268,21 +291,36 @@ export async function handleUserCreateOrUpdate(
 
   try {
     await db.transaction(async (tx) => {
-      // Validate the requested role before processing - SINGLE SOURCE OF TRUTH
-      const requestedRole = (unsafeMetadata?.role || publicMetadata?.role) as string;
-      const validatedRole = await validateRoleAuthorization(primaryEmail, requestedRole, tx);
-
-      console.log('Webhook: Role validation result', {
-        requestedRole,
-        validatedRole,
-        email: primaryEmail,
-        eventType,
-      });
-
       const existingUser = (await tx.select().from(users).where(eq(users.clerkId, id)).limit(1))[0];
       const userWithEmail = (
         await tx.select().from(users).where(eq(users.email, primaryEmail)).limit(1)
       )[0];
+
+      // CRITICAL: Prevent role changes after initial signup
+      let finalValidatedRole: string;
+
+      if (existingUser && eventType === 'user.updated') {
+        // For existing users, NEVER allow role changes - use existing role
+        finalValidatedRole = existingUser.role;
+        console.log('Webhook: Preventing role change for existing user', {
+          userId: id,
+          existingRole: existingUser.role,
+          attemptedRole: clerkProvidedRole,
+          eventType,
+        });
+      } else {
+        // For new users, validate the requested role
+        const requestedRole = (unsafeMetadata?.role || publicMetadata?.role) as string;
+        finalValidatedRole = await validateRoleAuthorization(primaryEmail, requestedRole, tx);
+
+        console.log('Webhook: Role validation for new user', {
+          requestedRole,
+          validatedRole: finalValidatedRole,
+          email: primaryEmail,
+          eventType,
+        });
+      }
+
       let finalUser: typeof usersTable.$inferSelect | undefined = undefined;
 
       if (existingUser) {
@@ -292,7 +330,7 @@ export async function handleUserCreateOrUpdate(
           data,
           primaryEmail,
           now,
-          validatedRole as any,
+          finalValidatedRole as any,
         );
       } else if (userWithEmail) {
         finalUser = await updateUserWithClerkId(
@@ -301,21 +339,25 @@ export async function handleUserCreateOrUpdate(
           data,
           primaryEmail,
           now,
-          validatedRole as any,
+          finalValidatedRole as any,
         );
       } else {
-        finalUser = await createUser(tx, data, primaryEmail, now, validatedRole as any);
+        finalUser = await createUser(tx, data, primaryEmail, now, finalValidatedRole as any);
       }
 
       if (!finalUser) {
         throw new Error('Failed to create or update user');
       }
 
+      // CRITICAL: Ensure role is synchronized to Clerk's publicMetadata for session tokens
+      await synchronizeRoleToClerk(id, finalUser.role);
+
       console.log('Webhook: User created/updated with validated role', {
         userId: finalUser.id,
         clerkId: finalUser.clerkId,
         role: finalUser.role,
         email: finalUser.email,
+        eventType,
       });
 
       // Handle role-specific logic ONLY if role is therapist and validated
