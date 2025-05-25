@@ -40,8 +40,23 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
   // 3. Get user role from session claims
   const userRole = (sessionClaims?.metadata as { role?: string })?.role as UserRole;
+  const onboardingComplete = sessionClaims?.metadata?.onboardingComplete as boolean | undefined;
 
-  // 4. Role-based route protection
+  // 4. If user doesn't have a role or hasn't completed onboarding, redirect to auth-check
+  if (!userRole || !onboardingComplete) {
+    console.log(
+      'Middleware: User missing role or onboarding incomplete, redirecting to auth-check',
+      {
+        userId,
+        userRole,
+        onboardingComplete,
+        requestedPath: req.nextUrl.pathname,
+      },
+    );
+    return NextResponse.redirect(new URL('/auth-check', req.url));
+  }
+
+  // 5. Role-based route protection
   const roleProtectedRoutes = [
     { matcher: isTherapistRoute, requiredRole: 'therapist' as UserRole },
     { matcher: isEmployerRoute, requiredRole: 'employer_admin' as UserRole },
