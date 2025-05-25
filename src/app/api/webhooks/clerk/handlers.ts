@@ -1,17 +1,23 @@
 import { eq } from 'drizzle-orm';
-import { type PgTransaction } from 'drizzle-orm/pg-core'; // Import PgTransaction
+import { type PgTransaction } from 'drizzle-orm/pg-core';
 import { Result, ok, err } from 'neverthrow';
 
+import { EMPLOYER_EMAIL_MAP, ALLOWED_EMPLOYER_ADMIN_EMAILS } from '@/src/constants';
 import { db } from '@/src/db';
 import {
   users,
   userRoleEnum,
   therapists,
-  pendingTherapists, // Make sure to import pendingTherapists if it's a schema
+  pendingTherapists,
   userOnboarding,
 } from '@/src/db/schema';
 import type { users as usersTable } from '@/src/db/schema';
 import { createDate } from '@/src/utils/timezone';
+
+// Type for database transaction
+type DbTransaction = typeof db extends { transaction: (fn: (tx: infer T) => any) => any }
+  ? T
+  : never;
 
 export interface WebhookUserData {
   id: string;
@@ -489,15 +495,15 @@ async function validateRoleAuthorization(
   tx: PgTransaction<any, any, any>,
 ): Promise<string> {
   const normalizedEmail = email.toLowerCase().trim();
+  const emailDomain = normalizedEmail.split('@')[1];
 
-  console.log('Role validation:', { email: normalizedEmail, requestedRole });
+  console.log('Role validation:', {
+    email: normalizedEmail,
+    domain: emailDomain,
+    requestedRole,
+  });
 
-  // Default role for all users
-  if (!requestedRole || requestedRole === 'employee') {
-    return 'employee';
-  }
-
-  // Validate therapist role - ONLY authorized if in pendingTherapists table
+  // 1. THERAPIST ROLE - Must be in pendingTherapists table
   if (requestedRole === 'therapist') {
     const pendingTherapist = await tx
       .select()
@@ -506,33 +512,60 @@ async function validateRoleAuthorization(
       .limit(1);
 
     if (pendingTherapist.length > 0) {
-      console.log('Therapist role authorized via pendingTherapists table', {
+      console.log('✅ Therapist role authorized via pendingTherapists table', {
         email: normalizedEmail,
       });
       return 'therapist';
     } else {
-      console.warn('Unauthorized therapist role request - not in pendingTherapists', {
+      console.warn('❌ Unauthorized therapist role request - not in pendingTherapists', {
         email: normalizedEmail,
         requestedRole,
       });
-      return 'employee'; // Fallback to employee if not pre-authorized
+      return 'employee'; // Fallback to employee
     }
   }
 
-  // Validate employer_admin role (you might have a similar authorization table)
+  // 2. EMPLOYER_ADMIN ROLE - Must be in allowed employer admin emails
   if (requestedRole === 'employer_admin') {
-    // Add your employer admin validation logic here
-    // For now, fallback to employee unless specifically authorized
-    console.warn('Unauthorized employer_admin role request', {
+    if (ALLOWED_EMPLOYER_ADMIN_EMAILS.includes(normalizedEmail)) {
+      console.log('✅ Employer admin role authorized via ALLOWED_EMPLOYER_ADMIN_EMAILS', {
+        email: normalizedEmail,
+      });
+      return 'employer_admin';
+    } else {
+      console.warn('❌ Unauthorized employer_admin role request - not in allowed list', {
+        email: normalizedEmail,
+        requestedRole,
+      });
+      return 'employee'; // Fallback to employee
+    }
+  }
+
+  // 3. EMPLOYEE ROLE (default) - Check if they belong to a known employer
+  // Check exact email match first
+  if (EMPLOYER_EMAIL_MAP[normalizedEmail]) {
+    console.log('✅ Employee role authorized via exact email match', {
       email: normalizedEmail,
-      requestedRole,
+      employer: EMPLOYER_EMAIL_MAP[normalizedEmail],
     });
     return 'employee';
   }
 
-  // Unknown role, fallback to employee
-  console.warn('Unknown role requested, defaulting to employee', {
+  // Check domain match
+  if (emailDomain && EMPLOYER_EMAIL_MAP[emailDomain]) {
+    console.log('✅ Employee role authorized via domain match', {
+      email: normalizedEmail,
+      domain: emailDomain,
+      employer: EMPLOYER_EMAIL_MAP[emailDomain],
+    });
+    return 'employee';
+  }
+
+  // If no specific role requested or no authorization found, default to employee
+  // This allows for manual approval later if needed
+  console.log('⚠️ No specific authorization found, defaulting to employee role', {
     email: normalizedEmail,
+    domain: emailDomain,
     requestedRole,
   });
   return 'employee';

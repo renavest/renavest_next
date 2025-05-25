@@ -6,94 +6,93 @@ import { redirect } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import { useCallback } from 'react';
 
-// Define the role type based on our global types
-export type UserRole = 'therapist' | 'employer_admin' | 'employee';
+import type { UserRole } from '@/src/shared/types';
 
-// Define route mappings for each role
-export const ROLE_ROUTES: Record<UserRole, string> = {
+// Define route mappings for each role (excluding null)
+export const ROLE_ROUTES: Record<Exclude<UserRole, null>, string> = {
   therapist: '/therapist',
   employer_admin: '/employer',
   employee: '/employee',
+  super_admin: '/employer', // Super admin uses employer dashboard for now
 } as const;
 
-// Default fallback route
-export const DEFAULT_ROUTE = '/employee';
+// Auth flow paths
+export const AUTH_FLOW_PATH = '/auth-flow';
+export const UNAUTHORIZED_PATH = '/explore';
 
-// Auth flow path constant
-export const AUTH_FLOW_PATH = '/login';
+/**
+ * Get the appropriate route for a user's role
+ */
+export function getRouteForRole(role: UserRole): string {
+  if (!role) return ROLE_ROUTES.employee;
+  return ROLE_ROUTES[role] || ROLE_ROUTES.employee;
+}
 
-// Unauthorized path constant
-export const UNAUTHORIZED_PATH = '/unauthorized';
+/**
+ * Redirect user to their role-specific dashboard
+ */
+export function redirectToRoleDashboard(role: UserRole): never {
+  const route = getRouteForRole(role);
+  redirect(route);
+}
 
 /**
  * Type guard to check if a string is a valid UserRole
  */
-export function isValidUserRole(role: string): role is UserRole {
-  return role === 'therapist' || role === 'employer_admin' || role === 'employee';
+export function isValidUserRole(role: string | undefined | null): role is Exclude<UserRole, null> {
+  return (
+    role === 'therapist' ||
+    role === 'employer_admin' ||
+    role === 'employee' ||
+    role === 'super_admin'
+  );
 }
 
 /**
- * Extracts the user role from middleware session claims
- * Use this specifically in middleware where you only have sessionClaims
+ * Extract user role from Clerk session claims
  */
 export function getUserRoleFromSessionClaims(
-  sessionClaims:
-    | {
-        metadata?: {
-          role?: string;
-          [key: string]: unknown;
-        };
-      }
-    | null
-    | undefined,
-): UserRole | null {
-  if (!sessionClaims?.metadata?.role) {
-    return null;
-  }
+  sessionClaims: Record<string, any> | null | undefined,
+): UserRole {
+  const metadata = sessionClaims?.metadata as { role?: string } | undefined;
+  const role = metadata?.role;
 
-  const role = sessionClaims.metadata.role as string;
-
-  // Validate that the role is one of our expected values using type guard
   if (isValidUserRole(role)) {
     return role;
   }
 
-  return null;
+  // Default to employee if no valid role found
+  return 'employee';
 }
 
 /**
- * Extracts the user role from Clerk user object with improved type safety
+ * Handle post-authentication redirect based on user role
+ * This should be called after successful login/signup
  */
-export function getUserRole(user: UserResource | User | null | undefined): UserRole | null {
-  if (!user?.publicMetadata?.role) {
-    return null;
-  }
-
-  const role = user.publicMetadata.role as string;
-
-  // Validate that the role is one of our expected values using type guard
-  if (isValidUserRole(role)) {
-    return role;
-  }
-
-  return null;
+export function handlePostAuthRedirect(userRole: UserRole): string {
+  const route = getRouteForRole(userRole);
+  console.log('Post-auth redirect:', { userRole, route });
+  return route;
 }
 
 /**
- * Gets the appropriate route for a user role with fallback
+ * Get role display name for UI purposes
  */
-export function getRouteForRole(role: UserRole | null): string {
-  if (!role || !ROLE_ROUTES[role]) {
-    return DEFAULT_ROUTE;
-  }
-  return ROLE_ROUTES[role];
+export function getRoleDisplayName(role: UserRole): string {
+  const displayNames: Record<Exclude<UserRole, null>, string> = {
+    therapist: 'Financial Therapist',
+    employer_admin: 'Employer Admin',
+    employee: 'Employee',
+    super_admin: 'Super Admin',
+  };
+  return role ? displayNames[role] : 'Unknown';
 }
 
 /**
  * Gets the route for a user directly
  */
 export function getRouteForUser(user: UserResource | User | null | undefined): string {
-  const role = getUserRole(user);
+  const role = getUserRoleFromSessionClaims(user);
   return getRouteForRole(role);
 }
 
@@ -103,15 +102,6 @@ export function getRouteForUser(user: UserResource | User | null | undefined): s
  */
 export function redirectBasedOnRole(user: UserResource | User | null | undefined): never {
   const route = getRouteForUser(user);
-  redirect(route);
-}
-
-/**
- * Server-side redirect to a specific role's route
- * Use this when you know the specific role to redirect to
- */
-export function redirectToRoleRoute(role: UserRole): never {
-  const route = getRouteForRole(role);
   redirect(route);
 }
 
@@ -159,7 +149,7 @@ export function useRoleBasedRedirect() {
     redirectToRoleReplace,
     redirectToSpecificRole,
     redirectToSpecificRoleReplace,
-    getUserRole,
+    getUserRole: getUserRoleFromSessionClaims,
     getRouteForRole,
     getRouteForUser,
   };
@@ -169,7 +159,7 @@ export function useRoleBasedRedirect() {
  * Check if user has a specific role
  */
 export function hasRole(user: UserResource | User | null | undefined, role: UserRole): boolean {
-  const userRole = getUserRole(user);
+  const userRole = getUserRoleFromSessionClaims(user);
   return userRole === role;
 }
 
@@ -180,7 +170,7 @@ export function hasAnyRole(
   user: UserResource | User | null | undefined,
   roles: UserRole[],
 ): boolean {
-  const userRole = getUserRole(user);
+  const userRole = getUserRoleFromSessionClaims(user);
   return userRole !== null && roles.includes(userRole);
 }
 
@@ -188,7 +178,7 @@ export function hasAnyRole(
  * Check if user is authenticated and has completed onboarding
  */
 export function isUserReady(user: UserResource | User | null | undefined): boolean {
-  return !!(user && user.publicMetadata?.onboardingComplete && getUserRole(user));
+  return !!(user && user.publicMetadata?.onboardingComplete && getUserRoleFromSessionClaims(user));
 }
 
 /**
@@ -196,18 +186,6 @@ export function isUserReady(user: UserResource | User | null | undefined): boole
  */
 export function getAllRoles(): UserRole[] {
   return Object.keys(ROLE_ROUTES) as UserRole[];
-}
-
-/**
- * Get role display name for UI purposes
- */
-export function getRoleDisplayName(role: UserRole): string {
-  const displayNames: Record<UserRole, string> = {
-    therapist: 'Financial Therapist',
-    employer_admin: 'Employer Admin',
-    employee: 'Employee',
-  };
-  return displayNames[role];
 }
 
 /**

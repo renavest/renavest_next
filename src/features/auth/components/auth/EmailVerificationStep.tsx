@@ -12,12 +12,26 @@ import {
 } from '../../state/authState';
 import { getOnboardingData } from '../../utils/onboardingStorage';
 
+// Type for user validation response
+interface UserValidationResponse {
+  exists: boolean;
+  user?: {
+    id: number;
+    clerkId: string;
+    email: string;
+    role: string;
+    firstName: string | null;
+    lastName: string | null;
+    isActive: boolean;
+  };
+}
+
 // Helper function for polling the user endpoint
 const pollForUser = async (
   clerkId: string,
   retries = 10,
   delay = 1000,
-): Promise<{ exists: boolean }> => {
+): Promise<UserValidationResponse> => {
   try {
     const response = await fetch('/api/auth/validate-user-db-entry', {
       method: 'POST',
@@ -93,7 +107,23 @@ export function EmailVerificationStep() {
           if (userPollResult.exists) {
             // Webhook has processed the user - redirect based on role
             // The webhook is the single source of truth for role assignment
-            window.location.href = '/dashboard';
+            const userRole = userPollResult.user?.role;
+
+            console.log('Email verification complete, redirecting based on role:', userRole);
+
+            // Role-based redirects
+            switch (userRole) {
+              case 'therapist':
+                window.location.href = '/therapist';
+                break;
+              case 'employer_admin':
+                window.location.href = '/employer';
+                break;
+              case 'employee':
+              default:
+                window.location.href = '/employee';
+                break;
+            }
           } else {
             authErrorSignal.value = 'Account setup failed. Please contact support.';
           }
