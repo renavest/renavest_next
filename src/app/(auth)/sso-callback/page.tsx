@@ -3,7 +3,8 @@ import { AuthenticateWithRedirectCallback } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-import { getRouteForRole, UserRole } from '@/src/features/auth/utils/routerUtil';
+import { getRouteForRole } from '@/src/features/auth/utils/routerUtil';
+import type { UserRole } from '@/src/shared/types';
 
 export default function Page() {
   const router = useRouter();

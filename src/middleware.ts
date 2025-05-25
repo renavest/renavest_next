@@ -5,7 +5,7 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-import { getRouteForRole, UNAUTHORIZED_PATH } from '@/src/features/auth/utils/routerUtil';
+import { getRouteForRole, UNAUTHORIZED_PATH } from '@/src/features/auth/utils/routeMapping';
 import type { UserRole } from '@/src/shared/types';
 
 // All API routes are public in middleware (must protect themselves internally)
