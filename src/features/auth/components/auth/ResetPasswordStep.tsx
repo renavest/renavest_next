@@ -18,7 +18,6 @@ import { useRoleBasedRedirect } from '../../utils/routerUtil';
 
 export function ResetPasswordStep() {
   const { signIn } = useSignIn();
-  const authError = authErrorSignal.value;
   const { setActive } = useClerk();
   const showResetPasswordStep = signal(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
@@ -107,16 +106,6 @@ export function ResetPasswordStep() {
           Enter the code sent to your email and your new password.
         </p>
       </div>
-
-      {/* Use the global authErrorSignal */}
-      {authError && ( // Display error if exists
-        <div
-          className='bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative animate-fade-in'
-          role='alert'
-        >
-          <span className='block sm:inline'>{authError}</span>
-        </div>
-      )}
 
       {/* Use a form element */}
       <form onSubmit={handleSubmit} className='space-y-4'>

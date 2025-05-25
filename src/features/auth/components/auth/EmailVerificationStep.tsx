@@ -193,15 +193,6 @@ export function EmailVerificationStep() {
         </p>
       </div>
 
-      {authErrorSignal.value && (
-        <div
-          className='bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative animate-fade-in'
-          role='alert'
-        >
-          <span className='block sm:inline'>{authErrorSignal.value}</span>
-        </div>
-      )}
-
       <form onSubmit={handleSubmit} className='space-y-4'>
         <div className='space-y-1'>
           <label htmlFor='code' className='block text-sm font-medium text-gray-700 mb-1'>

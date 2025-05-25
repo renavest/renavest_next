@@ -6,12 +6,7 @@ import React from 'react'; // Import React
 import { cn } from '@/src/lib/utils';
 
 // Removed direct signal import, use global signal instead
-import {
-  authErrorSignal,
-  firstName,
-  selectedMaritalStatus,
-  currentStep,
-} from '../../state/authState';
+import { firstName, selectedMaritalStatus, currentStep } from '../../state/authState';
 import { OnboardingStep } from '../../types';
 
 const MARITAL_STATUS_OPTIONS = [
@@ -26,7 +21,6 @@ const MARITAL_STATUS_OPTIONS = [
 ];
 
 export function MaritalStatusStep() {
-  const authError = authErrorSignal.value;
   const handleMaritalStatusSelect = (maritalStatus: string) => {
     selectedMaritalStatus.value = maritalStatus;
   };
@@ -48,14 +42,6 @@ export function MaritalStatusStep() {
         <h2 className='text-2xl font-bold text-gray-900 mb-4 text-center'>
           What's your marital status, {firstName.value}?
         </h2>
-        {authError && (
-          <div
-            className='bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative animate-fade-in'
-            role='alert'
-          >
-            <span className='block sm:inline'>{authError}</span>
-          </div>
-        )}
       </div>
       <form onSubmit={handleContinue} className='space-y-4'>
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>

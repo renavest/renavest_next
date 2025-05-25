@@ -125,15 +125,6 @@ export function LoginStep() {
         <h2 className='text-2xl font-bold text-gray-900 mb-4 text-center'>Welcome to Renavest</h2>
       </div>
 
-      {authErrorSignal.value && (
-        <div
-          className='bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative animate-fade-in'
-          role='alert'
-        >
-          <span className='block sm:inline'>{authErrorSignal.value}</span>
-        </div>
-      )}
-
       <form onSubmit={onLogin} className='space-y-4'>
         <FormInput
           type='email'

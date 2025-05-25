@@ -7,7 +7,6 @@ import React from 'react'; // Import React
 import { cn } from '@/src/lib/utils';
 
 // Removed direct signal import, use global signal instead
-import { authErrorSignal } from '../../state/authState';
 import { firstName, selectedPurpose, currentStep } from '../../state/authState';
 import { OnboardingStep } from '../../types';
 
@@ -46,8 +45,6 @@ const RENAVEST_PURPOSE_OPTIONS = [
 ];
 
 export function RenavestPurposeStep() {
-  const authError = authErrorSignal.value;
-
   const handlePurposeSelect = (purpose: string) => {
     selectedPurpose.value = purpose;
   };
@@ -89,14 +86,6 @@ export function RenavestPurposeStep() {
           ! Tell us why you're here.
         </h2>
         <p className='text-base text-gray-600'>Choose your primary goal for using Renavest.</p>
-        {authError && (
-          <div
-            className='bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative animate-fade-in mt-4'
-            role='alert'
-          >
-            <span className='block sm:inline'>{authError}</span>
-          </div>
-        )}
       </div>
       <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 space-y-0 sm:space-y-0'>
         {RENAVEST_PURPOSE_OPTIONS.map((option) => (

@@ -86,7 +86,6 @@ const PrivacyHighlights = () => (
 export function PrivacyPledgeStep() {
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const authError = authErrorSignal.value;
 
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,15 +123,6 @@ export function PrivacyPledgeStep() {
           Here's our commitment to protecting your privacy and financial information.
         </p>
       </div>
-
-      {authError && (
-        <div
-          className='bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative animate-fade-in'
-          role='alert'
-        >
-          <span className='block sm:inline'>{authError}</span>
-        </div>
-      )}
 
       <div className='space-y-4'>
         <PrivacyHighlights />

@@ -11,7 +11,6 @@ import { OnboardingStep } from '../../types';
 
 export function ForgotPasswordStep() {
   const { signIn } = useSignIn();
-  const authError = authErrorSignal.value;
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     forgotPasswordEmailAddress.value = e.target.value;
   };
@@ -43,16 +42,6 @@ export function ForgotPasswordStep() {
           Enter your email address and we'll send you a link to reset your password.
         </p>
       </div>
-
-      {/* Use the global authErrorSignal */}
-      {authError && (
-        <div
-          className='bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative animate-fade-in'
-          role='alert'
-        >
-          <span className='block sm:inline'>{authError}</span>
-        </div>
-      )}
 
       {/* Use a form element */}
       <form onSubmit={handleSubmit} className='space-y-4'>
