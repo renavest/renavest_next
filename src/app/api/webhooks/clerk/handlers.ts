@@ -17,10 +17,8 @@ import { createDate } from '@/src/utils/timezone';
 
 // Import clerkClient for role synchronization
 
-// Type for database transaction
-type DbTransaction = typeof db extends { transaction: (fn: (tx: infer T) => any) => any }
-  ? T
-  : never;
+// Proper Drizzle transaction type
+type DatabaseTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 export interface WebhookUserData {
   id: string;
@@ -111,13 +109,13 @@ async function createUser(
  * Handles updating an existing user in the database.
  */
 async function updateUser(
-  tx: PgTransaction<any, any, any>,
+  tx: DatabaseTransaction,
   existingUser: typeof usersTable.$inferSelect,
   data: WebhookUserData,
   primaryEmail: string,
   now: Date,
-  clerkProvidedRole: (typeof userRoleEnum.enumValues)[number] | undefined,
-): Promise<typeof usersTable.$inferSelect | undefined> {
+  validatedRole: (typeof userRoleEnum.enumValues)[number],
+): Promise<typeof usersTable.$inferSelect> {
   const {
     id,
     first_name: firstName,
@@ -136,7 +134,7 @@ async function updateUser(
       lastName: lastName || null,
       imageUrl: imageUrl || null,
       updatedAt: userUpdatedAt,
-      role: clerkProvidedRole ?? existingUser.role,
+      role: validatedRole,
     })
     .where(eq(users.clerkId, id));
 
@@ -534,7 +532,7 @@ export async function handleUserActivity(
 async function validateRoleAuthorization(
   email: string,
   requestedRole: string,
-  tx: PgTransaction<any, any, any>,
+  tx: DatabaseTransaction,
 ): Promise<string> {
   const normalizedEmail = email.toLowerCase().trim();
   const emailDomain = normalizedEmail.split('@')[1];
