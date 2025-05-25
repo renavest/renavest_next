@@ -5,12 +5,15 @@ import { useSignUp, useClerk } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
+import type { UserRole } from '@/src/shared/types';
+
 import {
   authErrorSignal,
   verificationEmailAddress,
   emailVerificationCode,
 } from '../../state/authState';
 import { getOnboardingData } from '../../utils/onboardingStorage';
+import { getRouteForRole } from '../../utils/routerUtil';
 
 // Type for user validation response
 interface UserValidationResponse {
@@ -105,25 +108,17 @@ export function EmailVerificationStep() {
           const userPollResult = await pollForUser(signUp.createdUserId);
 
           if (userPollResult.exists) {
-            // Webhook has processed the user - redirect based on role
-            // The webhook is the single source of truth for role assignment
-            const userRole = userPollResult.user?.role;
+            // Webhook has processed the user - redirect based on role using router utilities
+            const userRole = userPollResult.user?.role as UserRole;
+            const redirectRoute = getRouteForRole(userRole);
 
-            console.log('Email verification complete, redirecting based on role:', userRole);
+            console.log('Email verification complete, redirecting based on role:', {
+              userRole,
+              redirectRoute,
+            });
 
-            // Role-based redirects
-            switch (userRole) {
-              case 'therapist':
-                window.location.href = '/therapist';
-                break;
-              case 'employer_admin':
-                window.location.href = '/employer';
-                break;
-              case 'employee':
-              default:
-                window.location.href = '/employee';
-                break;
-            }
+            // Use router.replace for a clean redirect without back button issues
+            router.replace(redirectRoute);
           } else {
             authErrorSignal.value = 'Account setup failed. Please contact support.';
           }

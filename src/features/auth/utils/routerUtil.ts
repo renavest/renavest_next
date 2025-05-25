@@ -16,9 +16,8 @@ export const ROLE_ROUTES: Record<Exclude<UserRole, null>, string> = {
   super_admin: '/employer', // Super admin uses employer dashboard for now
 } as const;
 
-// Auth flow paths
-export const AUTH_FLOW_PATH = '/auth-flow';
-export const UNAUTHORIZED_PATH = '/explore';
+// Default unauthorized path - users must be authorized to access any protected content
+export const UNAUTHORIZED_PATH = '/login';
 
 /**
  * Get the appropriate route for a user's role
@@ -49,16 +48,21 @@ export function isValidUserRole(role: string | undefined | null): role is Exclud
 }
 
 /**
- * Extract user role from Clerk session claims
+ * Extract user role from Clerk user object (works with both UserResource and User types)
  */
-export function getUserRoleFromSessionClaims(
-  sessionClaims: Record<string, any> | null | undefined,
-): UserRole {
-  const metadata = sessionClaims?.metadata as { role?: string } | undefined;
-  const role = metadata?.role;
+export function getUserRoleFromUser(user: UserResource | User | null | undefined): UserRole {
+  if (!user) return null;
 
-  if (isValidUserRole(role)) {
-    return role;
+  // Try publicMetadata first (available on both types)
+  const publicRole = user.publicMetadata?.role as string | undefined;
+  if (isValidUserRole(publicRole)) {
+    return publicRole;
+  }
+
+  // Try unsafeMetadata (available on UserResource)
+  const unsafeRole = (user as UserResource).unsafeMetadata?.role as string | undefined;
+  if (isValidUserRole(unsafeRole)) {
+    return unsafeRole;
   }
 
   // Default to employee if no valid role found
@@ -92,7 +96,7 @@ export function getRoleDisplayName(role: UserRole): string {
  * Gets the route for a user directly
  */
 export function getRouteForUser(user: UserResource | User | null | undefined): string {
-  const role = getUserRoleFromSessionClaims(user);
+  const role = getUserRoleFromUser(user);
   return getRouteForRole(role);
 }
 
@@ -149,7 +153,7 @@ export function useRoleBasedRedirect() {
     redirectToRoleReplace,
     redirectToSpecificRole,
     redirectToSpecificRoleReplace,
-    getUserRole: getUserRoleFromSessionClaims,
+    getUserRole: getUserRoleFromUser,
     getRouteForRole,
     getRouteForUser,
   };
@@ -159,7 +163,7 @@ export function useRoleBasedRedirect() {
  * Check if user has a specific role
  */
 export function hasRole(user: UserResource | User | null | undefined, role: UserRole): boolean {
-  const userRole = getUserRoleFromSessionClaims(user);
+  const userRole = getUserRoleFromUser(user);
   return userRole === role;
 }
 
@@ -170,7 +174,7 @@ export function hasAnyRole(
   user: UserResource | User | null | undefined,
   roles: UserRole[],
 ): boolean {
-  const userRole = getUserRoleFromSessionClaims(user);
+  const userRole = getUserRoleFromUser(user);
   return userRole !== null && roles.includes(userRole);
 }
 
@@ -178,20 +182,20 @@ export function hasAnyRole(
  * Check if user is authenticated and has completed onboarding
  */
 export function isUserReady(user: UserResource | User | null | undefined): boolean {
-  return !!(user && user.publicMetadata?.onboardingComplete && getUserRoleFromSessionClaims(user));
+  return !!(user && user.publicMetadata?.onboardingComplete && getUserRoleFromUser(user));
 }
 
 /**
  * Get all available roles
  */
-export function getAllRoles(): UserRole[] {
-  return Object.keys(ROLE_ROUTES) as UserRole[];
+export function getAllRoles(): Exclude<UserRole, null>[] {
+  return Object.keys(ROLE_ROUTES) as Exclude<UserRole, null>[];
 }
 
 /**
  * Check if a route path matches a specific role's protected routes
  */
-export function isRoleRoute(path: string, role: UserRole): boolean {
+export function isRoleRoute(path: string, role: Exclude<UserRole, null>): boolean {
   const roleRoute = ROLE_ROUTES[role];
   return path.startsWith(roleRoute);
 }
@@ -199,10 +203,10 @@ export function isRoleRoute(path: string, role: UserRole): boolean {
 /**
  * Get the role that should have access to a given path
  */
-export function getRoleForPath(path: string): UserRole | null {
+export function getRoleForPath(path: string): Exclude<UserRole, null> | null {
   for (const [role, route] of Object.entries(ROLE_ROUTES)) {
     if (path.startsWith(route)) {
-      return role as UserRole;
+      return role as Exclude<UserRole, null>;
     }
   }
   return null;

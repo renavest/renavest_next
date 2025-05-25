@@ -2,7 +2,6 @@ import { eq } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
-import { users, therapists, pendingTherapists } from '@/src/db/schema';
 
 export async function POST(req: NextRequest) {
   try {
