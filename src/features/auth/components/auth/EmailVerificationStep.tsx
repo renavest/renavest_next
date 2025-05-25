@@ -38,7 +38,7 @@ const pollForUser = async (
 
     await new Promise((resolve) => setTimeout(resolve, delay));
     return pollForUser(clerkId, retries - 1, delay);
-  } catch (error) {
+  } catch {
     if (retries <= 0) {
       return { exists: false };
     }
@@ -87,26 +87,16 @@ export function EmailVerificationStep() {
       if (result.status === 'complete') {
         if (signUp.createdUserId) {
           await setActive({ session: result.createdSessionId });
+
+          // Wait for webhook to process user creation
           const userPollResult = await pollForUser(signUp.createdUserId);
 
-          const response = await fetch('/api/auth/update-user-metadata', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              clerkId: signUp.createdUserId,
-              metadata: onboardingData,
-              role: onboardingData?.role,
-            }),
-            credentials: 'include',
-          });
-
-          if (user) {
-            await user.reload();
-          }
-
-          const { role } = await response.json();
-
-          if (userPollResult.exists && role) {
+          if (userPollResult.exists) {
+            // Let the webhook handle all metadata updates
+            // Just reload the user and redirect
+            if (user) {
+              await user.reload();
+            }
             await setActive({ session: result.createdSessionId });
             window.location.reload();
           } else {
@@ -119,7 +109,7 @@ export function EmailVerificationStep() {
       } else {
         authErrorSignal.value = `Verification failed. Please check the code and try again.`;
       }
-    } catch (error) {
+    } catch {
       authErrorSignal.value = 'Verification failed. Please try again.';
     } finally {
       setIsLoading(false);
@@ -137,7 +127,7 @@ export function EmailVerificationStep() {
       await signUp.reload();
       await signUp.prepareVerification({ strategy: 'email_code' });
       authErrorSignal.value = 'Verification code resent. Check your inbox.';
-    } catch (error) {
+    } catch {
       authErrorSignal.value = 'Failed to resend verification code.';
     }
   };

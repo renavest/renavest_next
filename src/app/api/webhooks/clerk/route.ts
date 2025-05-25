@@ -18,7 +18,7 @@ import {
   handleUserCreateOrUpdate,
   handleUserDeletion,
 } from './handlers';
-  
+
 // User-related Clerk webhook event types
 type WebhookEventType =
   | 'user.created'

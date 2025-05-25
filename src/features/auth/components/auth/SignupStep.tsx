@@ -6,7 +6,6 @@ import { signal } from '@preact-signals/safe-react';
 import Link from 'next/link';
 import React from 'react';
 
-import { ALLOWED_EMAILS } from '@/src/constants';
 import { cn } from '@/src/lib/utils'; // Assuming cn utility
 
 import {
@@ -192,6 +191,14 @@ export function SignupStep() {
         unsafeMetadata: {
           role: selectedRole.value,
           onboardingComplete: false,
+          firstName: firstName.value,
+          lastName: lastName.value,
+          email: email.value,
+          purpose: selectedPurpose.value,
+          ageRange: selectedAgeRange.value,
+          maritalStatus: selectedMaritalStatus.value,
+          ethnicity: selectedEthnicity.value,
+          agreeToTerms: agreeToTerms.value,
         },
       });
       if (result.status === 'complete' || result.status === 'missing_requirements') {

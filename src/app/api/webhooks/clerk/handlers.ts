@@ -1,4 +1,3 @@
-import { createClerkClient } from '@clerk/backend';
 import { eq } from 'drizzle-orm';
 import { type PgTransaction } from 'drizzle-orm/pg-core'; // Import PgTransaction
 import { Result, ok, err } from 'neverthrow';
@@ -9,6 +8,7 @@ import {
   userRoleEnum,
   therapists,
   pendingTherapists, // Make sure to import pendingTherapists if it's a schema
+  userOnboarding,
 } from '@/src/db/schema';
 import type { users as usersTable } from '@/src/db/schema';
 import { createDate } from '@/src/utils/timezone';
@@ -238,10 +238,19 @@ export async function handleUserCreateOrUpdate(
     unsafe_metadata: unsafeMetadata,
   } = data;
 
+  // Prioritize unsafeMetadata over publicMetadata for role (signup flow uses unsafeMetadata)
   const clerkProvidedRole = (unsafeMetadata?.role || publicMetadata?.role) as
     | (typeof userRoleEnum.enumValues)[number]
     | undefined;
-  console.log('Webhook: Clerk provided role', { clerkProvidedRole });
+
+  console.log('Webhook: Processing user event', {
+    userId: id,
+    eventType,
+    clerkProvidedRole,
+    hasUnsafeMetadata: !!unsafeMetadata,
+    hasPublicMetadata: !!publicMetadata,
+  });
+
   const emailResult = getPrimaryEmail(emailAddresses, id);
   if (emailResult.isErr()) {
     console.error('Webhook: No valid email found for user', { userId: id, eventType });
@@ -258,6 +267,7 @@ export async function handleUserCreateOrUpdate(
         await tx.select().from(users).where(eq(users.email, primaryEmail)).limit(1)
       )[0];
       let finalUser: typeof usersTable.$inferSelect | undefined = undefined;
+
       if (existingUser) {
         finalUser = await updateUser(tx, existingUser, data, primaryEmail, now, clerkProvidedRole);
       } else if (userWithEmail) {
@@ -273,8 +283,13 @@ export async function handleUserCreateOrUpdate(
         finalUser = await createUser(tx, data, primaryEmail, now, clerkProvidedRole);
       }
 
-      console.log('Webhook: Final user', { finalUser });
-      // If user is a pending therapist and role is therapist, promote them
+      console.log('Webhook: Final user created/updated', {
+        userId: finalUser?.id,
+        clerkId: finalUser?.clerkId,
+        role: finalUser?.role,
+      });
+
+      // Handle role-specific logic
       if (finalUser && clerkProvidedRole === 'therapist') {
         const pendingTherapistMatch = (
           await tx
@@ -285,23 +300,86 @@ export async function handleUserCreateOrUpdate(
         )[0];
         if (pendingTherapistMatch) {
           await promotePendingTherapist(finalUser, pendingTherapistMatch, tx);
+          console.log('Webhook: Promoted pending therapist', { userId: finalUser.id });
         }
       }
-      console.info('Webhook: Basic user sync complete for', { userId: id, eventType });
+
+      // Process onboarding data if present in unsafeMetadata (for new signups)
+      if (eventType === 'user.created' && finalUser && unsafeMetadata) {
+        await processOnboardingData(tx, finalUser, unsafeMetadata);
+      }
+
+      console.info('Webhook: User sync complete', { userId: id, eventType, role: finalUser?.role });
     });
     return ok(true);
   } catch (error) {
     const errorDetails: UserHandlingError = {
       type: 'DatabaseError',
-      message: `Error ${eventType === 'user.created' ? 'creating' : 'updating'} user during basic sync`,
+      message: `Error ${eventType === 'user.created' ? 'creating' : 'updating'} user during sync`,
       originalError: error,
     };
-    console.error('Webhook: User handling error during basic sync', {
+    console.error('Webhook: User handling error', {
       userId: id,
       eventType,
       error,
     });
     return err(errorDetails);
+  }
+}
+
+/**
+ * Process onboarding data from Clerk unsafeMetadata
+ */
+async function processOnboardingData(
+  tx: PgTransaction<any, any, any>,
+  user: typeof usersTable.$inferSelect,
+  unsafeMetadata: Record<string, unknown>,
+) {
+  try {
+    // Extract onboarding data from unsafeMetadata
+    const onboardingData = {
+      firstName: unsafeMetadata.firstName as string,
+      lastName: unsafeMetadata.lastName as string,
+      email: unsafeMetadata.email as string,
+      purpose: unsafeMetadata.purpose as string,
+      ageRange: unsafeMetadata.ageRange as string,
+      maritalStatus: unsafeMetadata.maritalStatus as string,
+      ethnicity: unsafeMetadata.ethnicity as string,
+      agreeToTerms: unsafeMetadata.agreeToTerms as boolean,
+      role: unsafeMetadata.role as string,
+    };
+
+    // Only process if we have meaningful onboarding data
+    if (
+      onboardingData.purpose ||
+      onboardingData.ageRange ||
+      onboardingData.maritalStatus ||
+      onboardingData.ethnicity
+    ) {
+      // Store onboarding data in userOnboarding table
+      await tx
+        .insert(userOnboarding)
+        .values({
+          userId: user.id,
+          answers: onboardingData,
+          version: 1,
+          createdAt: createDate().toJSDate(),
+          updatedAt: createDate().toJSDate(),
+        })
+        .onConflictDoUpdate({
+          target: userOnboarding.userId,
+          set: {
+            answers: onboardingData,
+            version: 1,
+            updatedAt: createDate().toJSDate(),
+          },
+        });
+
+      console.log('Webhook: Processed onboarding data', { userId: user.id });
+    }
+  } catch (error) {
+    console.error('Webhook: Error processing onboarding data', { userId: user.id, error });
+    // Don't fail the entire webhook for onboarding data issues
   }
 }
 
