@@ -1,6 +1,9 @@
 // src/features/auth/utils/routeMapping.ts
 // Server-side route mapping utilities (no 'use client' directive)
 
+import { User } from '@clerk/nextjs/server';
+import type { UserResource } from '@clerk/types';
+
 import type { UserRole } from '@/src/shared/types';
 
 // Define route mappings for each role (excluding null)
@@ -32,6 +35,47 @@ export function isValidUserRole(role: string | undefined | null): role is Exclud
     role === 'employee' ||
     role === 'super_admin'
   );
+}
+
+/**
+ * Extract user role from Clerk user object (works with both UserResource and User types)
+ */
+export function getUserRoleFromUser(user: UserResource | User | null | undefined): UserRole {
+  if (!user) return null;
+
+  // Try publicMetadata first (available on both types)
+  const publicRole = user.publicMetadata?.role as string | undefined;
+  if (isValidUserRole(publicRole)) {
+    return publicRole;
+  }
+
+  // Try unsafeMetadata (available on UserResource)
+  const unsafeRole = (user as UserResource).unsafeMetadata?.role as string | undefined;
+  if (isValidUserRole(unsafeRole)) {
+    return unsafeRole;
+  }
+
+  // Default to employee if no valid role found
+  return 'employee';
+}
+
+/**
+ * Check if user has a specific role (server-side safe)
+ */
+export function hasRole(user: UserResource | User | null | undefined, role: UserRole): boolean {
+  const userRole = getUserRoleFromUser(user);
+  return userRole === role;
+}
+
+/**
+ * Check if user has any of the specified roles (server-side safe)
+ */
+export function hasAnyRole(
+  user: UserResource | User | null | undefined,
+  roles: UserRole[],
+): boolean {
+  const userRole = getUserRoleFromUser(user);
+  return userRole !== null && roles.includes(userRole);
 }
 
 /**

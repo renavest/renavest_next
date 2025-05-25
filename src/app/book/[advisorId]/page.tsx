@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { trackSessionSearch } from '@/src/app/api/track/calendly/route';
 import { db } from '@/src/db';
 import { therapists, users, pendingTherapists } from '@/src/db/schema';
-import { hasRole } from '@/src/features/auth/utils/routerUtil';
+import { hasRole } from '@/src/features/auth/utils/routeMapping';
 import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
 
 import UnifiedBookingFlow from '../../../features/booking/components/BookingFlow';

@@ -16,6 +16,7 @@ const ethnicityOptions = [
   'Native Hawaiian or Other Pacific Islander',
   'White',
   'Two or More Races',
+  'Middle Eastern or North African',
   'Other',
   'Prefer not to answer',
 ];

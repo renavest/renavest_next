@@ -14,6 +14,9 @@ import {
   UNAUTHORIZED_PATH,
   getRouteForRole,
   isValidUserRole,
+  getUserRoleFromUser,
+  hasRole,
+  hasAnyRole,
   getRoleDisplayName,
   getAllRoles,
   isRoleRoute,
@@ -26,6 +29,9 @@ export {
   UNAUTHORIZED_PATH,
   getRouteForRole,
   isValidUserRole,
+  getUserRoleFromUser,
+  hasRole,
+  hasAnyRole,
   getRoleDisplayName,
   getAllRoles,
   isRoleRoute,
@@ -38,28 +44,6 @@ export {
 export function redirectToRoleDashboard(role: UserRole): never {
   const route = getRouteForRole(role);
   redirect(route);
-}
-
-/**
- * Extract user role from Clerk user object (works with both UserResource and User types)
- */
-export function getUserRoleFromUser(user: UserResource | User | null | undefined): UserRole {
-  if (!user) return null;
-
-  // Try publicMetadata first (available on both types)
-  const publicRole = user.publicMetadata?.role as string | undefined;
-  if (isValidUserRole(publicRole)) {
-    return publicRole;
-  }
-
-  // Try unsafeMetadata (available on UserResource)
-  const unsafeRole = (user as UserResource).unsafeMetadata?.role as string | undefined;
-  if (isValidUserRole(unsafeRole)) {
-    return unsafeRole;
-  }
-
-  // Default to employee if no valid role found
-  return 'employee';
 }
 
 /**
@@ -137,25 +121,6 @@ export function useRoleBasedRedirect() {
     getRouteForRole,
     getRouteForUser,
   };
-}
-
-/**
- * Check if user has a specific role
- */
-export function hasRole(user: UserResource | User | null | undefined, role: UserRole): boolean {
-  const userRole = getUserRoleFromUser(user);
-  return userRole === role;
-}
-
-/**
- * Check if user has any of the specified roles
- */
-export function hasAnyRole(
-  user: UserResource | User | null | undefined,
-  roles: UserRole[],
-): boolean {
-  const userRole = getUserRoleFromUser(user);
-  return userRole !== null && roles.includes(userRole);
 }
 
 /**
