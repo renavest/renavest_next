@@ -5,6 +5,7 @@ import { ChevronLeft, Download } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
 
+import { getRouteForRole, getUserRoleFromUser } from '@/src/features/auth/utils/routerUtil';
 import Navbar from '@/src/features/home/components/Navbar';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
@@ -164,23 +165,20 @@ const ContactSection = () => {
 export default function PrivacyPage() {
   const { user, isLoaded } = useUser();
 
-  // Determine the back navigation path
-  // TODO: Create a more robust way to determine default dashboard based on user role
-  const backPath =
-    isLoaded && user
-      ? (() => {
-          // If no role metadata is set, default to employee dashboard
-          const role = (user.publicMetadata?.role as string | undefined) || 'employee';
-          switch (role) {
-            case 'employer':
-              return '/employer';
-            case 'therapist':
-              return '/therapist';
-            default:
-              return '/employee';
-          }
-        })()
-      : '/employee'; // Default to employee dashboard for logged-in users without explicit routing
+  // Determine the back navigation path using the new utilities
+  // If user hasn't completed onboarding, default to home page instead of employee
+  let backPath = '/';
+  if (isLoaded && user) {
+    const userRole = getUserRoleFromUser(user);
+    const onboardingComplete = user.publicMetadata?.onboardingComplete as boolean | undefined;
+
+    if (userRole && onboardingComplete) {
+      backPath = getRouteForRole(userRole);
+    } else {
+      // User hasn't completed onboarding, send them to auth-check or home
+      backPath = '/';
+    }
+  }
 
   return (
     <div className={`min-h-screen ${COLORS.WARM_WHITE.bg} font-sans`}>

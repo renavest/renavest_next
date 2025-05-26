@@ -3,7 +3,7 @@
 'use client';
 
 import { useClerk, useUser, useSignIn } from '@clerk/nextjs';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 import {
   email,
@@ -13,7 +13,8 @@ import {
   // Add any needed handler functions from authState or define here
 } from '../../state/authState';
 import { OnboardingStep } from '../../types';
-import { redirectBasedOnRole } from '../../utils/routerUtil';
+import { useRoleBasedRedirect } from '../../utils/routerUtil';
+
 // Validation utility
 const validateEmail = (emailValue: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -64,6 +65,7 @@ export function LoginStep() {
   const { signIn } = useSignIn();
   const { user } = useUser();
   const { setActive } = useClerk();
+  const { redirectToRole } = useRoleBasedRedirect();
 
   const onLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,7 +94,7 @@ export function LoginStep() {
           await setActive({ session: result.createdSessionId });
 
           if (user) {
-            redirectBasedOnRole(user);
+            redirectToRole(user);
           }
         }
       }
@@ -122,15 +124,6 @@ export function LoginStep() {
       <div className='flex flex-col items-center mb-8'>
         <h2 className='text-2xl font-bold text-gray-900 mb-4 text-center'>Welcome to Renavest</h2>
       </div>
-
-      {authErrorSignal.value && (
-        <div
-          className='bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative animate-fade-in'
-          role='alert'
-        >
-          <span className='block sm:inline'>{authErrorSignal.value}</span>
-        </div>
-      )}
 
       <form onSubmit={onLogin} className='space-y-4'>
         <FormInput

@@ -15,6 +15,7 @@ import { SignupStep } from './auth/SignupStep';
 import { AgeRangeStep } from './onboarding/AgeRangeStep';
 import { EthnicityStep } from './onboarding/EthnicityStep';
 import { MaritalStatusStep } from './onboarding/MaritalStatusStep';
+import { PrivacyPledgeStep } from './onboarding/PrivacyPledgeStep';
 import { RenavestPurposeStep } from './onboarding/PurposeStep';
 
 export default function AuthenticationFlow() {
@@ -50,6 +51,8 @@ export default function AuthenticationFlow() {
         return <MaritalStatusStep />;
       case OnboardingStep.ETHNICITY:
         return <EthnicityStep />;
+      case OnboardingStep.PRIVACY_PLEDGE:
+        return <PrivacyPledgeStep />;
       case OnboardingStep.SIGNUP:
         return <SignupStep />;
       case OnboardingStep.EMAIL_VERIFICATION:

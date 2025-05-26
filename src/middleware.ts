@@ -5,28 +5,28 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// Clerk/Next.js RBAC & onboarding: see Clerk docs for recommended patterns
+import { getRouteForRole, UNAUTHORIZED_PATH } from '@/src/features/auth/utils/routeMapping';
+import type { UserRole } from '@/src/shared/types';
+
 // All API routes are public in middleware (must protect themselves internally)
 const isPublicRoute = createRouteMatcher([
   '/',
   '/login(.*)',
   '/sign-up(.*)',
+  '/auth-check(.*)',
   '/privacy(.*)',
   '/terms(.*)',
   '/api(.*)',
-  '/pricing(.*)', // All API routes are public in middleware
+  '/pricing(.*)',
 ]);
 
 const isTherapistRoute = createRouteMatcher(['/therapist(.*)']);
 const isEmployerRoute = createRouteMatcher(['/employer(.*)']);
 const isEmployeeRoute = createRouteMatcher(['/employee(.*)']);
-
-const AUTH_FLOW_PATH = '/login';
-const UNAUTHORIZED_PATH = '/unauthorized';
+const isExploreRoute = createRouteMatcher(['/explore(.*)']);
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
   const { userId, sessionClaims, redirectToSignIn } = await auth();
-  const currentPath = req.nextUrl.pathname;
 
   // 1. Allow public routes (including all API routes)
   if (isPublicRoute(req)) {
@@ -38,45 +38,47 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     return redirectToSignIn({ returnBackUrl: req.url });
   }
 
-  // 3. Onboarding and role-based access
+  // 3. Get user role from session claims
+  const userRole = (sessionClaims?.metadata as { role?: string })?.role as UserRole;
+  const onboardingComplete = sessionClaims?.metadata?.onboardingComplete as boolean | undefined;
 
-  const publicMetadata = sessionClaims?.metadata as
-    | {
-        onboardingComplete?: boolean;
-        role?: 'therapist' | 'employer_admin' | 'employee';
-        [key: string]: unknown;
-      }
-    | undefined;
-  const userRole = publicMetadata?.role;
-
-  // If on the auth flow path and onboarding is complete, redirect to dashboard
-  if (currentPath === AUTH_FLOW_PATH) {
-    let redirectPath = '/employee';
-    switch (userRole) {
-      case 'therapist':
-        redirectPath = '/therapist';
-        break;
-      case 'employer_admin':
-        redirectPath = '/employer';
-        break;
-      case 'employee':
-      default:
-        redirectPath = '/employee';
-        break;
-    }
-    if (redirectPath === AUTH_FLOW_PATH) redirectPath = '/employee';
-    return NextResponse.redirect(new URL(redirectPath, req.url));
+  // 4. If user doesn't have a role or hasn't completed onboarding, redirect to auth-check
+  if (!userRole || !onboardingComplete) {
+    console.log(
+      'Middleware: User missing role or onboarding incomplete, redirecting to auth-check',
+      {
+        userId,
+        userRole,
+        onboardingComplete,
+        requestedPath: req.nextUrl.pathname,
+      },
+    );
+    return NextResponse.redirect(new URL('/auth-check', req.url));
   }
 
-  // Role-based route protection
+  // 5. Role-based route protection
   const roleProtectedRoutes = [
-    { matcher: isTherapistRoute, requiredRole: 'therapist' },
-    { matcher: isEmployerRoute, requiredRole: 'employer_admin' },
-    { matcher: isEmployeeRoute, requiredRole: 'employee' },
+    { matcher: isTherapistRoute, requiredRole: 'therapist' as UserRole },
+    { matcher: isEmployerRoute, requiredRole: 'employer_admin' as UserRole },
+    { matcher: isEmployeeRoute, requiredRole: 'employee' as UserRole },
+    // Explore page requires any valid role (employee, therapist, or employer_admin)
+    {
+      matcher: isExploreRoute,
+      requiredRole: null, // Special case - any authenticated user with valid role
+      allowedRoles: ['employee', 'therapist', 'employer_admin', 'super_admin'] as UserRole[],
+    },
   ];
-  for (const { matcher, requiredRole } of roleProtectedRoutes) {
-    if (matcher(req) && userRole !== requiredRole) {
-      return NextResponse.redirect(new URL(UNAUTHORIZED_PATH, req.url));
+
+  for (const { matcher, requiredRole, allowedRoles } of roleProtectedRoutes) {
+    if (matcher(req)) {
+      if (requiredRole && userRole !== requiredRole) {
+        // Specific role required and user doesn't have it
+        const correctRoute = getRouteForRole(userRole);
+        return NextResponse.redirect(new URL(correctRoute, req.url));
+      } else if (allowedRoles && (!userRole || !allowedRoles.includes(userRole))) {
+        // Multiple roles allowed but user doesn't have any of them
+        return NextResponse.redirect(new URL(UNAUTHORIZED_PATH, req.url));
+      }
     }
   }
 

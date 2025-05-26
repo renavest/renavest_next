@@ -1,4 +1,4 @@
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
   pgTable,
   serial,
@@ -6,19 +6,20 @@ import {
   varchar,
   timestamp,
   integer,
-  numeric,
   boolean,
   jsonb,
-  pgEnum, // <-- Import pgEnum for explicit enums
+  pgEnum,
+  check,
+  uniqueIndex,
+  index,
 } from 'drizzle-orm/pg-core';
 
-// === 1. Define Enums Explicitly (Best Practice) ===
-// Drizzle supports native PostgreSQL enums which are more type-safe and efficient
+// === 1. Enums ===
 export const userRoleEnum = pgEnum('user_role', [
   'employee',
   'therapist',
   'employer_admin',
-  'super_admin', // Example: for your internal team
+  'super_admin',
 ]);
 
 export const googleIntegrationStatusEnum = pgEnum('google_integration_status', [
@@ -36,11 +37,28 @@ export const sessionStatusEnum = pgEnum('session_status', [
   'rescheduled',
 ]);
 
-// === 2. Employers Table (Minimal Changes - Good as Is) ===
-// This table represents an organization, not an individual user.
+// Stripe‑specific enums
+export const paymentStatusEnum = pgEnum('payment_status', [
+  'pending',
+  'succeeded',
+  'failed',
+  'canceled',
+  'refunded',
+]);
+
+export const payoutStatusEnum = pgEnum('payout_status', [
+  'pending',
+  'completed',
+  'failed',
+  'refunded',
+]);
+
+export const payoutTypeEnum = pgEnum('payout_type', ['session_fee', 'async_credit', 'refund']);
+
+// === 2. Employers ===
 export const employers = pgTable('employers', {
   id: serial('id').primaryKey(),
-  clerkOrgId: varchar('clerk_org_id', { length: 255 }).unique(), // For Clerk Organizations, good!
+  clerkOrgId: varchar('clerk_org_id', { length: 255 }).unique(),
   name: varchar('name', { length: 255 }).notNull(),
   industry: varchar('industry', { length: 255 }),
   employeeCount: integer('employee_count').default(0).notNull(),
@@ -52,36 +70,34 @@ export const employers = pgTable('employers', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-// === 3. Users Table (Core Identity - KEY CHANGES) ===
-// This table represents an individual person in your system.
-// Every authenticated user (via Clerk) should have an entry here.
+// === 3. Users ===
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
-  clerkId: varchar('clerk_id', { length: 255 }).notNull().unique(), // Link to Clerk user ID, MUST be unique
-  email: varchar('email', { length: 255 }).notNull().unique(), // Primary email, MUST be unique
+  clerkId: varchar('clerk_id', { length: 255 }).notNull().unique(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
   firstName: text('first_name'),
   lastName: text('last_name'),
   imageUrl: text('image_url'),
-  role: userRoleEnum('role').notNull().default('employee'), // Use the enum, default to 'member'
-  isActive: boolean('is_active').default(true).notNull(), // For soft deletion/deactivation
-  employerId: integer('employer_id').references(() => employers.id, { onDelete: 'set null' }), // Employee belongs to an employer
+  role: userRoleEnum('role').notNull().default('employee'),
+  isActive: boolean('is_active').default(true).notNull(),
+  employerId: integer('employer_id').references(() => employers.id, { onDelete: 'set null' }),
+  // Stripe subscription fields
+  subscriptionStatus: varchar('subscription_status', { length: 50 }),
+  stripeSubscriptionId: varchar('stripe_subscription_id', { length: 255 }).unique(),
+  subscriptionEndDate: timestamp('subscription_end_date'),
+  cancelAtPeriodEnd: boolean('cancel_at_period_end').default(false),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(), // Default to createdAt for initial update
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-// === 4. Therapists Table (Role-Specific Details - KEY CHANGES) ===
-// Stores details specific to a user who is also a therapist.
-// This is a one-to-one relationship with the `users` table.
+// === 4. Therapists ===
 export const therapists = pgTable('therapists', {
   id: serial('id').primaryKey(),
-  // Foreign key to the `users` table, unique, and not null for a 1-to-1 relationship.
-  // This is the direct link that signifies "this user IS a therapist."
   userId: integer('user_id')
-    .references(() => users.id, { onDelete: 'cascade' }) // If user is deleted, therapist profile also goes
+    .references(() => users.id, { onDelete: 'cascade' })
     .unique()
     .notNull(),
-  // REMOVE email field here. It's already in the users table.
-  name: varchar('name', { length: 255 }).notNull(), // Can be redundant with user firstName/lastName but often therapist wants to set their own "professional name"
+  name: varchar('name', { length: 255 }).notNull(),
   title: varchar('title', { length: 255 }),
   bookingURL: text('booking_url'),
   expertise: text('expertise'),
@@ -91,8 +107,18 @@ export const therapists = pgTable('therapists', {
   clientele: text('ideal_clientele'),
   longBio: text('long_bio'),
   previewBlurb: text('preview_blurb'),
-  profileUrl: text('profile_image_url'), // Therapist-specific profile image
-  hourlyRate: numeric('hourly_rate', { precision: 10, scale: 2 }),
+  profileUrl: text('profile_image_url'),
+  // Monetary field stored as integer cents for exact math
+  hourlyRateCents: integer('hourly_rate_cents'),
+  // Stripe Connect
+  stripeAccountId: varchar('stripe_account_id', { length: 255 }),
+  onboardingStatus: varchar('onboarding_status', { length: 50 }).default('not_started'),
+  chargesEnabled: boolean('charges_enabled').default(false),
+  payoutsEnabled: boolean('payouts_enabled').default(false),
+  detailsSubmitted: boolean('details_submitted').default(false),
+  // Soft delete flag
+  deletedAt: timestamp('deleted_at'),
+  // Google Calendar
   googleCalendarAccessToken: text('google_calendar_access_token'),
   googleCalendarRefreshToken: text('google_calendar_refresh_token'),
   googleCalendarEmail: text('google_calendar_email'),
@@ -104,20 +130,20 @@ export const therapists = pgTable('therapists', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-// === 5. UserOnboarding Table (Good as is, referencing users.id) ===
+// === 5. UserOnboarding ===
 export const userOnboarding = pgTable('user_onboarding', {
   id: serial('id').primaryKey(),
   userId: integer('user_id')
     .references(() => users.id, { onDelete: 'cascade' })
     .notNull()
-    .unique(), // Assuming one onboarding record per user
+    .unique(),
   answers: jsonb('answers'),
   version: integer('version').notNull().default(1),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-// === 6. Therapist Availability & Blocked Times (Good as is) ===
+// === 6. Therapist Availability & Blocks ===
 export const therapistAvailability = pgTable('therapist_availability', {
   id: serial('id').primaryKey(),
   therapistId: integer('therapist_id')
@@ -126,6 +152,7 @@ export const therapistAvailability = pgTable('therapist_availability', {
   dayOfWeek: integer('day_of_week').notNull(),
   startTime: varchar('start_time', { length: 5 }).notNull(),
   endTime: varchar('end_time', { length: 5 }).notNull(),
+  timezone: varchar('timezone', { length: 50 }).default('UTC').notNull(),
   isRecurring: boolean('is_recurring').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -144,29 +171,37 @@ export const therapistBlockedTimes = pgTable('therapist_blocked_times', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-// === 7. Booking Sessions & Client Notes (Good as is, referencing users.id) ===
-export const bookingSessions = pgTable('booking_sessions', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id')
-    .references(() => users.id, { onDelete: 'restrict' }) // Restrict deletion if sessions exist
-    .notNull(),
-  therapistId: integer('therapist_id')
-    .references(() => therapists.id, { onDelete: 'restrict' })
-    .notNull(),
-  sessionDate: timestamp('session_date').notNull(),
-  sessionStartTime: timestamp('session_start_time').notNull(),
-  sessionEndTime: timestamp('session_end_time').notNull(),
-  status: sessionStatusEnum('status').notNull().default('pending'),
-  googleEventId: text('google_event_id'),
-  cancellationReason: text('cancellation_reason'),
-  metadata: jsonb('metadata'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+// === 7. Booking Sessions & Client Notes ===
+export const bookingSessions = pgTable(
+  'booking_sessions',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .references(() => users.id, { onDelete: 'restrict' })
+      .notNull(),
+    therapistId: integer('therapist_id')
+      .references(() => therapists.id, { onDelete: 'restrict' })
+      .notNull(),
+    sessionDate: timestamp('session_date').notNull(),
+    sessionStartTime: timestamp('session_start_time').notNull(),
+    sessionEndTime: timestamp('session_end_time').notNull(),
+    timezone: varchar('timezone', { length: 50 }).default('UTC').notNull(),
+    status: sessionStatusEnum('status').default('pending').notNull(),
+    googleEventId: text('google_event_id'),
+    cancellationReason: text('cancellation_reason'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    // prevent double booking same start time per therapist
+    therapistSlotUix: uniqueIndex('uix_therapist_slot').on(t.therapistId, t.sessionStartTime),
+  }),
+);
 
 export const pendingTherapists = pgTable('pending_therapists', {
   id: serial('id').primaryKey(),
-  clerkEmail: varchar('clerk_email', { length: 255 }).notNull().unique(), // Email they will use to sign up
+  clerkEmail: varchar('clerk_email', { length: 255 }).notNull().unique(),
   name: varchar('name', { length: 255 }).notNull(),
   title: varchar('title', { length: 255 }),
   bookingURL: text('booking_url'),
@@ -178,7 +213,7 @@ export const pendingTherapists = pgTable('pending_therapists', {
   longBio: text('long_bio'),
   previewBlurb: text('preview_blurb'),
   profileUrl: text('profile_image_url'),
-  hourlyRate: numeric('hourly_rate', { precision: 10, scale: 2 }),
+  hourlyRateCents: integer('hourly_rate_cents'),
   googleCalendarAccessToken: text('google_calendar_access_token'),
   googleCalendarRefreshToken: text('google_calendar_refresh_token'),
   googleCalendarEmail: text('google_calendar_email'),
@@ -193,13 +228,12 @@ export const pendingTherapists = pgTable('pending_therapists', {
 export const clientNotes = pgTable('client_notes', {
   id: serial('id').primaryKey(),
   userId: integer('user_id')
-    .references(() => users.id, { onDelete: 'restrict' }) // Client's user ID
+    .references(() => users.id, { onDelete: 'restrict' })
     .notNull(),
-  therapistId: integer('therapist_id') // Therapist who created the note
+  therapistId: integer('therapist_id')
     .references(() => therapists.id, { onDelete: 'restrict' })
     .notNull(),
-  sessionId: integer('session_id') // Optional link to a specific session
-    .references(() => bookingSessions.id, { onDelete: 'set null' }),
+  sessionId: integer('session_id').references(() => bookingSessions.id, { onDelete: 'set null' }),
   title: text('title').notNull(),
   content: jsonb('content').$type<{
     keyObservations?: string[];
@@ -213,62 +247,103 @@ export const clientNotes = pgTable('client_notes', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-// === 8. Relations (Updated for new schema structure) ===
+// === 8. Stripe Integration Tables ===
+export const stripeCustomers = pgTable('stripe_customers', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .unique()
+    .notNull(),
+  stripeCustomerId: varchar('stripe_customer_id', { length: 255 }).notNull().unique(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
 
+export const employerSubsidies = pgTable(
+  'employer_subsidies',
+  {
+    id: serial('id').primaryKey(),
+    employerId: integer('employer_id')
+      .references(() => employers.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: integer('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    originalCents: integer('original_cents').notNull(),
+    remainingCents: integer('remaining_cents').notNull(),
+    reason: text('reason'),
+    expiresAt: timestamp('expires_at'),
+    appliedAt: timestamp('applied_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    remainingNonNegative: check('remaining_non_negative', sql`${table.remainingCents} >= 0`),
+    activeIdx: index('idx_subsidies_active')
+      .on(table.userId)
+      .where(sql`${table.remainingCents} > 0 AND ${table.expiresAt} IS NULL`),
+  }),
+);
+
+export const therapistPayouts = pgTable('therapist_payouts', {
+  id: serial('id').primaryKey(),
+  therapistId: integer('therapist_id')
+    .references(() => therapists.id, { onDelete: 'cascade' })
+    .notNull(),
+  bookingSessionId: integer('booking_session_id').references(() => bookingSessions.id, {
+    onDelete: 'cascade',
+  }),
+  amountCents: integer('amount_cents').notNull(),
+  stripeTransferId: varchar('stripe_transfer_id', { length: 255 }),
+  paidAt: timestamp('paid_at'),
+  status: payoutStatusEnum('status').default('pending').notNull(),
+  payoutType: payoutTypeEnum('payout_type').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const sessionPayments = pgTable('session_payments', {
+  id: serial('id').primaryKey(),
+  bookingSessionId: integer('booking_session_id')
+    .references(() => bookingSessions.id, { onDelete: 'cascade' })
+    .notNull()
+    .unique(),
+  userId: integer('user_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  stripePaymentIntentId: varchar('stripe_payment_intent_id', { length: 255 }).notNull().unique(),
+  totalAmountCents: integer('total_amount_cents').notNull(),
+  subsidyUsedCents: integer('subsidy_used_cents').default(0).notNull(),
+  outOfPocketCents: integer('out_of_pocket_cents').notNull(),
+  status: paymentStatusEnum('status').default('pending').notNull(),
+  chargedAt: timestamp('charged_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// === 9. Relations ===
 export const employersRelations = relations(employers, ({ many }) => ({
-  // An employer can have multiple employee users
   employees: many(users),
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
-  // A user can be linked to one employer (if they are an employee)
-  employer: one(employers, {
-    fields: [users.employerId],
-    references: [employers.id],
-  }),
-  // A user MAY BE a therapist (one-to-one relationship)
-  therapistProfile: one(therapists, {
-    fields: [users.id], // Link user.id to therapist.userId
-    references: [therapists.userId],
-  }),
-  // A user has one onboarding record
-  onboarding: one(userOnboarding, {
-    fields: [users.id],
-    references: [userOnboarding.userId],
-  }),
-  // A user can book many sessions (as a client)
+  employer: one(employers, { fields: [users.employerId], references: [employers.id] }),
+  therapistProfile: one(therapists, { fields: [users.id], references: [therapists.userId] }),
+  onboarding: one(userOnboarding, { fields: [users.id], references: [userOnboarding.userId] }),
   bookedSessions: many(bookingSessions),
-  // A user can have many client notes (as a client)
   clientNotes: many(clientNotes),
 }));
 
 export const therapistsRelations = relations(therapists, ({ one, many }) => ({
-  // A therapist profile belongs to one user
-  user: one(users, {
-    fields: [therapists.userId],
-    references: [users.id],
-  }),
-  // A therapist has many clients (users who booked sessions with them)
-  // This relation would typically be inferred via the bookingSessions table
-  // You might want to define this explicitly if you track clients directly
-  // beyond just session bookings. For now, rely on bookingSessions.
-  // clients: many(users), // If you wanted a direct relation, but bookingSessions handles it better
-
-  // A therapist has many availability slots
+  user: one(users, { fields: [therapists.userId], references: [users.id] }),
   availability: many(therapistAvailability),
-  // A therapist has many blocked times
   blockedTimes: many(therapistBlockedTimes),
-  // A therapist has many booked sessions (as the therapist)
   sessions: many(bookingSessions),
-  // A therapist has many client notes they've written
   writtenNotes: many(clientNotes),
 }));
 
 export const userOnboardingRelations = relations(userOnboarding, ({ one }) => ({
-  user: one(users, {
-    fields: [userOnboarding.userId],
-    references: [users.id],
-  }),
+  user: one(users, { fields: [userOnboarding.userId], references: [users.id] }),
 }));
 
 export const therapistAvailabilityRelations = relations(therapistAvailability, ({ one }) => ({
@@ -286,10 +361,7 @@ export const therapistBlockedTimesRelations = relations(therapistBlockedTimes, (
 }));
 
 export const bookingSessionsRelations = relations(bookingSessions, ({ one }) => ({
-  user: one(users, {
-    fields: [bookingSessions.userId],
-    references: [users.id],
-  }),
+  user: one(users, { fields: [bookingSessions.userId], references: [users.id] }),
   therapist: one(therapists, {
     fields: [bookingSessions.therapistId],
     references: [therapists.id],
@@ -297,14 +369,8 @@ export const bookingSessionsRelations = relations(bookingSessions, ({ one }) => 
 }));
 
 export const clientNotesRelations = relations(clientNotes, ({ one }) => ({
-  user: one(users, {
-    fields: [clientNotes.userId],
-    references: [users.id],
-  }),
-  therapist: one(therapists, {
-    fields: [clientNotes.therapistId],
-    references: [therapists.id],
-  }),
+  user: one(users, { fields: [clientNotes.userId], references: [users.id] }),
+  therapist: one(therapists, { fields: [clientNotes.therapistId], references: [therapists.id] }),
   session: one(bookingSessions, {
     fields: [clientNotes.sessionId],
     references: [bookingSessions.id],

@@ -4,8 +4,7 @@
 
 import { useSignIn, useUser } from '@clerk/nextjs';
 import { useClerk } from '@clerk/nextjs';
-import { signal, computed, effect } from '@preact-signals/safe-react';
-import { redirect } from 'next/navigation';
+import { signal } from '@preact-signals/safe-react';
 import React, { useState, useEffect } from 'react';
 
 import {
@@ -15,14 +14,16 @@ import {
   currentStep,
 } from '../../state/authState'; // Use global error signal
 import { OnboardingStep } from '../../types'; // Import props type
+import { useRoleBasedRedirect } from '../../utils/routerUtil';
 
 export function ResetPasswordStep() {
   const { signIn } = useSignIn();
-  const authError = authErrorSignal.value;
   const { setActive } = useClerk();
   const showResetPasswordStep = signal(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const { user } = useUser();
+  const { redirectToRole } = useRoleBasedRedirect();
+
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     resetPasswordCode.value = e.target.value;
   };
@@ -57,24 +58,13 @@ export function ResetPasswordStep() {
   const handleBackToLogin = () => {
     currentStep.value = OnboardingStep.LOGIN;
   };
-  const handleRedirectToDashboard = () => {
-    if (user) {
-      if (user.publicMetadata.role === 'employee') {
-        redirect('/employee');
-      } else if (user.publicMetadata.role === 'employer_admin') {
-        redirect('/employer');
-      } else if (user.publicMetadata.role === 'therapist') {
-        redirect('/therapist');
-      }
-    }
-  };
 
   // Use useEffect for redirect logic
   useEffect(() => {
     if (showResetPasswordStep.value && user) {
-      handleRedirectToDashboard();
+      redirectToRole(user);
     }
-  }, [showResetPasswordStep.value, user]);
+  }, [showResetPasswordStep.value, user, redirectToRole]);
 
   // Show spinner/message as soon as the user submits the form (isResettingPassword) or after reset (showResetPasswordStep)
   if (isResettingPassword || showResetPasswordStep.value) {
@@ -116,16 +106,6 @@ export function ResetPasswordStep() {
           Enter the code sent to your email and your new password.
         </p>
       </div>
-
-      {/* Use the global authErrorSignal */}
-      {authError && ( // Display error if exists
-        <div
-          className='bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative animate-fade-in'
-          role='alert'
-        >
-          <span className='block sm:inline'>{authError}</span>
-        </div>
-      )}
 
       {/* Use a form element */}
       <form onSubmit={handleSubmit} className='space-y-4'>

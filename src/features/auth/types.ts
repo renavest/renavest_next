@@ -11,6 +11,7 @@ export enum OnboardingStep {
   AGE_RANGE = 'AGE_RANGE',
   MARITAL_STATUS = 'MARITAL_STATUS',
   ETHNICITY = 'ETHNICITY',
+  PRIVACY_PLEDGE = 'PRIVACY_PLEDGE',
   SIGNUP = 'SIGNUP',
   EMAIL_VERIFICATION = 'EMAIL_VERIFICATION',
   FORGOT_PASSWORD = 'FORGOT_PASSWORD',
@@ -40,7 +41,7 @@ export interface OnboardingData {
 // Prop types for the authentication/onboarding step components
 
 // Props for components/auth/RoleSelectionStep.tsx
-export interface RoleSelectionStepProps {
+interface RoleSelectionStepProps {
   selectedRole: UserRole; // Should be null initially, then 'employee', 'therapist', or 'employer'
   onRoleSelect: (role: UserRole) => void;
   onContinue: () => void; // Handler to move to the next step (Login for existing, Signup for new)
@@ -49,7 +50,7 @@ export interface RoleSelectionStepProps {
 
 // Props for components/auth/LoginStep.tsx - This step is now primarily for logging in existing users
 // It also provides a path to start the signup flow after role selection.
-export interface LoginStepProps {
+interface LoginStepProps {
   email: string;
   setEmail: (value: string) => void;
   password: string;
@@ -61,7 +62,7 @@ export interface LoginStepProps {
 }
 
 // Props for components/auth/SignupStep.tsx - This is the final step after demographic questions (Employee) or directly after role selection (Therapist/Employer)
-export interface SignupStepProps {
+interface SignupStepProps {
   firstName: string; // Pre-filled/editable
   setFirstName: (value: string) => void;
   lastName: string;
@@ -78,7 +79,7 @@ export interface SignupStepProps {
 }
 
 // Props for components/auth/EmailVerificationStep.tsx
-export interface EmailVerificationStepProps {
+interface EmailVerificationStepProps {
   email: string; // Email address that the code was sent to (from Clerk or state)
   code: string;
   setCode: (value: string) => void; // Setter for the verification code input
@@ -88,7 +89,7 @@ export interface EmailVerificationStepProps {
 }
 
 // Props for components/auth/ForgotPasswordStep.tsx
-export interface ForgotPasswordStepProps {
+interface ForgotPasswordStepProps {
   email: string; // Email address input for the reset request
   setEmail: (value: string) => void; // Setter for the email input
   onSubmit: (e: React.FormEvent) => Promise<void>; // Handler for submitting the forgot password request (sends email)
@@ -96,7 +97,7 @@ export interface ForgotPasswordStepProps {
 }
 
 // Props for components/auth/ResetPasswordStep.tsx
-export interface ResetPasswordStepProps {
+interface ResetPasswordStepProps {
   code: string; // Input for the reset verification code (pre-filled from URL if deep link)
   setCode: (value: string) => void; // Setter for the code input
   newPassword: string; // Input for the new password
@@ -106,7 +107,7 @@ export interface ResetPasswordStepProps {
 }
 
 // Props for components/onboarding/PurposeStep.tsx (Employee specific onboarding)
-export interface RenavestPurposeStepProps {
+interface RenavestPurposeStepProps {
   selectedPurpose: string;
   onPurposeSelect: (purpose: string) => void; // Handler for selecting a purpose
   onContinue: () => void; // Handler to move to the next step (AgeRangeStep)
@@ -117,7 +118,7 @@ export interface RenavestPurposeStepProps {
 }
 
 // Props for components/onboarding/AgeRangeStep.tsx (Employee specific onboarding)
-export interface AgeRangeStepProps {
+interface AgeRangeStepProps {
   selectedAgeRange: string;
   onAgeRangeSelect: (ageRange: string) => void; // Handler for selecting age range
   onContinue: () => void; // Handler to move to the next step (MaritalStatusStep)
@@ -127,7 +128,7 @@ export interface AgeRangeStepProps {
 }
 
 // Props for components/onboarding/MaritalStatusStep.tsx (Employee specific onboarding)
-export interface MaritalStatusStepProps {
+interface MaritalStatusStepProps {
   selectedMaritalStatus: string;
   onMaritalStatusSelect: (maritalStatus: string) => void; // Handler for selecting marital status
   onContinue: () => void; // Handler to move to the next step (EthnicityStep)
@@ -137,7 +138,7 @@ export interface MaritalStatusStepProps {
 }
 
 // Props for components/onboarding/EthnicityStep.tsx (Employee specific onboarding)
-export interface EthnicityStepProps {
+interface EthnicityStepProps {
   selectedEthnicity: string;
   onEthnicitySelect: (ethnicity: string) => void; // Handler for selecting ethnicity
   onContinue: () => void; // Handler to move to the next step (SignupStep)
@@ -145,7 +146,7 @@ export interface EthnicityStepProps {
   onBackToLogin: () => void; // Handler for explicit back to Role Selection
   firstName: string; // Display first name
 }
-export interface CompleteOnboardingError {
+interface CompleteOnboardingError {
   type: 'AuthMismatch' | 'MissingRole' | 'DatabaseError';
   message: string;
 }

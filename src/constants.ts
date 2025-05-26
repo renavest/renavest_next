@@ -32,3 +32,15 @@ export const EMPLOYER_EMAIL_MAP: { [emailOrDomain: string]: string } = {
   'globex.com': 'Globex Corporation',
   'anotheremployee@specificcompany.com': 'Specific Company Inc.', // Map specific email
 };
+
+// List of email addresses authorized to be employer_admin
+export const ALLOWED_EMPLOYER_ADMIN_EMAILS = [
+  'admin@acmecorp.com',
+  'hr@acmecorp.com',
+  'admin@globex.com',
+  'hr@globex.com',
+  'seth@renavestapp.com', // For testing
+  'stanley@renavestapp.com', // For testing
+  'smphotography39@gmail.com',
+  'rameau.stan@gmail.com',
+];

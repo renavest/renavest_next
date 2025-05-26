@@ -1,36 +1,40 @@
 // src/features/auth/components/auth/SignupStep.tsx
 'use client';
 
-import { useSignUp } from '@clerk/nextjs';
+import { useSignUp, useUser } from '@clerk/nextjs';
 import { signal } from '@preact-signals/safe-react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import React from 'react';
 
-import { ALLOWED_EMAILS } from '@/src/constants';
-import { cn } from '@/src/lib/utils'; // Assuming cn utility
+import { cn } from '@/src/lib/utils';
+import type { UserRole } from '@/src/shared/types';
 
 import {
-  selectedRole,
+  authErrorSignal,
+  verificationEmailAddress,
   firstName,
   lastName,
   email,
   password,
-  agreeToTerms,
-  currentStep,
-  authErrorSignal,
-  verificationEmailAddress,
+  selectedRole,
   selectedPurpose,
   selectedAgeRange,
   selectedMaritalStatus,
   selectedEthnicity,
+  agreeToTerms,
+  currentStep,
 } from '../../state/authState';
 import { OnboardingStep } from '../../types';
 import { checkEmailEligibility } from '../../utils/emailEligibilityUtil';
 import { setOnboardingData } from '../../utils/onboardingStorage';
+import { getRouteForRole } from '../../utils/routerUtil';
+
 // Add isSignupLoading signal
 const isSignupLoading = signal(false);
 
-// Extracted form fields and checkbox into a separate component
+// CRITICAL: Prevent role changes by checking if user is already authenticated
+
+// Extracted form fields into a separate component (removed checkbox)
 function SignupFormFields() {
   return (
     <>
@@ -94,27 +98,6 @@ function SignupFormFields() {
           placeholder='Use at least 8 characters'
         />
       </div>
-
-      <div className='flex items-center mt-4'>
-        <input
-          id='agreeToTerms'
-          type='checkbox'
-          checked={agreeToTerms.value}
-          onChange={(e) => (agreeToTerms.value = e.target.checked)}
-          required
-          className='h-4 w-4 text-black focus:ring-black border-gray-300 rounded'
-        />
-        <label htmlFor='agreeToTerms' className='ml-2 block text-sm text-gray-700'>
-          * I agree to the{' '}
-          <Link href='/terms' className='text-gray-900 hover:underline'>
-            Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link href='/privacy' className='text-gray-900 hover:underline'>
-            Privacy Policy
-          </Link>
-        </label>
-      </div>
     </>
   );
 }
@@ -130,6 +113,35 @@ function isClerkAPIError(err: unknown): err is { errors: { message: string }[] }
     typeof (err as { errors: { message?: unknown }[] }).errors[0].message === 'string'
   );
 }
+
+// Validation helper functions
+const validateSignupForm = () => {
+  if (password.value.length < 8) {
+    return 'Password must be at least 8 characters long.';
+  }
+  if (firstName.value.length === 0) {
+    return 'First name is required.';
+  }
+  if (lastName.value.length === 0) {
+    return 'Last name is required.';
+  }
+  return null;
+};
+
+const handleSignupError = (err: unknown) => {
+  if (isClerkAPIError(err)) {
+    return err.errors[0].message;
+  } else if (
+    typeof err === 'object' &&
+    err !== null &&
+    'message' in err &&
+    typeof (err as { message: unknown }).message === 'string'
+  ) {
+    return (err as { message: string }).message;
+  } else {
+    return 'Signup failed. Please try again.';
+  }
+};
 
 // Utility to gather onboarding data from signals
 function getOnboardingDataFromSignals() {
@@ -149,25 +161,58 @@ function getOnboardingDataFromSignals() {
 
 export function SignupStep() {
   const { signUp } = useSignUp();
+  const { user, isLoaded: userLoaded } = useUser();
+  const router = useRouter();
+
+  // CRITICAL: Prevent authenticated users from accessing signup
+  // This prevents role changes after initial signup
+  React.useEffect(() => {
+    if (userLoaded && user) {
+      console.warn('Authenticated user attempting to access signup - redirecting to dashboard');
+
+      // Check if user has completed onboarding (has role and onboardingComplete flag)
+      const userRole = user.publicMetadata?.role as string | undefined;
+      const onboardingComplete = user.publicMetadata?.onboardingComplete as boolean | undefined;
+
+      if (userRole && onboardingComplete) {
+        // User has completed onboarding, redirect to their dashboard
+        const redirectRoute = getRouteForRole(userRole as UserRole);
+        router.replace(redirectRoute);
+      } else {
+        // User hasn't completed onboarding yet, redirect to auth-check to wait for webhook
+        console.log('User onboarding not complete, redirecting to auth-check', {
+          userRole,
+          onboardingComplete,
+          userId: user.id,
+        });
+        router.replace('/auth-check');
+      }
+    }
+  }, [userLoaded, user, router]);
+
+  // Don't render signup form if user is already authenticated
+  if (userLoaded && user) {
+    return (
+      <div className='text-center'>
+        <p className='text-gray-600'>You are already signed up. Redirecting to your dashboard...</p>
+      </div>
+    );
+  }
+
   const onSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     authErrorSignal.value = null;
     isSignupLoading.value = true; // Set loading state
+
+    // Set agreeToTerms to true since user already confirmed in PrivacyPledgeStep
+    agreeToTerms.value = true;
+
     // Store onboarding data in localStorage
     const onboardingData = getOnboardingDataFromSignals();
     try {
-      if (password.value.length < 8) {
-        authErrorSignal.value = 'Password must be at least 8 characters long.';
-        isSignupLoading.value = false;
-        return;
-      }
-      if (firstName.value.length === 0) {
-        authErrorSignal.value = 'First name is required.';
-        isSignupLoading.value = false;
-        return;
-      }
-      if (lastName.value.length === 0) {
-        authErrorSignal.value = 'Last name is required.';
+      const error = validateSignupForm();
+      if (error) {
+        authErrorSignal.value = error;
         isSignupLoading.value = false;
         return;
       }
@@ -192,6 +237,14 @@ export function SignupStep() {
         unsafeMetadata: {
           role: selectedRole.value,
           onboardingComplete: false,
+          firstName: firstName.value,
+          lastName: lastName.value,
+          email: email.value,
+          purpose: selectedPurpose.value,
+          ageRange: selectedAgeRange.value,
+          maritalStatus: selectedMaritalStatus.value,
+          ethnicity: selectedEthnicity.value,
+          agreeToTerms: agreeToTerms.value,
         },
       });
       if (result.status === 'complete' || result.status === 'missing_requirements') {
@@ -202,18 +255,7 @@ export function SignupStep() {
         authErrorSignal.value = 'Signup requires further verification.';
       }
     } catch (err: unknown) {
-      if (isClerkAPIError(err)) {
-        authErrorSignal.value = err.errors[0].message;
-      } else if (
-        typeof err === 'object' &&
-        err !== null &&
-        'message' in err &&
-        typeof (err as { message: unknown }).message === 'string'
-      ) {
-        authErrorSignal.value = (err as { message: string }).message;
-      } else {
-        authErrorSignal.value = 'Signup failed. Please try again.';
-      }
+      authErrorSignal.value = handleSignupError(err);
     } finally {
       isSignupLoading.value = false; // Always reset loading state
     }
@@ -229,11 +271,7 @@ export function SignupStep() {
     currentStep.value = OnboardingStep.LOGIN;
   };
   const isFormValid =
-    firstName.value.trim() &&
-    lastName.value.trim() &&
-    email.value.trim() &&
-    password.value.trim() &&
-    agreeToTerms.value;
+    firstName.value.trim() && lastName.value.trim() && email.value.trim() && password.value.trim();
   return (
     <div className='space-y-6'>
       <div className='flex flex-col items-center mb-8'>

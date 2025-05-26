@@ -1,7 +1,7 @@
 // src/features/auth/components/auth/EmailVerificationStep.tsx
 
 'use client';
-import { useSignUp, useClerk, useUser } from '@clerk/nextjs';
+import { useSignUp, useClerk } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
@@ -12,48 +12,11 @@ import {
 } from '../../state/authState';
 import { getOnboardingData } from '../../utils/onboardingStorage';
 
-// Helper function for polling the user endpoint
-const pollForUser = async (
-  clerkId: string,
-  retries = 10,
-  delay = 1000,
-): Promise<{ exists: boolean }> => {
-  try {
-    const response = await fetch('/api/auth/validate-user-db-entry', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clerkId }),
-      credentials: 'include',
-    });
-
-    const result = await response.json();
-
-    if (result.exists) {
-      return result;
-    }
-
-    if (retries <= 0) {
-      return { exists: false };
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, delay));
-    return pollForUser(clerkId, retries - 1, delay);
-  } catch (error) {
-    if (retries <= 0) {
-      return { exists: false };
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, delay));
-    return pollForUser(clerkId, retries - 1, delay);
-  }
-};
-
 export function EmailVerificationStep() {
   const router = useRouter();
   const { signUp, isLoaded: isSignUpLoaded } = useSignUp();
   const [isLoading, setIsLoading] = useState(false);
   const { setActive } = useClerk();
-  const { user } = useUser();
   const onboardingData = getOnboardingData();
 
   if (!onboardingData) {
@@ -86,32 +49,18 @@ export function EmailVerificationStep() {
 
       if (result.status === 'complete') {
         if (signUp.createdUserId) {
-          await setActive({ session: result.createdSessionId });
-          const userPollResult = await pollForUser(signUp.createdUserId);
-
-          const response = await fetch('/api/auth/update-user-metadata', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              clerkId: signUp.createdUserId,
-              metadata: onboardingData,
-              role: onboardingData?.role,
-            }),
-            credentials: 'include',
+          await setActive({
+            session: result.createdSessionId,
+            beforeEmit: () => {
+              console.log('Setting active session with ID:', result.createdSessionId);
+            },
           });
 
-          if (user) {
-            await user.reload();
-          }
+          console.log('Email verification complete, redirecting to auth-check...');
 
-          const { role } = await response.json();
-
-          if (userPollResult.exists && role) {
-            await setActive({ session: result.createdSessionId });
-            window.location.reload();
-          } else {
-            authErrorSignal.value = 'Account setup failed. Please contact support.';
-          }
+          // CRITICAL CHANGE: Redirect to an intermediate auth-check page
+          // This gives time for the webhook to complete and Clerk's session metadata to update
+          router.replace('/auth-check');
         } else {
           authErrorSignal.value = 'Account verification incomplete. Please log in.';
           router.push('/login');
@@ -120,6 +69,7 @@ export function EmailVerificationStep() {
         authErrorSignal.value = `Verification failed. Please check the code and try again.`;
       }
     } catch (error) {
+      console.error('Email verification error:', error);
       authErrorSignal.value = 'Verification failed. Please try again.';
     } finally {
       setIsLoading(false);
@@ -137,7 +87,7 @@ export function EmailVerificationStep() {
       await signUp.reload();
       await signUp.prepareVerification({ strategy: 'email_code' });
       authErrorSignal.value = 'Verification code resent. Check your inbox.';
-    } catch (error) {
+    } catch {
       authErrorSignal.value = 'Failed to resend verification code.';
     }
   };
@@ -152,15 +102,6 @@ export function EmailVerificationStep() {
           enter the code below.
         </p>
       </div>
-
-      {authErrorSignal.value && (
-        <div
-          className='bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative animate-fade-in'
-          role='alert'
-        >
-          <span className='block sm:inline'>{authErrorSignal.value}</span>
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className='space-y-4'>
         <div className='space-y-1'>
@@ -188,7 +129,7 @@ export function EmailVerificationStep() {
           className='w-full py-3 px-6 rounded-full shadow-md text-sm font-medium text-white bg-black hover:bg-gray-800 transition-all duration-300 ease-in-out transform'
           disabled={isLoading || emailVerificationCode.value.length !== 6}
         >
-          {isLoading ? 'Verifying...' : 'Verify'}
+          {isLoading ? 'Verifying...' : 'Verify & Continue'}
         </button>
 
         <div className='text-center mt-4'>

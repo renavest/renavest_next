@@ -32,7 +32,7 @@ export function RoleSelectionStep() {
     if (selectedRole.value === 'employee') {
       currentStep.value = OnboardingStep.PURPOSE;
     } else if (selectedRole.value === 'therapist' || selectedRole.value === 'employer_admin') {
-      currentStep.value = OnboardingStep.SIGNUP;
+      currentStep.value = OnboardingStep.PRIVACY_PLEDGE;
     }
   };
   const onBackToLogin = () => {

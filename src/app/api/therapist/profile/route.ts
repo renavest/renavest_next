@@ -78,7 +78,7 @@ export async function POST(request: Request) {
       'longBio',
       'previewBlurb',
       'profileUrl',
-      'hourlyRate',
+      'hourlyRateCents',
     ];
     const userUpdates: Record<string, unknown> = {};
     const therapistUpdates: Record<string, unknown> = {};

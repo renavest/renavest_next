@@ -26,7 +26,7 @@ export const selectedPurpose = signal('');
 export const selectedAgeRange = signal('');
 export const selectedMaritalStatus = signal('');
 export const selectedEthnicity = signal('');
-export const selectedGender = signal(''); // Assuming this is still a collected field
+const selectedGender = signal(''); // Assuming this is still a collected field
 
 // Flow State for AuthenticationFlow component
 // Start at LOGIN
@@ -45,7 +45,7 @@ export const resetPasswordNewPassword = signal(''); // New password entered by u
 
 // Clears all state related to the custom signup/onboarding flow
 // Keeps email and password as they are used in Login/Signup steps
-export const resetSignupState = () => {
+const resetSignupState = () => {
   selectedRole.value = null; // Reset role selection
   firstName.value = '';
   lastName.value = '';
@@ -61,7 +61,7 @@ export const resetSignupState = () => {
 };
 
 // Clears all state related to email verification and password reset flows
-export const resetVerificationResetState = () => {
+const resetVerificationResetState = () => {
   verificationEmailAddress.value = '';
   emailVerificationCode.value = '';
   forgotPasswordEmailAddress.value = '';
@@ -73,7 +73,7 @@ export const resetVerificationResetState = () => {
 };
 
 // Clears all authentication-related state and goes back to the start
-export const resetAuthState = () => {
+const resetAuthState = () => {
   authErrorSignal.value = null;
   email.value = '';
   password.value = '';
