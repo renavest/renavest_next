@@ -44,6 +44,7 @@ interface FormData {
   bookingURL?: string;
   firstName?: string;
   lastName?: string;
+  profileUrl?: string;
 }
 
 export default function TherapistProfileCard() {
@@ -76,6 +77,20 @@ export default function TherapistProfileCard() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm((prev: FormData) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handlePhotoUploaded = (newPhotoUrl: string) => {
+    setForm((prev: FormData) => ({ ...prev, profileUrl: newPhotoUrl }));
+    // Update the profile state immediately to reflect the change
+    if (profile) {
+      setProfile({
+        ...profile,
+        therapist: {
+          ...profile.therapist,
+          profileUrl: newPhotoUrl,
+        },
+      });
+    }
   };
 
   const handleSave = async () => {
@@ -159,6 +174,7 @@ export default function TherapistProfileCard() {
         saveSuccess={saveSuccess}
         error={error}
         isCalendarConnected={isCalendarConnected}
+        onPhotoUploaded={handlePhotoUploaded}
       />
     </div>
   );

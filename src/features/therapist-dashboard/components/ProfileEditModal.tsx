@@ -2,6 +2,8 @@
 import { Loader2, Save, X } from 'lucide-react';
 import React from 'react';
 
+import { PhotoUpload } from './PhotoUpload';
+
 interface TherapistProfile {
   user: {
     firstName?: string;
@@ -38,6 +40,7 @@ interface FormData {
   bookingURL?: string;
   firstName?: string;
   lastName?: string;
+  profileUrl?: string;
 }
 
 interface ProfileEditModalProps {
@@ -51,6 +54,7 @@ interface ProfileEditModalProps {
   saveSuccess: boolean;
   error: string | null;
   isCalendarConnected: boolean;
+  onPhotoUploaded: (newPhotoUrl: string) => void;
 }
 
 export function ProfileEditModal({
@@ -64,6 +68,7 @@ export function ProfileEditModal({
   saveSuccess,
   error,
   isCalendarConnected,
+  onPhotoUploaded,
 }: ProfileEditModalProps) {
   if (!isOpen) return null;
 
@@ -87,6 +92,13 @@ export function ProfileEditModal({
             onSave();
           }}
         >
+          {/* Photo Upload Section */}
+          <PhotoUpload
+            currentPhotoUrl={form.profileUrl || profile.therapist.profileUrl}
+            therapistName={form.name || profile.therapist.name}
+            onPhotoUploaded={onPhotoUploaded}
+            disabled={saving}
+          />
           <div>
             <label htmlFor='name' className='block text-sm font-semibold text-gray-700 mb-1'>
               Full Name
