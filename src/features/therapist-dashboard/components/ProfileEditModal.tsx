@@ -24,6 +24,7 @@ interface TherapistProfile {
     previewBlurb?: string;
     profileUrl?: string;
     hourlyRate?: string;
+    hourlyRateCents?: number;
   };
 }
 
@@ -33,6 +34,7 @@ interface FormData {
   email?: string;
   yoe?: number;
   hourlyRate?: string;
+  hourlyRateCents?: number;
   expertise?: string;
   certifications?: string;
   clientele?: string;

@@ -25,6 +25,7 @@ interface TherapistProfile {
     previewBlurb?: string;
     profileUrl?: string;
     hourlyRate?: string;
+    hourlyRateCents?: number;
   };
 }
 
@@ -204,6 +205,14 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
             {therapist.yoe ? `${therapist.yoe} years` : 'N/A'}
           </span>
         </div>
+        {therapist.hourlyRateCents && (
+          <div>
+            <h3 className='text-sm font-semibold text-gray-700 mb-1'>Hourly Rate</h3>
+            <span className='bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-medium'>
+              ${(therapist.hourlyRateCents / 100).toFixed(2)} USD
+            </span>
+          </div>
+        )}
         <div>
           <h3 className='text-sm font-semibold text-gray-700 mb-1'>Areas of Expertise</h3>
           <ExpertiseTags tags={expertiseTags} />
