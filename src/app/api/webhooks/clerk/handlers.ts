@@ -13,6 +13,7 @@ import {
   userOnboarding,
 } from '@/src/db/schema';
 import type { users as usersTable } from '@/src/db/schema';
+import { getOrCreateStripeCustomer } from '@/src/features/stripe';
 import { createDate } from '@/src/utils/timezone';
 
 // Import clerkClient for role synchronization
@@ -394,6 +395,28 @@ export async function handleUserCreateOrUpdate(
         email: finalUser.email,
       });
     });
+
+    // Create Stripe customer for new users (outside transaction to avoid blocking)
+    if (eventType === 'user.created') {
+      try {
+        const userRecord = await db.select().from(users).where(eq(users.clerkId, id)).limit(1);
+        if (userRecord.length > 0) {
+          await getOrCreateStripeCustomer(userRecord[0].id, primaryEmail);
+          console.log('Webhook: Created Stripe customer for new user', {
+            userId: id,
+            email: primaryEmail,
+          });
+        }
+      } catch (stripeError) {
+        console.error('Webhook: Failed to create Stripe customer (non-blocking)', {
+          userId: id,
+          email: primaryEmail,
+          error: stripeError,
+        });
+        // Don't fail the webhook for Stripe customer creation errors
+      }
+    }
+
     return ok(true);
   } catch (error) {
     const errorDetails: UserHandlingError = {

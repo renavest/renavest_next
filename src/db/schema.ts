@@ -36,6 +36,24 @@ export const sessionStatusEnum = pgEnum('session_status', [
   'rescheduled',
 ]);
 
+// === Stripe-specific enums ===
+export const paymentStatusEnum = pgEnum('payment_status', [
+  'pending',
+  'succeeded',
+  'failed',
+  'canceled',
+  'refunded',
+]);
+
+export const payoutStatusEnum = pgEnum('payout_status', [
+  'pending',
+  'completed',
+  'failed',
+  'refunded',
+]);
+
+export const payoutTypeEnum = pgEnum('payout_type', ['session_fee', 'async_credit', 'refund']);
+
 // === 2. Employers Table (Minimal Changes - Good as Is) ===
 // This table represents an organization, not an individual user.
 export const employers = pgTable('employers', {
@@ -65,6 +83,11 @@ export const users = pgTable('users', {
   role: userRoleEnum('role').notNull().default('employee'), // Use the enum, default to 'member'
   isActive: boolean('is_active').default(true).notNull(), // For soft deletion/deactivation
   employerId: integer('employer_id').references(() => employers.id, { onDelete: 'set null' }), // Employee belongs to an employer
+  // Stripe subscription fields
+  subscriptionStatus: varchar('subscription_status', { length: 50 }), // e.g., 'active', 'canceled', 'trialing', 'past_due', 'unpaid', 'none'
+  stripeSubscriptionId: varchar('stripe_subscription_id', { length: 255 }), // The actual Stripe subscription ID
+  subscriptionEndDate: timestamp('subscription_end_date'), // When the current subscription period ends
+  cancelAtPeriodEnd: boolean('cancel_at_period_end').default(false),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(), // Default to createdAt for initial update
 });
@@ -93,6 +116,13 @@ export const therapists = pgTable('therapists', {
   previewBlurb: text('preview_blurb'),
   profileUrl: text('profile_image_url'), // Therapist-specific profile image
   hourlyRate: numeric('hourly_rate', { precision: 10, scale: 2 }),
+  // Stripe Connect fields
+  stripeAccountId: varchar('stripe_account_id', { length: 255 }), // Stripe Connect Express account ID
+  onboardingStatus: varchar('onboarding_status', { length: 50 }).default('not_started'), // not_started, pending, completed
+  chargesEnabled: boolean('charges_enabled').default(false),
+  payoutsEnabled: boolean('payouts_enabled').default(false),
+  detailsSubmitted: boolean('details_submitted').default(false),
+  // Google Calendar fields
   googleCalendarAccessToken: text('google_calendar_access_token'),
   googleCalendarRefreshToken: text('google_calendar_refresh_token'),
   googleCalendarEmail: text('google_calendar_email'),
@@ -211,6 +241,77 @@ export const clientNotes = pgTable('client_notes', {
   isConfidential: boolean('is_confidential').default(false),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// === Stripe Integration Tables ===
+
+// 1. Stripe Customer Linking Table
+// Purpose: Maps your internal users.id to Stripe's cus_ ID. Essential for consistent Stripe customer identification.
+export const stripeCustomers = pgTable('stripe_customers', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .unique() // Each user has one Stripe customer ID
+    .notNull(),
+  stripeCustomerId: varchar('stripe_customer_id', { length: 255 }).notNull().unique(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// 2. Employer Subsidy Credits (applied to employees)
+// Purpose: Tracks employer-provided credits for specific employees.
+export const employerSubsidies = pgTable('employer_subsidies', {
+  id: serial('id').primaryKey(),
+  employerId: integer('employer_id')
+    .references(() => employers.id, { onDelete: 'cascade' })
+    .notNull(),
+  userId: integer('user_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  creditAmountCents: integer('credit_amount_cents').notNull(), // e.g., 200 = $2.00
+  reason: text('reason'), // e.g., 'Starter plan subsidy', 'Session credit'
+  expiresAt: timestamp('expires_at'), // Optional expiry for credits
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// 3. Therapist Payout Ledger
+// Purpose: A ledger for all payouts made to therapists (live sessions, async credits, refunds).
+export const therapistPayouts = pgTable('therapist_payouts', {
+  id: serial('id').primaryKey(),
+  therapistId: integer('therapist_id')
+    .references(() => therapists.id, { onDelete: 'cascade' })
+    .notNull(),
+  bookingSessionId: integer('booking_session_id') // Nullable for async credits
+    .references(() => bookingSessions.id, { onDelete: 'cascade' }),
+  amountCents: integer('amount_cents').notNull(), // e.g., 13500 = $135.00
+  stripeTransferId: varchar('stripe_transfer_id', { length: 255 }), // Stripe ID for the transfer/payout
+  paidAt: timestamp('paid_at'),
+  status: payoutStatusEnum('status').default('pending').notNull(),
+  payoutType: payoutTypeEnum('payout_type').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// 4. Session Payments (Stripe receipts)
+// Purpose: Records payment details for each individual booking session.
+export const sessionPayments = pgTable('session_payments', {
+  id: serial('id').primaryKey(),
+  bookingSessionId: integer('booking_session_id')
+    .references(() => bookingSessions.id, { onDelete: 'cascade' })
+    .notNull()
+    .unique(), // One payment record per session
+  userId: integer('user_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  stripePaymentIntentId: varchar('stripe_payment_intent_id', { length: 255 }).notNull().unique(),
+  totalAmountCents: integer('total_amount_cents').notNull(),
+  subsidyUsedCents: integer('subsidy_used_cents').default(0).notNull(),
+  outOfPocketCents: integer('out_of_pocket_cents').notNull(),
+  status: paymentStatusEnum('status').default('pending').notNull(),
+  chargedAt: timestamp('charged_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // === 8. Relations (Updated for new schema structure) ===

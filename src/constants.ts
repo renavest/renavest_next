@@ -41,4 +41,6 @@ export const ALLOWED_EMPLOYER_ADMIN_EMAILS = [
   'hr@globex.com',
   'seth@renavestapp.com', // For testing
   'stanley@renavestapp.com', // For testing
+  'smphotography39@gmail.com',
+  'rameau.stan@gmail.com',
 ];
