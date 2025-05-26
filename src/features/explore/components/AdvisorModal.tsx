@@ -78,6 +78,29 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
 
     // Navigate based on the therapist's integration status for active therapists
     if (isConnected && advisor.therapistId) {
+      // For direct booking, check billing information first
+      try {
+        const billingResponse = await fetch('/api/stripe/billing-setup-check');
+
+        if (billingResponse.ok) {
+          const billingData = await billingResponse.json();
+
+          if (!billingData.hasPaymentMethod) {
+            // Redirect to billing setup with therapist ID
+            toast.info('Please add a payment method to book sessions directly');
+            router.push(
+              `/billing/setup?therapistId=${advisor.therapistId}&redirect=/book/${advisor.therapistId}`,
+            );
+            return;
+          }
+        } else {
+          console.warn('Could not check billing setup, proceeding with booking');
+        }
+      } catch (error) {
+        console.error('Error checking billing setup:', error);
+        // Continue with booking if billing check fails
+      }
+
       // Use therapist ID for internal booking
       router.push(`/book/${advisor.therapistId}`);
     } else if (advisor.bookingURL) {

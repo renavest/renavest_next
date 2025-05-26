@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { useCalendlyEventListener } from 'react-calendly';
 
 import AlternativeBooking from '@/src/features/booking/components/AlternativeBooking';
+import BillingCheckWrapper from '@/src/features/booking/components/BillingCheckWrapper';
 import { BookingForm } from '@/src/features/booking/components/form/BookingForm';
 import { getInitials } from '@/src/features/booking/utils/stringUtils';
 
@@ -105,14 +106,19 @@ export default function UnifiedBookingFlow({ advisor, userId, userEmail }: Booki
     return <AlternativeBooking advisor={advisor} bookingURL={advisor.bookingURL} />;
   }
 
-  // If active therapist with Google Calendar integration, show internal booking
+  // If active therapist with Google Calendar integration, show internal booking with billing check
   return (
-    <BookingForm
+    <BillingCheckWrapper
       advisorId={advisor.id}
-      onConfirm={handleBookingConfirmation}
-      advisorName={advisor.name}
-      advisorImage={advisor.profileUrl}
-      advisorInitials={getInitials(advisor.name)}
-    />
+      shouldCheckBilling={true} // Always check billing for direct bookings
+    >
+      <BookingForm
+        advisorId={advisor.id}
+        onConfirm={handleBookingConfirmation}
+        advisorName={advisor.name}
+        advisorImage={advisor.profileUrl}
+        advisorInitials={getInitials(advisor.name)}
+      />
+    </BillingCheckWrapper>
   );
 }
