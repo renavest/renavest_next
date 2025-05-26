@@ -225,7 +225,7 @@ export const therapistList = [
       'Aged 18-45 who are navigating life transitions. Diverse genders. Diverse income levels and backgrounds.',
     long_bio:
       "Jaelyn (Jae) Vickery is a dynamic force in the world of holistic wellness and financial empowerment. As a financial therapist, entrepreneur, and creator of the acclaimed podcast Finance Fitness Finesse, Jae is dedicated to helping individuals build their wealth with wellness. Through her business, Dimensional Wealth LLC, she champions a momentum mindset—encouraging actionable steps toward abundance and longevity rather than waiting on fleeting motivation. With extensive experience researching and working in eating disorder therapy, Jae has explored the complex relationship between eating disorders and financial strain. She particularly enjoys working with individuals who seek a higher understanding of themselves and value the accountability to embrace the challenge of building and sustaining new habits. Jae is dedicated to helping individuals break free from the cycle of compulsion, consumption, and control. Jae's straightforward compassionate accountability approach brings purpose to every conversation to help her network diversify their knowledge portfolios. She's here to help you connect the dots between wealth and wellness and isn't afraid to tell you why 'you're not woke, you're broke.' In her free time, Jae embraces free movement through exercise, explores nature with her dog Bibble, and indulges her love for art. A devoted plant mom and chess enthusiast, she brings creativity and strategy to everything she does.",
-    preview_blurb: 
+    preview_blurb:
       'Empowering holistic wealth and wellness through financial therapy and mindset transformation!',
     profile_image_url: 'therapists/jaelyn-vickery.jpg',
     hourly_rate: 8000,
@@ -547,5 +547,28 @@ export const therapistList = [
     created_at: '2025-04-20 01:08:57.276',
     updated_at: '2025-04-20 01:08:57.276',
     email: 'seth@renavestapp.com',
+  },
+  {
+    id: 22,
+    name: 'Jenny Jean-Baptiste',
+    title: 'Financial Therapist',
+    booking_url: '',
+    expertise: 'N/A',
+    certifications: 'N/A',
+    favorite_song: 'N/A',
+    years_of_experience: 0,
+    ideal_clientele: 'N/A',
+    long_bio: 'N/A',
+    preview_blurb: 'N/A',
+    profile_image_url: 'therapists/jenny-jean-baptiste.jpg',
+    hourly_rate: 0,
+    google_calendar_access_token: null,
+    google_calendar_refresh_token: null,
+    google_calendar_email: null,
+    google_calendar_integration_status: 'not_connected',
+    google_calendar_integration_date: null,
+    created_at: '2025-04-20 01:08:56.305',
+    updated_at: '2025-04-20 01:08:56.305',
+    email: 'jenny@surplusfinancial.com',
   },
 ];
