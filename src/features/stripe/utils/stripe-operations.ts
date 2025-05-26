@@ -1,12 +1,11 @@
 import { eq } from 'drizzle-orm';
-import type Stripe from 'stripe';
 
 import { db } from '@/src/db';
 import { stripeCustomers, users } from '@/src/db/schema';
 
 import { kv, CACHE_KEYS } from '../services/kv-cache';
 import { stripe } from '../services/stripe-client';
-import type { STRIPE_SUB_CACHE } from '../types';
+import type { StripeSubCache } from '../types';
 
 /**
  * Ensures every internal userId has a corresponding stripeCustomerId
@@ -48,7 +47,7 @@ export async function getOrCreateStripeCustomer(
  * The core function that syncs all Stripe data for a customer to KV
  * This is called from webhooks and success endpoints to maintain consistency
  */
-export async function syncStripeDataToKV(customerId: string): Promise<STRIPE_SUB_CACHE> {
+export async function syncStripeDataToKV(customerId: string): Promise<StripeSubCache> {
   try {
     // Fetch latest subscription data from Stripe
     const subscriptions = await stripe.subscriptions.list({
@@ -59,7 +58,7 @@ export async function syncStripeDataToKV(customerId: string): Promise<STRIPE_SUB
     });
 
     if (subscriptions.data.length === 0) {
-      const subData: STRIPE_SUB_CACHE = {
+      const subData: StripeSubCache = {
         subscriptionId: null,
         status: null,
         currentPeriodEnd: null,
@@ -75,11 +74,11 @@ export async function syncStripeDataToKV(customerId: string): Promise<STRIPE_SUB
     const subscription = subscriptions.data[0];
 
     // Store complete subscription state
-    const subData: STRIPE_SUB_CACHE = {
+    const subData: StripeSubCache = {
       subscriptionId: subscription.id,
       status: subscription.status,
       planId: subscription.items.data[0]?.price.id || null,
-      currentPeriodEnd: subscription.current_period_end,
+      currentPeriodEnd: subscription.items.data[0]?.current_period_end,
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
       customerId: customerId,
     };
@@ -102,7 +101,7 @@ export async function syncStripeDataToKV(customerId: string): Promise<STRIPE_SUB
  */
 async function updateUserSubscriptionInDB(
   stripeCustomerId: string,
-  subData: STRIPE_SUB_CACHE,
+  subData: StripeSubCache,
 ): Promise<void> {
   try {
     // Find the user associated with this Stripe customer
@@ -154,10 +153,10 @@ async function updateUserSubscriptionInDB(
 /**
  * Get cached subscription data from KV with fallback to Stripe API
  */
-export async function getSubscriptionStatus(stripeCustomerId: string): Promise<STRIPE_SUB_CACHE> {
+export async function getSubscriptionStatus(stripeCustomerId: string): Promise<StripeSubCache> {
   try {
     // First try to get from cache
-    const cached = await kv.get<STRIPE_SUB_CACHE>(CACHE_KEYS.userSubscription(stripeCustomerId));
+    const cached = await kv.get<StripeSubCache>(CACHE_KEYS.userSubscription(stripeCustomerId));
 
     if (cached) {
       return cached;
