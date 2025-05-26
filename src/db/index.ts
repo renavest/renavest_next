@@ -6,7 +6,7 @@ import * as schema from './schema';
 
 // Load environment variables from .env.local or .env.production based on NODE_ENV
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local';
-dotenv.config({ path: envFile });
+dotenv.config({ path: '.env.production' });
 
 // Create a connection pool
 const pool = new Pool({

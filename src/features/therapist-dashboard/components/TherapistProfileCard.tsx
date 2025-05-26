@@ -28,6 +28,7 @@ interface TherapistProfile {
     previewBlurb?: string;
     profileUrl?: string;
     hourlyRate?: string;
+    hourlyRateCents?: number;
   };
 }
 
@@ -37,6 +38,7 @@ interface FormData {
   email?: string;
   yoe?: number;
   hourlyRate?: string;
+  hourlyRateCents?: number;
   expertise?: string;
   certifications?: string;
   clientele?: string;
@@ -44,6 +46,7 @@ interface FormData {
   bookingURL?: string;
   firstName?: string;
   lastName?: string;
+  profileUrl?: string;
 }
 
 export default function TherapistProfileCard() {
@@ -67,7 +70,15 @@ export default function TherapistProfileCard() {
         if (data.error) throw new Error(data.error);
         setProfile(data);
         // Initialize form with existing profile data
-        setForm({ ...data.user, ...data.therapist });
+        // Convert hourlyRateCents to dollars for display
+        const formData = {
+          ...data.user,
+          ...data.therapist,
+          hourlyRate: data.therapist.hourlyRateCents
+            ? (data.therapist.hourlyRateCents / 100).toFixed(2)
+            : '',
+        };
+        setForm(formData);
         setError(null);
       })
       .catch((err) => setError(err.message || 'Failed to load profile'))
@@ -78,15 +89,36 @@ export default function TherapistProfileCard() {
     setForm((prev: FormData) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  const handlePhotoUploaded = (newPhotoUrl: string) => {
+    setForm((prev: FormData) => ({ ...prev, profileUrl: newPhotoUrl }));
+    // Update the profile state immediately to reflect the change
+    if (profile) {
+      setProfile({
+        ...profile,
+        therapist: {
+          ...profile.therapist,
+          profileUrl: newPhotoUrl,
+        },
+      });
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     setSaveSuccess(false);
     setError(null);
     try {
+      // Convert hourlyRate from dollars to cents for API
+      const formDataForAPI = { ...form };
+      if (form.hourlyRate) {
+        formDataForAPI.hourlyRateCents = Math.round(parseFloat(form.hourlyRate) * 100);
+        delete formDataForAPI.hourlyRate; // Remove the dollar version
+      }
+
       const res = await fetch('/api/therapist/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(formDataForAPI),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to save profile');
@@ -103,7 +135,15 @@ export default function TherapistProfileCard() {
 
   const openEditModal = () => {
     if (profile) {
-      setForm({ ...profile.user, ...profile.therapist });
+      // Convert hourlyRateCents to dollars for form display
+      const formData = {
+        ...profile.user,
+        ...profile.therapist,
+        hourlyRate: profile.therapist.hourlyRateCents
+          ? (profile.therapist.hourlyRateCents / 100).toFixed(2)
+          : '',
+      };
+      setForm(formData);
     }
     setIsModalOpen(true);
   };
@@ -111,7 +151,15 @@ export default function TherapistProfileCard() {
   const closeEditModal = () => {
     setIsModalOpen(false);
     if (profile) {
-      setForm({ ...profile.user, ...profile.therapist });
+      // Convert hourlyRateCents to dollars for form display
+      const formData = {
+        ...profile.user,
+        ...profile.therapist,
+        hourlyRate: profile.therapist.hourlyRateCents
+          ? (profile.therapist.hourlyRateCents / 100).toFixed(2)
+          : '',
+      };
+      setForm(formData);
     }
   };
 
@@ -146,7 +194,11 @@ export default function TherapistProfileCard() {
 
   return (
     <div className='space-y-6'>
-      <ProfileDisplay profile={displayProfile} onEditClick={openEditModal} />
+      <ProfileDisplay
+        profile={displayProfile}
+        onEditClick={openEditModal}
+        onPhotoUpdated={handlePhotoUploaded}
+      />
 
       <ProfileEditModal
         isOpen={isModalOpen}
@@ -159,6 +211,7 @@ export default function TherapistProfileCard() {
         saveSuccess={saveSuccess}
         error={error}
         isCalendarConnected={isCalendarConnected}
+        onPhotoUploaded={handlePhotoUploaded}
       />
     </div>
   );
