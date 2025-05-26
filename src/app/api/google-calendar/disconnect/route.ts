@@ -4,7 +4,7 @@ import { google } from 'googleapis';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
-import { therapists } from '@/src/db/schema';
+import { therapists, users } from '@/src/db/schema';
 import { createDate } from '@/src/utils/timezone';
 
 // OAuth2 client configuration
@@ -25,13 +25,33 @@ export async function POST(_req: NextRequest) {
     console.log('=== Google Calendar Disconnect ===');
     console.log('User ID:', userId);
 
-    // Find therapist by userId
+    // First find the user by email in the users table
+    const userEmail = user.emailAddresses[0]?.emailAddress;
+    if (!userEmail) {
+      return NextResponse.json(
+        { success: false, message: 'User email not found' },
+        { status: 400 },
+      );
+    }
+
+    const userResult = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, userEmail))
+      .limit(1);
+
+    if (!userResult.length) {
+      console.error('User not found for email:', userEmail);
+      return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
+    }
+
+    // Then find the therapist by userId
     const therapist = await db.query.therapists.findFirst({
-      where: (therapists, { eq }) => eq(therapists.email, user.emailAddresses[0]?.emailAddress),
+      where: (therapists, { eq }) => eq(therapists.userId, userResult[0].id),
     });
 
     if (!therapist) {
-      console.error('Therapist not found for userId:', userId);
+      console.error('Therapist not found for userId:', userResult[0].id);
       return NextResponse.json({ success: false, message: 'Therapist not found' }, { status: 404 });
     }
 
