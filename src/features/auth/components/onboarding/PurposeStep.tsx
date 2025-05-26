@@ -6,7 +6,6 @@ import React from 'react'; // Import React
 
 import { cn } from '@/src/lib/utils';
 
-// Removed direct signal import, use global signal instead
 import { firstName, selectedPurpose, currentStep } from '../../state/authState';
 import { OnboardingStep } from '../../types';
 
