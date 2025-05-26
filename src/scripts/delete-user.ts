@@ -73,29 +73,6 @@ async function deleteClerkUser(userId: string) {
 }
 
 /**
- * Deletes pending therapist records with matching email
- */
-async function deletePendingTherapistRecords(email: string) {
-  try {
-    console.log(`🗑️ Deleting pending therapist records for email: ${email}...`);
-    const deletePendingResult = await db
-      .delete(pendingTherapists)
-      .where(eq(pendingTherapists.clerkEmail, email));
-
-    if (deletePendingResult.rowCount !== null && deletePendingResult.rowCount > 0) {
-      console.log(
-        `✅ Successfully deleted ${deletePendingResult.rowCount} pending therapist record(s) for ${email}.`,
-      );
-    } else {
-      console.log(`ℹ️ No pending therapist records found for ${email}.`);
-    }
-  } catch (error) {
-    console.error(`❌ Error deleting pending therapist records for ${email}:`, error);
-    // Don't re-throw, continue with other deletions
-  }
-}
-
-/**
  * Deletes client notes and booking sessions for a user
  */
 async function deleteUserClientData(internalUserId: number, therapistId?: number) {
@@ -364,9 +341,6 @@ async function deleteUser(email: string): Promise<void> {
       `⚠️ User ${email} not found in local 'users' table. Skipping database cleanup for related records.`,
     );
   }
-
-  // Step 2: Delete pending therapist records with matching email
-  await deletePendingTherapistRecords(email);
 
   if (!internalUserId) {
     console.log(`🎉 Deletion process for ${email} completed (user not found in local database).`);
