@@ -154,7 +154,8 @@ export async function POST(req: NextRequest) {
       .values({
         employerId,
         userId,
-        creditAmountCents,
+        originalCents: creditAmountCents,
+        remainingCents: creditAmountCents,
         reason: reason || 'Employer credit',
         expiresAt: expiryDate,
       })

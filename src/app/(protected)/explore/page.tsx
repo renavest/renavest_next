@@ -29,7 +29,7 @@ export default async function Home() {
           longBio: therapists.longBio,
           previewBlurb: therapists.previewBlurb,
           profileUrl: therapists.profileUrl,
-          hourlyRate: therapists.hourlyRate,
+          hourlyRateCents: therapists.hourlyRateCents,
           googleCalendarIntegrationStatus: therapists.googleCalendarIntegrationStatus,
           googleCalendarAccessToken: therapists.googleCalendarAccessToken,
         })
@@ -50,7 +50,7 @@ export default async function Home() {
           longBio: pendingTherapists.longBio,
           previewBlurb: pendingTherapists.previewBlurb,
           profileUrl: pendingTherapists.profileUrl,
-          hourlyRate: pendingTherapists.hourlyRate,
+          hourlyRateCents: pendingTherapists.hourlyRateCents,
           googleCalendarIntegrationStatus: pendingTherapists.googleCalendarIntegrationStatus,
           googleCalendarAccessToken: pendingTherapists.googleCalendarAccessToken,
         })
@@ -105,8 +105,8 @@ export default async function Home() {
           longBio: therapist.longBio || '',
           previewBlurb: therapist.previewBlurb || 'Experienced financial therapist',
           profileUrl: profileUrl,
-          hourlyRate: therapist.hourlyRate
-            ? `$${Math.round(Number(therapist.hourlyRate))}`
+          hourlyRate: therapist.hourlyRateCents
+            ? `$${Math.round(therapist.hourlyRateCents / 100)}`
             : undefined,
           hasProfileImage: !!therapist.profileUrl,
           isPending: false,
@@ -150,8 +150,8 @@ export default async function Home() {
         longBio: pendingTherapist.longBio || '',
         previewBlurb: pendingTherapist.previewBlurb || 'Experienced financial therapist',
         profileUrl: profileUrl,
-        hourlyRate: pendingTherapist.hourlyRate
-          ? `$${Math.round(Number(pendingTherapist.hourlyRate))}`
+        hourlyRate: pendingTherapist.hourlyRateCents
+          ? `$${Math.round(pendingTherapist.hourlyRateCents / 100)}`
           : undefined,
         hasProfileImage: !!pendingTherapist.profileUrl,
         isPending: true,

@@ -221,7 +221,7 @@ async function promotePendingTherapist(
     longBio: pendingTherapistMatch.longBio,
     previewBlurb: pendingTherapistMatch.previewBlurb,
     profileUrl: pendingTherapistMatch.profileUrl,
-    hourlyRate: pendingTherapistMatch.hourlyRate,
+    hourlyRateCents: pendingTherapistMatch.hourlyRateCents,
     googleCalendarIntegrationStatus: 'not_connected',
     createdAt: createDate().toJSDate(),
     updatedAt: createDate().toJSDate(),

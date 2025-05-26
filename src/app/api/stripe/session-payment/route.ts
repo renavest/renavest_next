@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
       .select({
         id: therapists.id,
         stripeAccountId: therapists.stripeAccountId,
-        hourlyRate: therapists.hourlyRate,
+        hourlyRateCents: therapists.hourlyRateCents,
       })
       .from(therapists)
       .where(eq(therapists.id, session.therapistId))
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
     const therapistData = therapist[0];
 
     // Calculate session cost (assuming 1-hour sessions)
-    const totalAmountCents = Math.round((therapistData.hourlyRate || 0) * 100);
+    const totalAmountCents = therapistData.hourlyRateCents || 0;
 
     if (totalAmountCents <= 0) {
       return NextResponse.json({ error: 'Invalid session cost' }, { status: 400 });
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
       .where(
         and(
           eq(employerSubsidies.userId, userId),
-          gte(employerSubsidies.creditAmountCents, 1),
+          gte(employerSubsidies.remainingCents, 1),
           // Only unexpired subsidies
           eq(employerSubsidies.expiresAt, null), // TODO: Add proper expiry check
         ),
@@ -119,10 +119,10 @@ export async function POST(req: NextRequest) {
       const remainingToSubsidize = totalAmountCents - subsidyUsedCents;
       if (remainingToSubsidize <= 0) break;
 
-      const subsidyToUse = Math.min(subsidy.creditAmountCents, remainingToSubsidize);
+      const subsidyToUse = Math.min(subsidy.remainingCents, remainingToSubsidize);
       subsidyUsedCents += subsidyToUse;
 
-      const remainingCredit = subsidy.creditAmountCents - subsidyToUse;
+      const remainingCredit = subsidy.remainingCents - subsidyToUse;
       subsidiesToUpdate.push({ id: subsidy.id, remainingCredit });
     }
 
@@ -139,7 +139,7 @@ export async function POST(req: NextRequest) {
           } else {
             await tx
               .update(employerSubsidies)
-              .set({ creditAmountCents: update.remainingCredit })
+              .set({ remainingCents: update.remainingCredit })
               .where(eq(employerSubsidies.id, update.id));
           }
         }
@@ -205,7 +205,7 @@ export async function POST(req: NextRequest) {
         } else {
           await tx
             .update(employerSubsidies)
-            .set({ creditAmountCents: update.remainingCredit })
+            .set({ remainingCents: update.remainingCredit })
             .where(eq(employerSubsidies.id, update.id));
         }
       }
