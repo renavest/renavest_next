@@ -1,7 +1,7 @@
 'use client';
-import { Pencil } from 'lucide-react';
+import { Camera, Loader2, Pencil } from 'lucide-react';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
 
@@ -54,11 +54,15 @@ function ExpertiseTags({ tags }: { tags: string[] }) {
 interface ProfileDisplayProps {
   profile: TherapistProfile;
   onEditClick: () => void;
+  onPhotoUpdated?: (newPhotoUrl: string) => void;
 }
 
-export function ProfileDisplay({ profile, onEditClick }: ProfileDisplayProps) {
+export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: ProfileDisplayProps) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { user, therapist } = profile;
   const expertiseTags = (therapist.expertise || '')
@@ -69,10 +73,76 @@ export function ProfileDisplay({ profile, onEditClick }: ProfileDisplayProps) {
     ? getTherapistImageUrl(therapist.profileUrl || therapist.name || user.firstName || '')
     : PLACEHOLDER;
 
+  const handlePhotoUpload = async (file: File) => {
+    setUploadingPhoto(true);
+    setPhotoError(null);
+
+    try {
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error('Please upload a JPEG, PNG, or WebP image.');
+      }
+
+      // Validate file size (max 10MB)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        throw new Error('File too large. Please upload an image smaller than 10MB.');
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/therapist/upload-photo', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to upload photo');
+      }
+
+      // Call the callback to update the parent component
+      if (onPhotoUpdated) {
+        onPhotoUpdated(data.profileUrl);
+      }
+
+      // Reset image states to trigger reload
+      setImgLoaded(false);
+      setImgError(false);
+
+      // Reload the page to ensure the new image is displayed
+      window.location.reload();
+    } catch (err) {
+      console.error('Photo upload error:', err);
+      setPhotoError(err instanceof Error ? err.message : 'Failed to upload photo');
+    } finally {
+      setUploadingPhoto(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      handlePhotoUpload(file);
+    }
+  };
+
+  const handleCameraClick = () => {
+    if (uploadingPhoto) return;
+    fileInputRef.current?.click();
+  };
+
   return (
     <div className='w-full h-full bg-white rounded-3xl shadow-2xl p-8 flex flex-col items-center max-w-xl mx-auto min-h-[540px] border border-purple-100'>
       <div className='flex flex-col items-center mb-6 w-full'>
-        <div className='relative w-32 h-32 mb-3 rounded-2xl overflow-hidden bg-gray-100 flex items-center justify-center'>
+        <div className='relative w-32 h-32 mb-3 rounded-2xl overflow-hidden bg-gray-100 flex items-center justify-center group'>
           {!imgLoaded && !imgError && (
             <div
               className='absolute inset-0 bg-gray-200 animate-pulse rounded-2xl'
@@ -88,7 +158,39 @@ export function ProfileDisplay({ profile, onEditClick }: ProfileDisplayProps) {
             onError={() => setImgError(true)}
             priority
           />
+
+          {/* Photo Upload Overlay */}
+          <div className='absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 rounded-2xl flex items-center justify-center'>
+            <button
+              onClick={handleCameraClick}
+              disabled={uploadingPhoto}
+              className='opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-full p-3 shadow-lg disabled:cursor-not-allowed'
+              aria-label='Change profile photo'
+            >
+              {uploadingPhoto ? (
+                <Loader2 className='h-5 w-5 text-purple-600 animate-spin' />
+              ) : (
+                <Camera className='h-5 w-5 text-purple-600' />
+              )}
+            </button>
+          </div>
+
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type='file'
+            accept='image/jpeg,image/jpg,image/png,image/webp'
+            onChange={handleFileSelect}
+            className='hidden'
+            disabled={uploadingPhoto}
+          />
         </div>
+
+        {/* Photo upload error */}
+        {photoError && (
+          <p className='text-sm text-red-600 text-center mb-2 max-w-xs'>{photoError}</p>
+        )}
+
         <h2 className='text-2xl font-bold text-center text-gray-900 mb-1'>
           {therapist.name || user.firstName + ' ' + user.lastName}
         </h2>

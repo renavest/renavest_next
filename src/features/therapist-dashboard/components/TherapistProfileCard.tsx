@@ -161,7 +161,11 @@ export default function TherapistProfileCard() {
 
   return (
     <div className='space-y-6'>
-      <ProfileDisplay profile={displayProfile} onEditClick={openEditModal} />
+      <ProfileDisplay
+        profile={displayProfile}
+        onEditClick={openEditModal}
+        onPhotoUpdated={handlePhotoUploaded}
+      />
 
       <ProfileEditModal
         isOpen={isModalOpen}

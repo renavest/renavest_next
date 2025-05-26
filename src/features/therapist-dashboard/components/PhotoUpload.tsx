@@ -78,6 +78,9 @@ export function PhotoUpload({
         URL.revokeObjectURL(previewUrl);
         setPreviewUrl(null);
       }
+
+      // Reload the page to ensure the new image is displayed
+      window.location.reload();
     } catch (err) {
       console.error('Photo upload error:', err);
       setError(err instanceof Error ? err.message : 'Failed to upload photo');
