@@ -182,7 +182,11 @@ export async function POST(req: NextRequest) {
       amount: outOfPocketCents,
       currency: 'usd',
       customer: stripeCustomerId,
-      capture_method: 'manual', // 36-hour delay
+      capture_method: 'automatic_async', // Use automatic_async as the new default
+      automatic_payment_methods: {
+        enabled: true,
+        allow_redirects: 'never', // Prevent redirects for therapy session payments
+      },
       application_fee_amount: applicationFeeAmount,
       transfer_data: {
         destination: therapistData.stripeAccountId,

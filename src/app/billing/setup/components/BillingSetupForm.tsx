@@ -39,8 +39,17 @@ export default function BillingSetupForm({ onSuccess }: BillingSetupFormProps) {
 
       if (confirmError) {
         console.error('Setup confirmation error:', confirmError);
-        setError(confirmError.message || 'Failed to save payment method');
-        toast.error(confirmError.message || 'Failed to save payment method');
+
+        // Handle specific error types for better UX
+        let errorMessage = 'Failed to save payment method';
+        if (confirmError.type === 'card_error') {
+          errorMessage = confirmError.message || 'Your card was declined';
+        } else if (confirmError.type === 'validation_error') {
+          errorMessage = 'Please check your payment information';
+        }
+
+        setError(errorMessage);
+        toast.error(errorMessage);
       } else {
         // Success! The payment method has been saved
         toast.success('Payment method saved successfully!');
@@ -48,8 +57,9 @@ export default function BillingSetupForm({ onSuccess }: BillingSetupFormProps) {
       }
     } catch (err) {
       console.error('Unexpected error during setup:', err);
-      setError('An unexpected error occurred');
-      toast.error('An unexpected error occurred');
+      const errorMessage = 'An unexpected error occurred';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
