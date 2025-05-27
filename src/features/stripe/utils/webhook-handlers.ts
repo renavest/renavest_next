@@ -2,13 +2,7 @@ import { eq } from 'drizzle-orm';
 import type Stripe from 'stripe';
 
 import { db } from '@/src/db';
-import {
-  stripeCustomers,
-  therapists,
-  sessionPayments,
-  bookingSessions,
-  therapistPayouts,
-} from '@/src/db/schema';
+import { therapists, sessionPayments, bookingSessions, therapistPayouts } from '@/src/db/schema';
 
 import { syncStripeDataToKV } from './stripe-operations';
 

@@ -7,7 +7,7 @@ export {
   getSubscriptionStatus,
 } from './utils/stripe-operations';
 export type {
-  STRIPE_SUB_CACHE,
+  StripeSubCache,
   SubscriptionStatus,
   PaymentStatus,
   PayoutStatus,
