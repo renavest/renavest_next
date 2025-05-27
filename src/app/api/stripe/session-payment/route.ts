@@ -1,5 +1,5 @@
 import { currentUser } from '@clerk/nextjs/server';
-import { eq, and, gte } from 'drizzle-orm';
+import { eq, and, gte, isNull } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
@@ -9,7 +9,6 @@ import {
   bookingSessions,
   sessionPayments,
   employerSubsidies,
-  stripeCustomers,
 } from '@/src/db/schema';
 import { stripe, getOrCreateStripeCustomer } from '@/src/features/stripe';
 
@@ -106,7 +105,7 @@ export async function POST(req: NextRequest) {
           eq(employerSubsidies.userId, userId),
           gte(employerSubsidies.remainingCents, 1),
           // Only unexpired subsidies
-          eq(employerSubsidies.expiresAt, null), // TODO: Add proper expiry check
+          isNull(employerSubsidies.expiresAt), // TODO: Add proper expiry check
         ),
       )
       .orderBy(employerSubsidies.createdAt); // Use oldest first
@@ -189,7 +188,7 @@ export async function POST(req: NextRequest) {
       },
       application_fee_amount: applicationFeeAmount,
       transfer_data: {
-        destination: therapistData.stripeAccountId,
+        destination: therapistData.stripeAccountId!,
       },
       metadata: {
         bookingSessionId: bookingSessionId.toString(),

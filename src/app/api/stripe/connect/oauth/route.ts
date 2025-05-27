@@ -4,10 +4,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
 import { users, therapists } from '@/src/db/schema';
-import { stripe, STRIPE_CONFIG } from '@/src/features/stripe';
+import { stripe } from '@/src/features/stripe';
 
 // GET - Initiate Stripe Connect OAuth flow
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     const user = await currentUser();
 

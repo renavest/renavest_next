@@ -26,6 +26,7 @@ export default function BillingSetupPage() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasPaymentMethod, setHasPaymentMethod] = useState(false);
 
   // Get redirect URL from query params
   const redirectTo = searchParams?.get('redirect') || '/explore';
@@ -42,8 +43,32 @@ export default function BillingSetupPage() {
       return;
     }
 
-    const createSetupIntent = async () => {
+    const initializeBilling = async () => {
       try {
+        // First check if user already has payment methods
+        const billingCheckResponse = await fetch('/api/stripe/billing-setup-check');
+
+        if (billingCheckResponse.ok) {
+          const billingData = await billingCheckResponse.json();
+
+          // Only consider billing "connected" if the integration is completely synced
+          if (billingData.integrationComplete) {
+            setHasPaymentMethod(true);
+            setLoading(false);
+            return;
+          }
+
+          // Log integration issues for debugging
+          if (!billingData.integrationComplete) {
+            console.log('[BILLING SETUP] Integration incomplete:', {
+              reason: billingData.reason,
+              hasPaymentMethod: billingData.hasPaymentMethod,
+              stripeCustomerId: billingData.stripeCustomerId,
+            });
+          }
+        }
+
+        // If no payment method, create setup intent
         const response = await fetch('/api/stripe/setup-intent', {
           method: 'POST',
           headers: {
@@ -59,7 +84,7 @@ export default function BillingSetupPage() {
         const data = await response.json();
         setClientSecret(data.clientSecret);
       } catch (err) {
-        console.error('Error creating setup intent:', err);
+        console.error('Error initializing billing:', err);
         setError(err instanceof Error ? err.message : 'Failed to initialize billing setup');
         toast.error('Failed to initialize billing setup');
       } finally {
@@ -67,13 +92,20 @@ export default function BillingSetupPage() {
       }
     };
 
-    createSetupIntent();
+    initializeBilling();
   }, [user, isLoaded, router]);
 
   const handleSuccess = () => {
-    toast.success('Payment method added successfully!');
-
+    // Don't show toast here - let the form component handle it
     // Redirect to the original destination or explore page
+    if (therapistId) {
+      router.push(`/book/${therapistId}`);
+    } else {
+      router.push(redirectTo);
+    }
+  };
+
+  const handleContinue = () => {
     if (therapistId) {
       router.push(`/book/${therapistId}`);
     } else {
@@ -95,6 +127,38 @@ export default function BillingSetupPage() {
         <div className='bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-4'>
           <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4'></div>
           <p className='text-center text-gray-600'>Setting up billing...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (hasPaymentMethod) {
+    return (
+      <div className='min-h-screen bg-gradient-to-br from-purple-50 to-green-50 flex items-center justify-center'>
+        <div className='bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-4'>
+          <div className='text-center'>
+            <div className='mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4'>
+              <CreditCard className='h-6 w-6 text-green-600' />
+            </div>
+            <h2 className='text-xl font-semibold text-gray-900 mb-2'>Billing Connected</h2>
+            <p className='text-gray-600 mb-6'>
+              Your payment method is already set up and ready for bookings.
+            </p>
+            <div className='flex flex-col space-y-3'>
+              <button
+                onClick={handleContinue}
+                className={`inline-flex items-center justify-center px-6 py-3 border-0 text-base font-medium rounded-full shadow-lg transition-all duration-200 ${COLORS.WARM_PURPLE.bg} ${COLORS.WARM_WHITE.DEFAULT} ${COLORS.WARM_PURPLE.hover} ${COLORS.WARM_PURPLE.focus}`}
+              >
+                {therapistId ? 'Continue to Booking' : 'Continue to Explore'}
+              </button>
+              <button
+                onClick={handleBack}
+                className='text-gray-600 hover:text-gray-800 text-sm transition-colors'
+              >
+                Go Back
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );

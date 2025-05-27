@@ -28,8 +28,29 @@ export async function POST(_req: NextRequest) {
       return NextResponse.json({ error: 'User email not found' }, { status: 400 });
     }
 
-    // Get or create Stripe customer
+    // CRITICAL: Ensure database consistency by checking if we have the Stripe customer record
+    // If webhooks failed or there's a sync issue, we need to create/fix it
     const stripeCustomerId = await getOrCreateStripeCustomer(userId, userEmail);
+
+    // Verify the customer is accessible in Stripe before creating setup intent
+    try {
+      const customer = await stripe.customers.retrieve(stripeCustomerId);
+      if (customer.deleted) {
+        throw new Error('Stripe customer has been deleted');
+      }
+    } catch (stripeError) {
+      console.error('[SETUP INTENT API] Stripe customer verification failed', {
+        stripeCustomerId,
+        userId,
+        error: stripeError,
+      });
+      return NextResponse.json(
+        {
+          error: 'Stripe integration issue - please contact support',
+        },
+        { status: 500 },
+      );
+    }
 
     // Create SetupIntent for future payments
     const setupIntent = await stripe.setupIntents.create({
@@ -38,6 +59,7 @@ export async function POST(_req: NextRequest) {
       usage: 'off_session', // For future payments
       metadata: {
         userId: userId.toString(),
+        userEmail,
       },
     });
 

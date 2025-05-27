@@ -8,6 +8,8 @@ import {
   handlePaymentIntentSucceeded,
   handlePaymentIntentFailed,
   handleAccountUpdated,
+  handleSetupIntentSucceeded,
+  handleSetupIntentFailed,
 } from '@/src/features/stripe/utils/webhook-handlers';
 
 // Events we track for updates - optimized for 2025 standards
@@ -104,15 +106,13 @@ async function processEvent(event: Stripe.Event) {
 
       case 'setup_intent.succeeded': {
         const setupIntent = event.data.object as Stripe.SetupIntent;
-        console.log(`[STRIPE WEBHOOK] Setup intent succeeded: ${setupIntent.id}`);
-        // Handle successful setup intents if needed
+        await handleSetupIntentSucceeded(setupIntent);
         break;
       }
 
       case 'setup_intent.setup_failed': {
         const setupIntent = event.data.object as Stripe.SetupIntent;
-        console.log(`[STRIPE WEBHOOK] Setup intent failed: ${setupIntent.id}`);
-        // Handle failed setup intents if needed
+        await handleSetupIntentFailed(setupIntent);
         break;
       }
 
