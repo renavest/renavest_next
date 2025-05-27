@@ -5,6 +5,7 @@ import { CreditCard, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { PAYMENT_ELEMENT_OPTIONS } from '@/src/features/stripe/services/stripe-client-config';
 import { COLORS } from '@/src/styles/colors';
 
 interface BillingSetupFormProps {
@@ -74,12 +75,7 @@ export default function BillingSetupForm({ onSuccess }: BillingSetupFormProps) {
         </div>
 
         <div className='p-4 border border-gray-200 rounded-lg bg-gray-50'>
-          <PaymentElement
-            options={{
-              layout: 'tabs',
-              paymentMethodOrder: ['card'],
-            }}
-          />
+          <PaymentElement options={PAYMENT_ELEMENT_OPTIONS} />
         </div>
       </div>
 

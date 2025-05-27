@@ -8,12 +8,16 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+import {
+  STRIPE_PUBLISHABLE_KEY,
+  STRIPE_APPEARANCE,
+} from '@/src/features/stripe/services/stripe-client-config';
 import { COLORS } from '@/src/styles/colors';
 
 import BillingSetupForm from './components/BillingSetupForm';
 
 // Initialize Stripe
-const stripePromise = loadStripe(process.env.STRIPE_PUBLISHABLE_KEY!);
+const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
 
 export default function BillingSetupPage() {
   const { user, isLoaded } = useUser();
@@ -121,18 +125,7 @@ export default function BillingSetupPage() {
 
   const stripeOptions = {
     clientSecret,
-    appearance: {
-      theme: 'stripe' as const,
-      variables: {
-        colorPrimary: '#7c3aed',
-        colorBackground: '#ffffff',
-        colorText: '#1f2937',
-        colorDanger: '#ef4444',
-        fontFamily: 'system-ui, sans-serif',
-        spacingUnit: '4px',
-        borderRadius: '8px',
-      },
-    },
+    appearance: STRIPE_APPEARANCE,
   };
 
   return (
