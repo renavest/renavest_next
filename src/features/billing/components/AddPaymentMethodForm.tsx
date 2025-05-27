@@ -3,7 +3,6 @@ import { CreditCard, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { PAYMENT_ELEMENT_OPTIONS } from '@/src/features/stripe/services/stripe-client-config';
-import { COLORS } from '@/src/styles/colors';
 
 interface AddPaymentMethodFormProps {
   onSuccess: () => void;
@@ -58,7 +57,7 @@ export default function AddPaymentMethodForm({ onSuccess, onError }: AddPaymentM
 
   return (
     <form onSubmit={handleSubmit} className='space-y-6'>
-      <div className='p-4 border border-gray-200 rounded-lg bg-white'>
+      <div className='p-4 border border-gray-200 rounded-lg bg-white shadow-sm'>
         <PaymentElement options={PAYMENT_ELEMENT_OPTIONS} />
       </div>
 
@@ -66,10 +65,10 @@ export default function AddPaymentMethodForm({ onSuccess, onError }: AddPaymentM
         <button
           type='submit'
           disabled={!stripe || !elements || isLoading}
-          className={`flex-1 inline-flex items-center justify-center px-6 py-3 border-0 text-base font-medium rounded-lg shadow-lg transition-all duration-200 ${
+          className={`flex-1 inline-flex items-center justify-center px-6 py-3 text-base font-medium rounded-lg shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 ${
             !stripe || !elements || isLoading
               ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : `${COLORS.WARM_PURPLE.bg} ${COLORS.WARM_WHITE.DEFAULT} ${COLORS.WARM_PURPLE.hover} ${COLORS.WARM_PURPLE.focus}`
+              : 'bg-purple-600 hover:bg-purple-700 text-white'
           }`}
         >
           {isLoading ? (
