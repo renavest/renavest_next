@@ -67,7 +67,7 @@ export default function BillingManagementPage() {
           </button>
 
           <div className='flex items-center mb-6'>
-            <div className='mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-purple-100 mr-6'>
+            <div className='flex items-center justify-center h-16 w-16 rounded-full bg-purple-100 mr-6'>
               <CreditCard className='h-8 w-8 text-purple-600' />
             </div>
             <div>
