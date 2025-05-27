@@ -1,17 +1,6 @@
 import { CreditCard, Trash2, Calendar, Loader2 } from 'lucide-react';
 
-interface PaymentMethod {
-  id: string;
-  type: string;
-  card: {
-    brand: string;
-    last4: string;
-    exp_month: number;
-    exp_year: number;
-    funding: string;
-  } | null;
-  created: number;
-}
+import { type PaymentMethod } from '../services/payment-methods';
 
 interface PaymentMethodCardProps {
   paymentMethod: PaymentMethod;

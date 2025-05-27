@@ -6,14 +6,15 @@ import { ArrowLeft, CreditCard, Plus, Shield, AlertTriangle } from 'lucide-react
 import { useRouter } from 'next/navigation';
 
 import {
+  AddPaymentMethodForm,
+  PaymentMethodCard,
+  useBillingManagement,
+} from '@/src/features/billing';
+import {
   STRIPE_PUBLISHABLE_KEY,
   STRIPE_APPEARANCE,
 } from '@/src/features/stripe/services/stripe-client-config';
 import { COLORS } from '@/src/styles/colors';
-
-import AddPaymentMethodForm from './components/AddPaymentMethodForm';
-import PaymentMethodCard from './components/PaymentMethodCard';
-import { useBillingManagement } from './hooks/useBillingManagement';
 
 // Initialize Stripe
 const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);

@@ -3,23 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-interface PaymentMethod {
-  id: string;
-  type: string;
-  card: {
-    brand: string;
-    last4: string;
-    exp_month: number;
-    exp_year: number;
-    funding: string;
-  } | null;
-  created: number;
-}
-
-interface PaymentMethodsResponse {
-  paymentMethods: PaymentMethod[];
-  stripeCustomerId: string | null;
-}
+import { PaymentMethodsService, type PaymentMethod } from '../services/payment-methods';
 
 export function useBillingManagement() {
   const { user, isLoaded } = useUser();
@@ -45,13 +29,7 @@ export function useBillingManagement() {
   const fetchPaymentMethods = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/stripe/payment-methods');
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch payment methods');
-      }
-
-      const data: PaymentMethodsResponse = await response.json();
+      const data = await PaymentMethodsService.fetchPaymentMethods();
       setPaymentMethods(data.paymentMethods);
     } catch (err) {
       console.error('Error fetching payment methods:', err);
@@ -66,19 +44,7 @@ export function useBillingManagement() {
       setAddingNew(true);
       setError(null);
 
-      const response = await fetch('/api/stripe/setup-intent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create setup intent');
-      }
-
-      const data = await response.json();
+      const data = await PaymentMethodsService.createSetupIntent();
       setClientSecret(data.clientSecret);
     } catch (err) {
       console.error('Error creating setup intent:', err);
@@ -95,20 +61,7 @@ export function useBillingManagement() {
 
     try {
       setRemoving(paymentMethodId);
-
-      const response = await fetch('/api/stripe/payment-methods', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ paymentMethodId }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to remove payment method');
-      }
-
+      await PaymentMethodsService.removePaymentMethod(paymentMethodId);
       setPaymentMethods((prev) => prev.filter((pm) => pm.id !== paymentMethodId));
       toast.success('Payment method removed successfully');
     } catch (err) {
