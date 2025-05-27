@@ -24,6 +24,8 @@ const isTherapistRoute = createRouteMatcher(['/therapist(.*)']);
 const isEmployerRoute = createRouteMatcher(['/employer(.*)']);
 const isEmployeeRoute = createRouteMatcher(['/employee(.*)']);
 const isExploreRoute = createRouteMatcher(['/explore(.*)']);
+const isBillingRoute = createRouteMatcher(['/billing(.*)']); // Allow billing for all authenticated users
+const isBookRoute = createRouteMatcher(['/book(.*)']); // Allow booking for all authenticated users
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
   const { userId, sessionClaims, redirectToSignIn } = await auth();
@@ -38,11 +40,17 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     return redirectToSignIn({ returnBackUrl: req.url });
   }
 
-  // 3. Get user role from session claims
+  // 3. Allow billing and booking routes for all authenticated users (no role requirement)
+  if (isBillingRoute(req) || isBookRoute(req)) {
+    return NextResponse.next();
+  }
+
+  // 4. Get user role from session claims
   const userRole = (sessionClaims?.metadata as { role?: string })?.role as UserRole;
   const onboardingComplete = sessionClaims?.metadata?.onboardingComplete as boolean | undefined;
 
-  // 4. If user doesn't have a role or hasn't completed onboarding, redirect to auth-check
+  // 5. If user doesn't have a role or hasn't completed onboarding, redirect to auth-check
+  // (except for billing and booking routes which are handled above)
   if (!userRole || !onboardingComplete) {
     console.log(
       'Middleware: User missing role or onboarding incomplete, redirecting to auth-check',
@@ -56,7 +64,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     return NextResponse.redirect(new URL('/auth-check', req.url));
   }
 
-  // 5. Role-based route protection
+  // 6. Role-based route protection
   const roleProtectedRoutes = [
     { matcher: isTherapistRoute, requiredRole: 'therapist' as UserRole },
     { matcher: isEmployerRoute, requiredRole: 'employer_admin' as UserRole },

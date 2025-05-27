@@ -16,7 +16,7 @@ import BillingSetupForm from './components/BillingSetupForm';
 const stripePromise = loadStripe(process.env.STRIPE_PUBLISHABLE_KEY!);
 
 export default function BillingSetupPage() {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -28,8 +28,13 @@ export default function BillingSetupPage() {
   const therapistId = searchParams?.get('therapistId');
 
   useEffect(() => {
+    // Wait for Clerk to finish loading before checking user status
+    if (!isLoaded) {
+      return;
+    }
+
     if (!user) {
-      router.push('/auth/sign-in');
+      router.push('/login');
       return;
     }
 
@@ -59,7 +64,7 @@ export default function BillingSetupPage() {
     };
 
     createSetupIntent();
-  }, [user, router]);
+  }, [user, isLoaded, router]);
 
   const handleSuccess = () => {
     toast.success('Payment method added successfully!');
