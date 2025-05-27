@@ -13,7 +13,7 @@ import { COLORS } from '@/src/styles/colors';
 import BillingSetupForm from './components/BillingSetupForm';
 
 // Initialize Stripe
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+const stripePromise = loadStripe(process.env.STRIPE_PUBLISHABLE_KEY!);
 
 export default function BillingSetupPage() {
   const { user } = useUser();
