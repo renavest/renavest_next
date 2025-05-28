@@ -1,7 +1,7 @@
 'use client';
 import { useUser } from '@clerk/nextjs';
 import { Loader2, X } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { useGoogleCalendarIntegration } from '@/src/features/google-calendar/utils/googleCalendarIntegration';
 import {
@@ -33,6 +33,9 @@ export default function TherapistProfileCard() {
   const therapistIdLoading = therapistIdLoadingSignal.value;
   const therapistIdError = therapistIdErrorSignal.value;
 
+  // Track if we've attempted initialization for this user
+  const initializationAttemptedRef = useRef<string | null>(null);
+
   // Initialize therapist ID with robust error handling
   useEffect(() => {
     async function initializeTherapistIdSafely() {
@@ -41,9 +44,16 @@ export default function TherapistProfileCard() {
         return;
       }
 
+      // Prevent multiple initialization attempts for the same user
+      if (initializationAttemptedRef.current === user.id) {
+        console.log('Initialization already attempted for this user');
+        return;
+      }
+
       const currentTherapistId = getValidTherapistId();
       if (currentTherapistId) {
         console.log('Valid therapist ID already exists:', currentTherapistId);
+        initializationAttemptedRef.current = user.id;
         return;
       }
 
@@ -53,6 +63,7 @@ export default function TherapistProfileCard() {
       }
 
       console.log('Starting therapist ID initialization for user:', user.id);
+      initializationAttemptedRef.current = user.id;
 
       try {
         const therapistId = await initializeTherapistId(user.id);
@@ -60,14 +71,18 @@ export default function TherapistProfileCard() {
           console.log('Therapist ID initialization successful:', therapistId);
         } else {
           console.error('Therapist ID initialization failed');
+          // Reset the attempted flag on failure so retry is possible
+          initializationAttemptedRef.current = null;
         }
       } catch (error) {
         console.error('Error during therapist ID initialization:', error);
+        // Reset the attempted flag on error so retry is possible
+        initializationAttemptedRef.current = null;
       }
     }
 
     initializeTherapistIdSafely();
-  }, [user?.id, therapistIdLoading]);
+  }, [user?.id]); // Removed therapistIdLoading from dependencies to prevent loop
 
   // Check Google Calendar integration status - only after therapistId is set
   const validTherapistId = getValidTherapistId();
@@ -78,11 +93,15 @@ export default function TherapistProfileCard() {
     isCalendarConnectedSignal.value = !!calendarStatus.isConnected;
   }, [calendarStatus.isConnected]);
 
+  // Track profile loading to prevent loops
+  const profileLoadedRef = useRef(false);
+
   useEffect(() => {
     // Load profile on component mount - only after therapistId is initialized
     const currentTherapistId = getValidTherapistId();
-    if (currentTherapistId && !loading) {
+    if (currentTherapistId && !loading && !profileLoadedRef.current) {
       console.log('Loading profile for therapist ID:', currentTherapistId);
+      profileLoadedRef.current = true;
       profileActions.loadProfile();
     }
   }, [therapistIdSignal.value, loading]);
@@ -117,6 +136,8 @@ export default function TherapistProfileCard() {
         <button
           onClick={() => {
             if (user?.id) {
+              // Reset the attempted flag and try again
+              initializationAttemptedRef.current = null;
               initializeTherapistId(user.id);
             }
           }}
@@ -136,7 +157,10 @@ export default function TherapistProfileCard() {
         <p className='text-red-600 text-lg'>Profile Error</p>
         <p className='text-red-500 text-sm mt-2'>{error}</p>
         <button
-          onClick={() => profileActions.loadProfile()}
+          onClick={() => {
+            profileLoadedRef.current = false;
+            profileActions.loadProfile();
+          }}
           className='mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700'
         >
           Retry Loading
