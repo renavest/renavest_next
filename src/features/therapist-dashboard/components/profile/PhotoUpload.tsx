@@ -240,17 +240,17 @@ export function PhotoUpload({
   const displayImageUrl = () => {
     if (previewUrl) return previewUrl;
 
-    // Force cache bust if we just uploaded
-    const forceRefresh = justUploaded;
-    const timestamp = updatedAt ? new Date(updatedAt).getTime() : undefined;
-
-    // Use current timestamp if we just uploaded to ensure immediate update
-    const effectiveTimestamp = justUploaded ? Date.now() : timestamp;
+    // Force cache bust if we just uploaded using current timestamp
+    const timestamp = justUploaded
+      ? Date.now()
+      : updatedAt
+        ? new Date(updatedAt).getTime()
+        : undefined;
 
     return getTherapistImageUrl(
       currentPhotoUrl || therapistName || '',
-      forceRefresh,
-      effectiveTimestamp,
+      justUploaded, // Force refresh when just uploaded
+      timestamp,
     );
   };
 
@@ -264,7 +264,7 @@ export function PhotoUpload({
         {/* Photo Preview */}
         <div className='relative w-32 h-32 rounded-2xl overflow-hidden bg-gray-100 border-4 border-purple-100'>
           <Image
-            key={justUploaded ? `uploaded-${Date.now()}` : currentPhotoUrl || 'default'}
+            key={justUploaded ? `uploaded-${Date.now()}` : `${currentPhotoUrl}-${updatedAt}`}
             src={displayImageUrl()}
             alt={therapistName || 'Profile photo'}
             fill

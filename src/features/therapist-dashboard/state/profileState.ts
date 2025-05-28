@@ -180,6 +180,11 @@ export const profileActions = {
       profileActions.setSaveSuccess(true);
       profileActions.closeModal();
 
+      // Force a complete profile reload to get the latest data with updated timestamps
+      setTimeout(async () => {
+        await profileActions.loadProfile();
+      }, 200);
+
       // Clear success message after 3 seconds
       setTimeout(() => {
         profileActions.setSaveSuccess(false);
