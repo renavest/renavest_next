@@ -27,14 +27,22 @@ export function getTherapistImageUrl(
     return '/experts/placeholderexp.png';
   }
 
-  // In production, serve directly from S3 if AWS is configured
+  // Detect environment - be more aggressive about production detection
   const isProduction =
-    process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production';
+    process.env.NODE_ENV === 'production' ||
+    process.env.VERCEL_ENV === 'production' ||
+    process.env.VERCEL_ENV === 'preview';
+
+  // For production, we have a choice:
+  // 1. Use API route (keeps authentication) but might get 400 errors
+  // 2. Use direct S3 (no auth) but always works
+  // Let's use an environment variable to control this
+  const useDirectS3InProduction = process.env.USE_DIRECT_S3_IMAGES === 'true';
 
   // If it's already an S3 key, decide whether to use API or direct S3
   if (key.startsWith('therapists/')) {
-    if (isProduction) {
-      // Use direct S3 URL in production - no API route fallback needed
+    if (isProduction && useDirectS3InProduction) {
+      // Use direct S3 URL in production when configured to do so
       const s3Url = `https://${process.env.AWS_S3_IMAGES_BUCKET_NAME}.s3.amazonaws.com/${key}`;
       if (bustCache || timestamp) {
         const cacheParam = timestamp ? `v=${timestamp}` : `t=${Date.now()}`;
@@ -42,7 +50,7 @@ export function getTherapistImageUrl(
       }
       return s3Url;
     } else {
-      // Use API route only in development
+      // Use authenticated API route (default behavior)
       const baseUrl = `/api/images/${encodeURIComponent(key)}`;
       if (bustCache || timestamp) {
         const cacheParam = timestamp ? `v=${timestamp}` : `t=${Date.now()}`;
@@ -55,8 +63,8 @@ export function getTherapistImageUrl(
   // Otherwise, treat it as a therapist name and generate the key
   const s3Key = generateTherapistImageKey(key);
 
-  if (isProduction) {
-    // Use direct S3 URL in production - no fallback needed
+  if (isProduction && useDirectS3InProduction) {
+    // Use direct S3 URL in production when configured to do so
     const s3Url = `https://${process.env.AWS_S3_IMAGES_BUCKET_NAME}.s3.amazonaws.com/${s3Key}`;
     if (bustCache || timestamp) {
       const cacheParam = timestamp ? `v=${timestamp}` : `t=${Date.now()}`;
@@ -64,7 +72,7 @@ export function getTherapistImageUrl(
     }
     return s3Url;
   } else {
-    // Use API route for development
+    // Use authenticated API route (default behavior)
     const baseUrl = `/api/images/${encodeURIComponent(s3Key)}`;
     if (bustCache || timestamp) {
       const cacheParam = timestamp ? `v=${timestamp}` : `t=${Date.now()}`;
