@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate S3 key based on therapist name
+    // Generate S3 key based on therapist name with timestamp to ensure uniqueness
     const therapistName = therapistResult[0].name || userResult[0].firstName || 'therapist';
     const normalizedName = therapistName
       .trim()
@@ -135,9 +135,27 @@ export async function POST(request: NextRequest) {
       .replace(/^-+|-+$/g, '');
 
     const fileExtension = file.type === 'image/png' ? 'png' : 'jpg';
-    const s3Key = `therapists/${normalizedName}.${fileExtension}`;
+    const timestamp = Date.now();
+    const s3Key = `therapists/${normalizedName}-${timestamp}.${fileExtension}`;
 
-    console.log('S3 upload details:', { s3Key, fileExtension, normalizedName });
+    console.log('S3 upload details:', { s3Key, fileExtension, normalizedName, timestamp });
+
+    // Delete old profile image if it exists
+    const oldProfileUrl = therapistResult[0].profileUrl;
+    if (oldProfileUrl && oldProfileUrl.startsWith('therapists/')) {
+      try {
+        console.log('Deleting old profile image:', oldProfileUrl);
+        const deleteCommand = new DeleteObjectCommand({
+          Bucket: bucketName,
+          Key: oldProfileUrl,
+        });
+        await s3Client.send(deleteCommand);
+        console.log('Old profile image deleted successfully');
+      } catch (deleteError) {
+        console.error('Failed to delete old profile image:', deleteError);
+        // Continue with upload even if deletion fails
+      }
+    }
 
     // Convert file to buffer
     const buffer = Buffer.from(await file.arrayBuffer());

@@ -37,7 +37,6 @@ function usePhotoUpload(onPhotoUpdated?: (newPhotoUrl: string) => void) {
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [imageKey, setImageKey] = useState(0);
   const [forceRefresh, setForceRefresh] = useState(false);
-  const [lastUploadTime, setLastUploadTime] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handlePhotoUpload = async (file: File) => {
@@ -77,17 +76,11 @@ function usePhotoUpload(onPhotoUpdated?: (newPhotoUrl: string) => void) {
 
       setImageKey((prev) => prev + 1);
       setForceRefresh(true);
-      setLastUploadTime(Date.now());
 
       setTimeout(() => {
         setForceRefresh(false);
         console.log('Image refresh triggered');
       }, 200);
-
-      setTimeout(() => {
-        setLastUploadTime(null);
-        console.log('Upload cache-busting reset');
-      }, 3000);
     } catch (err) {
       console.error('Photo upload error:', err);
       setPhotoError(err instanceof Error ? err.message : 'Failed to upload photo');
@@ -116,7 +109,6 @@ function usePhotoUpload(onPhotoUpdated?: (newPhotoUrl: string) => void) {
     photoError,
     imageKey,
     forceRefresh,
-    lastUploadTime,
     fileInputRef,
     handleFileSelect,
     handleCameraClick,
@@ -159,7 +151,6 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
     photoError,
     imageKey,
     forceRefresh,
-    lastUploadTime,
     fileInputRef,
     handleFileSelect,
     handleCameraClick,
@@ -171,21 +162,12 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
     .map((t: string) => t.trim())
     .filter(Boolean);
 
-  // Create image URL with aggressive cache-busting when needed
+  // Create image URL - unique filenames eliminate caching issues
   const createImageUrl = () => {
     const baseUrl = therapist.profileUrl || therapist.name || user.firstName || '';
     if (!baseUrl) return PLACEHOLDER;
 
-    // If we just uploaded, bypass all caching with multiple cache busters
-    if (lastUploadTime) {
-      const timestamp = Date.now();
-      const random = Math.random().toString(36).substring(7);
-      return (
-        getTherapistImageUrl(baseUrl, true) + `&upload=${lastUploadTime}&t=${timestamp}&r=${random}`
-      );
-    }
-
-    // Otherwise use normal cache behavior
+    // Since we use unique filenames, no special cache-busting needed
     return getTherapistImageUrl(baseUrl, forceRefresh);
   };
 
@@ -195,35 +177,23 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
     <div className='w-full h-full bg-white rounded-3xl shadow-2xl p-8 flex flex-col items-center max-w-xl mx-auto min-h-[540px] border border-purple-100'>
       <div className='flex flex-col items-center mb-6 w-full'>
         <div className='relative w-32 h-32 mb-3 rounded-2xl overflow-hidden bg-gray-100 flex items-center justify-center group'>
-          {!imgLoaded && !imgError && !lastUploadTime && (
+          {!imgLoaded && !imgError && (
             <div
               className='absolute inset-0 bg-gray-200 animate-pulse rounded-2xl'
               aria-label='Image loading placeholder'
             />
           )}
 
-          {/* Use standard img tag for uploaded photos to bypass Next.js caching */}
-          {lastUploadTime ? (
-            <img
-              key={`profile-image-${imageKey}-${lastUploadTime}`}
-              src={displayImage}
-              alt={therapist.name || user.firstName || 'Profile'}
-              className='w-full h-full object-cover object-center rounded-2xl border-4 border-purple-100'
-              onLoad={() => setImgLoaded(true)}
-              onError={() => setImgError(true)}
-            />
-          ) : (
-            <Image
-              key={`profile-image-${imageKey}-initial`}
-              src={displayImage}
-              alt={therapist.name || user.firstName || 'Profile'}
-              fill
-              className='object-cover object-center rounded-2xl border-4 border-purple-100'
-              onLoad={() => setImgLoaded(true)}
-              onError={() => setImgError(true)}
-              priority
-            />
-          )}
+          <Image
+            key={`profile-image-${imageKey}`}
+            src={displayImage}
+            alt={therapist.name || user.firstName || 'Profile'}
+            fill
+            className='object-cover object-center rounded-2xl border-4 border-purple-100'
+            onLoad={() => setImgLoaded(true)}
+            onError={() => setImgError(true)}
+            priority
+          />
 
           <div className='absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 rounded-2xl flex items-center justify-center'>
             <button
