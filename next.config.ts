@@ -9,18 +9,13 @@ const config: NextConfig = {
       'renavestapp.com',
       'www.renavestapp.com',
       'renavest-therapist-images.s3.amazonaws.com',
+      '*.s3.amazonaws.com',
       'd2qcuj7ucxw61o.cloudfront.net',
     ],
     remotePatterns: [
       {
         protocol: 'http',
         hostname: 'localhost',
-        port: '*',
-        pathname: '/api/images/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'renavestapp.com',
         port: '*',
         pathname: '/api/images/**',
       },

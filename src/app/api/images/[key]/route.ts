@@ -57,6 +57,8 @@ export async function GET(
   console.log('=== Image API Route Called = ==');
   console.log('URL:', request.url);
   console.log('User-Agent:', request.headers.get('user-agent'));
+  console.log('Environment:', process.env.NODE_ENV);
+  console.log('Vercel Environment:', process.env.VERCEL_ENV);
 
   try {
     const { userId } = await auth();
@@ -79,6 +81,10 @@ export async function GET(
       hasSecretKey: !!process.env.AWS_SECRET_ACCESS_KEY,
       hasBucketName: !!process.env.AWS_S3_IMAGES_BUCKET_NAME,
       bucketName: bucketName,
+      region: process.env.AWS_REGION || 'us-east-1',
+      accessKeyPrefix: process.env.AWS_ACCESS_KEY_ID
+        ? process.env.AWS_ACCESS_KEY_ID.substring(0, 8) + '...'
+        : 'missing',
     });
 
     if (!hasAwsConfig) {
