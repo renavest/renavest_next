@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
       CacheControl: 'public, max-age=0, must-revalidate', // Force cache revalidation
       Metadata: {
         'upload-timestamp': Date.now().toString(), // Help with cache busting
-        'original-filename': file.name,
+        'original-filename': file.name.replace(/[^\w\-_.]/g, '-'), // Sanitize filename for header
       },
     });
 
