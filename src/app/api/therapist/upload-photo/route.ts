@@ -164,20 +164,23 @@ export async function POST(request: NextRequest) {
 
     // Update therapist profile with new image URL and timestamp
     console.log('Updating therapist profile...');
-    await db
+    const updateResult = await db
       .update(therapists)
       .set({
         profileUrl: s3Key,
         updatedAt: new Date(), // Update the timestamp to help with cache busting
       })
-      .where(eq(therapists.id, therapistResult[0].id));
+      .where(eq(therapists.id, therapistResult[0].id))
+      .returning({ updatedAt: therapists.updatedAt });
 
     console.log('Database update successful');
+
+    const updatedTimestamp = updateResult[0]?.updatedAt?.getTime() || Date.now();
 
     return NextResponse.json({
       success: true,
       profileUrl: s3Key,
-      timestamp: Date.now(), // Include timestamp for cache busting
+      timestamp: updatedTimestamp, // Use database timestamp for consistent cache busting
       message: 'Photo uploaded successfully',
     });
   } catch (error) {

@@ -2,9 +2,14 @@
  * Generates URLs specifically for therapist profile images
  * @param key The S3 key or therapist name
  * @param bustCache Whether to add a cache-busting parameter (use after uploads)
+ * @param timestamp Optional timestamp for cache-busting (from database updatedAt)
  * @returns The URL to access the profile image through S3
  */
-export function getTherapistImageUrl(key?: string | null, bustCache = false): string {
+export function getTherapistImageUrl(
+  key?: string | null,
+  bustCache = false,
+  timestamp?: number,
+): string {
   if (!key) return '/experts/placeholderexp.png';
 
   // If it's already a full URL, return it
@@ -13,13 +18,21 @@ export function getTherapistImageUrl(key?: string | null, bustCache = false): st
   // If it's already an S3 key, use it directly
   if (key.startsWith('therapists/')) {
     const baseUrl = `/api/images/${encodeURIComponent(key)}`;
-    return bustCache ? `${baseUrl}?t=${Date.now()}` : baseUrl;
+    if (bustCache || timestamp) {
+      const cacheParam = timestamp ? `v=${timestamp}` : `t=${Date.now()}`;
+      return `${baseUrl}?${cacheParam}`;
+    }
+    return baseUrl;
   }
 
   // Otherwise, treat it as a therapist name and generate the key
   const s3Key = generateTherapistImageKey(key);
   const baseUrl = `/api/images/${encodeURIComponent(s3Key)}`;
-  return bustCache ? `${baseUrl}?t=${Date.now()}` : baseUrl;
+  if (bustCache || timestamp) {
+    const cacheParam = timestamp ? `v=${timestamp}` : `t=${Date.now()}`;
+    return `${baseUrl}?${cacheParam}`;
+  }
+  return baseUrl;
 }
 
 /**

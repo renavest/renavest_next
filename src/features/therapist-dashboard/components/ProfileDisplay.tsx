@@ -26,6 +26,7 @@ interface TherapistProfile {
     profileUrl?: string;
     hourlyRate?: string;
     hourlyRateCents?: number;
+    updatedAt?: string; // ISO string from database
   };
 }
 
@@ -171,13 +172,14 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
     const baseUrl = therapist.profileUrl || therapist.name || user.firstName || '';
     if (!baseUrl) return PLACEHOLDER;
 
-    // Use upload timestamp for cache-busting after successful uploads
+    // Use upload timestamp for immediate cache-busting after successful uploads
     if (uploadTimestamp) {
-      return getTherapistImageUrl(baseUrl, true) + `&upload=${uploadTimestamp}`;
+      return getTherapistImageUrl(baseUrl, true, uploadTimestamp);
     }
 
-    // Otherwise use normal cache behavior with optional force refresh
-    return getTherapistImageUrl(baseUrl, forceRefresh);
+    // Use database updatedAt timestamp for consistent cache-busting
+    const dbTimestamp = therapist.updatedAt ? new Date(therapist.updatedAt).getTime() : undefined;
+    return getTherapistImageUrl(baseUrl, forceRefresh, dbTimestamp);
   };
 
   const displayImage = !imgError ? createImageUrl() : PLACEHOLDER;
