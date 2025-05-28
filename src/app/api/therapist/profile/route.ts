@@ -92,6 +92,9 @@ export async function POST(request: Request) {
       await db.update(users).set(userUpdates).where(eq(users.id, userResult[0].id));
     }
     if (Object.keys(therapistUpdates).length > 0) {
+      // Always update the updatedAt timestamp when saving therapist data
+      therapistUpdates.updatedAt = new Date();
+
       await db
         .update(therapists)
         .set(therapistUpdates)

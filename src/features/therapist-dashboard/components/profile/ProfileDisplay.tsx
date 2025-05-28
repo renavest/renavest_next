@@ -1,100 +1,13 @@
 'use client';
-import { Camera, Loader2, Pencil } from 'lucide-react';
+import { Pencil } from 'lucide-react';
 import Image from 'next/image';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 
 import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
 
 import { TherapistProfile } from '../../types/profile';
 
 const PLACEHOLDER = '/experts/placeholderexp.png';
-
-// Custom hook for photo upload functionality
-function usePhotoUpload(onPhotoUpdated?: (newPhotoUrl: string) => void) {
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const [photoError, setPhotoError] = useState<string | null>(null);
-  const [imageKey, setImageKey] = useState(0);
-  const [forceRefresh, setForceRefresh] = useState(false);
-  const [uploadTimestamp, setUploadTimestamp] = useState<number | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handlePhotoUpload = async (file: File) => {
-    setUploadingPhoto(true);
-    setPhotoError(null);
-
-    try {
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-      if (!allowedTypes.includes(file.type)) {
-        throw new Error('Please upload a JPEG, PNG, or WebP image.');
-      }
-
-      const maxSize = 10 * 1024 * 1024;
-      if (file.size > maxSize) {
-        throw new Error('File too large. Please upload an image smaller than 10MB.');
-      }
-
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch('/api/therapist/upload-photo', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to upload photo');
-      }
-
-      console.log('Photo upload successful, new URL:', data.profileUrl);
-
-      if (onPhotoUpdated) {
-        onPhotoUpdated(data.profileUrl);
-      }
-
-      setImageKey((prev) => prev + 1);
-      setForceRefresh(true);
-      setUploadTimestamp(data.timestamp);
-
-      setTimeout(() => {
-        setForceRefresh(false);
-        console.log('Image refresh triggered');
-      }, 200);
-    } catch (err) {
-      console.error('Photo upload error:', err);
-      setPhotoError(err instanceof Error ? err.message : 'Failed to upload photo');
-    } finally {
-      setUploadingPhoto(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
-  };
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      handlePhotoUpload(file);
-    }
-  };
-
-  const handleCameraClick = () => {
-    if (uploadingPhoto) return;
-    fileInputRef.current?.click();
-  };
-
-  return {
-    uploadingPhoto,
-    photoError,
-    imageKey,
-    forceRefresh,
-    uploadTimestamp,
-    fileInputRef,
-    handleFileSelect,
-    handleCameraClick,
-  };
-}
 
 function ExpertiseTags({ tags }: { tags: string[] }) {
   if (!tags.length) return null;
@@ -120,23 +33,11 @@ function ExpertiseTags({ tags }: { tags: string[] }) {
 interface ProfileDisplayProps {
   profile: TherapistProfile;
   onEditClick: () => void;
-  onPhotoUpdated?: (newPhotoUrl: string) => void;
 }
 
-export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: ProfileDisplayProps) {
+export function ProfileDisplay({ profile, onEditClick }: ProfileDisplayProps) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
-
-  const {
-    uploadingPhoto,
-    photoError,
-    imageKey,
-    forceRefresh,
-    uploadTimestamp,
-    fileInputRef,
-    handleFileSelect,
-    handleCameraClick,
-  } = usePhotoUpload(onPhotoUpdated);
 
   const { user, therapist } = profile;
   const expertiseTags = (therapist.expertise || '')
@@ -149,18 +50,10 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
     const baseUrl = therapist.profileUrl || therapist.name || user.firstName || '';
     if (!baseUrl) return PLACEHOLDER;
 
-    // Use upload timestamp for immediate cache-busting after successful uploads
-    if (uploadTimestamp) {
-      return getTherapistImageUrl(baseUrl, true, uploadTimestamp);
-    }
-
     // Use database updatedAt timestamp for consistent cache-busting
     const dbTimestamp = therapist.updatedAt ? new Date(therapist.updatedAt).getTime() : undefined;
 
-    // Force refresh when needed and add current timestamp if forcing refresh
-    const effectiveTimestamp = forceRefresh ? Date.now() : dbTimestamp;
-
-    return getTherapistImageUrl(baseUrl, forceRefresh, effectiveTimestamp);
+    return getTherapistImageUrl(baseUrl, false, dbTimestamp);
   };
 
   const displayImage = !imgError ? createImageUrl() : PLACEHOLDER;
@@ -168,7 +61,7 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
   return (
     <div className='w-full h-full bg-white rounded-3xl shadow-2xl p-8 flex flex-col items-center max-w-xl mx-auto min-h-[540px] border border-purple-100'>
       <div className='flex flex-col items-center mb-6 w-full'>
-        <div className='relative w-32 h-32 mb-3 rounded-2xl overflow-hidden bg-gray-100 flex items-center justify-center group'>
+        <div className='relative w-32 h-32 mb-3 rounded-2xl overflow-hidden bg-gray-100 flex items-center justify-center'>
           {!imgLoaded && !imgError && (
             <div
               className='absolute inset-0 bg-gray-200 animate-pulse rounded-2xl'
@@ -177,7 +70,7 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
           )}
 
           <Image
-            key={`profile-image-${imageKey}`}
+            key={`profile-image-${therapist.updatedAt}`}
             src={displayImage}
             alt={therapist.name || user.firstName || 'Profile'}
             fill
@@ -186,35 +79,7 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
             onError={() => setImgError(true)}
             priority
           />
-
-          <div className='absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 rounded-2xl flex items-center justify-center'>
-            <button
-              onClick={handleCameraClick}
-              disabled={uploadingPhoto}
-              className='opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-full p-3 shadow-lg disabled:cursor-not-allowed'
-              aria-label='Change profile photo'
-            >
-              {uploadingPhoto ? (
-                <Loader2 className='h-5 w-5 text-purple-600 animate-spin' />
-              ) : (
-                <Camera className='h-5 w-5 text-purple-600' />
-              )}
-            </button>
-          </div>
-
-          <input
-            ref={fileInputRef}
-            type='file'
-            accept='image/jpeg,image/jpg,image/png,image/webp'
-            onChange={handleFileSelect}
-            className='hidden'
-            disabled={uploadingPhoto}
-          />
         </div>
-
-        {photoError && (
-          <p className='text-sm text-red-600 text-center mb-2 max-w-xs'>{photoError}</p>
-        )}
 
         <h2 className='text-2xl font-bold text-center text-gray-900 mb-1'>
           {therapist.name || user.firstName + ' ' + user.lastName}

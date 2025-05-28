@@ -1,4 +1,9 @@
-import { S3Client, GetObjectCommand, S3ServiceException } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  GetObjectCommand,
+  S3ServiceException,
+  GetObjectCommandOutput,
+} from '@aws-sdk/client-s3';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Configure AWS S3
@@ -56,7 +61,7 @@ export async function GET(
     const response = (await Promise.race([
       s3Client.send(command),
       new Promise((_, reject) => setTimeout(() => reject(new Error('S3 request timeout')), 10000)),
-    ])) as any;
+    ])) as GetObjectCommandOutput;
 
     // Convert the S3 response stream to a Response
     if (!response.Body) {
@@ -83,8 +88,7 @@ export async function GET(
     }
 
     // Stream the response directly
-    // @ts-expect-error response.Body is a Readable stream
-    return new NextResponse(response.Body, { headers });
+    return new NextResponse(response.Body as ReadableStream, { headers });
   } catch (error) {
     console.error('Error in image API route:', error);
 

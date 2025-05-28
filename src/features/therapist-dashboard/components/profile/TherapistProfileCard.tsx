@@ -106,14 +106,6 @@ export default function TherapistProfileCard() {
     }
   }, [therapistIdSignal.value, loading]);
 
-  const handlePhotoUpdated = (newPhotoUrl: string) => {
-    profileActions.updatePhotoUrl(newPhotoUrl);
-    // Force a profile reload to ensure we have the latest data including updated timestamp
-    setTimeout(() => {
-      profileActions.loadProfile();
-    }, 500);
-  };
-
   const openEditModal = () => {
     profileActions.openModal();
   };
@@ -186,11 +178,7 @@ export default function TherapistProfileCard() {
 
   return (
     <div className='space-y-6'>
-      <ProfileDisplay
-        profile={displayProfile}
-        onEditClick={openEditModal}
-        onPhotoUpdated={handlePhotoUpdated}
-      />
+      <ProfileDisplay profile={displayProfile} onEditClick={openEditModal} />
 
       <ProfileEditModal />
     </div>
