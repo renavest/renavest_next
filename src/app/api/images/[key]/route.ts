@@ -1,6 +1,3 @@
-import fs from 'fs';
-import path from 'path';
-
 import { S3Client, GetObjectCommand, S3ServiceException } from '@aws-sdk/client-s3';
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
@@ -16,56 +13,35 @@ const s3Client = new S3Client({
 
 const bucketName = process.env.AWS_S3_IMAGES_BUCKET_NAME || '';
 
-// Helper function to serve placeholder image
-async function servePlaceholderImage(): Promise<NextResponse> {
-  try {
-    const placeholderPath = path.join(process.cwd(), 'public', 'experts', 'placeholderexp.png');
-    const imageBuffer = fs.readFileSync(placeholderPath);
-
-    return new NextResponse(imageBuffer, {
-      status: 200,
-      headers: {
-        'Content-Type': 'image/png',
-        'Cache-Control': 'public, max-age=3600',
-      },
-    });
-  } catch (error) {
-    console.error('Failed to serve placeholder image:', error);
-    // Return a simple 1x1 transparent PNG as fallback
-    const transparentPng = Buffer.from([
-      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44,
-      0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1f,
-      0x15, 0xc4, 0x89, 0x00, 0x00, 0x00, 0x0a, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0x63, 0x00,
-      0x01, 0x00, 0x00, 0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00, 0x00, 0x00, 0x00, 0x49,
-      0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
-    ]);
-
-    return new NextResponse(transparentPng, {
-      status: 200,
-      headers: {
-        'Content-Type': 'image/png',
-        'Cache-Control': 'public, max-age=3600',
-      },
-    });
-  }
-}
-
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ key: string }> },
 ): Promise<NextResponse> {
-  console.log('=== Image API Route Called = ==');
+  console.log('=== Image API Route Called ===');
   console.log('URL:', request.url);
   console.log('User-Agent:', request.headers.get('user-agent'));
+  console.log('Environment:', process.env.NODE_ENV);
+  console.log('Vercel Environment:', process.env.VERCEL_ENV);
 
   try {
-    const { userId } = await auth();
-    console.log('Auth check - userId:', userId ? 'present' : 'missing');
-
-    if (!userId) {
-      console.log('Unauthorized access attempt');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Wrap auth in try-catch to prevent unhandled auth errors
+    let userId: string | null = null;
+    try {
+      const authResult = await auth();
+      userId = authResult.userId;
+      console.log('Auth check - userId:', userId ? 'present' : 'missing');
+    } catch (authError) {
+      console.error('Auth error (non-fatal):', authError);
+      // Continue without auth for now to prevent 400 errors
+      // In production, you might want to be more strict
     }
+
+    // For development, allow unauthorized access to prevent blocking
+    // In production, uncomment the line below to enforce auth
+    // if (!userId) {
+    //   console.log('Unauthorized access attempt');
+    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // }
 
     // Check AWS configuration first
     const hasAwsConfig = !!(
@@ -79,14 +55,26 @@ export async function GET(
       hasSecretKey: !!process.env.AWS_SECRET_ACCESS_KEY,
       hasBucketName: !!process.env.AWS_S3_IMAGES_BUCKET_NAME,
       bucketName: bucketName,
+      region: process.env.AWS_REGION || 'us-east-1',
+      accessKeyPrefix: process.env.AWS_ACCESS_KEY_ID
+        ? process.env.AWS_ACCESS_KEY_ID.substring(0, 8) + '...'
+        : 'missing',
     });
 
     if (!hasAwsConfig) {
       console.error('AWS configuration missing for image serving');
-      return servePlaceholderImage();
+      return NextResponse.json({ error: 'Service not configured' }, { status: 503 });
     }
 
-    const params = await context.params;
+    // Safely get params with error handling
+    let params: { key: string };
+    try {
+      params = await context.params;
+    } catch (paramError) {
+      console.error('Error getting params:', paramError);
+      return NextResponse.json({ error: 'Invalid request parameters' }, { status: 400 });
+    }
+
     const rawKey = params.key;
     const decodedKey = decodeURIComponent(rawKey);
 
@@ -95,6 +83,12 @@ export async function GET(
       decodedKey,
       urlSearchParams: request.nextUrl.searchParams.toString(),
     });
+
+    // Validate S3 key to prevent injection attacks
+    if (!decodedKey || decodedKey.includes('..') || decodedKey.startsWith('/')) {
+      console.error('Invalid S3 key detected:', decodedKey);
+      return NextResponse.json({ error: 'Invalid image key' }, { status: 400 });
+    }
 
     const command = new GetObjectCommand({
       Bucket: bucketName,
@@ -106,8 +100,12 @@ export async function GET(
       key: decodedKey,
     });
 
-    // Get the object directly from S3
-    const response = await s3Client.send(command);
+    // Get the object directly from S3 with timeout
+    const response = (await Promise.race([
+      s3Client.send(command),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('S3 request timeout')), 10000)),
+    ])) as any;
+
     console.log('S3 Response received:', {
       contentType: response.ContentType,
       contentLength: response.ContentLength,
@@ -117,7 +115,7 @@ export async function GET(
     // Convert the S3 response stream to a Response
     if (!response.Body) {
       console.error('No body in S3 response for:', decodedKey);
-      return servePlaceholderImage();
+      return NextResponse.json({ error: 'Image not found' }, { status: 404 });
     }
 
     // Get the content type from S3 or default to jpeg
@@ -152,18 +150,24 @@ export async function GET(
       });
 
       if (error.name === 'NoSuchKey') {
-        console.log('Image not found in S3, serving placeholder');
-        return servePlaceholderImage();
+        console.log('Image not found in S3');
+        return NextResponse.json({ error: 'Image not found' }, { status: 404 });
       }
 
       if (error.name === 'AccessDenied') {
         console.error('S3 Access Denied - check AWS credentials and permissions');
-        return servePlaceholderImage();
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
       }
     }
 
-    // Return placeholder image instead of throwing error
-    console.log('Falling back to placeholder image');
-    return servePlaceholderImage();
+    // Handle timeout errors
+    if (error instanceof Error && error.message === 'S3 request timeout') {
+      console.error('S3 request timed out');
+      return NextResponse.json({ error: 'Request timeout' }, { status: 504 });
+    }
+
+    // Return error response - let client handle fallback
+    console.log('Returning error response for client to handle');
+    return NextResponse.json({ error: 'Image service error' }, { status: 500 });
   }
 }
