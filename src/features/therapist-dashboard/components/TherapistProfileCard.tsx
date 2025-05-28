@@ -145,6 +145,19 @@ export default function TherapistProfileCard() {
       setSaveSuccess(true);
 
       console.log('Profile updated successfully');
+
+      // Force a fresh fetch of profile data to ensure everything is in sync
+      setTimeout(() => {
+        fetch('/api/therapist/profile')
+          .then((res) => res.json())
+          .then((freshData) => {
+            if (!freshData.error) {
+              setProfile(freshData);
+              console.log('Fresh profile data loaded:', freshData);
+            }
+          })
+          .catch(console.error);
+      }, 500);
     } catch (err: unknown) {
       console.error('Save error:', err);
       setError(err instanceof Error ? err.message : 'Failed to save profile');

@@ -64,6 +64,7 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [imageKey, setImageKey] = useState(0);
+  const [forceRefresh, setForceRefresh] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { user, therapist } = profile;
@@ -71,8 +72,12 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
     .split(',')
     .map((t: string) => t.trim())
     .filter(Boolean);
+
   const displayImage = !imgError
-    ? getTherapistImageUrl(therapist.profileUrl || therapist.name || user.firstName || '')
+    ? getTherapistImageUrl(
+        therapist.profileUrl || therapist.name || user.firstName || '',
+        forceRefresh,
+      )
     : PLACEHOLDER;
 
   const handlePhotoUpload = async (file: File) => {
@@ -106,22 +111,26 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
         throw new Error(data.error || 'Failed to upload photo');
       }
 
+      console.log('Photo upload successful, new URL:', data.profileUrl);
+
       // Call the callback to update the parent component
       if (onPhotoUpdated) {
         onPhotoUpdated(data.profileUrl);
       }
 
-      // Reset image states to trigger reload with cache-busting
+      // Force image refresh by updating the key and enabling cache-busting
+      setImageKey((prev) => prev + 1);
+      setForceRefresh(true); // Enable cache-busting for this refresh
       setImgLoaded(false);
       setImgError(false);
-      setImageKey((prev) => prev + 1); // Force image component to re-render
 
-      // Force the image to reload by updating the display image URL with a cache buster
-      // This will trigger a re-render with the new image
+      // Reset force refresh after image loads
       setTimeout(() => {
+        setForceRefresh(false); // Disable cache-busting after refresh
         setImgLoaded(false);
         setImgError(false);
-      }, 100);
+        console.log('Image refresh triggered');
+      }, 200);
     } catch (err) {
       console.error('Photo upload error:', err);
       setPhotoError(err instanceof Error ? err.message : 'Failed to upload photo');
