@@ -7,6 +7,7 @@ const config: NextConfig = {
       'randomuser.me',
       'localhost',
       'renavestapp.com',
+      'www.renavestapp.com',
       'renavest-therapist-images.s3.amazonaws.com',
       'd2qcuj7ucxw61o.cloudfront.net',
     ],
@@ -20,6 +21,17 @@ const config: NextConfig = {
       {
         protocol: 'https',
         hostname: 'renavestapp.com',
+        port: '*',
+        pathname: '/api/images/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'renavestapp.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.renavestapp.com',
         pathname: '/**',
       },
       {
@@ -62,6 +74,16 @@ const config: NextConfig = {
           {
             key: 'X-Frame-Options',
             value: 'DENY',
+          },
+        ],
+      },
+      // Add specific headers for API image routes
+      {
+        source: '/api/images/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
           },
         ],
       },
