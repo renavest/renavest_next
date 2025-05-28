@@ -15,19 +15,26 @@ export function getTherapistImageUrl(
   // If it's already a full URL, return it
   if (key.startsWith('http')) return key;
 
-  // In production, serve directly from S3 if AWS is configured
-  const isProduction =
-    process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production';
+  // Check if we have proper AWS configuration
   const hasS3Config = !!(
     process.env.AWS_S3_IMAGES_BUCKET_NAME &&
     process.env.AWS_ACCESS_KEY_ID &&
     process.env.AWS_SECRET_ACCESS_KEY
   );
 
+  // If we don't have S3 config, always return placeholder
+  if (!hasS3Config) {
+    return '/experts/placeholderexp.png';
+  }
+
+  // In production, serve directly from S3 if AWS is configured
+  const isProduction =
+    process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production';
+
   // If it's already an S3 key, decide whether to use API or direct S3
   if (key.startsWith('therapists/')) {
-    if (isProduction && hasS3Config) {
-      // Use direct S3 URL in production
+    if (isProduction) {
+      // Use direct S3 URL in production - no API route fallback needed
       const s3Url = `https://${process.env.AWS_S3_IMAGES_BUCKET_NAME}.s3.amazonaws.com/${key}`;
       if (bustCache || timestamp) {
         const cacheParam = timestamp ? `v=${timestamp}` : `t=${Date.now()}`;
@@ -35,7 +42,7 @@ export function getTherapistImageUrl(
       }
       return s3Url;
     } else {
-      // Use API route for development or when S3 is not configured
+      // Use API route only in development
       const baseUrl = `/api/images/${encodeURIComponent(key)}`;
       if (bustCache || timestamp) {
         const cacheParam = timestamp ? `v=${timestamp}` : `t=${Date.now()}`;
@@ -48,8 +55,8 @@ export function getTherapistImageUrl(
   // Otherwise, treat it as a therapist name and generate the key
   const s3Key = generateTherapistImageKey(key);
 
-  if (isProduction && hasS3Config) {
-    // Use direct S3 URL in production
+  if (isProduction) {
+    // Use direct S3 URL in production - no fallback needed
     const s3Url = `https://${process.env.AWS_S3_IMAGES_BUCKET_NAME}.s3.amazonaws.com/${s3Key}`;
     if (bustCache || timestamp) {
       const cacheParam = timestamp ? `v=${timestamp}` : `t=${Date.now()}`;
