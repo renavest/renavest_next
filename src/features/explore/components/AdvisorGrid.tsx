@@ -1,6 +1,5 @@
 'use client';
 import { Award } from 'lucide-react';
-import Image from 'next/image';
 import React, { useState } from 'react';
 
 import { cn } from '@/src/lib/utils';
@@ -93,10 +92,8 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
         )}
 
         {imageLoadState.hasError ? (
-          <Image
-            width={350}
-            height={350}
-            src={'/experts/placeholderexp.png'}
+          <img
+            src='/experts/placeholderexp.png'
             alt={advisor.name}
             className={cn(
               'h-full w-full rounded-2xl object-cover object-center transition-transform duration-500',
@@ -104,13 +101,9 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
               'opacity-100',
               'overflow-hidden',
             )}
-            placeholder='blur'
-            blurDataURL='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
           />
         ) : (
-          <Image
-            width={350}
-            height={350}
+          <img
             src={advisor.profileUrl as string}
             alt={advisor.name}
             className={cn(
@@ -119,8 +112,6 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
               !imageLoadState.isLoaded ? 'opacity-0' : 'opacity-100',
               'overflow-hidden',
             )}
-            placeholder='blur'
-            blurDataURL='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
             onLoad={handleImageLoad}
             onError={handleImageError}
           />
