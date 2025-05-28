@@ -63,6 +63,7 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
   const [imgError, setImgError] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  const [imageKey, setImageKey] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { user, therapist } = profile;
@@ -110,12 +111,17 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
         onPhotoUpdated(data.profileUrl);
       }
 
-      // Reset image states to trigger reload
+      // Reset image states to trigger reload with cache-busting
       setImgLoaded(false);
       setImgError(false);
+      setImageKey((prev) => prev + 1); // Force image component to re-render
 
-      // Reload the page to ensure the new image is displayed
-      window.location.reload();
+      // Force the image to reload by updating the display image URL with a cache buster
+      // This will trigger a re-render with the new image
+      setTimeout(() => {
+        setImgLoaded(false);
+        setImgError(false);
+      }, 100);
     } catch (err) {
       console.error('Photo upload error:', err);
       setPhotoError(err instanceof Error ? err.message : 'Failed to upload photo');
@@ -151,6 +157,7 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
             />
           )}
           <Image
+            key={`profile-image-${imageKey}`}
             src={displayImage}
             alt={therapist.name || user.firstName || 'Profile'}
             fill

@@ -115,17 +115,38 @@ export default function TherapistProfileCard() {
         delete formDataForAPI.hourlyRate; // Remove the dollar version
       }
 
+      console.log('Saving profile data:', formDataForAPI);
+
       const res = await fetch('/api/therapist/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formDataForAPI),
       });
       const data = await res.json();
+
+      console.log('Save response:', data);
+
       if (!res.ok) throw new Error(data.error || 'Failed to save profile');
+
+      // Update the profile state with the returned data
       setProfile(data);
+
+      // Update the form state to match the saved data
+      const updatedFormData = {
+        ...data.user,
+        ...data.therapist,
+        hourlyRate: data.therapist.hourlyRateCents
+          ? (data.therapist.hourlyRateCents / 100).toFixed(2)
+          : '',
+      };
+      setForm(updatedFormData);
+
       setIsModalOpen(false);
       setSaveSuccess(true);
+
+      console.log('Profile updated successfully');
     } catch (err: unknown) {
+      console.error('Save error:', err);
       setError(err instanceof Error ? err.message : 'Failed to save profile');
     } finally {
       setSaving(false);
