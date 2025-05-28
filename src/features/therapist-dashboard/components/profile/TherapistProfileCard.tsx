@@ -1,8 +1,12 @@
 'use client';
+import { useUser } from '@clerk/nextjs';
 import { Loader2, X } from 'lucide-react';
 import { useEffect } from 'react';
 
-import { useGoogleCalendarIntegration } from '@/src/features/google-calendar/utils/googleCalendarIntegration';
+import {
+  useGoogleCalendarIntegration,
+  fetchTherapistId,
+} from '@/src/features/google-calendar/utils/googleCalendarIntegration';
 import { therapistIdSignal } from '@/src/features/therapist-dashboard/state/therapistDashboardState';
 
 import {
@@ -12,18 +16,32 @@ import {
   isCalendarConnectedSignal,
   profileActions,
   hasProfileSignal,
-} from '../state/profileState';
+} from '../../state/profileState';
 
 import { ProfileDisplay } from './ProfileDisplay';
 import { ProfileEditModal } from './ProfileEditModal';
 
 export default function TherapistProfileCard() {
+  const { user } = useUser();
   const profile = profileSignal.value;
   const loading = profileLoadingSignal.value;
   const error = profileErrorSignal.value;
   const hasProfile = hasProfileSignal.value;
 
-  // Check Google Calendar integration status
+  // Initialize therapist ID if not set
+  useEffect(() => {
+    async function initializeTherapistId() {
+      if (user?.id && !therapistIdSignal.value) {
+        const therapistId = await fetchTherapistId(user.id);
+        if (therapistId) {
+          therapistIdSignal.value = therapistId;
+        }
+      }
+    }
+    initializeTherapistId();
+  }, [user?.id]);
+
+  // Check Google Calendar integration status - only after therapistId is set
   const { status: calendarStatus } = useGoogleCalendarIntegration(therapistIdSignal.value || 0);
 
   useEffect(() => {
@@ -32,9 +50,11 @@ export default function TherapistProfileCard() {
   }, [calendarStatus.isConnected]);
 
   useEffect(() => {
-    // Load profile on component mount
-    profileActions.loadProfile();
-  }, []);
+    // Load profile on component mount - only after therapistId is initialized
+    if (therapistIdSignal.value) {
+      profileActions.loadProfile();
+    }
+  }, [therapistIdSignal.value]);
 
   const handlePhotoUpdated = (newPhotoUrl: string) => {
     profileActions.updatePhotoUrl(newPhotoUrl);

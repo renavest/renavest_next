@@ -23,13 +23,26 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Check AWS configuration first
+    const hasAwsConfig = !!(
+      process.env.AWS_ACCESS_KEY_ID &&
+      process.env.AWS_SECRET_ACCESS_KEY &&
+      process.env.AWS_S3_IMAGES_BUCKET_NAME
+    );
+
+    if (!hasAwsConfig) {
+      console.error('AWS configuration missing for image serving');
+      // Return placeholder image instead of error
+      return NextResponse.redirect('/experts/placeholderexp.png');
+    }
+
     const params = await context.params;
     const decodedKey = decodeURIComponent(params.key);
 
     console.log('Attempting to fetch from S3:', {
       bucket: bucketName,
       key: decodedKey,
-      hasCredentials: !!process.env.AWS_ACCESS_KEY_ID && !!process.env.AWS_SECRET_ACCESS_KEY,
+      hasCredentials: hasAwsConfig,
     });
 
     const command = new GetObjectCommand({
@@ -43,7 +56,7 @@ export async function GET(
     // Convert the S3 response stream to a Response
     if (!response.Body) {
       console.error('No body in S3 response for:', decodedKey);
-      return new NextResponse('No image data received', { status: 404 });
+      return NextResponse.redirect('/experts/placeholderexp.png');
     }
 
     // Get the content type from S3 or default to jpeg
@@ -70,10 +83,13 @@ export async function GET(
       });
 
       if (error.name === 'NoSuchKey') {
-        return new NextResponse('Image not found in S3', {
-          status: 404,
-          headers: { 'Content-Type': 'text/plain' },
-        });
+        // Redirect to placeholder instead of 404
+        return NextResponse.redirect('/experts/placeholderexp.png');
+      }
+
+      if (error.name === 'AccessDenied') {
+        console.error('S3 Access Denied - check AWS credentials and permissions');
+        return NextResponse.redirect('/experts/placeholderexp.png');
       }
     }
 
@@ -83,9 +99,7 @@ export async function GET(
       stack: error instanceof Error ? error.stack : undefined,
     });
 
-    return new NextResponse('Failed to fetch image', {
-      status: 500,
-      headers: { 'Content-Type': 'text/plain' },
-    });
+    // Redirect to placeholder instead of error response
+    return NextResponse.redirect('/experts/placeholderexp.png');
   }
 }

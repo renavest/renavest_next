@@ -5,7 +5,7 @@ import { useRef, useState } from 'react';
 
 import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
 
-import { TherapistProfile } from '../types/profile';
+import { TherapistProfile } from '../../types/profile';
 
 const PLACEHOLDER = '/experts/placeholderexp.png';
 
