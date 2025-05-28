@@ -31,61 +31,14 @@ interface TherapistProfile {
 
 const PLACEHOLDER = '/experts/placeholderexp.png';
 
-function ExpertiseTags({ tags }: { tags: string[] }) {
-  if (!tags.length) return null;
-  return (
-    <div className='mt-2 flex items-start flex-wrap gap-1 min-h-[1.5rem] overflow-hidden'>
-      {tags.slice(0, 3).map((exp, index) => (
-        <span
-          key={index}
-          className='px-2 py-1 rounded-full text-xs bg-purple-50 text-purple-700 font-medium'
-        >
-          {exp.trim()}
-        </span>
-      ))}
-      {tags.length > 3 && (
-        <span className='px-2 py-1 rounded-full text-xs bg-purple-50 text-purple-700 font-medium'>
-          +{tags.length - 3}
-        </span>
-      )}
-    </div>
-  );
-}
-
-interface ProfileDisplayProps {
-  profile: TherapistProfile;
-  onEditClick: () => void;
-  onPhotoUpdated?: (newPhotoUrl: string) => void;
-}
-
-export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: ProfileDisplayProps) {
-  const [imgLoaded, setImgLoaded] = useState(false);
-  const [imgError, setImgError] = useState(false);
+// Custom hook for photo upload functionality
+function usePhotoUpload(onPhotoUpdated?: (newPhotoUrl: string) => void) {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [imageKey, setImageKey] = useState(0);
   const [forceRefresh, setForceRefresh] = useState(false);
   const [lastUploadTime, setLastUploadTime] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const { user, therapist } = profile;
-  const expertiseTags = (therapist.expertise || '')
-    .split(',')
-    .map((t: string) => t.trim())
-    .filter(Boolean);
-
-  const createImageUrl = () => {
-    const baseUrl = therapist.profileUrl || therapist.name || user.firstName || '';
-    if (!baseUrl) return PLACEHOLDER;
-
-    if (lastUploadTime) {
-      return getTherapistImageUrl(baseUrl, true) + `&upload=${lastUploadTime}`;
-    }
-
-    return getTherapistImageUrl(baseUrl, forceRefresh);
-  };
-
-  const displayImage = !imgError ? createImageUrl() : PLACEHOLDER;
 
   const handlePhotoUpload = async (file: File) => {
     setUploadingPhoto(true);
@@ -124,18 +77,13 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
 
       setImageKey((prev) => prev + 1);
       setForceRefresh(true);
-      setImgLoaded(false);
-      setImgError(false);
       setLastUploadTime(Date.now());
 
       setTimeout(() => {
         setForceRefresh(false);
-        setImgLoaded(false);
-        setImgError(false);
         console.log('Image refresh triggered');
       }, 200);
 
-      // Reset upload time after image has had time to load
       setTimeout(() => {
         setLastUploadTime(null);
         console.log('Upload cache-busting reset');
@@ -163,27 +111,119 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
     fileInputRef.current?.click();
   };
 
+  return {
+    uploadingPhoto,
+    photoError,
+    imageKey,
+    forceRefresh,
+    lastUploadTime,
+    fileInputRef,
+    handleFileSelect,
+    handleCameraClick,
+  };
+}
+
+function ExpertiseTags({ tags }: { tags: string[] }) {
+  if (!tags.length) return null;
+  return (
+    <div className='mt-2 flex items-start flex-wrap gap-1 min-h-[1.5rem] overflow-hidden'>
+      {tags.slice(0, 3).map((exp, index) => (
+        <span
+          key={index}
+          className='px-2 py-1 rounded-full text-xs bg-purple-50 text-purple-700 font-medium'
+        >
+          {exp.trim()}
+        </span>
+      ))}
+      {tags.length > 3 && (
+        <span className='px-2 py-1 rounded-full text-xs bg-purple-50 text-purple-700 font-medium'>
+          +{tags.length - 3}
+        </span>
+      )}
+    </div>
+  );
+}
+
+interface ProfileDisplayProps {
+  profile: TherapistProfile;
+  onEditClick: () => void;
+  onPhotoUpdated?: (newPhotoUrl: string) => void;
+}
+
+export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: ProfileDisplayProps) {
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const [imgError, setImgError] = useState(false);
+
+  const {
+    uploadingPhoto,
+    photoError,
+    imageKey,
+    forceRefresh,
+    lastUploadTime,
+    fileInputRef,
+    handleFileSelect,
+    handleCameraClick,
+  } = usePhotoUpload(onPhotoUpdated);
+
+  const { user, therapist } = profile;
+  const expertiseTags = (therapist.expertise || '')
+    .split(',')
+    .map((t: string) => t.trim())
+    .filter(Boolean);
+
+  // Create image URL with aggressive cache-busting when needed
+  const createImageUrl = () => {
+    const baseUrl = therapist.profileUrl || therapist.name || user.firstName || '';
+    if (!baseUrl) return PLACEHOLDER;
+
+    // If we just uploaded, bypass all caching with multiple cache busters
+    if (lastUploadTime) {
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(7);
+      return (
+        getTherapistImageUrl(baseUrl, true) + `&upload=${lastUploadTime}&t=${timestamp}&r=${random}`
+      );
+    }
+
+    // Otherwise use normal cache behavior
+    return getTherapistImageUrl(baseUrl, forceRefresh);
+  };
+
+  const displayImage = !imgError ? createImageUrl() : PLACEHOLDER;
+
   return (
     <div className='w-full h-full bg-white rounded-3xl shadow-2xl p-8 flex flex-col items-center max-w-xl mx-auto min-h-[540px] border border-purple-100'>
       <div className='flex flex-col items-center mb-6 w-full'>
         <div className='relative w-32 h-32 mb-3 rounded-2xl overflow-hidden bg-gray-100 flex items-center justify-center group'>
-          {!imgLoaded && !imgError && (
+          {!imgLoaded && !imgError && !lastUploadTime && (
             <div
               className='absolute inset-0 bg-gray-200 animate-pulse rounded-2xl'
               aria-label='Image loading placeholder'
             />
           )}
-          <Image
-            key={`profile-image-${imageKey}-${lastUploadTime || 'initial'}`}
-            src={displayImage}
-            alt={therapist.name || user.firstName || 'Profile'}
-            fill
-            className='object-cover object-center rounded-2xl border-4 border-purple-100'
-            onLoad={() => setImgLoaded(true)}
-            onError={() => setImgError(true)}
-            priority
-            unoptimized={!!lastUploadTime}
-          />
+
+          {/* Use standard img tag for uploaded photos to bypass Next.js caching */}
+          {lastUploadTime ? (
+            <img
+              key={`profile-image-${imageKey}-${lastUploadTime}`}
+              src={displayImage}
+              alt={therapist.name || user.firstName || 'Profile'}
+              className='w-full h-full object-cover object-center rounded-2xl border-4 border-purple-100'
+              onLoad={() => setImgLoaded(true)}
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <Image
+              key={`profile-image-${imageKey}-initial`}
+              src={displayImage}
+              alt={therapist.name || user.firstName || 'Profile'}
+              fill
+              className='object-cover object-center rounded-2xl border-4 border-purple-100'
+              onLoad={() => setImgLoaded(true)}
+              onError={() => setImgError(true)}
+              priority
+            />
+          )}
 
           <div className='absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 rounded-2xl flex items-center justify-center'>
             <button
