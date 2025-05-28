@@ -79,15 +79,20 @@ export function ProfileDisplay({ profile, onEditClick }: ProfileDisplayProps) {
     // If refresh trigger was activated, force fresh cache-busting
     if (imageKey.startsWith('refreshed-')) {
       const freshTimestamp = Date.now();
+      const randomComponent = Math.random().toString(36).substring(7);
       const imageUrl = getTherapistImageUrl(baseUrl, true, freshTimestamp);
+      // Add additional random parameter to ensure uniqueness
+      const separator = imageUrl.includes('?') ? '&' : '?';
+      const finalUrl = `${imageUrl}${separator}r=${randomComponent}`;
       console.log('ProfileDisplay: Creating fresh image URL after refresh trigger', {
         baseUrl,
         therapistProfileUrl: therapist.profileUrl,
         freshTimestamp,
-        imageUrl,
+        randomComponent,
+        imageUrl: finalUrl,
         imageKey,
       });
-      return imageUrl;
+      return finalUrl;
     }
 
     // Use database updatedAt timestamp for normal display

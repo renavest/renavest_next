@@ -78,7 +78,6 @@ export async function GET(
     // Create headers for better caching and cache invalidation support
     const headers = new Headers({
       'Content-Type': contentType,
-      'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
       'Content-Length': response.ContentLength?.toString() || '',
       ETag: response.ETag || `"${Date.now()}"`,
     });
@@ -87,7 +86,13 @@ export async function GET(
     const url = new URL(request.url);
     const version = url.searchParams.get('v') || url.searchParams.get('t');
     if (version) {
-      headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+      // For versioned requests (cache-busting), use no-cache to force fresh fetch
+      headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      headers.set('Pragma', 'no-cache');
+      headers.set('Expires', '0');
+    } else {
+      // For normal requests, allow some caching
+      headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
     }
 
     // Convert the stream to bytes to avoid stream handling issues
