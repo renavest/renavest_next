@@ -240,8 +240,18 @@ export function PhotoUpload({
   const displayImageUrl = () => {
     if (previewUrl) return previewUrl;
 
+    // Force cache bust if we just uploaded
+    const forceRefresh = justUploaded;
     const timestamp = updatedAt ? new Date(updatedAt).getTime() : undefined;
-    return getTherapistImageUrl(currentPhotoUrl || therapistName || '', justUploaded, timestamp);
+
+    // Use current timestamp if we just uploaded to ensure immediate update
+    const effectiveTimestamp = justUploaded ? Date.now() : timestamp;
+
+    return getTherapistImageUrl(
+      currentPhotoUrl || therapistName || '',
+      forceRefresh,
+      effectiveTimestamp,
+    );
   };
 
   const isPlaceholder = !previewUrl && !currentPhotoUrl;

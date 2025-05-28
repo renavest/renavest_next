@@ -39,7 +39,14 @@ const config: NextConfig = {
         hostname: 'renavest-therapist-images.s3.amazonaws.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'renavest-therapist-images.s3.amazonaws.com',
+        pathname: '/therapists/**',
+      },
     ],
+    unoptimized: false,
+    minimumCacheTTL: 60,
   },
   experimental: {
     swcPlugins: [
@@ -77,13 +84,16 @@ const config: NextConfig = {
           },
         ],
       },
-      // Add specific headers for API image routes
       {
         source: '/api/images/:path*',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            value: 'public, max-age=3600, stale-while-revalidate=86400',
+          },
+          {
+            key: 'Vary',
+            value: 'Accept-Encoding',
           },
         ],
       },

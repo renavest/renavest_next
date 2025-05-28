@@ -108,6 +108,10 @@ export default function TherapistProfileCard() {
 
   const handlePhotoUpdated = (newPhotoUrl: string) => {
     profileActions.updatePhotoUrl(newPhotoUrl);
+    // Force a profile reload to ensure we have the latest data including updated timestamp
+    setTimeout(() => {
+      profileActions.loadProfile();
+    }, 500);
   };
 
   const openEditModal = () => {

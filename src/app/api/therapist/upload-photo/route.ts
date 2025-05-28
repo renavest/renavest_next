@@ -155,6 +155,7 @@ export async function POST(request: NextRequest) {
       CacheControl: 'public, max-age=0, must-revalidate', // Force cache revalidation
       Metadata: {
         'upload-timestamp': Date.now().toString(), // Help with cache busting
+        'original-filename': file.name,
       },
     });
 
@@ -181,6 +182,7 @@ export async function POST(request: NextRequest) {
       success: true,
       profileUrl: s3Key,
       timestamp: updatedTimestamp, // Use database timestamp for consistent cache busting
+      uploadTimestamp: Date.now(), // Also provide upload timestamp for immediate cache busting
       message: 'Photo uploaded successfully',
     });
   } catch (error) {

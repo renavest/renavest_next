@@ -36,8 +36,8 @@ export function getTherapistImageUrl(
   // For production, we have a choice:
   // 1. Use API route (keeps authentication) but might get 400 errors
   // 2. Use direct S3 (no auth) but always works
-  // Let's use an environment variable to control this
-  const useDirectS3InProduction = process.env.USE_DIRECT_S3_IMAGES === 'true';
+  // Let's use direct S3 in production to avoid auth issues
+  const useDirectS3InProduction = true; // Always use direct S3 in production
 
   // If it's already an S3 key, decide whether to use API or direct S3
   if (key.startsWith('therapists/')) {
@@ -50,7 +50,7 @@ export function getTherapistImageUrl(
       }
       return s3Url;
     } else {
-      // Use authenticated API route (default behavior)
+      // Use authenticated API route (default behavior for development)
       const baseUrl = `/api/images/${encodeURIComponent(key)}`;
       if (bustCache || timestamp) {
         const cacheParam = timestamp ? `v=${timestamp}` : `t=${Date.now()}`;
@@ -72,7 +72,7 @@ export function getTherapistImageUrl(
     }
     return s3Url;
   } else {
-    // Use authenticated API route (default behavior)
+    // Use authenticated API route (default behavior for development)
     const baseUrl = `/api/images/${encodeURIComponent(s3Key)}`;
     if (bustCache || timestamp) {
       const cacheParam = timestamp ? `v=${timestamp}` : `t=${Date.now()}`;

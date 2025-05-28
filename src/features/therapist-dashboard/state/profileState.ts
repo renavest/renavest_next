@@ -89,13 +89,25 @@ export const profileActions = {
     profileFormSignal.value = { ...profileFormSignal.value, profileUrl: newPhotoUrl };
     // Update the profile state immediately to reflect the change
     if (profileSignal.value) {
-      profileSignal.value = {
+      const updatedProfile = {
         ...profileSignal.value,
         therapist: {
           ...profileSignal.value.therapist,
           profileUrl: newPhotoUrl,
+          updatedAt: new Date().toISOString(), // Update timestamp to help with cache busting
         },
       };
+      profileSignal.value = updatedProfile;
+
+      // Also update the form with the new timestamp
+      const formData: ProfileFormData = {
+        ...updatedProfile.user,
+        ...updatedProfile.therapist,
+        hourlyRate: updatedProfile.therapist.hourlyRateCents
+          ? (updatedProfile.therapist.hourlyRateCents / 100).toFixed(2)
+          : '',
+      };
+      profileFormSignal.value = formData;
     }
   },
 

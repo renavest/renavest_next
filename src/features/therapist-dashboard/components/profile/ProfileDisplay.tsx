@@ -156,7 +156,11 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
 
     // Use database updatedAt timestamp for consistent cache-busting
     const dbTimestamp = therapist.updatedAt ? new Date(therapist.updatedAt).getTime() : undefined;
-    return getTherapistImageUrl(baseUrl, forceRefresh, dbTimestamp);
+
+    // Force refresh when needed and add current timestamp if forcing refresh
+    const effectiveTimestamp = forceRefresh ? Date.now() : dbTimestamp;
+
+    return getTherapistImageUrl(baseUrl, forceRefresh, effectiveTimestamp);
   };
 
   const displayImage = !imgError ? createImageUrl() : PLACEHOLDER;
