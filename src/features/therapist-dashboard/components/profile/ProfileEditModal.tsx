@@ -11,9 +11,9 @@ import {
   profileErrorSignal,
   isCalendarConnectedSignal,
   profileActions,
-} from '../state/profileState';
+} from '../../state/profileState';
 
-import { ProfileFormFields } from './profile/ProfileFormFields';
+import { ProfileFormFields } from './ProfileFormFields';
 
 export function ProfileEditModal() {
   const isOpen = profileModalOpenSignal.value;

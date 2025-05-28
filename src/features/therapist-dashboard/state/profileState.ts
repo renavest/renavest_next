@@ -119,8 +119,8 @@ export const profileActions = {
 
   saveProfile: async () => {
     profileActions.setSaving(true);
-    profileActions.setSaveSuccess(false);
     profileActions.setError(null);
+    profileActions.setSaveSuccess(false);
 
     try {
       // Convert hourlyRate from dollars to cents for API
@@ -137,21 +137,47 @@ export const profileActions = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formDataForAPI),
       });
-      const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || 'Failed to save profile');
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error("Save isn't working right now. Please try again later.");
+      }
 
-      // Update the profile state with the returned data
+      if (!res.ok) {
+        // Provide user-friendly error messages
+        if (res.status === 401) {
+          throw new Error('Please refresh the page and try again.');
+        }
+        if (res.status >= 500) {
+          throw new Error("Save isn't working right now. Please try again later.");
+        }
+
+        const errorMsg = data.error || 'Failed to save profile. Please try again.';
+
+        // Make technical errors more user-friendly
+        if (errorMsg.includes('database') || errorMsg.includes('DB')) {
+          throw new Error("Save isn't working right now. Please try again later.");
+        }
+
+        throw new Error(errorMsg);
+      }
+
       profileActions.setProfile(data);
-      profileActions.closeModal();
       profileActions.setSaveSuccess(true);
+      profileActions.closeModal();
 
-      // Force a fresh fetch of profile data to ensure everything is in sync
+      // Clear success message after 3 seconds
       setTimeout(() => {
-        profileActions.loadProfile();
-      }, 500);
+        profileActions.setSaveSuccess(false);
+      }, 3000);
     } catch (err) {
-      profileActions.setError(err instanceof Error ? err.message : 'Failed to save profile');
+      const errorMsg =
+        err instanceof Error
+          ? err.message
+          : "Save isn't working right now. Please try again later.";
+      profileActions.setError(errorMsg);
     } finally {
       profileActions.setSaving(false);
     }
