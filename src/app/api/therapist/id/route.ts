@@ -1,15 +1,16 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
 import { therapists, users } from '@/src/db/schema';
 
-export async function GET() {
+async function getTherapistId() {
   try {
     const { userId, sessionClaims } = await auth();
     const metadata = sessionClaims?.metadata as { role?: string } | undefined;
     console.log('metadata', metadata);
+
     if (!userId || metadata?.role !== 'therapist') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -27,22 +28,36 @@ export async function GET() {
       .from(users)
       .where(eq(users.email, userEmail))
       .limit(1);
+
     if (!userResult.length) {
       console.error('User not found for email:', { userEmail });
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
+
     const therapistResult = await db
       .select({ id: therapists.id })
       .from(therapists)
       .where(eq(therapists.userId, userResult[0].id))
       .limit(1);
+
     if (!therapistResult.length) {
       console.error('Therapist not found for userId:', { userId: userResult[0].id });
       return NextResponse.json({ error: 'Therapist not found' }, { status: 404 });
     }
+
     return NextResponse.json({ therapistId: therapistResult[0].id });
   } catch (error) {
     console.error('Error fetching therapist ID:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
+}
+
+export async function GET() {
+  return getTherapistId();
+}
+
+export async function POST(_request: NextRequest) {
+  // Support POST requests for compatibility with initialization code
+  // The body may contain userId but we ignore it since we get userId from auth()
+  return getTherapistId();
 }

@@ -10,20 +10,61 @@ export function getTherapistImageUrl(
   bustCache = false,
   timestamp?: number,
 ): string {
-  if (!key) return '/experts/placeholderexp.png';
+  console.log('getTherapistImageUrl called with:', { key, bustCache, timestamp });
+
+  if (!key) {
+    console.log('No key provided, returning placeholder');
+    return '/experts/placeholderexp.png';
+  }
 
   // If it's already a full URL, return it
-  if (key.startsWith('http')) return key;
+  if (key.startsWith('http')) {
+    console.log('Key is full URL, returning as-is');
+    return key;
+  }
 
-  // Check if we have proper AWS configuration
+  // Detect if we're running client-side (browser) vs server-side
+  const isClientSide = typeof window !== 'undefined';
+  console.log('Environment check:', { isClientSide });
+
+  // If we're client-side, always use the API route since env vars aren't available
+  if (isClientSide) {
+    console.log('Client-side detected, using API route');
+
+    // Determine the S3 key
+    let s3Key: string;
+    if (key.startsWith('therapists/')) {
+      s3Key = key;
+    } else {
+      s3Key = generateTherapistImageKey(key);
+    }
+
+    // Use authenticated API route
+    const baseUrl = `/api/images/${encodeURIComponent(s3Key)}`;
+    if (bustCache || timestamp) {
+      const cacheParam = timestamp ? `v=${timestamp}` : `t=${Date.now()}`;
+      return `${baseUrl}?${cacheParam}`;
+    }
+    return baseUrl;
+  }
+
+  // Server-side logic (original logic with environment variable checks)
   const hasS3Config = !!(
     process.env.AWS_S3_IMAGES_BUCKET_NAME &&
     process.env.AWS_ACCESS_KEY_ID &&
     process.env.AWS_SECRET_ACCESS_KEY
   );
 
+  console.log('AWS Config check:', {
+    hasS3Config,
+    bucketName: process.env.AWS_S3_IMAGES_BUCKET_NAME,
+    hasAccessKey: !!process.env.AWS_ACCESS_KEY_ID,
+    hasSecretKey: !!process.env.AWS_SECRET_ACCESS_KEY,
+  });
+
   // If we don't have S3 config, always return placeholder
   if (!hasS3Config) {
+    console.log('No S3 config, returning placeholder');
     return '/experts/placeholderexp.png';
   }
 
@@ -36,8 +77,8 @@ export function getTherapistImageUrl(
   // For production, we have a choice:
   // 1. Use API route (keeps authentication) but might get 400 errors
   // 2. Use direct S3 (no auth) but always works
-  // Let's use an environment variable to control this
-  const useDirectS3InProduction = process.env.USE_DIRECT_S3_IMAGES === 'true';
+  // Let's use direct S3 in production to avoid auth issues
+  const useDirectS3InProduction = true; // Always use direct S3 in production
 
   // If it's already an S3 key, decide whether to use API or direct S3
   if (key.startsWith('therapists/')) {
@@ -50,7 +91,7 @@ export function getTherapistImageUrl(
       }
       return s3Url;
     } else {
-      // Use authenticated API route (default behavior)
+      // Use authenticated API route (default behavior for development)
       const baseUrl = `/api/images/${encodeURIComponent(key)}`;
       if (bustCache || timestamp) {
         const cacheParam = timestamp ? `v=${timestamp}` : `t=${Date.now()}`;
@@ -72,7 +113,7 @@ export function getTherapistImageUrl(
     }
     return s3Url;
   } else {
-    // Use authenticated API route (default behavior)
+    // Use authenticated API route (default behavior for development)
     const baseUrl = `/api/images/${encodeURIComponent(s3Key)}`;
     if (bustCache || timestamp) {
       const cacheParam = timestamp ? `v=${timestamp}` : `t=${Date.now()}`;

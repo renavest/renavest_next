@@ -10,6 +10,7 @@ export const profileSaveSuccessSignal = signal<boolean>(false);
 export const profileErrorSignal = signal<string | null>(null);
 export const profileModalOpenSignal = signal<boolean>(false);
 export const profileFormSignal = signal<ProfileFormData>({});
+export const profileRefreshTriggerSignal = signal<number>(0); // New signal to trigger refreshes
 
 // Computed signals for derived state
 export const hasProfileSignal = computed(() => profileSignal.value !== null);
@@ -89,13 +90,25 @@ export const profileActions = {
     profileFormSignal.value = { ...profileFormSignal.value, profileUrl: newPhotoUrl };
     // Update the profile state immediately to reflect the change
     if (profileSignal.value) {
-      profileSignal.value = {
+      const updatedProfile = {
         ...profileSignal.value,
         therapist: {
           ...profileSignal.value.therapist,
           profileUrl: newPhotoUrl,
+          updatedAt: new Date().toISOString(), // Update timestamp to help with cache busting
         },
       };
+      profileSignal.value = updatedProfile;
+
+      // Also update the form with the new timestamp
+      const formData: ProfileFormData = {
+        ...updatedProfile.user,
+        ...updatedProfile.therapist,
+        hourlyRate: updatedProfile.therapist.hourlyRateCents
+          ? (updatedProfile.therapist.hourlyRateCents / 100).toFixed(2)
+          : '',
+      };
+      profileFormSignal.value = formData;
     }
   },
 
@@ -167,6 +180,18 @@ export const profileActions = {
       profileActions.setProfile(data);
       profileActions.setSaveSuccess(true);
       profileActions.closeModal();
+
+      // Trigger a complete refresh of photo components
+      console.log('Triggering photo refresh - first trigger');
+      profileRefreshTriggerSignal.value = Date.now();
+
+      // Force a complete profile reload to get the latest data with updated timestamps
+      setTimeout(async () => {
+        await profileActions.loadProfile();
+        // Trigger another refresh after reload to ensure all components update
+        console.log('Triggering photo refresh - second trigger after reload');
+        profileRefreshTriggerSignal.value = Date.now();
+      }, 200);
 
       // Clear success message after 3 seconds
       setTimeout(() => {
