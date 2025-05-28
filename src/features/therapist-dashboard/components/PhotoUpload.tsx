@@ -10,6 +10,7 @@ interface PhotoUploadProps {
   therapistName?: string;
   onPhotoUploaded: (newPhotoUrl: string) => void;
   disabled?: boolean;
+  updatedAt?: string; // ISO string from database for cache-busting
 }
 
 // Helper function to validate file
@@ -53,6 +54,7 @@ export function PhotoUpload({
   therapistName,
   onPhotoUploaded,
   disabled = false,
+  updatedAt,
 }: PhotoUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -173,8 +175,13 @@ export function PhotoUpload({
     }
   };
 
-  const displayImageUrl =
-    previewUrl || getTherapistImageUrl(currentPhotoUrl || therapistName || '', justUploaded);
+  const displayImageUrl = () => {
+    if (previewUrl) return previewUrl;
+
+    const timestamp = updatedAt ? new Date(updatedAt).getTime() : undefined;
+    return getTherapistImageUrl(currentPhotoUrl || therapistName || '', justUploaded, timestamp);
+  };
+
   const isPlaceholder = !previewUrl && !currentPhotoUrl;
 
   return (
@@ -186,12 +193,12 @@ export function PhotoUpload({
         <div className='relative w-32 h-32 rounded-2xl overflow-hidden bg-gray-100 border-4 border-purple-100'>
           <Image
             key={justUploaded ? `uploaded-${Date.now()}` : currentPhotoUrl || 'default'}
-            src={displayImageUrl}
+            src={displayImageUrl()}
             alt={therapistName || 'Profile photo'}
             fill
             className='object-cover object-center'
             onError={() => {
-              console.error('Image failed to load:', displayImageUrl);
+              console.error('Image failed to load:', displayImageUrl());
             }}
           />
 

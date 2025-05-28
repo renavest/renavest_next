@@ -29,6 +29,7 @@ interface TherapistProfile {
     profileUrl?: string;
     hourlyRate?: string;
     hourlyRateCents?: number;
+    updatedAt?: string;
   };
 }
 
