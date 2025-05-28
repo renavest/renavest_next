@@ -1,3 +1,5 @@
+import { Readable } from 'stream';
+
 import {
   S3Client,
   GetObjectCommand,
@@ -96,26 +98,21 @@ export async function GET(
     }
 
     // Convert the stream to bytes to avoid stream handling issues
-    const chunks: Uint8Array[] = [];
-    const reader = (response.Body as ReadableStream).getReader();
+    let buffer: Buffer;
 
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        chunks.push(value);
+    if (response.Body instanceof Buffer) {
+      // If it's already a buffer, use it directly
+      buffer = response.Body;
+    } else {
+      // Convert the stream to buffer using Node.js stream methods
+      const chunks: Uint8Array[] = [];
+      const stream = response.Body as Readable; // S3 response body is a Node.js readable stream
+
+      for await (const chunk of stream) {
+        chunks.push(chunk);
       }
-    } finally {
-      reader.releaseLock();
-    }
 
-    // Combine chunks into a single buffer
-    const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
-    const buffer = new Uint8Array(totalLength);
-    let offset = 0;
-    for (const chunk of chunks) {
-      buffer.set(chunk, offset);
-      offset += chunk.length;
+      buffer = Buffer.concat(chunks);
     }
 
     return new NextResponse(buffer, { headers });
