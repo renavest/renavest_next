@@ -10,20 +10,61 @@ export function getTherapistImageUrl(
   bustCache = false,
   timestamp?: number,
 ): string {
-  if (!key) return '/experts/placeholderexp.png';
+  console.log('getTherapistImageUrl called with:', { key, bustCache, timestamp });
+
+  if (!key) {
+    console.log('No key provided, returning placeholder');
+    return '/experts/placeholderexp.png';
+  }
 
   // If it's already a full URL, return it
-  if (key.startsWith('http')) return key;
+  if (key.startsWith('http')) {
+    console.log('Key is full URL, returning as-is');
+    return key;
+  }
 
-  // Check if we have proper AWS configuration
+  // Detect if we're running client-side (browser) vs server-side
+  const isClientSide = typeof window !== 'undefined';
+  console.log('Environment check:', { isClientSide });
+
+  // If we're client-side, always use the API route since env vars aren't available
+  if (isClientSide) {
+    console.log('Client-side detected, using API route');
+
+    // Determine the S3 key
+    let s3Key: string;
+    if (key.startsWith('therapists/')) {
+      s3Key = key;
+    } else {
+      s3Key = generateTherapistImageKey(key);
+    }
+
+    // Use authenticated API route
+    const baseUrl = `/api/images/${encodeURIComponent(s3Key)}`;
+    if (bustCache || timestamp) {
+      const cacheParam = timestamp ? `v=${timestamp}` : `t=${Date.now()}`;
+      return `${baseUrl}?${cacheParam}`;
+    }
+    return baseUrl;
+  }
+
+  // Server-side logic (original logic with environment variable checks)
   const hasS3Config = !!(
     process.env.AWS_S3_IMAGES_BUCKET_NAME &&
     process.env.AWS_ACCESS_KEY_ID &&
     process.env.AWS_SECRET_ACCESS_KEY
   );
 
+  console.log('AWS Config check:', {
+    hasS3Config,
+    bucketName: process.env.AWS_S3_IMAGES_BUCKET_NAME,
+    hasAccessKey: !!process.env.AWS_ACCESS_KEY_ID,
+    hasSecretKey: !!process.env.AWS_SECRET_ACCESS_KEY,
+  });
+
   // If we don't have S3 config, always return placeholder
   if (!hasS3Config) {
+    console.log('No S3 config, returning placeholder');
     return '/experts/placeholderexp.png';
   }
 
