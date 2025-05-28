@@ -10,6 +10,7 @@ export const profileSaveSuccessSignal = signal<boolean>(false);
 export const profileErrorSignal = signal<string | null>(null);
 export const profileModalOpenSignal = signal<boolean>(false);
 export const profileFormSignal = signal<ProfileFormData>({});
+export const profileRefreshTriggerSignal = signal<number>(0); // New signal to trigger refreshes
 
 // Computed signals for derived state
 export const hasProfileSignal = computed(() => profileSignal.value !== null);
@@ -180,9 +181,14 @@ export const profileActions = {
       profileActions.setSaveSuccess(true);
       profileActions.closeModal();
 
+      // Trigger a complete refresh of photo components
+      profileRefreshTriggerSignal.value = Date.now();
+
       // Force a complete profile reload to get the latest data with updated timestamps
       setTimeout(async () => {
         await profileActions.loadProfile();
+        // Trigger another refresh after reload to ensure all components update
+        profileRefreshTriggerSignal.value = Date.now();
       }, 200);
 
       // Clear success message after 3 seconds

@@ -1,10 +1,10 @@
 'use client';
 import { Pencil } from 'lucide-react';
-import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
 
+import { profileRefreshTriggerSignal } from '../../state/profileState';
 import { TherapistProfile } from '../../types/profile';
 
 const PLACEHOLDER = '/experts/placeholderexp.png';
@@ -38,12 +38,24 @@ interface ProfileDisplayProps {
 export function ProfileDisplay({ profile, onEditClick }: ProfileDisplayProps) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [imageKey, setImageKey] = useState(0);
 
   const { user, therapist } = profile;
   const expertiseTags = (therapist.expertise || '')
     .split(',')
     .map((t: string) => t.trim())
     .filter(Boolean);
+
+  // Listen to profile refresh trigger to force image reload
+  useEffect(() => {
+    const refreshTrigger = profileRefreshTriggerSignal.value;
+    if (refreshTrigger > 0) {
+      // Force image re-render by updating key
+      setImageKey(refreshTrigger);
+      setImgLoaded(false);
+      setImgError(false);
+    }
+  }, [profileRefreshTriggerSignal.value]);
 
   // Create image URL with cache-busting when needed
   const createImageUrl = () => {
@@ -69,15 +81,13 @@ export function ProfileDisplay({ profile, onEditClick }: ProfileDisplayProps) {
             />
           )}
 
-          <Image
-            key={`profile-image-${therapist.updatedAt}`}
+          <img
+            key={`profile-image-${imageKey}-${therapist.updatedAt}`}
             src={displayImage}
             alt={therapist.name || user.firstName || 'Profile'}
-            fill
-            className='object-cover object-center rounded-2xl border-4 border-purple-100'
+            className='w-full h-full object-cover object-center rounded-2xl border-4 border-purple-100'
             onLoad={() => setImgLoaded(true)}
             onError={() => setImgError(true)}
-            priority
           />
         </div>
 

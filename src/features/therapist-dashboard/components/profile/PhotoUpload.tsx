@@ -1,9 +1,10 @@
 'use client';
 import { Camera, Loader2, Upload, X } from 'lucide-react';
-import Image from 'next/image';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 
 import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
+
+import { profileRefreshTriggerSignal } from '../../state/profileState';
 
 interface PhotoUploadProps {
   currentPhotoUrl?: string | null;
@@ -135,21 +136,27 @@ export function PhotoUpload({
   const [justUploaded, setJustUploaded] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Listen to profile refresh trigger to reset upload state
+  useEffect(() => {
+    const refreshTrigger = profileRefreshTriggerSignal.value;
+    if (refreshTrigger > 0) {
+      // Reset upload state when profile is refreshed
+      setJustUploaded(false);
+      setDebugInfo(null);
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(null);
+      }
+    }
+  }, [profileRefreshTriggerSignal.value, previewUrl]);
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    console.log('File selected:', {
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      lastModified: file.lastModified,
-    });
-
     const validationError = validateFile(file);
     if (validationError) {
       setError(validationError);
-      console.error('File validation failed:', validationError);
       return;
     }
 
@@ -170,38 +177,36 @@ export function PhotoUpload({
     setJustUploaded(false);
 
     try {
-      console.log('Starting upload process...');
       setDebugInfo('Uploading to server...');
 
       const result = await performUpload(file);
 
       if (!result.success) {
         const errorMsg = result.error || 'Upload failed. Please try again.';
-        console.error('Upload failed:', errorMsg);
         setError(errorMsg);
         return;
       }
 
-      console.log('Upload successful:', result.profileUrl);
       setDebugInfo(`Upload successful!`);
       setJustUploaded(true);
 
       // Call the callback with the new photo URL
       onPhotoUploaded(result.profileUrl!);
 
-      // Clean up preview URL
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-        setPreviewUrl(null);
-      }
+      // Don't clean up preview URL immediately - keep it until profile save
+      // The preview will be cleared when justUploaded is reset
 
-      // Show success message briefly
+      // Show success message briefly and reset upload state
       setTimeout(() => {
         setDebugInfo(null);
         setJustUploaded(false);
-      }, 3000);
-    } catch (err) {
-      console.error('Photo upload error:', err);
+        // Clean up preview URL only after showing the upload state
+        if (previewUrl) {
+          URL.revokeObjectURL(previewUrl);
+          setPreviewUrl(null);
+        }
+      }, 5000); // Longer timeout to keep preview during save
+    } catch {
       setError("Upload isn't working right now. Please try again later.");
 
       // Clean up preview URL on error
@@ -238,20 +243,22 @@ export function PhotoUpload({
   };
 
   const displayImageUrl = () => {
+    // Always prioritize preview URL when available
     if (previewUrl) return previewUrl;
 
-    // Force cache bust if we just uploaded using current timestamp
-    const timestamp = justUploaded
-      ? Date.now()
-      : updatedAt
-        ? new Date(updatedAt).getTime()
-        : undefined;
+    // If we just uploaded but don't have preview, use a fresh timestamp
+    if (justUploaded) {
+      const imageUrl = getTherapistImageUrl(
+        currentPhotoUrl || therapistName || '',
+        true,
+        Date.now(),
+      );
+      return `${imageUrl}${imageUrl.includes('?') ? '&' : '?'}fresh=${Date.now()}`;
+    }
 
-    return getTherapistImageUrl(
-      currentPhotoUrl || therapistName || '',
-      justUploaded, // Force refresh when just uploaded
-      timestamp,
-    );
+    // Normal display with database timestamp
+    const timestamp = updatedAt ? new Date(updatedAt).getTime() : undefined;
+    return getTherapistImageUrl(currentPhotoUrl || therapistName || '', false, timestamp);
   };
 
   const isPlaceholder = !previewUrl && !currentPhotoUrl;
@@ -263,12 +270,11 @@ export function PhotoUpload({
       <div className='flex flex-col items-center space-y-4'>
         {/* Photo Preview */}
         <div className='relative w-32 h-32 rounded-2xl overflow-hidden bg-gray-100 border-4 border-purple-100'>
-          <Image
+          <img
             key={justUploaded ? `uploaded-${Date.now()}` : `${currentPhotoUrl}-${updatedAt}`}
             src={displayImageUrl()}
             alt={therapistName || 'Profile photo'}
-            fill
-            className='object-cover object-center'
+            className='w-full h-full object-cover object-center'
             onError={() => {
               console.error('Image failed to load:', displayImageUrl());
             }}
