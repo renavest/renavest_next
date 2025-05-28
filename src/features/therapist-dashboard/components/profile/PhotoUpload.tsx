@@ -20,7 +20,7 @@ const validateFile = (file: File): string | null => {
     return 'Please upload a JPEG, PNG, or WebP image.';
   }
 
-  const maxSize = 10 * 1024 * 1024; // 10MB
+  const maxSize = 5 * 1024 * 1024; // 10MB
   if (file.size > maxSize) {
     return 'File too large. Please upload an image smaller than 10MB.';
   }
@@ -35,18 +35,90 @@ const performUpload = async (
   const formData = new FormData();
   formData.append('file', file);
 
-  const response = await fetch('/api/therapist/upload-photo', {
-    method: 'POST',
-    body: formData,
-  });
+  try {
+    const response = await fetch('/api/therapist/upload-photo', {
+      method: 'POST',
+      body: formData,
+    });
 
-  const data = await response.json();
+    // Check for specific HTTP status codes
+    if (response.status === 413) {
+      return {
+        success: false,
+        error: 'File is too large. Please choose a smaller image (under 10MB).',
+      };
+    }
 
-  if (!response.ok) {
-    return { success: false, error: data.error || 'Failed to upload photo' };
+    if (response.status === 500) {
+      return {
+        success: false,
+        error: 'Upload service is temporarily unavailable. Please try again later.',
+      };
+    }
+
+    if (response.status === 401) {
+      return {
+        success: false,
+        error: 'You need to be logged in to upload photos. Please refresh the page and try again.',
+      };
+    }
+
+    // Try to parse JSON response
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      // If JSON parsing fails, it's likely an HTML error page
+      return {
+        success: false,
+        error: 'Upload service is temporarily unavailable. Please try again later.',
+      };
+    }
+
+    if (!response.ok) {
+      // Use the error message from the API if available, otherwise provide a friendly default
+      const errorMessage = data.error || 'Upload failed. Please try again.';
+
+      // Make specific errors more user-friendly
+      if (
+        errorMessage.includes('AWS') ||
+        errorMessage.includes('S3') ||
+        errorMessage.includes('configuration')
+      ) {
+        return {
+          success: false,
+          error: 'Photo upload is temporarily unavailable. Please contact support.',
+        };
+      }
+
+      if (errorMessage.includes('File too large')) {
+        return {
+          success: false,
+          error: 'File is too large. Please choose a smaller image (under 10MB).',
+        };
+      }
+
+      if (errorMessage.includes('Invalid file type')) {
+        return {
+          success: false,
+          error: 'Please upload a JPEG, PNG, or WebP image file.',
+        };
+      }
+
+      return {
+        success: false,
+        error: 'Upload failed. Please try again.',
+      };
+    }
+
+    return { success: true, profileUrl: data.profileUrl };
+  } catch {
+    // Network or connection errors
+    return {
+      success: false,
+      error: 'Connection error. Please check your internet and try again.',
+    };
   }
-
-  return { success: true, profileUrl: data.profileUrl };
 };
 
 export function PhotoUpload({
@@ -104,22 +176,14 @@ export function PhotoUpload({
       const result = await performUpload(file);
 
       if (!result.success) {
-        const errorMsg = result.error || 'Failed to upload photo';
+        const errorMsg = result.error || 'Upload failed. Please try again.';
         console.error('Upload failed:', errorMsg);
-
-        // Check for AWS configuration errors
-        if (errorMsg.includes('configuration error') || errorMsg.includes('AWS credentials')) {
-          setDebugInfo('AWS not configured. Please contact support.');
-          setError('Photo upload is temporarily unavailable. Please contact support.');
-        } else {
-          setDebugInfo(`Upload failed: ${errorMsg}`);
-          setError(errorMsg);
-        }
+        setError(errorMsg);
         return;
       }
 
       console.log('Upload successful:', result.profileUrl);
-      setDebugInfo(`Upload successful: ${result.profileUrl}`);
+      setDebugInfo(`Upload successful!`);
       setJustUploaded(true);
 
       // Call the callback with the new photo URL
@@ -138,9 +202,7 @@ export function PhotoUpload({
       }, 3000);
     } catch (err) {
       console.error('Photo upload error:', err);
-      const errorMsg = err instanceof Error ? err.message : 'Failed to upload photo';
-      setError('Network error. Please check your connection and try again.');
-      setDebugInfo(`Network error: ${errorMsg}`);
+      setError("Upload isn't working right now. Please try again later.");
 
       // Clean up preview URL on error
       if (previewUrl) {
@@ -270,7 +332,11 @@ export function PhotoUpload({
         )}
 
         {/* Error Message */}
-        {error && <p className='text-sm text-red-600 text-center'>{error}</p>}
+        {error && (
+          <div className='text-red-600 text-sm mt-2 p-2 bg-red-50 rounded-md border border-red-200'>
+            {error}
+          </div>
+        )}
 
         {/* Help Text */}
         <p className='text-xs text-gray-500 text-center max-w-xs'>

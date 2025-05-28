@@ -5,30 +5,7 @@ import { useRef, useState } from 'react';
 
 import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
 
-interface TherapistProfile {
-  user: {
-    firstName?: string;
-    lastName?: string;
-    email: string;
-    imageUrl?: string;
-  };
-  therapist: {
-    name?: string;
-    title?: string;
-    bookingURL?: string;
-    expertise?: string;
-    certifications?: string;
-    song?: string;
-    yoe?: number;
-    clientele?: string;
-    longBio?: string;
-    previewBlurb?: string;
-    profileUrl?: string;
-    hourlyRate?: string;
-    hourlyRateCents?: number;
-    updatedAt?: string; // ISO string from database
-  };
-}
+import { TherapistProfile } from '../../types/profile';
 
 const PLACEHOLDER = '/experts/placeholderexp.png';
 
