@@ -43,3 +43,6 @@ export interface EarningsMetrics {
   projectedEarnings: number;
   pendingPayouts: number;
 }
+
+// Re-export profile types
+export * from './profile';
