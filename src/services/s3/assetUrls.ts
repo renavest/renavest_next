@@ -23,104 +23,24 @@ export function getTherapistImageUrl(
     return key;
   }
 
-  // Detect if we're running client-side (browser) vs server-side
-  const isClientSide = typeof window !== 'undefined';
-  console.log('Environment check:', { isClientSide });
-
-  // If we're client-side, always use the API route since env vars aren't available
-  if (isClientSide) {
-    console.log('Client-side detected, using API route');
-
-    // Determine the S3 key
-    let s3Key: string;
-    if (key.startsWith('therapists/')) {
-      s3Key = key;
-    } else {
-      s3Key = generateTherapistImageKey(key);
-    }
-
-    // Use authenticated API route
-    const baseUrl = `/api/images/${encodeURIComponent(s3Key)}`;
-    if (bustCache || timestamp) {
-      const cacheParam = timestamp ? `v=${timestamp}` : `t=${Date.now()}`;
-      return `${baseUrl}?${cacheParam}`;
-    }
-    return baseUrl;
-  }
-
-  // Server-side logic (original logic with environment variable checks)
-  const hasS3Config = !!(
-    process.env.AWS_S3_IMAGES_BUCKET_NAME &&
-    process.env.AWS_ACCESS_KEY_ID &&
-    process.env.AWS_SECRET_ACCESS_KEY
-  );
-
-  console.log('AWS Config check:', {
-    hasS3Config,
-    bucketName: process.env.AWS_S3_IMAGES_BUCKET_NAME,
-    hasAccessKey: !!process.env.AWS_ACCESS_KEY_ID,
-    hasSecretKey: !!process.env.AWS_SECRET_ACCESS_KEY,
-  });
-
-  // If we don't have S3 config, always return placeholder
-  if (!hasS3Config) {
-    console.log('No S3 config, returning placeholder');
-    return '/experts/placeholderexp.png';
-  }
-
-  // Detect environment - be more aggressive about production detection
-  const isProduction =
-    process.env.NODE_ENV === 'production' ||
-    process.env.VERCEL_ENV === 'production' ||
-    process.env.VERCEL_ENV === 'preview';
-
-  // For production, we have a choice:
-  // 1. Use API route (keeps authentication) but might get 400 errors
-  // 2. Use direct S3 (no auth) but always works
-  // Let's use direct S3 in production to avoid auth issues
-  const useDirectS3InProduction = true; // Always use direct S3 in production
-
-  // If it's already an S3 key, decide whether to use API or direct S3
+  // Always use the API route for consistency between dev and prod
+  // Determine the S3 key
+  let s3Key: string;
   if (key.startsWith('therapists/')) {
-    if (isProduction && useDirectS3InProduction) {
-      // Use direct S3 URL in production when configured to do so
-      const s3Url = `https://${process.env.AWS_S3_IMAGES_BUCKET_NAME}.s3.amazonaws.com/${key}`;
-      if (bustCache || timestamp) {
-        const cacheParam = timestamp ? `v=${timestamp}` : `t=${Date.now()}`;
-        return `${s3Url}?${cacheParam}`;
-      }
-      return s3Url;
-    } else {
-      // Use authenticated API route (default behavior for development)
-      const baseUrl = `/api/images/${encodeURIComponent(key)}`;
-      if (bustCache || timestamp) {
-        const cacheParam = timestamp ? `v=${timestamp}` : `t=${Date.now()}`;
-        return `${baseUrl}?${cacheParam}`;
-      }
-      return baseUrl;
-    }
-  }
-
-  // Otherwise, treat it as a therapist name and generate the key
-  const s3Key = generateTherapistImageKey(key);
-
-  if (isProduction && useDirectS3InProduction) {
-    // Use direct S3 URL in production when configured to do so
-    const s3Url = `https://${process.env.AWS_S3_IMAGES_BUCKET_NAME}.s3.amazonaws.com/${s3Key}`;
-    if (bustCache || timestamp) {
-      const cacheParam = timestamp ? `v=${timestamp}` : `t=${Date.now()}`;
-      return `${s3Url}?${cacheParam}`;
-    }
-    return s3Url;
+    s3Key = key;
   } else {
-    // Use authenticated API route (default behavior for development)
-    const baseUrl = `/api/images/${encodeURIComponent(s3Key)}`;
-    if (bustCache || timestamp) {
-      const cacheParam = timestamp ? `v=${timestamp}` : `t=${Date.now()}`;
-      return `${baseUrl}?${cacheParam}`;
-    }
-    return baseUrl;
+    s3Key = generateTherapistImageKey(key);
   }
+
+  console.log('Using API route with S3 key:', s3Key);
+
+  // Use authenticated API route for all environments
+  const baseUrl = `/api/images/${encodeURIComponent(s3Key)}`;
+  if (bustCache || timestamp) {
+    const cacheParam = timestamp ? `v=${timestamp}` : `t=${Date.now()}`;
+    return `${baseUrl}?${cacheParam}`;
+  }
+  return baseUrl;
 }
 
 /**
