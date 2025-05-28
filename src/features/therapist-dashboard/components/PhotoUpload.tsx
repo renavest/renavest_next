@@ -12,6 +12,42 @@ interface PhotoUploadProps {
   disabled?: boolean;
 }
 
+// Helper function to validate file
+const validateFile = (file: File): string | null => {
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  if (!allowedTypes.includes(file.type)) {
+    return 'Please upload a JPEG, PNG, or WebP image.';
+  }
+
+  const maxSize = 10 * 1024 * 1024; // 10MB
+  if (file.size > maxSize) {
+    return 'File too large. Please upload an image smaller than 10MB.';
+  }
+
+  return null;
+};
+
+// Helper function to handle upload API call
+const performUpload = async (
+  file: File,
+): Promise<{ success: boolean; profileUrl?: string; error?: string }> => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch('/api/therapist/upload-photo', {
+    method: 'POST',
+    body: formData,
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    return { success: false, error: data.error || 'Failed to upload photo' };
+  }
+
+  return { success: true, profileUrl: data.profileUrl };
+};
+
 export function PhotoUpload({
   currentPhotoUrl,
   therapistName,
@@ -21,27 +57,29 @@ export function PhotoUpload({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      setError('Please upload a JPEG, PNG, or WebP image.');
-      return;
-    }
+    console.log('File selected:', {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      lastModified: file.lastModified,
+    });
 
-    // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    if (file.size > maxSize) {
-      setError('File too large. Please upload an image smaller than 10MB.');
+    const validationError = validateFile(file);
+    if (validationError) {
+      setError(validationError);
+      console.error('File validation failed:', validationError);
       return;
     }
 
     setError(null);
+    setDebugInfo(`File validated: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
 
     // Create preview URL
     const url = URL.createObjectURL(file);
@@ -56,22 +94,31 @@ export function PhotoUpload({
     setError(null);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      console.log('Starting upload process...');
+      setDebugInfo('Uploading to server...');
 
-      const response = await fetch('/api/therapist/upload-photo', {
-        method: 'POST',
-        body: formData,
-      });
+      const result = await performUpload(file);
 
-      const data = await response.json();
+      if (!result.success) {
+        const errorMsg = result.error || 'Failed to upload photo';
+        console.error('Upload failed:', errorMsg);
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to upload photo');
+        // Check for AWS configuration errors
+        if (errorMsg.includes('configuration error') || errorMsg.includes('AWS credentials')) {
+          setDebugInfo('AWS not configured. Please contact support.');
+          setError('Photo upload is temporarily unavailable. Please contact support.');
+        } else {
+          setDebugInfo(`Upload failed: ${errorMsg}`);
+          setError(errorMsg);
+        }
+        return;
       }
 
+      console.log('Upload successful:', result.profileUrl);
+      setDebugInfo(`Upload successful: ${result.profileUrl}`);
+
       // Call the callback with the new photo URL
-      onPhotoUploaded(data.profileUrl);
+      onPhotoUploaded(result.profileUrl!);
 
       // Clean up preview URL
       if (previewUrl) {
@@ -79,11 +126,16 @@ export function PhotoUpload({
         setPreviewUrl(null);
       }
 
+      // Show success message briefly
+      setTimeout(() => setDebugInfo(null), 3000);
+
       // Reload the page to ensure the new image is displayed
       window.location.reload();
     } catch (err) {
       console.error('Photo upload error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to upload photo');
+      const errorMsg = err instanceof Error ? err.message : 'Failed to upload photo';
+      setError('Network error. Please check your connection and try again.');
+      setDebugInfo(`Network error: ${errorMsg}`);
 
       // Clean up preview URL on error
       if (previewUrl) {
@@ -101,6 +153,8 @@ export function PhotoUpload({
 
   const handleUploadClick = () => {
     if (disabled || uploading) return;
+    setError(null);
+    setDebugInfo(null);
     fileInputRef.current?.click();
   };
 
@@ -110,6 +164,7 @@ export function PhotoUpload({
       setPreviewUrl(null);
     }
     setError(null);
+    setDebugInfo(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -132,7 +187,7 @@ export function PhotoUpload({
             fill
             className='object-cover object-center'
             onError={() => {
-              // Handle image load error
+              console.error('Image failed to load:', displayImageUrl);
             }}
           />
 
@@ -195,6 +250,13 @@ export function PhotoUpload({
           className='hidden'
           disabled={disabled || uploading}
         />
+
+        {/* Debug Info */}
+        {debugInfo && (
+          <p className='text-xs text-blue-600 text-center max-w-xs bg-blue-50 p-2 rounded'>
+            {debugInfo}
+          </p>
+        )}
 
         {/* Error Message */}
         {error && <p className='text-sm text-red-600 text-center'>{error}</p>}

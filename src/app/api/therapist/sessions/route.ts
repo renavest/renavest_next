@@ -51,6 +51,7 @@ export async function GET() {
         sessionDate: bookingSessions.sessionDate,
         sessionStartTime: bookingSessions.sessionStartTime,
         status: bookingSessions.status,
+        metadata: bookingSessions.metadata,
       })
       .from(bookingSessions)
       .leftJoin(users, eq(bookingSessions.userId, users.id))
@@ -71,14 +72,26 @@ export async function GET() {
     console.log('Fetched Sessions:', sessions);
 
     return NextResponse.json({
-      sessions: sessions.map((session) => ({
-        id: session.id.toString(),
-        clientId: session.clientId,
-        clientName: `${session.clientName || ''} ${session.clientLastName || ''}`.trim(),
-        sessionDate: session.sessionDate,
-        sessionStartTime: session.sessionStartTime,
-        status: session.status,
-      })),
+      sessions: sessions.map((session) => {
+        // Extract timezone and Google Meet link from metadata
+        const sessionMetadata = session.metadata as {
+          therapistTimezone?: string;
+          clientTimezone?: string;
+          googleMeetLink?: string;
+        } | null;
+
+        return {
+          id: session.id.toString(),
+          clientId: session.clientId,
+          clientName: `${session.clientName || ''} ${session.clientLastName || ''}`.trim(),
+          sessionDate: session.sessionDate,
+          sessionStartTime: session.sessionStartTime,
+          status: session.status,
+          therapistTimezone: sessionMetadata?.therapistTimezone || 'UTC',
+          clientTimezone: sessionMetadata?.clientTimezone || 'UTC',
+          googleMeetLink: sessionMetadata?.googleMeetLink || '',
+        };
+      }),
     });
   } catch (error) {
     console.error('Error fetching therapist sessions:', error);

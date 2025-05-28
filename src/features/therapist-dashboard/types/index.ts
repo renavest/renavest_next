@@ -13,27 +13,14 @@ export type UpcomingSession = {
   sessionStartTime: string;
   status: 'scheduled' | 'completed' | 'cancelled' | 'rescheduled';
   googleMeetLink?: string;
+  therapistTimezone?: string;
+  clientTimezone?: string;
 };
 
 export type TherapistStatistics = {
   totalSessions: number;
   totalClients: number;
   completedSessions: number;
-};
-
-type CreateClientNoteInput = {
-  userId: string;
-  therapistId: number;
-  sessionId?: number;
-  title: string;
-  content: {
-    keyObservations?: string[];
-    progressNotes?: string[];
-    actionItems?: string[];
-    emotionalState?: string;
-    additionalContext?: string;
-  };
-  isConfidential: boolean;
 };
 
 export interface ClientMetrics {
