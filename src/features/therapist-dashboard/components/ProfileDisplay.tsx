@@ -65,6 +65,7 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [imageKey, setImageKey] = useState(0);
   const [forceRefresh, setForceRefresh] = useState(false);
+  const [lastUploadTime, setLastUploadTime] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { user, therapist } = profile;
@@ -73,26 +74,30 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
     .map((t: string) => t.trim())
     .filter(Boolean);
 
-  const displayImage = !imgError
-    ? getTherapistImageUrl(
-        therapist.profileUrl || therapist.name || user.firstName || '',
-        forceRefresh,
-      )
-    : PLACEHOLDER;
+  const createImageUrl = () => {
+    const baseUrl = therapist.profileUrl || therapist.name || user.firstName || '';
+    if (!baseUrl) return PLACEHOLDER;
+
+    if (lastUploadTime) {
+      return getTherapistImageUrl(baseUrl, true) + `&upload=${lastUploadTime}`;
+    }
+
+    return getTherapistImageUrl(baseUrl, forceRefresh);
+  };
+
+  const displayImage = !imgError ? createImageUrl() : PLACEHOLDER;
 
   const handlePhotoUpload = async (file: File) => {
     setUploadingPhoto(true);
     setPhotoError(null);
 
     try {
-      // Validate file type
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
       if (!allowedTypes.includes(file.type)) {
         throw new Error('Please upload a JPEG, PNG, or WebP image.');
       }
 
-      // Validate file size (max 10MB)
-      const maxSize = 10 * 1024 * 1024; // 10MB
+      const maxSize = 10 * 1024 * 1024;
       if (file.size > maxSize) {
         throw new Error('File too large. Please upload an image smaller than 10MB.');
       }
@@ -113,30 +118,33 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
 
       console.log('Photo upload successful, new URL:', data.profileUrl);
 
-      // Call the callback to update the parent component
       if (onPhotoUpdated) {
         onPhotoUpdated(data.profileUrl);
       }
 
-      // Force image refresh by updating the key and enabling cache-busting
       setImageKey((prev) => prev + 1);
-      setForceRefresh(true); // Enable cache-busting for this refresh
+      setForceRefresh(true);
       setImgLoaded(false);
       setImgError(false);
+      setLastUploadTime(Date.now());
 
-      // Reset force refresh after image loads
       setTimeout(() => {
-        setForceRefresh(false); // Disable cache-busting after refresh
+        setForceRefresh(false);
         setImgLoaded(false);
         setImgError(false);
         console.log('Image refresh triggered');
       }, 200);
+
+      // Reset upload time after image has had time to load
+      setTimeout(() => {
+        setLastUploadTime(null);
+        console.log('Upload cache-busting reset');
+      }, 3000);
     } catch (err) {
       console.error('Photo upload error:', err);
       setPhotoError(err instanceof Error ? err.message : 'Failed to upload photo');
     } finally {
       setUploadingPhoto(false);
-      // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -166,7 +174,7 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
             />
           )}
           <Image
-            key={`profile-image-${imageKey}`}
+            key={`profile-image-${imageKey}-${lastUploadTime || 'initial'}`}
             src={displayImage}
             alt={therapist.name || user.firstName || 'Profile'}
             fill
@@ -174,9 +182,9 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
             onLoad={() => setImgLoaded(true)}
             onError={() => setImgError(true)}
             priority
+            unoptimized={!!lastUploadTime}
           />
 
-          {/* Photo Upload Overlay */}
           <div className='absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 rounded-2xl flex items-center justify-center'>
             <button
               onClick={handleCameraClick}
@@ -192,7 +200,6 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
             </button>
           </div>
 
-          {/* Hidden file input */}
           <input
             ref={fileInputRef}
             type='file'
@@ -203,7 +210,6 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
           />
         </div>
 
-        {/* Photo upload error */}
         {photoError && (
           <p className='text-sm text-red-600 text-center mb-2 max-w-xs'>{photoError}</p>
         )}
