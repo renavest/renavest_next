@@ -1,24 +1,4 @@
 /**
- * Generates URLs for assets stored in S3
- * @param key The S3 key of the asset
- * @returns The URL to access the asset through our secure API endpoint
- */
-function getAssetUrl(key: string): string {
-  // If it's already a full URL (e.g. external asset), return as is
-  if (key.startsWith('http')) {
-    return key;
-  }
-
-  // If it's an S3 key, return the API route URL
-  if (key) {
-    return `/api/images/${encodeURIComponent(key)}`;
-  }
-
-  // Return empty string if no key provided
-  return '';
-}
-
-/**
  * Generates URLs specifically for therapist profile images
  * @param key The S3 key or therapist name
  * @returns The URL to access the profile image through S3
@@ -31,12 +11,15 @@ export function getTherapistImageUrl(key?: string | null): string {
 
   // If it's already an S3 key, use it directly
   if (key.startsWith('therapists/')) {
-    return `/api/images/${encodeURIComponent(key)}`;
+    // Add cache-busting parameter to ensure fresh images
+    const timestamp = Date.now();
+    return `/api/images/${encodeURIComponent(key)}?t=${timestamp}`;
   }
 
   // Otherwise, treat it as a therapist name and generate the key
   const s3Key = generateTherapistImageKey(key);
-  return `/api/images/${encodeURIComponent(s3Key)}`;
+  const timestamp = Date.now();
+  return `/api/images/${encodeURIComponent(s3Key)}?t=${timestamp}`;
 }
 
 /**

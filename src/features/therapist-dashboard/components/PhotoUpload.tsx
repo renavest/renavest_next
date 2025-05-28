@@ -128,9 +128,6 @@ export function PhotoUpload({
 
       // Show success message briefly
       setTimeout(() => setDebugInfo(null), 3000);
-
-      // Reload the page to ensure the new image is displayed
-      window.location.reload();
     } catch (err) {
       console.error('Photo upload error:', err);
       const errorMsg = err instanceof Error ? err.message : 'Failed to upload photo';
@@ -182,6 +179,7 @@ export function PhotoUpload({
         {/* Photo Preview */}
         <div className='relative w-32 h-32 rounded-2xl overflow-hidden bg-gray-100 border-4 border-purple-100'>
           <Image
+            key={currentPhotoUrl || 'default'}
             src={displayImageUrl}
             alt={therapistName || 'Profile photo'}
             fill
