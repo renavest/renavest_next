@@ -2,13 +2,7 @@ import { eq } from 'drizzle-orm';
 import type Stripe from 'stripe';
 
 import { db } from '@/src/db';
-import {
-  stripeCustomers,
-  therapists,
-  sessionPayments,
-  bookingSessions,
-  therapistPayouts,
-} from '@/src/db/schema';
+import { therapists, sessionPayments, bookingSessions, therapistPayouts } from '@/src/db/schema';
 
 import { syncStripeDataToKV } from './stripe-operations';
 
@@ -102,4 +96,30 @@ export async function handleAccountUpdated(account: Stripe.Account) {
       updatedAt: new Date(),
     })
     .where(eq(therapists.stripeAccountId, account.id));
+}
+
+export async function handleSetupIntentSucceeded(setupIntent: Stripe.SetupIntent) {
+  console.log(`[STRIPE WEBHOOK] Setup intent succeeded: ${setupIntent.id}`);
+
+  // Sync customer data to ensure payment method cache is updated
+  if (setupIntent.customer && typeof setupIntent.customer === 'string') {
+    await syncStripeDataToKV(setupIntent.customer);
+  }
+
+  // Note: The payment method is automatically attached to the customer
+  // when the setup intent succeeds, so we don't need to do additional work here
+}
+
+export async function handleSetupIntentFailed(setupIntent: Stripe.SetupIntent) {
+  console.log(`[STRIPE WEBHOOK] Setup intent failed: ${setupIntent.id}`);
+
+  // Log setup intent failure details for debugging
+  if (setupIntent.last_setup_error) {
+    console.error(`[STRIPE WEBHOOK] Setup intent failed with error:`, {
+      setupIntentId: setupIntent.id,
+      customerId: setupIntent.customer,
+      errorType: setupIntent.last_setup_error.type,
+      errorMessage: setupIntent.last_setup_error.message,
+    });
+  }
 }

@@ -26,10 +26,98 @@ interface TherapistProfile {
     profileUrl?: string;
     hourlyRate?: string;
     hourlyRateCents?: number;
+    updatedAt?: string; // ISO string from database
   };
 }
 
 const PLACEHOLDER = '/experts/placeholderexp.png';
+
+// Custom hook for photo upload functionality
+function usePhotoUpload(onPhotoUpdated?: (newPhotoUrl: string) => void) {
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [imageKey, setImageKey] = useState(0);
+  const [forceRefresh, setForceRefresh] = useState(false);
+  const [uploadTimestamp, setUploadTimestamp] = useState<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePhotoUpload = async (file: File) => {
+    setUploadingPhoto(true);
+    setPhotoError(null);
+
+    try {
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error('Please upload a JPEG, PNG, or WebP image.');
+      }
+
+      const maxSize = 10 * 1024 * 1024;
+      if (file.size > maxSize) {
+        throw new Error('File too large. Please upload an image smaller than 10MB.');
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/therapist/upload-photo', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to upload photo');
+      }
+
+      console.log('Photo upload successful, new URL:', data.profileUrl);
+
+      if (onPhotoUpdated) {
+        onPhotoUpdated(data.profileUrl);
+      }
+
+      setImageKey((prev) => prev + 1);
+      setForceRefresh(true);
+      setUploadTimestamp(data.timestamp);
+
+      setTimeout(() => {
+        setForceRefresh(false);
+        console.log('Image refresh triggered');
+      }, 200);
+    } catch (err) {
+      console.error('Photo upload error:', err);
+      setPhotoError(err instanceof Error ? err.message : 'Failed to upload photo');
+    } finally {
+      setUploadingPhoto(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      handlePhotoUpload(file);
+    }
+  };
+
+  const handleCameraClick = () => {
+    if (uploadingPhoto) return;
+    fileInputRef.current?.click();
+  };
+
+  return {
+    uploadingPhoto,
+    photoError,
+    imageKey,
+    forceRefresh,
+    uploadTimestamp,
+    fileInputRef,
+    handleFileSelect,
+    handleCameraClick,
+  };
+}
 
 function ExpertiseTags({ tags }: { tags: string[] }) {
   if (!tags.length) return null;
@@ -61,84 +149,40 @@ interface ProfileDisplayProps {
 export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: ProfileDisplayProps) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const [photoError, setPhotoError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const {
+    uploadingPhoto,
+    photoError,
+    imageKey,
+    forceRefresh,
+    uploadTimestamp,
+    fileInputRef,
+    handleFileSelect,
+    handleCameraClick,
+  } = usePhotoUpload(onPhotoUpdated);
 
   const { user, therapist } = profile;
   const expertiseTags = (therapist.expertise || '')
     .split(',')
     .map((t: string) => t.trim())
     .filter(Boolean);
-  const displayImage = !imgError
-    ? getTherapistImageUrl(therapist.profileUrl || therapist.name || user.firstName || '')
-    : PLACEHOLDER;
 
-  const handlePhotoUpload = async (file: File) => {
-    setUploadingPhoto(true);
-    setPhotoError(null);
+  // Create image URL with cache-busting when needed
+  const createImageUrl = () => {
+    const baseUrl = therapist.profileUrl || therapist.name || user.firstName || '';
+    if (!baseUrl) return PLACEHOLDER;
 
-    try {
-      // Validate file type
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-      if (!allowedTypes.includes(file.type)) {
-        throw new Error('Please upload a JPEG, PNG, or WebP image.');
-      }
-
-      // Validate file size (max 10MB)
-      const maxSize = 10 * 1024 * 1024; // 10MB
-      if (file.size > maxSize) {
-        throw new Error('File too large. Please upload an image smaller than 10MB.');
-      }
-
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch('/api/therapist/upload-photo', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to upload photo');
-      }
-
-      // Call the callback to update the parent component
-      if (onPhotoUpdated) {
-        onPhotoUpdated(data.profileUrl);
-      }
-
-      // Reset image states to trigger reload
-      setImgLoaded(false);
-      setImgError(false);
-
-      // Reload the page to ensure the new image is displayed
-      window.location.reload();
-    } catch (err) {
-      console.error('Photo upload error:', err);
-      setPhotoError(err instanceof Error ? err.message : 'Failed to upload photo');
-    } finally {
-      setUploadingPhoto(false);
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+    // Use upload timestamp for immediate cache-busting after successful uploads
+    if (uploadTimestamp) {
+      return getTherapistImageUrl(baseUrl, true, uploadTimestamp);
     }
+
+    // Use database updatedAt timestamp for consistent cache-busting
+    const dbTimestamp = therapist.updatedAt ? new Date(therapist.updatedAt).getTime() : undefined;
+    return getTherapistImageUrl(baseUrl, forceRefresh, dbTimestamp);
   };
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      handlePhotoUpload(file);
-    }
-  };
-
-  const handleCameraClick = () => {
-    if (uploadingPhoto) return;
-    fileInputRef.current?.click();
-  };
+  const displayImage = !imgError ? createImageUrl() : PLACEHOLDER;
 
   return (
     <div className='w-full h-full bg-white rounded-3xl shadow-2xl p-8 flex flex-col items-center max-w-xl mx-auto min-h-[540px] border border-purple-100'>
@@ -150,7 +194,9 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
               aria-label='Image loading placeholder'
             />
           )}
+
           <Image
+            key={`profile-image-${imageKey}`}
             src={displayImage}
             alt={therapist.name || user.firstName || 'Profile'}
             fill
@@ -160,7 +206,6 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
             priority
           />
 
-          {/* Photo Upload Overlay */}
           <div className='absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 rounded-2xl flex items-center justify-center'>
             <button
               onClick={handleCameraClick}
@@ -176,7 +221,6 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
             </button>
           </div>
 
-          {/* Hidden file input */}
           <input
             ref={fileInputRef}
             type='file'
@@ -187,7 +231,6 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
           />
         </div>
 
-        {/* Photo upload error */}
         {photoError && (
           <p className='text-sm text-red-600 text-center mb-2 max-w-xs'>{photoError}</p>
         )}

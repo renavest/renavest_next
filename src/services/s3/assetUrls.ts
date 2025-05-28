@@ -1,29 +1,15 @@
 /**
- * Generates URLs for assets stored in S3
- * @param key The S3 key of the asset
- * @returns The URL to access the asset through our secure API endpoint
- */
-function getAssetUrl(key: string): string {
-  // If it's already a full URL (e.g. external asset), return as is
-  if (key.startsWith('http')) {
-    return key;
-  }
-
-  // If it's an S3 key, return the API route URL
-  if (key) {
-    return `/api/images/${encodeURIComponent(key)}`;
-  }
-
-  // Return empty string if no key provided
-  return '';
-}
-
-/**
  * Generates URLs specifically for therapist profile images
  * @param key The S3 key or therapist name
+ * @param bustCache Whether to add a cache-busting parameter (use after uploads)
+ * @param timestamp Optional timestamp for cache-busting (from database updatedAt)
  * @returns The URL to access the profile image through S3
  */
-export function getTherapistImageUrl(key?: string | null): string {
+export function getTherapistImageUrl(
+  key?: string | null,
+  bustCache = false,
+  timestamp?: number,
+): string {
   if (!key) return '/experts/placeholderexp.png';
 
   // If it's already a full URL, return it
@@ -31,12 +17,22 @@ export function getTherapistImageUrl(key?: string | null): string {
 
   // If it's already an S3 key, use it directly
   if (key.startsWith('therapists/')) {
-    return `/api/images/${encodeURIComponent(key)}`;
+    const baseUrl = `/api/images/${encodeURIComponent(key)}`;
+    if (bustCache || timestamp) {
+      const cacheParam = timestamp ? `v=${timestamp}` : `t=${Date.now()}`;
+      return `${baseUrl}?${cacheParam}`;
+    }
+    return baseUrl;
   }
 
   // Otherwise, treat it as a therapist name and generate the key
   const s3Key = generateTherapistImageKey(key);
-  return `/api/images/${encodeURIComponent(s3Key)}`;
+  const baseUrl = `/api/images/${encodeURIComponent(s3Key)}`;
+  if (bustCache || timestamp) {
+    const cacheParam = timestamp ? `v=${timestamp}` : `t=${Date.now()}`;
+    return `${baseUrl}?${cacheParam}`;
+  }
+  return baseUrl;
 }
 
 /**

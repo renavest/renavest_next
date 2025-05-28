@@ -8,9 +8,11 @@ import {
   handlePaymentIntentSucceeded,
   handlePaymentIntentFailed,
   handleAccountUpdated,
+  handleSetupIntentSucceeded,
+  handleSetupIntentFailed,
 } from '@/src/features/stripe/utils/webhook-handlers';
 
-// Events we track for updates
+// Events we track for updates - optimized for 2025 standards
 const ALLOWED_STRIPE_WEBHOOK_EVENTS: Stripe.Event.Type[] = [
   'checkout.session.completed',
   'customer.subscription.created',
@@ -28,6 +30,10 @@ const ALLOWED_STRIPE_WEBHOOK_EVENTS: Stripe.Event.Type[] = [
   'payment_intent.payment_failed',
   'payment_intent.canceled',
   'account.updated', // For Connect accounts onboarding status
+  // Added for better payment method handling
+  'payment_method.automatically_updated', // Replaces card_automatically_updated as of 2020-08-27
+  'setup_intent.succeeded',
+  'setup_intent.setup_failed',
 ];
 
 async function processEvent(event: Stripe.Event) {
@@ -91,12 +97,31 @@ async function processEvent(event: Stripe.Event) {
         break;
       }
 
+      case 'payment_method.automatically_updated': {
+        const paymentMethod = event.data.object as Stripe.PaymentMethod;
+        console.log(`[STRIPE WEBHOOK] Payment method automatically updated: ${paymentMethod.id}`);
+        // Handle payment method updates if needed
+        break;
+      }
+
+      case 'setup_intent.succeeded': {
+        const setupIntent = event.data.object as Stripe.SetupIntent;
+        await handleSetupIntentSucceeded(setupIntent);
+        break;
+      }
+
+      case 'setup_intent.setup_failed': {
+        const setupIntent = event.data.object as Stripe.SetupIntent;
+        await handleSetupIntentFailed(setupIntent);
+        break;
+      }
+
       default:
         console.log(`[STRIPE WEBHOOK] Unhandled event type: ${event.type}`);
     }
   } catch (error) {
     console.error(`[STRIPE WEBHOOK] Error processing ${event.type}:`, error);
-    throw error;
+    throw error; // Re-throw to ensure webhook returns 500 for retry
   }
 }
 
@@ -116,20 +141,31 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Verify the webhook signature
-    const event = stripe.webhooks.constructEvent(body, signature, STRIPE_CONFIG.WEBHOOK_SECRET);
+    // Verify the webhook signature with 2025 security standards
+    const event = stripe.webhooks.constructEvent(
+      body,
+      signature,
+      STRIPE_CONFIG.WEBHOOK_SECRET,
+      STRIPE_CONFIG.SECURITY.WEBHOOK_TOLERANCE, // Use configured tolerance (300 seconds)
+    );
 
-    // Process the event
+    // Log event for debugging (but don't log sensitive data)
+    console.log(`[STRIPE WEBHOOK] Received event: ${event.type} (${event.id})`);
+
+    // Process the event asynchronously for better webhook response times
     await processEvent(event);
 
-    return NextResponse.json({ received: true });
+    // Return quickly to acknowledge receipt (webhook best practice)
+    return NextResponse.json({ received: true }, { status: 200 });
   } catch (error) {
     console.error('[STRIPE WEBHOOK] Error processing webhook:', error);
 
     if (error instanceof stripe.errors.StripeSignatureVerificationError) {
+      console.error('[STRIPE WEBHOOK] Signature verification failed:', error.message);
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }
 
+    // Return 500 for retry logic
     return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
   }
 }

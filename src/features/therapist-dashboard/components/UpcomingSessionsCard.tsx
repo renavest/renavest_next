@@ -16,12 +16,14 @@ export function UpcomingSessionsCard({
   title?: string;
   showIcon?: boolean;
 }) {
-  const formatTime = (dateTimeString: string) => {
-    return createDate(dateTimeString).toFormat('h:mm a');
+  const formatTime = (dateTimeString: string, timezone?: string) => {
+    const tz = timezone || 'America/New_York'; // Default fallback timezone
+    return createDate(dateTimeString, tz).toFormat('h:mm a');
   };
 
-  const formatDate = (dateTimeString: string) => {
-    return createDate(dateTimeString).toFormat('ccc, MMM d');
+  const formatDate = (dateTimeString: string, timezone?: string) => {
+    const tz = timezone || 'America/New_York'; // Default fallback timezone
+    return createDate(dateTimeString, tz).toFormat('ccc, MMM d');
   };
 
   return (
@@ -46,9 +48,16 @@ export function UpcomingSessionsCard({
                   <p className='font-medium text-gray-800'>
                     {session.clientName || 'Unknown Client'}
                   </p>
-                  <p className='text-sm text-gray-500'>{formatDate(session.sessionDate)}</p>
+                  <p className='text-sm text-gray-500'>
+                    {formatDate(session.sessionDate, session.therapistTimezone)}
+                  </p>
                   <p className='text-sm font-medium text-purple-600'>
-                    {formatTime(session.sessionStartTime)}
+                    {formatTime(session.sessionStartTime, session.therapistTimezone)}
+                    {session.therapistTimezone && (
+                      <span className='text-xs text-gray-400 ml-1'>
+                        ({session.therapistTimezone})
+                      </span>
+                    )}
                   </p>
                 </div>
                 <div className='flex flex-col items-end gap-2'>

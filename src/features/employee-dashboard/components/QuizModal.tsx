@@ -16,52 +16,57 @@ const QUIZ_QUESTIONS = [
   {
     id: 0,
     question:
-      'Thinking about your finances, which of these topics currently feels like the heaviest weight or biggest source of stress for you?',
+      'You get a notification that your bank balance is lower than expected. What are you most likely to do first?',
     options: [
-      { value: 'daily_expenses', label: 'Managing day-to-day expenses' },
-      { value: 'debt_amount', label: 'The amount of debt I have' },
-      { value: 'saving_goals', label: 'Saving for important goals' },
-      { value: 'unexpected_bills', label: 'Dealing with unexpected bills' },
-      { value: 'money_anxiety', label: 'Feeling anxious or worried about money generally' },
-      { value: 'not_enough', label: 'Not enough to meet my needs' },
+      { value: 'put_off', label: 'Put it off and come back to it later' },
+      {
+        value: 'check_transactions',
+        label: "Go through recent transactions to check what's going on",
+      },
+      { value: 'talk_through', label: 'Talk it through with someone you trust' },
+      { value: 'think_differently', label: 'Think about what you could have done differently' },
     ],
   },
   {
     id: 1,
-    question:
-      "Looking ahead at your financial life over the next one to three years, what's your most important financial goal?",
+    question: "When money comes up in conversation, what's your usual reaction?",
     options: [
-      { value: 'debt_free', label: 'Becoming debt-free' },
-      { value: 'emergency_fund', label: 'Building an emergency fund' },
-      { value: 'home_purchase', label: 'Saving for a home purchase' },
-      { value: 'retirement_planning', label: 'Planning for retirement' },
-      { value: 'investment_growth', label: 'Growing my investments' },
-      { value: 'financial_stability', label: 'Achieving overall financial stability' },
+      { value: 'get_quiet', label: 'I get quiet or try to steer the topic elsewhere' },
+      { value: 'explain_defensive', label: 'I tend to explain a lot or feel defensive' },
+      { value: 'keep_simple', label: "I keep it simple and don't say much" },
+      { value: 'share_lots', label: 'I usually have a lot to share about it' },
     ],
   },
   {
     id: 2,
     question:
-      'On a scale of one to five, where one is not at all confident and five is very confident, how confident do you feel about managing your finances right now?',
+      'If you were meeting with a financial therapist, what kind of session would feel most helpful?',
     options: [
-      { value: '1', label: '1 - Not at all confident' },
-      { value: '2', label: '2 - Slightly confident' },
-      { value: '3', label: '3 - Moderately confident' },
-      { value: '4', label: '4 - Very confident' },
-      { value: '5', label: '5 - Extremely confident' },
+      { value: 'bigger_picture', label: 'Taking time to talk and understand the bigger picture' },
+      { value: 'clear_goals', label: 'Setting clear goals and working toward them' },
+      { value: 'daily_habits', label: 'Exploring how money affects your daily life or habits' },
+      { value: 'collaborate', label: 'Collaborating together to figure things out' },
     ],
   },
   {
     id: 3,
-    question:
-      'Are there any specific therapist qualities or communication styles that are important to you?',
+    question: 'Which of these situations feels most relatable right now?',
     options: [
-      { value: 'direct_concise', label: 'Short and direct communication' },
-      { value: 'detailed_thorough', label: 'Detailed and thorough explanations' },
-      { value: 'empathetic_supportive', label: 'Empathetic and emotionally supportive' },
-      { value: 'practical_actionable', label: 'Practical and action-oriented' },
-      { value: 'experienced_credentials', label: 'Strong credentials and experience' },
-      { value: 'no_preference', label: 'No specific preference' },
+      { value: 'income_coverage', label: "Income doesn't seem to cover everything" },
+      { value: 'spending_debt', label: 'Spending or debt feels hard to keep up with' },
+      { value: 'tension_others', label: "There's tension with others around money" },
+      { value: 'surprise_expenses', label: 'Worrying about surprise expenses or emergencies' },
+    ],
+  },
+  {
+    id: 4,
+    question: 'How confident do you feel managing your money right now?',
+    options: [
+      { value: '1', label: '1 - Not confident at all' },
+      { value: '2', label: '2 - Slightly confident' },
+      { value: '3', label: '3 - Moderately confident' },
+      { value: '4', label: '4 - Very confident' },
+      { value: '5', label: '5 - Extremely confident' },
     ],
   },
 ];

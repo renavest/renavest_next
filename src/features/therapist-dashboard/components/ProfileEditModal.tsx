@@ -25,6 +25,7 @@ interface TherapistProfile {
     profileUrl?: string;
     hourlyRate?: string;
     hourlyRateCents?: number;
+    updatedAt?: string;
   };
 }
 
@@ -100,6 +101,7 @@ export function ProfileEditModal({
             therapistName={form.name || profile.therapist.name}
             onPhotoUploaded={onPhotoUploaded}
             disabled={saving}
+            updatedAt={profile.therapist.updatedAt}
           />
           <div>
             <label htmlFor='name' className='block text-sm font-semibold text-gray-700 mb-1'>

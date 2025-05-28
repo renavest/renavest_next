@@ -1,0 +1,1 @@
+ALTER TABLE "therapists" ADD COLUMN "profile_image_version" integer DEFAULT 1 NOT NULL;

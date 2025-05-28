@@ -105,9 +105,15 @@ export default async function TherapistPage() {
       .limit(10);
 
     const upcomingSessions: UpcomingSession[] = sessionsResult.map((session) => {
-      // Extract Google Meet link from metadata
-      const metadata = session.metadata as { googleMeetLink?: string } | null;
+      // Extract Google Meet link and timezone info from metadata
+      const metadata = session.metadata as {
+        googleMeetLink?: string;
+        therapistTimezone?: string;
+        clientTimezone?: string;
+      } | null;
       const googleMeetLink = metadata?.googleMeetLink || '';
+      const therapistTimezone = metadata?.therapistTimezone || 'UTC';
+      const clientTimezone = metadata?.clientTimezone || 'UTC';
 
       return {
         id: session.id.toString(),
@@ -117,6 +123,8 @@ export default async function TherapistPage() {
         sessionStartTime: session.sessionStartTime.toISOString(),
         status: session.status as 'scheduled' | 'completed' | 'cancelled' | 'rescheduled',
         googleMeetLink,
+        therapistTimezone,
+        clientTimezone,
       };
     });
 
