@@ -142,6 +142,7 @@ export function PhotoUpload({
 
   // Reset upload state when refresh trigger changes
   if (refreshTrigger > 0 && refreshTrigger !== lastRefreshTrigger) {
+    console.log('PhotoUpload: Refresh trigger detected', { refreshTrigger, lastRefreshTrigger });
     setJustUploaded(false);
     setDebugInfo(null);
     if (previewUrl) {

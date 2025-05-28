@@ -52,6 +52,7 @@ export function ProfileDisplay({ profile, onEditClick }: ProfileDisplayProps) {
   // Force image reload when refresh trigger changes
   let imageKey = therapist.updatedAt || 'default';
   if (refreshTrigger > 0 && refreshTrigger !== lastRefreshTrigger) {
+    console.log('ProfileDisplay: Refresh trigger detected', { refreshTrigger, lastRefreshTrigger });
     imageKey = `refreshed-${refreshTrigger}`;
     setImgLoaded(false);
     setImgError(false);
@@ -66,10 +67,27 @@ export function ProfileDisplay({ profile, onEditClick }: ProfileDisplayProps) {
     // Use database updatedAt timestamp for consistent cache-busting
     const dbTimestamp = therapist.updatedAt ? new Date(therapist.updatedAt).getTime() : undefined;
 
-    return getTherapistImageUrl(baseUrl, false, dbTimestamp);
+    const imageUrl = getTherapistImageUrl(baseUrl, false, dbTimestamp);
+    console.log('ProfileDisplay: Creating image URL', {
+      baseUrl,
+      therapistProfileUrl: therapist.profileUrl,
+      dbTimestamp,
+      imageUrl,
+      imageKey,
+    });
+
+    return imageUrl;
   };
 
   const displayImage = !imgError ? createImageUrl() : PLACEHOLDER;
+
+  console.log('ProfileDisplay render:', {
+    imageKey,
+    displayImage,
+    refreshTrigger,
+    lastRefreshTrigger,
+    therapistUpdatedAt: therapist.updatedAt,
+  });
 
   return (
     <div className='w-full h-full bg-white rounded-3xl shadow-2xl p-8 flex flex-col items-center max-w-xl mx-auto min-h-[540px] border border-purple-100'>

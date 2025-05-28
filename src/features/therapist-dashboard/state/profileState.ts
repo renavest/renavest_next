@@ -182,12 +182,14 @@ export const profileActions = {
       profileActions.closeModal();
 
       // Trigger a complete refresh of photo components
+      console.log('Triggering photo refresh - first trigger');
       profileRefreshTriggerSignal.value = Date.now();
 
       // Force a complete profile reload to get the latest data with updated timestamps
       setTimeout(async () => {
         await profileActions.loadProfile();
         // Trigger another refresh after reload to ensure all components update
+        console.log('Triggering photo refresh - second trigger after reload');
         profileRefreshTriggerSignal.value = Date.now();
       }, 200);
 
