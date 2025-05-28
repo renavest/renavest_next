@@ -1,6 +1,6 @@
 'use client';
 import { Camera, Loader2, Upload, X } from 'lucide-react';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 
 import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
 
@@ -134,21 +134,22 @@ export function PhotoUpload({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
   const [justUploaded, setJustUploaded] = useState(false);
+  const [lastRefreshTrigger, setLastRefreshTrigger] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Listen to profile refresh trigger to reset upload state
-  useEffect(() => {
-    const refreshTrigger = profileRefreshTriggerSignal.value;
-    if (refreshTrigger > 0) {
-      // Reset upload state when profile is refreshed
-      setJustUploaded(false);
-      setDebugInfo(null);
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-        setPreviewUrl(null);
-      }
+  // Access signal directly - this will auto-subscribe
+  const refreshTrigger = profileRefreshTriggerSignal.value;
+
+  // Reset upload state when refresh trigger changes
+  if (refreshTrigger > 0 && refreshTrigger !== lastRefreshTrigger) {
+    setJustUploaded(false);
+    setDebugInfo(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
     }
-  }, [profileRefreshTriggerSignal.value, previewUrl]);
+    setLastRefreshTrigger(refreshTrigger);
+  }
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

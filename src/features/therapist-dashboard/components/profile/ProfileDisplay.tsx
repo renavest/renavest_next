@@ -1,6 +1,6 @@
 'use client';
 import { Pencil } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
 
@@ -38,7 +38,7 @@ interface ProfileDisplayProps {
 export function ProfileDisplay({ profile, onEditClick }: ProfileDisplayProps) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
-  const [imageKey, setImageKey] = useState(0);
+  const [lastRefreshTrigger, setLastRefreshTrigger] = useState(0);
 
   const { user, therapist } = profile;
   const expertiseTags = (therapist.expertise || '')
@@ -46,16 +46,17 @@ export function ProfileDisplay({ profile, onEditClick }: ProfileDisplayProps) {
     .map((t: string) => t.trim())
     .filter(Boolean);
 
-  // Listen to profile refresh trigger to force image reload
-  useEffect(() => {
-    const refreshTrigger = profileRefreshTriggerSignal.value;
-    if (refreshTrigger > 0) {
-      // Force image re-render by updating key
-      setImageKey(refreshTrigger);
-      setImgLoaded(false);
-      setImgError(false);
-    }
-  }, [profileRefreshTriggerSignal.value]);
+  // Access signal directly - this will auto-subscribe
+  const refreshTrigger = profileRefreshTriggerSignal.value;
+
+  // Force image reload when refresh trigger changes
+  let imageKey = therapist.updatedAt || 'default';
+  if (refreshTrigger > 0 && refreshTrigger !== lastRefreshTrigger) {
+    imageKey = `refreshed-${refreshTrigger}`;
+    setImgLoaded(false);
+    setImgError(false);
+    setLastRefreshTrigger(refreshTrigger);
+  }
 
   // Create image URL with cache-busting when needed
   const createImageUrl = () => {
