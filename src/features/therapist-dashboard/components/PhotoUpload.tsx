@@ -58,6 +58,7 @@ export function PhotoUpload({
   const [error, setError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
+  const [justUploaded, setJustUploaded] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,6 +93,7 @@ export function PhotoUpload({
   const uploadPhoto = async (file: File) => {
     setUploading(true);
     setError(null);
+    setJustUploaded(false);
 
     try {
       console.log('Starting upload process...');
@@ -116,6 +118,7 @@ export function PhotoUpload({
 
       console.log('Upload successful:', result.profileUrl);
       setDebugInfo(`Upload successful: ${result.profileUrl}`);
+      setJustUploaded(true);
 
       // Call the callback with the new photo URL
       onPhotoUploaded(result.profileUrl!);
@@ -127,7 +130,10 @@ export function PhotoUpload({
       }
 
       // Show success message briefly
-      setTimeout(() => setDebugInfo(null), 3000);
+      setTimeout(() => {
+        setDebugInfo(null);
+        setJustUploaded(false);
+      }, 3000);
     } catch (err) {
       console.error('Photo upload error:', err);
       const errorMsg = err instanceof Error ? err.message : 'Failed to upload photo';
@@ -168,7 +174,7 @@ export function PhotoUpload({
   };
 
   const displayImageUrl =
-    previewUrl || getTherapistImageUrl(currentPhotoUrl || therapistName || '');
+    previewUrl || getTherapistImageUrl(currentPhotoUrl || therapistName || '', justUploaded);
   const isPlaceholder = !previewUrl && !currentPhotoUrl;
 
   return (
@@ -179,7 +185,7 @@ export function PhotoUpload({
         {/* Photo Preview */}
         <div className='relative w-32 h-32 rounded-2xl overflow-hidden bg-gray-100 border-4 border-purple-100'>
           <Image
-            key={currentPhotoUrl || 'default'}
+            key={justUploaded ? `uploaded-${Date.now()}` : currentPhotoUrl || 'default'}
             src={displayImageUrl}
             alt={therapistName || 'Profile photo'}
             fill
