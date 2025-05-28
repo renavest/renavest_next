@@ -21,6 +21,12 @@ const config: NextConfig = {
       {
         protocol: 'https',
         hostname: 'renavestapp.com',
+        port: '*',
+        pathname: '/api/images/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'renavestapp.com',
         pathname: '/**',
       },
       {

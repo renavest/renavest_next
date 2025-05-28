@@ -54,7 +54,7 @@ export async function GET(
   request: NextRequest,
   context: { params: Promise<{ key: string }> },
 ): Promise<NextResponse> {
-  console.log('=== Image API Route Called ===');
+  console.log('=== Image API Route Called = ==');
   console.log('URL:', request.url);
   console.log('User-Agent:', request.headers.get('user-agent'));
 
