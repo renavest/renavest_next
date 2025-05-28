@@ -37,6 +37,7 @@ function usePhotoUpload(onPhotoUpdated?: (newPhotoUrl: string) => void) {
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [imageKey, setImageKey] = useState(0);
   const [forceRefresh, setForceRefresh] = useState(false);
+  const [uploadTimestamp, setUploadTimestamp] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handlePhotoUpload = async (file: File) => {
@@ -76,6 +77,7 @@ function usePhotoUpload(onPhotoUpdated?: (newPhotoUrl: string) => void) {
 
       setImageKey((prev) => prev + 1);
       setForceRefresh(true);
+      setUploadTimestamp(data.timestamp);
 
       setTimeout(() => {
         setForceRefresh(false);
@@ -109,6 +111,7 @@ function usePhotoUpload(onPhotoUpdated?: (newPhotoUrl: string) => void) {
     photoError,
     imageKey,
     forceRefresh,
+    uploadTimestamp,
     fileInputRef,
     handleFileSelect,
     handleCameraClick,
@@ -151,6 +154,7 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
     photoError,
     imageKey,
     forceRefresh,
+    uploadTimestamp,
     fileInputRef,
     handleFileSelect,
     handleCameraClick,
@@ -162,12 +166,17 @@ export function ProfileDisplay({ profile, onEditClick, onPhotoUpdated }: Profile
     .map((t: string) => t.trim())
     .filter(Boolean);
 
-  // Create image URL - unique filenames eliminate caching issues
+  // Create image URL with cache-busting when needed
   const createImageUrl = () => {
     const baseUrl = therapist.profileUrl || therapist.name || user.firstName || '';
     if (!baseUrl) return PLACEHOLDER;
 
-    // Since we use unique filenames, no special cache-busting needed
+    // Use upload timestamp for cache-busting after successful uploads
+    if (uploadTimestamp) {
+      return getTherapistImageUrl(baseUrl, true) + `&upload=${uploadTimestamp}`;
+    }
+
+    // Otherwise use normal cache behavior with optional force refresh
     return getTherapistImageUrl(baseUrl, forceRefresh);
   };
 

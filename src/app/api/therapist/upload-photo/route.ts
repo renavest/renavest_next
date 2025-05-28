@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate S3 key based on therapist name with timestamp to ensure uniqueness
+    // Generate S3 key based on therapist name (consistent naming for existing compatibility)
     const therapistName = therapistResult[0].name || userResult[0].firstName || 'therapist';
     const normalizedName = therapistName
       .trim()
@@ -135,50 +135,41 @@ export async function POST(request: NextRequest) {
       .replace(/^-+|-+$/g, '');
 
     const fileExtension = file.type === 'image/png' ? 'png' : 'jpg';
-    const timestamp = Date.now();
-    const s3Key = `therapists/${normalizedName}-${timestamp}.${fileExtension}`;
+    const s3Key = `therapists/${normalizedName}.${fileExtension}`;
 
-    console.log('S3 upload details:', { s3Key, fileExtension, normalizedName, timestamp });
+    console.log('S3 upload details:', { s3Key, fileExtension, normalizedName });
 
-    // Delete old profile image if it exists
-    const oldProfileUrl = therapistResult[0].profileUrl;
-    if (oldProfileUrl && oldProfileUrl.startsWith('therapists/')) {
-      try {
-        console.log('Deleting old profile image:', oldProfileUrl);
-        const deleteCommand = new DeleteObjectCommand({
-          Bucket: bucketName,
-          Key: oldProfileUrl,
-        });
-        await s3Client.send(deleteCommand);
-        console.log('Old profile image deleted successfully');
-      } catch (deleteError) {
-        console.error('Failed to delete old profile image:', deleteError);
-        // Continue with upload even if deletion fails
-      }
-    }
+    // Note: We're overwriting the existing file with the same S3 key
+    // This maintains compatibility with existing database records
 
     // Convert file to buffer
     const buffer = Buffer.from(await file.arrayBuffer());
     console.log('Buffer created, size:', buffer.length);
 
-    // Upload to S3
+    // Upload to S3 with cache invalidation headers
     const uploadCommand = new PutObjectCommand({
       Bucket: bucketName,
       Key: s3Key,
       Body: buffer,
       ContentType: file.type,
-      CacheControl: 'public, max-age=31536000', // Cache for 1 year
+      CacheControl: 'public, max-age=0, must-revalidate', // Force cache revalidation
+      Metadata: {
+        'upload-timestamp': Date.now().toString(), // Help with cache busting
+      },
     });
 
     console.log('Attempting S3 upload...');
     await s3Client.send(uploadCommand);
     console.log('S3 upload successful');
 
-    // Update therapist profile with new image URL
+    // Update therapist profile with new image URL and timestamp
     console.log('Updating therapist profile...');
     await db
       .update(therapists)
-      .set({ profileUrl: s3Key })
+      .set({
+        profileUrl: s3Key,
+        updatedAt: new Date(), // Update the timestamp to help with cache busting
+      })
       .where(eq(therapists.id, therapistResult[0].id));
 
     console.log('Database update successful');
@@ -186,6 +177,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       profileUrl: s3Key,
+      timestamp: Date.now(), // Include timestamp for cache busting
       message: 'Photo uploaded successfully',
     });
   } catch (error) {
