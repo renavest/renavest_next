@@ -12,7 +12,6 @@ export default async function Home() {
   try {
     auth.protect();
 
-    // Fetch both active therapists and pending therapists
     const [dbTherapists, dbPendingTherapists, dbUsers] = await Promise.all([
       db
         .select({

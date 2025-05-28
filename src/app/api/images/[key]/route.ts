@@ -1,3 +1,5 @@
+import { Readable } from 'stream';
+
 import {
   S3Client,
   GetObjectCommand,
@@ -21,6 +23,8 @@ export async function GET(
   request: NextRequest,
   context: { params: Promise<{ key: string }> },
 ): Promise<NextResponse> {
+  let decodedKey = ''; // Declare at function scope
+
   try {
     // Check AWS configuration first
     const hasAwsConfig = !!(
@@ -31,7 +35,8 @@ export async function GET(
 
     if (!hasAwsConfig) {
       console.error('AWS configuration missing for image serving');
-      return NextResponse.json({ error: 'Service not configured' }, { status: 503 });
+      // Return a redirect to placeholder instead of JSON error
+      return NextResponse.redirect(new URL('/experts/placeholderexp.png', request.url));
     }
 
     // Safely get params with error handling
@@ -40,16 +45,16 @@ export async function GET(
       params = await context.params;
     } catch (paramError) {
       console.error('Error getting params:', paramError);
-      return NextResponse.json({ error: 'Invalid request parameters' }, { status: 400 });
+      return NextResponse.redirect(new URL('/experts/placeholderexp.png', request.url));
     }
 
     const rawKey = params.key;
-    const decodedKey = decodeURIComponent(rawKey);
+    decodedKey = decodeURIComponent(rawKey);
 
     // Validate S3 key to prevent injection attacks
     if (!decodedKey || decodedKey.includes('..') || decodedKey.startsWith('/')) {
       console.error('Invalid S3 key detected:', decodedKey);
-      return NextResponse.json({ error: 'Invalid image key' }, { status: 400 });
+      return NextResponse.redirect(new URL('/experts/placeholderexp.png', request.url));
     }
 
     const command = new GetObjectCommand({
@@ -57,16 +62,16 @@ export async function GET(
       Key: decodedKey,
     });
 
-    // Get the object directly from S3 with timeout
+    // Get the object directly from S3 with shorter timeout to prevent 502s
     const response = (await Promise.race([
       s3Client.send(command),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('S3 request timeout')), 10000)),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('S3 request timeout')), 5000)),
     ])) as GetObjectCommandOutput;
 
     // Convert the S3 response stream to a Response
     if (!response.Body) {
       console.error('No body in S3 response for:', decodedKey);
-      return NextResponse.json({ error: 'Image not found' }, { status: 404 });
+      return NextResponse.redirect(new URL('/experts/placeholderexp.png', request.url));
     }
 
     // Get the content type from S3 or default to jpeg
@@ -75,41 +80,66 @@ export async function GET(
     // Create headers for better caching and cache invalidation support
     const headers = new Headers({
       'Content-Type': contentType,
-      'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400', // More flexible caching
       'Content-Length': response.ContentLength?.toString() || '',
-      ETag: response.ETag || `"${Date.now()}"`, // Add ETag for better cache control
+      ETag: response.ETag || `"${Date.now()}"`,
     });
 
     // Add cache-busting support via query parameters
     const url = new URL(request.url);
     const version = url.searchParams.get('v') || url.searchParams.get('t');
     if (version) {
-      headers.set('Cache-Control', 'public, max-age=31536000, immutable'); // Long cache for versioned images
+      // For versioned requests (cache-busting), use no-cache to force fresh fetch
+      headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      headers.set('Pragma', 'no-cache');
+      headers.set('Expires', '0');
+    } else {
+      // For normal requests, allow some caching
+      headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
     }
 
-    // Stream the response directly
-    return new NextResponse(response.Body as ReadableStream, { headers });
+    // Convert the stream to bytes to avoid stream handling issues
+    let buffer: Buffer;
+
+    if (response.Body instanceof Buffer) {
+      // If it's already a buffer, use it directly
+      buffer = response.Body;
+    } else {
+      // Convert the stream to buffer using Node.js stream methods
+      const chunks: Uint8Array[] = [];
+      const stream = response.Body as Readable; // S3 response body is a Node.js readable stream
+
+      for await (const chunk of stream) {
+        chunks.push(chunk);
+      }
+
+      buffer = Buffer.concat(chunks);
+    }
+
+    return new NextResponse(buffer, { headers });
   } catch (error) {
     console.error('Error in image API route:', error);
 
     // Handle S3 specific errors
     if (error instanceof S3ServiceException) {
       if (error.name === 'NoSuchKey') {
-        return NextResponse.json({ error: 'Image not found' }, { status: 404 });
+        console.log('Image not found, redirecting to placeholder:', decodedKey);
+        return NextResponse.redirect(new URL('/experts/placeholderexp.png', request.url));
       }
 
       if (error.name === 'AccessDenied') {
         console.error('S3 Access Denied - check AWS credentials and permissions');
-        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+        return NextResponse.redirect(new URL('/experts/placeholderexp.png', request.url));
       }
     }
 
     // Handle timeout errors
     if (error instanceof Error && error.message === 'S3 request timeout') {
-      return NextResponse.json({ error: 'Request timeout' }, { status: 504 });
+      console.log('S3 request timeout, redirecting to placeholder');
+      return NextResponse.redirect(new URL('/experts/placeholderexp.png', request.url));
     }
 
-    // Return error response - let client handle fallback
-    return NextResponse.json({ error: 'Image service error' }, { status: 500 });
+    // For any other error, redirect to placeholder instead of returning error response
+    console.log('Unknown error, redirecting to placeholder');
+    return NextResponse.redirect(new URL('/experts/placeholderexp.png', request.url));
   }
 }

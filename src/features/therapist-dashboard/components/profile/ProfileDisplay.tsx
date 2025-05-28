@@ -1,6 +1,6 @@
 'use client';
 import { Pencil } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
 
@@ -39,6 +39,7 @@ export function ProfileDisplay({ profile, onEditClick }: ProfileDisplayProps) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [lastRefreshTrigger, setLastRefreshTrigger] = useState(0);
+  const [imageKey, setImageKey] = useState(profile.therapist.updatedAt || 'default');
 
   const { user, therapist } = profile;
   const expertiseTags = (therapist.expertise || '')
@@ -49,22 +50,52 @@ export function ProfileDisplay({ profile, onEditClick }: ProfileDisplayProps) {
   // Access signal directly - this will auto-subscribe
   const refreshTrigger = profileRefreshTriggerSignal.value;
 
-  // Force image reload when refresh trigger changes
-  let imageKey = therapist.updatedAt || 'default';
-  if (refreshTrigger > 0 && refreshTrigger !== lastRefreshTrigger) {
-    console.log('ProfileDisplay: Refresh trigger detected', { refreshTrigger, lastRefreshTrigger });
-    imageKey = `refreshed-${refreshTrigger}`;
-    setImgLoaded(false);
-    setImgError(false);
-    setLastRefreshTrigger(refreshTrigger);
-  }
+  // Handle refresh trigger changes in useEffect to avoid infinite re-renders
+  useEffect(() => {
+    if (refreshTrigger > 0 && refreshTrigger !== lastRefreshTrigger) {
+      console.log('ProfileDisplay: Refresh trigger detected', {
+        refreshTrigger,
+        lastRefreshTrigger,
+      });
+      setImageKey(`refreshed-${refreshTrigger}`);
+      setImgLoaded(false);
+      setImgError(false);
+      setLastRefreshTrigger(refreshTrigger);
+    }
+  }, [refreshTrigger, lastRefreshTrigger]);
+
+  // Update image key when therapist.updatedAt changes
+  useEffect(() => {
+    if (therapist.updatedAt) {
+      setImageKey(therapist.updatedAt);
+    }
+  }, [therapist.updatedAt]);
 
   // Create image URL with cache-busting when needed
   const createImageUrl = () => {
     const baseUrl = therapist.profileUrl || therapist.name || user.firstName || '';
     if (!baseUrl) return PLACEHOLDER;
 
-    // Use database updatedAt timestamp for consistent cache-busting
+    // If refresh trigger was activated, force fresh cache-busting
+    if (imageKey.startsWith('refreshed-')) {
+      const freshTimestamp = Date.now();
+      const randomComponent = Math.random().toString(36).substring(7);
+      const imageUrl = getTherapistImageUrl(baseUrl, true, freshTimestamp);
+      // Add additional random parameter to ensure uniqueness
+      const separator = imageUrl.includes('?') ? '&' : '?';
+      const finalUrl = `${imageUrl}${separator}r=${randomComponent}`;
+      console.log('ProfileDisplay: Creating fresh image URL after refresh trigger', {
+        baseUrl,
+        therapistProfileUrl: therapist.profileUrl,
+        freshTimestamp,
+        randomComponent,
+        imageUrl: finalUrl,
+        imageKey,
+      });
+      return finalUrl;
+    }
+
+    // Use database updatedAt timestamp for normal display
     const dbTimestamp = therapist.updatedAt ? new Date(therapist.updatedAt).getTime() : undefined;
 
     const imageUrl = getTherapistImageUrl(baseUrl, false, dbTimestamp);
