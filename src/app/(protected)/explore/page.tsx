@@ -4,7 +4,6 @@ import { db } from '@/src/db';
 import { therapists, pendingTherapists, users } from '@/src/db/schema';
 import AdvisorGrid from '@/src/features/explore/components/AdvisorGrid';
 import ExploreNavbar from '@/src/features/explore/components/ExploreNavbar';
-import { advisorActions } from '@/src/features/explore/components/state/advisorSignals';
 import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
 import { Advisor } from '@/src/shared/types';
 

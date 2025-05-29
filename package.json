@@ -51,7 +51,7 @@
     "@eslint/js": "^9.21.0",
     "@next/eslint-plugin-next": "^15.3.2",
     "@types/luxon": "^3.6.2",
-    "@types/node": "^20",
+    "@types/node": "^20.17.52",
     "@types/pg": "^8.11.11",
     "@types/react": "^19",
     "@types/react-dom": "^19",
