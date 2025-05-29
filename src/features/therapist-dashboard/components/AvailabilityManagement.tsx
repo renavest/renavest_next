@@ -268,6 +268,13 @@ export function AvailabilityManagement({ therapistId }: AvailabilityManagementPr
   const slotsForSelectedDate = useMemo(() => {
     if (!selectedDate) return [];
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const today = DateTime.now().setZone(timezone).startOf('day');
+
+    // If the selected date is in the past, return no slots
+    if (selectedDate.startOf('day') < today) {
+      return [];
+    }
+
     return availableSlots.filter((slot: TimeSlot) => {
       const slotDate = createDate(slot.start, timezone);
       return slotDate.toISODate() === selectedDate.toISODate();
