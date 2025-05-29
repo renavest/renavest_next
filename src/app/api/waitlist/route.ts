@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
 
     // Send notification email to the team
     const teamEmailResult = await resend.emails.send({
-      from: 'Renavest Waitlist <waitlist@renavestapp.com>',
+      from: 'Renavest Waitlist <waitlist@booking.renavestapp.com>',
       to: ['seth@renavestapp.com', 'stanley@renavestapp.com'],
       subject: 'New Waitlist Signup - Renavest',
       html: `
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
 
     // Send welcome email to the user
     const userEmailResult = await resend.emails.send({
-      from: 'Renavest <hello@renavestapp.com>',
+      from: 'Renavest <hello@booking.renavestapp.com>',
       to: [email],
       subject: 'Welcome to the Renavest Waitlist! 🎉',
       html: `
