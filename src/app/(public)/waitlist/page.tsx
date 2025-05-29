@@ -5,6 +5,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 
+import { COLORS } from '@/src/styles/colors';
+
 export default function WaitlistPage() {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,17 +49,19 @@ export default function WaitlistPage() {
 
   if (isSubmitted) {
     return (
-      <div className='min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 flex items-center justify-center p-4'>
+      <div className={`min-h-screen ${COLORS.WARM_WHITE.bg} flex items-center justify-center p-4`}>
         <div className='max-w-sm w-full bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden'>
           <div className='p-8 text-center'>
-            <div className='mx-auto w-16 h-16 bg-gradient-to-br from-purple-100 to-green-100 rounded-full flex items-center justify-center mb-6'>
+            <div
+              className={`mx-auto w-16 h-16 ${COLORS.WARM_PURPLE['10']} rounded-full flex items-center justify-center mb-6`}
+            >
               <CheckCircle className='w-10 h-10 text-[#9071FF]' />
             </div>
             <h2 className='text-xl font-bold text-gray-900 mb-3'>You're on the list!</h2>
             <p className='text-gray-600 mb-6 text-sm'>We'll notify you when we launch.</p>
             <Link
               href='/'
-              className='inline-flex items-center justify-center px-6 py-3 bg-[#9071FF] text-white rounded-full hover:bg-[#9071FF]/90 transition-all duration-300 font-medium text-sm'
+              className={`inline-flex items-center justify-center px-6 py-3 ${COLORS.WARM_PURPLE.bg} text-white rounded-full ${COLORS.WARM_PURPLE.hover} transition-all duration-300 font-medium text-sm`}
             >
               Back to Home
               <ArrowRight className='w-4 h-4 ml-2' />
@@ -69,7 +73,7 @@ export default function WaitlistPage() {
   }
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50'>
+    <div className={`min-h-screen ${COLORS.WARM_WHITE.bg}`}>
       {/* Header */}
       <header className='fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 px-4 py-3'>
         <div className='max-w-4xl mx-auto flex items-center justify-between'>
@@ -84,13 +88,15 @@ export default function WaitlistPage() {
                 priority
               />
             </div>
-            <h1 className='text-lg font-semibold text-gray-800 hover:text-[#9071FF] transition-colors'>
+            <h1
+              className={`text-lg font-semibold text-gray-800 ${COLORS.WARM_PURPLE.hoverText} transition-colors`}
+            >
               Renavest
             </h1>
           </Link>
           <Link
             href='/'
-            className='text-gray-600 hover:text-[#9071FF] transition-colors font-medium text-sm'
+            className={`text-gray-600 ${COLORS.WARM_PURPLE.hoverText} transition-colors font-medium text-sm`}
           >
             Back
           </Link>
@@ -102,13 +108,17 @@ export default function WaitlistPage() {
         <div className='max-w-lg mx-auto text-center'>
           {/* Hero Section */}
           <div className='mb-12'>
-            <div className='inline-flex items-center bg-gradient-to-r from-purple-100 to-pink-100 rounded-full px-3 py-1 mb-6'>
-              <span className='text-xs font-medium text-[#9071FF]'>Coming Soon</span>
+            <div
+              className={`inline-flex items-center ${COLORS.WARM_PURPLE['10']} rounded-full px-3 py-1 mb-6`}
+            >
+              <span className={`text-xs font-medium ${COLORS.WARM_PURPLE.DEFAULT}`}>
+                Coming Soon
+              </span>
             </div>
 
             <h1 className='text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight'>
               Financial Therapy
-              <span className='block text-2xl md:text-3xl bg-gradient-to-r from-[#9071FF] to-pink-500 bg-clip-text text-transparent'>
+              <span className={`block text-2xl md:text-3xl ${COLORS.WARM_PURPLE.DEFAULT}`}>
                 Actually Talks About Money
               </span>
             </h1>
@@ -127,12 +137,16 @@ export default function WaitlistPage() {
                 <p className='text-xs text-gray-500 font-medium'>Regular Therapy</p>
                 <p className='text-xs text-gray-400'>Avoids money topics</p>
               </div>
-              <div className='bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-4 shadow-sm border border-purple-100'>
+              <div
+                className={`${COLORS.WARM_PURPLE['10']} rounded-2xl p-4 shadow-sm ${COLORS.WARM_PURPLE['20']}`}
+              >
                 <div className='flex items-center justify-center mb-2'>
                   <Heart className='w-6 h-6 text-[#9071FF]' />
-                  <DollarSign className='w-6 h-6 text-pink-500 -ml-1' />
+                  <DollarSign className='w-6 h-6 text-[#9071FF] -ml-1' />
                 </div>
-                <p className='text-xs text-[#9071FF] font-medium'>Financial Therapy</p>
+                <p className={`text-xs ${COLORS.WARM_PURPLE.DEFAULT} font-medium`}>
+                  Financial Therapy
+                </p>
                 <p className='text-xs text-gray-600'>Focuses on money</p>
               </div>
             </div>
@@ -140,7 +154,7 @@ export default function WaitlistPage() {
 
           {/* Waitlist Form */}
           <div className='bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden'>
-            <div className='bg-gradient-to-r from-[#9071FF] to-pink-500 p-6 text-center'>
+            <div className={`${COLORS.WARM_PURPLE.bg} p-6 text-center`}>
               <Mail className='w-12 h-12 text-white mx-auto mb-3' />
               <h2 className='text-xl font-bold text-white mb-1'>Join the Waitlist</h2>
               <p className='text-purple-100 text-sm'>Be first to heal your money relationship</p>
@@ -155,7 +169,7 @@ export default function WaitlistPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder='Enter your email'
-                    className='w-full px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:border-[#9071FF] focus:ring-2 focus:ring-[#9071FF]/20 transition-all duration-300'
+                    className={`w-full px-4 py-3 rounded-xl border border-gray-300 shadow-sm ${COLORS.WARM_PURPLE.focus} ${COLORS.WARM_PURPLE.ring} transition-all duration-300`}
                     required
                     disabled={isSubmitting}
                   />
@@ -170,7 +184,7 @@ export default function WaitlistPage() {
                 <button
                   type='submit'
                   disabled={isSubmitting}
-                  className='w-full py-3 px-6 bg-gradient-to-r from-[#9071FF] to-pink-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl hover:from-[#9071FF]/90 hover:to-pink-500/90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5'
+                  className={`w-full py-3 px-6 ${COLORS.WARM_PURPLE.bg} text-white rounded-xl font-semibold shadow-lg hover:shadow-xl ${COLORS.WARM_PURPLE.hover} transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5`}
                 >
                   {isSubmitting ? (
                     <span className='flex items-center justify-center'>
