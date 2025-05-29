@@ -22,9 +22,7 @@ const fetchedTherapistIds = new Set<string>();
 /**
  * Fetches the current Google Calendar integration status for a therapist
  */
-async function fetchGoogleCalendarStatus(
-  therapistId: number | string,
-): Promise<IntegrationStatus> {
+async function fetchGoogleCalendarStatus(therapistId: number | string): Promise<IntegrationStatus> {
   const idStr = String(therapistId);
   const statusMap = googleCalendarIntegrationStatusSignal.value;
 
@@ -259,43 +257,63 @@ async function reconnectGoogleCalendar(therapistId: number | string): Promise<bo
  */
 export function useGoogleCalendarIntegration(therapistId: string | number) {
   const idStr = String(therapistId);
+  const isValidTherapistId = therapistId && therapistId !== 0 && therapistId !== '0';
 
-  // Fetch status on mount if not already fetched
+  // Fetch status on mount if not already fetched and therapistId is valid
   useEffect(() => {
-    if (!fetchedTherapistIds.has(idStr)) {
+    if (isValidTherapistId && !fetchedTherapistIds.has(idStr)) {
       fetchGoogleCalendarStatus(idStr);
       fetchedTherapistIds.add(idStr);
     }
-  }, [idStr]);
+  }, [idStr, isValidTherapistId]);
 
   // Refresh status handler
   const refreshStatus = useCallback(() => {
-    fetchGoogleCalendarStatus(idStr);
-  }, [idStr]);
+    if (isValidTherapistId) {
+      fetchGoogleCalendarStatus(idStr);
+    }
+  }, [idStr, isValidTherapistId]);
 
   // Connect handler
   const connect = useCallback(() => {
-    return initiateGoogleCalendarConnection(idStr);
-  }, [idStr]);
+    if (isValidTherapistId) {
+      return initiateGoogleCalendarConnection(idStr);
+    }
+    return Promise.resolve(false);
+  }, [idStr, isValidTherapistId]);
 
   // Disconnect handler
   const disconnect = useCallback(() => {
-    return disconnectGoogleCalendar(idStr);
-  }, [idStr]);
+    if (isValidTherapistId) {
+      return disconnectGoogleCalendar(idStr);
+    }
+    return Promise.resolve(false);
+  }, [idStr, isValidTherapistId]);
 
   // Reconnect handler
   const reconnect = useCallback(() => {
-    return reconnectGoogleCalendar(idStr);
-  }, [idStr]);
+    if (isValidTherapistId) {
+      return reconnectGoogleCalendar(idStr);
+    }
+    return Promise.resolve(false);
+  }, [idStr, isValidTherapistId]);
 
-  // Get current status
-  const status = googleCalendarIntegrationStatusSignal.value[idStr] || {
-    isConnected: null,
-    isLoading: true,
-    calendarEmail: null,
-    lastSynced: null,
-    error: null,
-  };
+  // Get current status - return loading state if therapistId is invalid
+  const status = isValidTherapistId
+    ? googleCalendarIntegrationStatusSignal.value[idStr] || {
+        isConnected: null,
+        isLoading: true,
+        calendarEmail: null,
+        lastSynced: null,
+        error: null,
+      }
+    : {
+        isConnected: null,
+        isLoading: true,
+        calendarEmail: null,
+        lastSynced: null,
+        error: null,
+      };
 
   return {
     status,

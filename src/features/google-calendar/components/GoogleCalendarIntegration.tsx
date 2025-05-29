@@ -375,9 +375,16 @@ export function GoogleCalendarIntegration() {
       </div>
       <div className='border-t border-gray-200'>
         <div className='divide-y divide-gray-200'>
-          {isLoading && !isConnected ? (
+          {!therapistId || (isLoading && !isConnected) ? (
             <div className='flex justify-center items-center py-8'>
-              <Loader2 className='animate-spin h-6 w-6 text-purple-600' />
+              <div className='text-center'>
+                <Loader2 className='animate-spin h-6 w-6 text-purple-600 mx-auto mb-2' />
+                <p className='text-sm text-gray-500'>
+                  {!therapistId
+                    ? 'Loading therapist information...'
+                    : 'Checking calendar connection...'}
+                </p>
+              </div>
             </div>
           ) : isConnected && therapistId ? (
             <ConnectedStatus
