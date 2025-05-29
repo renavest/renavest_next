@@ -37,6 +37,7 @@ export function OverviewView({
     const isSelected = day.hasSame(selectedDate, 'day');
     const hasAvailability = availableDates.has(day.toISODate()!);
     const isCurrentMonth = day.hasSame(currentMonth, 'month');
+    const isPastDate = day < DateTime.now().startOf('day');
 
     return (
       <button
@@ -58,7 +59,7 @@ export function OverviewView({
         disabled={!isCurrentMonth}
       >
         <span className='mb-1'>{day.day}</span>
-        {hasAvailability && isCurrentMonth && (
+        {hasAvailability && isCurrentMonth && !isPastDate && (
           <div className='w-1 h-1 bg-green-500 rounded-full absolute bottom-1'></div>
         )}
       </button>
