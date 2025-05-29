@@ -68,12 +68,20 @@ export function OverviewView({
 
   const generateCalendarDays = () => {
     const startOfMonth = currentMonth.startOf('month');
-    const endOfMonth = currentMonth.endOf('month');
 
-    // Get the Sunday before the first day of the month
-    const startOfCalendar = startOfMonth.startOf('week', { useLocaleWeeks: false });
-    // Get the Saturday after the last day of the month
-    const endOfCalendar = endOfMonth.endOf('week', { useLocaleWeeks: false });
+    // Get the weekday of the first day of the month (1 = Monday, 7 = Sunday)
+    const firstDayWeekday = startOfMonth.weekday;
+
+    // Calculate how many days to go back to reach Sunday
+    // For Luxon: Monday=1, Tuesday=2, ..., Sunday=7
+    // We want Sunday=0, Monday=1, ..., Saturday=6 for our calendar
+    const daysToSubtract = firstDayWeekday === 7 ? 0 : firstDayWeekday;
+
+    // Get the Sunday before (or on) the first day of the month
+    const startOfCalendar = startOfMonth.minus({ days: daysToSubtract });
+
+    // Calculate the end of the calendar (6 weeks = 42 days total)
+    const endOfCalendar = startOfCalendar.plus({ days: 41 });
 
     const days = [];
     let current = startOfCalendar;
