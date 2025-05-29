@@ -5,7 +5,6 @@ import { z } from 'zod';
 
 import { db } from '@/src/db';
 import { users, therapists, therapistBlockedTimes } from '@/src/db/schema';
-import { createDate } from '@/src/utils/timezone';
 
 const CreateBlockedTimeSchema = z.object({
   therapistId: z.number(),
@@ -67,14 +66,17 @@ export async function GET(req: NextRequest) {
     let whereConditions = eq(therapistBlockedTimes.therapistId, therapistIdNum);
 
     if (month) {
-      const monthStart = createDate(month).startOf('month');
-      const monthEnd = createDate(month).endOf('month');
+      // Parse month in YYYY-MM format and create Date objects for start and end
+      const year = parseInt(month.split('-')[0]);
+      const monthNum = parseInt(month.split('-')[1]) - 1; // JavaScript months are 0-indexed
+      const monthStart = new Date(year, monthNum, 1);
+      const monthEnd = new Date(year, monthNum + 1, 0, 23, 59, 59, 999);
 
       whereConditions = and(
         whereConditions,
-        gte(therapistBlockedTimes.date, monthStart.toJSDate()),
-        lte(therapistBlockedTimes.date, monthEnd.toJSDate()),
-      );
+        gte(therapistBlockedTimes.startTime, monthStart),
+        lte(therapistBlockedTimes.startTime, monthEnd),
+      )!;
     }
 
     // Fetch blocked times
@@ -82,16 +84,21 @@ export async function GET(req: NextRequest) {
       .select()
       .from(therapistBlockedTimes)
       .where(whereConditions)
-      .orderBy(therapistBlockedTimes.date, therapistBlockedTimes.startTime);
+      .orderBy(therapistBlockedTimes.startTime);
 
-    const blockedTimes = blockedTimesResult.map((blocked) => ({
-      id: blocked.id,
-      date: blocked.date.toISOString().split('T')[0], // Format as YYYY-MM-DD
-      startTime: blocked.startTime,
-      endTime: blocked.endTime,
-      reason: blocked.reason,
-      isRecurring: blocked.isRecurring,
-    }));
+    const blockedTimes = blockedTimesResult.map((blocked) => {
+      const startDate = new Date(blocked.startTime);
+      const endDate = new Date(blocked.endTime);
+
+      return {
+        id: blocked.id,
+        date: startDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
+        startTime: startDate.toTimeString().slice(0, 5), // Format as HH:MM
+        endTime: endDate.toTimeString().slice(0, 5), // Format as HH:MM
+        reason: blocked.reason,
+        isRecurring: false, // This field doesn't exist in current schema
+      };
+    });
 
     return NextResponse.json({
       success: true,
@@ -149,8 +156,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate the blocked time
-    const blockedDate = createDate(blockedTime.date);
-    if (!blockedDate.isValid) {
+    const blockedDate = new Date(blockedTime.date);
+    if (isNaN(blockedDate.getTime())) {
       return NextResponse.json({ error: 'Invalid date format' }, { status: 400 });
     }
 
@@ -173,6 +180,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Start time must be before end time' }, { status: 400 });
     }
 
+    // Create start and end timestamps
+    const startDateTime = new Date(blockedDate);
+    startDateTime.setHours(startHour, startMin, 0, 0);
+    const endDateTime = new Date(blockedDate);
+    endDateTime.setHours(endHour, endMin, 0, 0);
+
     // Check for overlapping blocked times
     const existingBlockedTimes = await db
       .select()
@@ -180,20 +193,12 @@ export async function POST(req: NextRequest) {
       .where(
         and(
           eq(therapistBlockedTimes.therapistId, therapistId),
-          eq(therapistBlockedTimes.date, blockedDate.toJSDate()),
+          gte(therapistBlockedTimes.endTime, startDateTime),
+          lte(therapistBlockedTimes.startTime, endDateTime),
         ),
       );
 
-    const hasOverlap = existingBlockedTimes.some((existing) => {
-      const [existingStartHour, existingStartMin] = existing.startTime.split(':').map(Number);
-      const [existingEndHour, existingEndMin] = existing.endTime.split(':').map(Number);
-      const existingStartMinutes = existingStartHour * 60 + existingStartMin;
-      const existingEndMinutes = existingEndHour * 60 + existingEndMin;
-
-      return startMinutes < existingEndMinutes && endMinutes > existingStartMinutes;
-    });
-
-    if (hasOverlap) {
+    if (existingBlockedTimes.length > 0) {
       return NextResponse.json(
         { error: 'This time period overlaps with an existing blocked time' },
         { status: 409 },
@@ -205,23 +210,26 @@ export async function POST(req: NextRequest) {
       .insert(therapistBlockedTimes)
       .values({
         therapistId,
-        date: blockedDate.toJSDate(),
-        startTime: blockedTime.startTime,
-        endTime: blockedTime.endTime,
+        startTime: startDateTime,
+        endTime: endDateTime,
         reason: blockedTime.reason,
-        isRecurring: blockedTime.isRecurring,
+        googleEventId: null,
       })
       .returning();
+
+    const createdBlocked = result[0];
+    const startDate = new Date(createdBlocked.startTime);
+    const endDate = new Date(createdBlocked.endTime);
 
     return NextResponse.json({
       success: true,
       blockedTime: {
-        id: result[0].id,
-        date: result[0].date.toISOString().split('T')[0],
-        startTime: result[0].startTime,
-        endTime: result[0].endTime,
-        reason: result[0].reason,
-        isRecurring: result[0].isRecurring,
+        id: createdBlocked.id,
+        date: startDate.toISOString().split('T')[0],
+        startTime: startDate.toTimeString().slice(0, 5),
+        endTime: endDate.toTimeString().slice(0, 5),
+        reason: createdBlocked.reason,
+        isRecurring: false, // This field doesn't exist in current schema
       },
     });
   } catch (error) {
