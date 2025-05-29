@@ -6,6 +6,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
+
 export default [
   // Base configurations
   eslint.configs.recommended,
@@ -21,8 +22,9 @@ export default [
     },
   },
   
-  // Import plugin configuration
+  // Import plugin configuration for TypeScript files
   {
+    files: ['**/*.{ts,tsx}'],
     plugins: {
       import: importPlugin,
     },
@@ -31,15 +33,25 @@ export default [
         ...globals.browser,
         ...globals.node,
       },
+      parser: tseslint.parser,
       parserOptions: {
-        project: './tsconfig.json',
+        project: true,
         tsconfigRootDir: import.meta.dirname,
+        ecmaVersion: 2022,
+        sourceType: 'module',
       },
     },
     settings: {
+      'import/parsers': {
+        '@typescript-eslint/parser': ['.ts', '.tsx'],
+      },
       'import/resolver': {
         typescript: {
+          alwaysTryTypes: true,
           project: './tsconfig.json',
+        },
+        node: {
+          extensions: ['.js', '.jsx', '.ts', '.tsx'],
         },
       },
     },
@@ -52,8 +64,10 @@ export default [
             {
               pattern: '@/**',
               group: 'internal',
+              position: 'before',
             },
           ],
+          pathGroupsExcludedImportTypes: ['builtin'],
           'newlines-between': 'always',
           alphabetize: {
             order: 'asc',
@@ -86,6 +100,42 @@ export default [
     },
   },
 
+  // Import plugin configuration for JavaScript files (without TypeScript parsing)
+  {
+    files: ['**/*.{js,mjs,cjs}'],
+    plugins: {
+      import: importPlugin,
+    },
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+      ecmaVersion: 2022,
+      sourceType: 'module',
+    },
+    settings: {
+      'import/resolver': {
+        node: {
+          extensions: ['.js', '.jsx', '.ts', '.tsx', '.mjs'],
+        },
+      },
+    },
+    rules: {
+      'import/order': [
+        'error',
+        {
+          groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+          'newlines-between': 'always',
+          alphabetize: {
+            order: 'asc',
+            caseInsensitive: true,
+          },
+        },
+      ],
+    },
+  },
+
   // Next.js configuration
   {
     plugins: {
@@ -103,17 +153,33 @@ export default [
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
+    },
+    linterOptions: {
+      reportUnusedDisableDirectives: true,
+    },
+    rules: {
+      // File structure rules
+      'max-lines': ['error', { max: 500, skipBlankLines: true, skipComments: true }],
+      'max-lines-per-function': ['error', { max: 200, skipBlankLines: true, skipComments: true }],
+
+      // Code style
+      'no-console': ['warn', { allow: ['warn', 'error', 'info', 'debug'] }],
+      'react/react-in-jsx-scope': 'off',
+    },
+  },
+
+  // TypeScript-specific rules only for TypeScript files
+  {
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        project: './tsconfig.json',
+        project: true,
         tsconfigRootDir: import.meta.dirname,
         ecmaFeatures: {
           jsx: true,
         },
       },
-    },
-    linterOptions: {
-      reportUnusedDisableDirectives: true,
     },
     rules: {
       // Naming conventions
@@ -142,24 +208,11 @@ export default [
         },
       ],
 
-      // File structure rules
-      'max-lines': ['error', { max: 500, skipBlankLines: true, skipComments: true }],
-      'max-lines-per-function': ['error', { max: 200, skipBlankLines: true, skipComments: true }],
-
-      // Code style
-      'no-console': ['warn', { allow: ['warn', 'error', 'info', 'debug'] }],
-      'react/react-in-jsx-scope': 'off',
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },
   },
 
   // Apply Prettier as config
-  {
-    files: ['**/*.{js,jsx,ts,tsx}'],
-    rules: {
-      // Add any prettier overrides here
-    },
-  },
   prettier,
 ];
