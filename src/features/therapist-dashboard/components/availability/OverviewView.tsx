@@ -43,23 +43,24 @@ export function OverviewView({
         key={day.toISODate()}
         onClick={() => setSelectedDate(day)}
         className={`
-          w-10 h-10 rounded-lg text-sm font-medium transition-colors
+          w-10 h-10 rounded-lg text-sm font-medium transition-colors flex flex-col items-center justify-center relative
           ${
             isSelected
               ? 'bg-purple-600 text-white'
               : isToday
                 ? 'bg-purple-100 text-purple-700'
-                : hasAvailability && isCurrentMonth
-                  ? 'bg-green-50 text-green-700 hover:bg-green-100'
-                  : isCurrentMonth
-                    ? 'text-gray-700 hover:bg-gray-100'
-                    : 'text-gray-300'
+                : isCurrentMonth
+                  ? 'text-gray-700 hover:bg-gray-100'
+                  : 'text-gray-300'
           }
           ${!isCurrentMonth ? 'cursor-default' : 'cursor-pointer'}
         `}
         disabled={!isCurrentMonth}
       >
-        {day.day}
+        <span className='mb-1'>{day.day}</span>
+        {hasAvailability && isCurrentMonth && (
+          <div className='w-1 h-1 bg-green-500 rounded-full absolute bottom-1'></div>
+        )}
       </button>
     );
   };
@@ -145,7 +146,10 @@ export function OverviewView({
           {/* Calendar Grid */}
           <div className='grid grid-cols-7 gap-1 mb-4'>
             {dayNames.map((day) => (
-              <div key={day} className='text-center text-sm font-medium text-gray-500 py-2'>
+              <div
+                key={day}
+                className='h-8 flex items-center justify-center text-sm font-medium text-gray-500'
+              >
                 {day.slice(0, 3)}
               </div>
             ))}
@@ -157,12 +161,14 @@ export function OverviewView({
 
           {/* Legend */}
           <div className='flex items-center justify-center gap-4 mt-4 text-xs'>
-            <div className='flex items-center gap-1'>
-              <div className='w-3 h-3 bg-green-200 rounded'></div>
+            <div className='flex items-center gap-2'>
+              <div className='w-2 h-2 bg-green-500 rounded-full'></div>
               <span>Available</span>
             </div>
-            <div className='flex items-center gap-1'>
-              <div className='w-3 h-3 bg-purple-200 rounded'></div>
+            <div className='flex items-center gap-2'>
+              <div className='w-6 h-6 bg-purple-200 rounded flex items-center justify-center'>
+                <span className='text-xs'>•</span>
+              </div>
               <span>Selected</span>
             </div>
           </div>
