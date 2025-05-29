@@ -276,6 +276,50 @@ export const trackTherapistIntegrations = {
       ...userContext,
     });
   },
+
+  bankConnectionAttempted: (
+    therapistId: number,
+    userContext: { user_id?: string; email?: string } = {},
+  ) => {
+    if (typeof window === 'undefined') return;
+
+    posthog.capture('therapist_integrations:bank_connection_attempted_v1', {
+      therapist_id: therapistId,
+      attempted_timestamp: new Date().toISOString(),
+      url: window.location.href,
+      ...userContext,
+    });
+  },
+
+  bankConnectionSucceeded: (
+    therapistId: number,
+    userContext: { user_id?: string; email?: string } = {},
+  ) => {
+    if (typeof window === 'undefined') return;
+
+    posthog.capture('therapist_integrations:bank_connection_succeeded_v1', {
+      therapist_id: therapistId,
+      connected_timestamp: new Date().toISOString(),
+      url: window.location.href,
+      ...userContext,
+    });
+  },
+
+  bankConnectionFailed: (
+    therapistId: number,
+    errorType: string,
+    userContext: { user_id?: string; email?: string } = {},
+  ) => {
+    if (typeof window === 'undefined') return;
+
+    posthog.capture('therapist_integrations:bank_connection_failed_v1', {
+      therapist_id: therapistId,
+      error_type: errorType,
+      failed_timestamp: new Date().toISOString(),
+      url: window.location.href,
+      ...userContext,
+    });
+  },
 };
 
 /**

@@ -1,9 +1,38 @@
 'use client';
 
+import { useUser } from '@clerk/nextjs';
+import { useEffect, useState } from 'react';
+
 import { GoogleCalendarIntegration } from '@/src/features/google-calendar/components/GoogleCalendarIntegration';
+import { StripeConnectIntegration } from '@/src/features/stripe/components/StripeConnectIntegration';
 import TherapistNavbar from '@/src/features/therapist-dashboard/components/TherapistNavbar';
 
 export default function IntegrationsPage() {
+  const { user } = useUser();
+  const [therapistId, setTherapistId] = useState<number | null>(null);
+
+  // Get therapist ID from user metadata or API
+  useEffect(() => {
+    const getTherapistId = async () => {
+      if (user?.publicMetadata?.therapistId) {
+        setTherapistId(user.publicMetadata.therapistId as number);
+      } else if (user?.id) {
+        // Fallback to API call if not in metadata
+        try {
+          const response = await fetch('/api/therapist/profile');
+          if (response.ok) {
+            const data = await response.json();
+            setTherapistId(data.therapist?.id || null);
+          }
+        } catch (error) {
+          console.error('Error fetching therapist ID:', error);
+        }
+      }
+    };
+
+    getTherapistId();
+  }, [user]);
+
   return (
     <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen'>
       <TherapistNavbar pageTitle='Integrations' showBackButton={true} backButtonHref='/therapist' />
@@ -12,6 +41,9 @@ export default function IntegrationsPage() {
         <div className='space-y-6'>
           {/* Google Calendar Integration with Working Hours */}
           <GoogleCalendarIntegration />
+
+          {/* Stripe Connect Bank Account Integration */}
+          {therapistId && <StripeConnectIntegration therapistId={therapistId} />}
 
           {/* Placeholder for future integrations */}
           <div className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm'>
