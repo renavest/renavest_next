@@ -84,11 +84,27 @@ export async function GET(_req: NextRequest) {
       })
       .where(eq(therapists.id, therapist.id));
 
+    // Construct proper URLs with fallback and validation
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const refreshUrl = `${baseUrl}/therapist/connect/refresh`;
+    const returnUrl = `${baseUrl}/therapist/connect/return`;
+
+    // Validate URLs start with http/https
+    if (!refreshUrl.startsWith('http://') && !refreshUrl.startsWith('https://')) {
+      console.error('[CONNECT OAUTH] Invalid refresh URL:', refreshUrl);
+      return NextResponse.json({ error: 'Invalid app URL configuration' }, { status: 500 });
+    }
+
+    if (!returnUrl.startsWith('http://') && !returnUrl.startsWith('https://')) {
+      console.error('[CONNECT OAUTH] Invalid return URL:', returnUrl);
+      return NextResponse.json({ error: 'Invalid app URL configuration' }, { status: 500 });
+    }
+
     // Create account link for onboarding
     const accountLink = await stripe.accountLinks.create({
       account: account.id,
-      refresh_url: `${process.env.NEXT_PUBLIC_APP_URL}/therapist/connect/refresh`,
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/therapist/connect/return`,
+      refresh_url: refreshUrl,
+      return_url: returnUrl,
       type: 'account_onboarding',
     });
 

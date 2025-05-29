@@ -1,48 +1,28 @@
 import { Calendar, Clock, Users } from 'lucide-react';
 import { DateTime } from 'luxon';
 
-import type { TimeSlot, WorkingHours, BlockedTime } from '../AvailabilityManagement';
+import {
+  availabilityStatsSignal,
+  selectedDateSignal,
+  currentMonthSignal,
+  availableDatesSignal,
+  slotsForSelectedDateSignal,
+} from '../../state/availabilityState';
 
-interface OverviewViewProps {
-  availabilityStats: {
-    thisWeek: number;
-    nextWeek: number;
-    total: number;
-  };
-  selectedDate: DateTime;
-  setSelectedDate: (date: DateTime) => void;
-  currentMonth: DateTime;
-  setCurrentMonth: (month: DateTime) => void;
-  availableDates: Set<string>;
-  slotsForSelectedDate: TimeSlot[];
-  _workingHours: WorkingHours[];
-  _blockedTimes: BlockedTime[];
-}
-
-export function OverviewView({
-  availabilityStats,
-  selectedDate,
-  setSelectedDate,
-  currentMonth,
-  setCurrentMonth,
-  availableDates,
-  slotsForSelectedDate,
-  _workingHours,
-  _blockedTimes,
-}: OverviewViewProps) {
+export function OverviewView() {
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   const renderCalendarDay = (day: DateTime) => {
     const isToday = day.hasSame(DateTime.now(), 'day');
-    const isSelected = day.hasSame(selectedDate, 'day');
-    const hasAvailability = availableDates.has(day.toISODate()!);
-    const isCurrentMonth = day.hasSame(currentMonth, 'month');
+    const isSelected = day.hasSame(selectedDateSignal.value, 'day');
+    const hasAvailability = availableDatesSignal.value.has(day.toISODate()!);
+    const isCurrentMonth = day.hasSame(currentMonthSignal.value, 'month');
     const isPastDate = day < DateTime.now().startOf('day');
 
     return (
       <button
         key={day.toISODate()}
-        onClick={() => setSelectedDate(day)}
+        onClick={() => (selectedDateSignal.value = day)}
         className={`
           w-10 h-10 rounded-lg text-sm font-medium transition-colors flex flex-col items-center justify-center relative
           ${
@@ -67,7 +47,7 @@ export function OverviewView({
   };
 
   const generateCalendarDays = () => {
-    const startOfMonth = currentMonth.startOf('month');
+    const startOfMonth = currentMonthSignal.value.startOf('month');
 
     // Get the weekday of the first day of the month (1 = Monday, 7 = Sunday)
     const firstDayWeekday = startOfMonth.weekday;
@@ -102,7 +82,9 @@ export function OverviewView({
           <div className='flex items-center justify-between'>
             <div>
               <p className='text-green-600 text-sm font-medium'>This Week</p>
-              <p className='text-2xl font-bold text-green-700'>{availabilityStats.thisWeek}</p>
+              <p className='text-2xl font-bold text-green-700'>
+                {availabilityStatsSignal.value.thisWeek}
+              </p>
               <p className='text-green-600 text-sm'>Available slots</p>
             </div>
             <Calendar className='w-8 h-8 text-green-600' />
@@ -113,7 +95,9 @@ export function OverviewView({
           <div className='flex items-center justify-between'>
             <div>
               <p className='text-blue-600 text-sm font-medium'>Next Week</p>
-              <p className='text-2xl font-bold text-blue-700'>{availabilityStats.nextWeek}</p>
+              <p className='text-2xl font-bold text-blue-700'>
+                {availabilityStatsSignal.value.nextWeek}
+              </p>
               <p className='text-blue-600 text-sm'>Available slots</p>
             </div>
             <Clock className='w-8 h-8 text-blue-600' />
@@ -124,7 +108,9 @@ export function OverviewView({
           <div className='flex items-center justify-between'>
             <div>
               <p className='text-purple-600 text-sm font-medium'>Total</p>
-              <p className='text-2xl font-bold text-purple-700'>{availabilityStats.total}</p>
+              <p className='text-2xl font-bold text-purple-700'>
+                {availabilityStatsSignal.value.total}
+              </p>
               <p className='text-purple-600 text-sm'>Available slots</p>
             </div>
             <Users className='w-8 h-8 text-purple-600' />
@@ -137,17 +123,21 @@ export function OverviewView({
         <div className='bg-gray-50 rounded-xl p-6'>
           <div className='flex items-center justify-between mb-6'>
             <h3 className='text-lg font-semibold text-gray-800'>
-              {currentMonth.toFormat('MMMM yyyy')}
+              {currentMonthSignal.value.toFormat('MMMM yyyy')}
             </h3>
             <div className='flex gap-2'>
               <button
-                onClick={() => setCurrentMonth(currentMonth.minus({ months: 1 }))}
+                onClick={() =>
+                  (currentMonthSignal.value = currentMonthSignal.value.minus({ months: 1 }))
+                }
                 className='p-2 rounded-lg hover:bg-gray-200 transition-colors'
               >
                 ←
               </button>
               <button
-                onClick={() => setCurrentMonth(currentMonth.plus({ months: 1 }))}
+                onClick={() =>
+                  (currentMonthSignal.value = currentMonthSignal.value.plus({ months: 1 }))
+                }
                 className='p-2 rounded-lg hover:bg-gray-200 transition-colors'
               >
                 →
@@ -183,14 +173,14 @@ export function OverviewView({
         {/* Selected Date Details */}
         <div className='bg-gray-50 rounded-xl p-6'>
           <h3 className='text-lg font-semibold text-gray-800 mb-4'>
-            {selectedDate.toFormat('EEEE, MMMM d')}
+            {selectedDateSignal.value.toFormat('EEEE, MMMM d')}
           </h3>
 
-          {slotsForSelectedDate.length > 0 ? (
+          {slotsForSelectedDateSignal.value.length > 0 ? (
             <div className='space-y-2'>
               <h4 className='text-sm font-medium text-gray-600 mb-2'>Available Times</h4>
               <div className='grid grid-cols-2 gap-2'>
-                {slotsForSelectedDate.map((slot, index) => (
+                {slotsForSelectedDateSignal.value.map((slot, index) => (
                   <div
                     key={index}
                     className='bg-white border border-gray-200 rounded-lg p-3 text-center'
