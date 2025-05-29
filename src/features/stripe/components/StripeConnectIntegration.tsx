@@ -1,8 +1,8 @@
 'use client';
 
+import { useUser } from '@clerk/nextjs';
 import { CheckCircle, DollarSign, Loader2, AlertTriangle, XCircle, CreditCard } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 
 import { trackTherapistIntegrations } from '@/src/features/posthog/therapistTracking';
