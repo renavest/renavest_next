@@ -6,6 +6,7 @@
 
 import { useClerk } from '@clerk/nextjs';
 import { Inter } from 'next/font/google';
+import Head from 'next/head';
 import { useSearchParams } from 'next/navigation';
 import posthog from 'posthog-js';
 import { useEffect } from 'react';
@@ -54,19 +55,92 @@ function HomeContent() {
   }, [searchParams, clerkUser]);
 
   return (
-    <div className={`min-h-screen bg-white ${inter.className}`}>
-      <Navbar />
-      <ParallaxWrapper>
-        <HeroSection />
-        <BusinessImpactSection />
-        <WhatWeDoSection />
-        <WhatIsFinancialTherapySection />
-        <JasmineJourneySection />
-        <TestimonialSection />
-        <PilotCohortBanner />
-      </ParallaxWrapper>
-      <Footer />
-    </div>
+    <>
+      <Head>
+        {/* Additional structured data for home page */}
+        <script
+          type='application/ld+json'
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebPage',
+              '@id': 'https://renavestapp.com/#webpage',
+              url: 'https://renavestapp.com',
+              name: 'Renavest - Financial Therapy for Workplace Wellness',
+              isPartOf: {
+                '@id': 'https://renavestapp.com/#website',
+              },
+              about: {
+                '@id': 'https://renavestapp.com/#organization',
+              },
+              description:
+                'Transform your workplace with financial therapy. Renavest connects businesses with certified financial therapists to reduce employee financial stress and boost productivity by up to 15%.',
+              breadcrumb: {
+                '@id': 'https://renavestapp.com/#breadcrumb',
+              },
+              inLanguage: 'en-US',
+              potentialAction: [
+                {
+                  '@type': 'ReadAction',
+                  target: ['https://renavestapp.com'],
+                },
+              ],
+            }),
+          }}
+        />
+
+        {/* FAQ structured data */}
+        <script
+          type='application/ld+json'
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'FAQPage',
+              mainEntity: [
+                {
+                  '@type': 'Question',
+                  name: 'What is financial therapy?',
+                  acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: 'Financial therapy combines financial planning with therapeutic techniques to help people understand and improve their relationship with money. It addresses the emotional and psychological aspects of financial decisions.',
+                  },
+                },
+                {
+                  '@type': 'Question',
+                  name: 'How does financial therapy help employees?',
+                  acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: 'Financial therapy helps employees reduce financial stress, improve decision-making, and develop healthier money habits. This leads to increased workplace productivity, reduced absenteeism, and improved overall wellbeing.',
+                  },
+                },
+                {
+                  '@type': 'Question',
+                  name: 'What are the benefits for employers?',
+                  acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: 'Employers see reduced turnover, increased productivity, lower healthcare costs, and improved employee satisfaction. Financial stress costs employers an average of $2,500 per employee annually in lost productivity.',
+                  },
+                },
+              ],
+            }),
+          }}
+        />
+      </Head>
+
+      <div className={`min-h-screen bg-white ${inter.className}`}>
+        <Navbar />
+        <ParallaxWrapper>
+          <HeroSection />
+          <BusinessImpactSection />
+          <WhatWeDoSection />
+          <WhatIsFinancialTherapySection />
+          <JasmineJourneySection />
+          <TestimonialSection />
+          <PilotCohortBanner />
+        </ParallaxWrapper>
+        <Footer />
+      </div>
+    </>
   );
 }
 

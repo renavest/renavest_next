@@ -19,6 +19,9 @@ import TherapistNavbar from '@/src/features/therapist-dashboard/components/Thera
 
 type IntegrationType = 'stripe' | 'calendar' | null;
 
+// Check if we're in development mode
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 interface StripeStatus {
   connected: boolean;
   accountId?: string;
@@ -103,8 +106,13 @@ function StripeCard({
   return (
     <div
       onClick={onClick}
-      className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all cursor-pointer group'
+      className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all cursor-pointer group relative'
     >
+      {/* Development Badge */}
+      <div className='absolute top-3 right-3 bg-orange-100 text-orange-700 text-xs font-medium px-2 py-1 rounded-full border border-orange-200'>
+        DEV ONLY
+      </div>
+
       <div className='flex items-start justify-between mb-4'>
         <div className='flex items-center gap-3'>
           <div
@@ -248,10 +256,15 @@ function IntegrationsStatusHeader({
   stripeLoading: boolean;
   calendarLoading: boolean;
 }) {
-  const hasConnections =
-    (stripeStatus?.connected && stripeStatus?.payoutsEnabled) || calendarConnected;
+  // Only consider Stripe in development mode
+  const stripeConnected = isDevelopment
+    ? stripeStatus?.connected && stripeStatus?.payoutsEnabled
+    : false;
+  const hasConnections = stripeConnected || calendarConnected;
   const hasPartialSetup =
-    (stripeStatus?.connected && !stripeStatus?.payoutsEnabled) || stripeLoading || calendarLoading;
+    (isDevelopment && stripeStatus?.connected && !stripeStatus?.payoutsEnabled) ||
+    (isDevelopment && stripeLoading) ||
+    calendarLoading;
 
   if (hasConnections) {
     return (
@@ -289,7 +302,8 @@ function IntegrationsStatusHeader({
         <span className='font-medium text-blue-800'>Let's get you set up</span>
       </div>
       <p className='text-blue-700 text-sm'>
-        Connect your essential tools to streamline your practice and get paid faster.
+        Connect your essential tools to streamline your practice
+        {isDevelopment ? ' and get paid faster' : ''}.
       </p>
     </div>
   );
@@ -329,10 +343,10 @@ export default function IntegrationsPage() {
     getTherapistId();
   }, [user]);
 
-  // Fetch Stripe status when therapistId is available
+  // Fetch Stripe status when therapistId is available - only in development
   useEffect(() => {
     const fetchStripeStatus = async () => {
-      if (!therapistId) return;
+      if (!therapistId || !isDevelopment) return;
 
       setStripeLoading(true);
       try {
@@ -351,7 +365,7 @@ export default function IntegrationsPage() {
     fetchStripeStatus();
   }, [therapistId]);
 
-  if (selectedIntegration === 'stripe') {
+  if (selectedIntegration === 'stripe' && isDevelopment) {
     return (
       <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen'>
         <TherapistNavbar
@@ -369,6 +383,19 @@ export default function IntegrationsPage() {
               <ChevronRight className='w-4 h-4 mr-2 rotate-180' />
               Back to Integrations
             </button>
+
+            {/* Development Warning */}
+            <div className='bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6'>
+              <div className='flex items-center gap-2 mb-2'>
+                <AlertTriangle className='w-5 h-5 text-orange-600' />
+                <span className='font-medium text-orange-800'>Development Mode Only</span>
+              </div>
+              <p className='text-orange-700 text-sm'>
+                Stripe payment functionality is only available in development environment. This will
+                be hidden in production.
+              </p>
+            </div>
+
             <h1 className='text-3xl font-bold text-gray-900 mb-3'>Stripe Payment Integration</h1>
             <p className='text-gray-600 text-lg'>
               Connect your bank account to receive payments from client sessions.
@@ -428,13 +455,17 @@ export default function IntegrationsPage() {
           />
         </div>
 
-        <div className='grid md:grid-cols-2 gap-6'>
-          {/* Stripe Integration Card */}
-          <StripeCard
-            onClick={() => setSelectedIntegration('stripe')}
-            status={stripeStatus}
-            isLoading={stripeLoading}
-          />
+        <div
+          className={`grid gap-6 ${isDevelopment ? 'md:grid-cols-2' : 'md:grid-cols-1 max-w-2xl mx-auto'}`}
+        >
+          {/* Stripe Integration Card - Only in Development */}
+          {isDevelopment && (
+            <StripeCard
+              onClick={() => setSelectedIntegration('stripe')}
+              status={stripeStatus}
+              isLoading={stripeLoading}
+            />
+          )}
 
           {/* Google Calendar Integration Card */}
           <CalendarCard
@@ -446,7 +477,7 @@ export default function IntegrationsPage() {
         </div>
 
         {/* Coming Soon Section - only show if user has some integrations */}
-        {(stripeStatus?.connected || calendarConnected) && (
+        {((isDevelopment && stripeStatus?.connected) || calendarConnected) && (
           <div className='mt-12'>
             <h2 className='text-xl font-semibold text-gray-800 mb-6'>Coming Soon</h2>
             <div className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm'>

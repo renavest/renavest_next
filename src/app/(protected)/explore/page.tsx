@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
+import { Metadata } from 'next';
 
 import { db } from '@/src/db';
 import { therapists, pendingTherapists, users } from '@/src/db/schema';
@@ -6,6 +7,37 @@ import AdvisorGrid from '@/src/features/explore/components/AdvisorGrid';
 import ExploreNavbar from '@/src/features/explore/components/ExploreNavbar';
 import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
 import { Advisor } from '@/src/shared/types';
+
+export const metadata: Metadata = {
+  title: 'Find Financial Therapists - Expert Directory',
+  description:
+    'Browse our directory of certified financial therapists. Connect with experienced professionals who can help you build a healthier relationship with money and achieve financial wellness.',
+  keywords: [
+    'financial therapist directory',
+    'certified financial therapists',
+    'financial therapy experts',
+    'money counseling',
+    'financial wellness professionals',
+    'debt therapy',
+    'financial anxiety help',
+    'money mindset coaching',
+  ],
+  openGraph: {
+    title: 'Find Financial Therapists - Expert Directory | Renavest',
+    description:
+      'Browse our directory of certified financial therapists. Get help with financial stress, debt management, and building healthy money habits.',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Find Financial Therapists - Expert Directory | Renavest',
+    description:
+      'Browse our directory of certified financial therapists. Get help with financial stress and build healthy money habits.',
+  },
+  alternates: {
+    canonical: '/explore',
+  },
+};
 
 // Make this a server component since we're doing DB fetching
 export default async function Home() {
