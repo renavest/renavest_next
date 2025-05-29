@@ -11,16 +11,24 @@ import { cn } from '@/src/lib/utils';
 import { Advisor } from '@/src/shared/types';
 import { COLORS } from '@/src/styles/colors';
 
-import { advisorSignal, isOpenSignal, advisorActions } from './state/advisorSignals';
+import {
+  advisorSignal,
+  isOpenSignal,
+  advisorActions,
+  advisorImageLoadingSignal,
+  advisorImageErrorSignal,
+} from './state/advisorSignals';
 import { useMarketplaceIntegration } from './utils/useMarketplaceIntegration';
 
 const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
   const { user } = useUser();
   const router = useRouter();
-  const [hasError, setHasError] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [currentUserTherapistId, setCurrentUserTherapistId] = useState<number | null>(null);
   const { isConnected, isChecking, bookingMode } = useMarketplaceIntegration(advisor);
+
+  // Use global signals for image loading state
+  const isLoading = advisorImageLoadingSignal.value[advisor.id] !== false;
+  const hasError = advisorImageErrorSignal.value[advisor.id] || false;
 
   // Check if current user is a therapist and get their therapist ID
   useEffect(() => {
@@ -40,19 +48,26 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
     fetchCurrentUserTherapistId();
   }, [user]);
 
+  // Initialize loading state if not set
+  useEffect(() => {
+    if (advisorImageLoadingSignal.value[advisor.id] === undefined) {
+      advisorActions.setImageLoading(advisor.id, true);
+    }
+  }, [advisor.id]);
+
   // Check if user is trying to book themselves
   const isBookingSelf = !!(
     currentUserTherapistId && advisor.therapistId === currentUserTherapistId
   );
 
   const handleImageLoad = () => {
-    setIsLoading(false);
-    setHasError(false);
+    advisorActions.setImageLoading(advisor.id, false);
+    advisorActions.setImageError(advisor.id, false);
   };
 
   const handleImageError = () => {
-    setIsLoading(false);
-    setHasError(true);
+    advisorActions.setImageLoading(advisor.id, false);
+    advisorActions.setImageError(advisor.id, true);
   };
 
   const handleBookSession = async () => {
