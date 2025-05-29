@@ -139,58 +139,26 @@ export async function POST(request: NextRequest) {
     const userEmailResult = await resend.emails.send({
       from: 'Renavest <hello@booking.renavestapp.com>',
       to: [email],
-      subject: 'Welcome to the Renavest Waitlist! 🎉',
+      subject: "You're on the Renavest Waitlist",
       html: `
         <div style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 30px;">
-            <div style="width: 80px; height: 80px; background: #9071FF; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
-              <span style="font-size: 32px;">🎉</span>
+            <div style="width: 60px; height: 60px; background: #9071FF; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+              <span style="font-size: 24px;">✓</span>
             </div>
-            <h1 style="color: #1f2937; font-size: 32px; font-weight: bold; margin: 0; line-height: 1.2;">
-              You're on the list!
+            <h1 style="color: #1f2937; font-size: 28px; font-weight: bold; margin: 0; line-height: 1.2;">
+              You're on the Renavest waitlist
             </h1>
           </div>
           
-          <div style="background: linear-gradient(135deg, #9071FF10 0%, #faf9f6 100%); border-radius: 16px; padding: 24px; margin-bottom: 24px; border: 1px solid #9071FF20;">
+          <div style="background: linear-gradient(135deg, #9071FF10 0%, #faf9f6 100%); border-radius: 16px; padding: 24px; margin-bottom: 24px; border: 1px solid #9071FF20; text-align: center;">
             <p style="color: #374151; font-size: 18px; line-height: 1.6; margin: 0;">
-              Thank you for joining the <strong style="color: #9071FF;">Renavest waitlist</strong>! 
-              You're now part of an exclusive group that will be the first to experience the future of financial wellness.
+              Thanks for being part of our journey to transform how people relate to money.
             </p>
-          </div>
-          
-          <div style="background: white; border-radius: 12px; padding: 20px; border: 1px solid #e5e7eb; margin-bottom: 24px;">
-            <h2 style="color: #1f2937; font-size: 20px; margin-top: 0; margin-bottom: 16px;">
-              🌟 What to expect:
-            </h2>
-            <ul style="color: #6b7280; margin: 0; padding-left: 20px; line-height: 1.8;">
-              <li style="margin-bottom: 8px;"><strong>Early access</strong> to our platform before anyone else</li>
-              <li style="margin-bottom: 8px;"><strong>Exclusive updates</strong> on our development progress</li>
-              <li style="margin-bottom: 8px;"><strong>Special pricing</strong> and perks for early adopters</li>
-              <li style="margin-bottom: 8px;"><strong>Direct input</strong> on features and functionality</li>
-            </ul>
-          </div>
-          
-          <div style="background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%); border-radius: 12px; padding: 20px; border: 1px solid #bbf7d0; margin-bottom: 24px;">
-            <h3 style="color: #065f46; margin-top: 0; margin-bottom: 12px;">
-              💡 While you wait...
-            </h3>
-            <p style="color: #047857; margin: 0; line-height: 1.6;">
-              Follow us on social media or visit our website to stay updated on the latest financial wellness insights and our journey toward transforming how people relate to money.
-            </p>
-          </div>
-          
-          <div style="text-align: center; margin-bottom: 32px;">
-            <a href="https://renavestapp.com" style="display: inline-block; background: #9071FF; color: white; text-decoration: none; padding: 16px 32px; border-radius: 50px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(144, 113, 255, 0.3); transition: all 0.3s ease;">
-              Visit Our Website
-            </a>
           </div>
           
           <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
-            <p style="color: #9ca3af; font-size: 14px; margin: 0; line-height: 1.6;">
-              Thank you for believing in our mission to revolutionize financial wellness.<br>
-              Together, we're building something extraordinary.
-            </p>
-            <p style="color: #9ca3af; font-size: 12px; margin: 8px 0 0 0;">
+            <p style="color: #9ca3af; font-size: 12px; margin: 0;">
               © ${new Date().getFullYear()} Renavest. All rights reserved.
             </p>
           </div>
