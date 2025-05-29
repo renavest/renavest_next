@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
 import { therapists, users } from '@/src/db/schema';
-import { trackTherapistServerSide } from '@/src/features/posthog/therapistTracking';
+import { trackTherapistServerSide } from '@/src/features/posthog/therapistTrackingServer';
 
 export async function GET() {
   try {
