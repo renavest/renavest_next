@@ -68,17 +68,29 @@ export async function GET(req: NextRequest) {
       .where(eq(therapistAvailability.therapistId, therapistIdNum))
       .orderBy(therapistAvailability.dayOfWeek, therapistAvailability.startTime);
 
-    const workingHours = workingHoursResult.map((hours) => ({
-      id: hours.id,
-      dayOfWeek: hours.dayOfWeek,
-      startTime: hours.startTime,
-      endTime: hours.endTime,
-      isRecurring: hours.isRecurring,
-    }));
+    // If no working hours are stored, return default working hours
+    const workingHours =
+      workingHoursResult.length > 0
+        ? workingHoursResult.map((hours) => ({
+            id: hours.id,
+            dayOfWeek: hours.dayOfWeek,
+            startTime: hours.startTime,
+            endTime: hours.endTime,
+            isRecurring: hours.isRecurring,
+          }))
+        : [
+            // Default working hours (Monday to Friday, 9 AM to 5 PM)
+            { dayOfWeek: 1, startTime: '09:00', endTime: '17:00', isRecurring: true },
+            { dayOfWeek: 2, startTime: '09:00', endTime: '17:00', isRecurring: true },
+            { dayOfWeek: 3, startTime: '09:00', endTime: '17:00', isRecurring: true },
+            { dayOfWeek: 4, startTime: '09:00', endTime: '17:00', isRecurring: true },
+            { dayOfWeek: 5, startTime: '09:00', endTime: '17:00', isRecurring: true },
+          ];
 
     return NextResponse.json({
       success: true,
       workingHours,
+      isDefault: workingHoursResult.length === 0, // Indicate if these are default hours
     });
   } catch (error) {
     console.error('[GET WORKING HOURS] Error:', error);

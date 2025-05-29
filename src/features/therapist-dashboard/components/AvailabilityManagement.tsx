@@ -92,6 +92,12 @@ export function AvailabilityManagement({ therapistId }: AvailabilityManagementPr
       }
 
       setWorkingHours(data.workingHours || []);
+
+      // If these are default hours (not saved by user), show them in edit mode
+      if (data.isDefault && data.workingHours?.length > 0) {
+        // Auto-enter edit mode so therapist can see and modify default hours
+        setEditingWorkingHours(true);
+      }
     } catch (error) {
       console.error('Error fetching working hours:', error);
     }
@@ -336,8 +342,8 @@ export function AvailabilityManagement({ therapistId }: AvailabilityManagementPr
             setCurrentMonth={setCurrentMonth}
             availableDates={availableDates}
             slotsForSelectedDate={slotsForSelectedDate}
-            workingHours={workingHours}
-            blockedTimes={blockedTimes}
+            _workingHours={workingHours}
+            _blockedTimes={blockedTimes}
           />
         )}
 

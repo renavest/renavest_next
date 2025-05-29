@@ -1,31 +1,22 @@
-import { Calendar, Clock, Settings } from 'lucide-react';
+import { Calendar, Clock, Users } from 'lucide-react';
 import { DateTime } from 'luxon';
-
-import { CalendarGrid } from '@/src/features/booking/components/calendar/CalendarGrid';
-import { createDate } from '@/src/utils/timezone';
 
 import type { TimeSlot, WorkingHours, BlockedTime } from '../AvailabilityManagement';
 
-const DAYS_OF_WEEK = [
-  { value: 1, label: 'Monday', short: 'Mon' },
-  { value: 2, label: 'Tuesday', short: 'Tue' },
-  { value: 3, label: 'Wednesday', short: 'Wed' },
-  { value: 4, label: 'Thursday', short: 'Thu' },
-  { value: 5, label: 'Friday', short: 'Fri' },
-  { value: 6, label: 'Saturday', short: 'Sat' },
-  { value: 0, label: 'Sunday', short: 'Sun' },
-];
-
 interface OverviewViewProps {
-  availabilityStats: { thisWeek: number; nextWeek: number; total: number };
+  availabilityStats: {
+    thisWeek: number;
+    nextWeek: number;
+    total: number;
+  };
   selectedDate: DateTime;
   setSelectedDate: (date: DateTime) => void;
   currentMonth: DateTime;
   setCurrentMonth: (month: DateTime) => void;
   availableDates: Set<string>;
   slotsForSelectedDate: TimeSlot[];
-  workingHours: WorkingHours[];
-  blockedTimes: BlockedTime[];
+  _workingHours: WorkingHours[];
+  _blockedTimes: BlockedTime[];
 }
 
 export function OverviewView({
@@ -36,123 +27,176 @@ export function OverviewView({
   setCurrentMonth,
   availableDates,
   slotsForSelectedDate,
-  workingHours,
-  blockedTimes,
+  _workingHours,
+  _blockedTimes,
 }: OverviewViewProps) {
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  const renderCalendarDay = (day: DateTime) => {
+    const isToday = day.hasSame(DateTime.now(), 'day');
+    const isSelected = day.hasSame(selectedDate, 'day');
+    const hasAvailability = availableDates.has(day.toISODate()!);
+    const isCurrentMonth = day.hasSame(currentMonth, 'month');
+
+    return (
+      <button
+        key={day.toISODate()}
+        onClick={() => setSelectedDate(day)}
+        className={`
+          w-10 h-10 rounded-lg text-sm font-medium transition-colors
+          ${
+            isSelected
+              ? 'bg-purple-600 text-white'
+              : isToday
+                ? 'bg-purple-100 text-purple-700'
+                : hasAvailability && isCurrentMonth
+                  ? 'bg-green-50 text-green-700 hover:bg-green-100'
+                  : isCurrentMonth
+                    ? 'text-gray-700 hover:bg-gray-100'
+                    : 'text-gray-300'
+          }
+          ${!isCurrentMonth ? 'cursor-default' : 'cursor-pointer'}
+        `}
+        disabled={!isCurrentMonth}
+      >
+        {day.day}
+      </button>
+    );
+  };
+
+  const generateCalendarDays = () => {
+    const startOfMonth = currentMonth.startOf('month');
+    const endOfMonth = currentMonth.endOf('month');
+    const startOfCalendar = startOfMonth.startOf('week');
+    const endOfCalendar = endOfMonth.endOf('week');
+
+    const days = [];
+    let current = startOfCalendar;
+
+    while (current <= endOfCalendar) {
+      days.push(current);
+      current = current.plus({ days: 1 });
+    }
+
+    return days;
+  };
 
   return (
     <div className='space-y-6'>
-      {/* Stats */}
-      <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-        <div className='bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4'>
+      {/* Stats Cards */}
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+        <div className='bg-green-50 border border-green-200 rounded-xl p-6'>
           <div className='flex items-center justify-between'>
             <div>
-              <p className='text-sm font-medium text-blue-600'>This Week</p>
-              <p className='text-2xl font-bold text-blue-700'>{availabilityStats.thisWeek}</p>
+              <p className='text-green-600 text-sm font-medium'>This Week</p>
+              <p className='text-2xl font-bold text-green-700'>{availabilityStats.thisWeek}</p>
+              <p className='text-green-600 text-sm'>Available slots</p>
             </div>
-            <Calendar className='h-8 w-8 text-blue-500' />
+            <Calendar className='w-8 h-8 text-green-600' />
           </div>
         </div>
-        <div className='bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4'>
+
+        <div className='bg-blue-50 border border-blue-200 rounded-xl p-6'>
           <div className='flex items-center justify-between'>
             <div>
-              <p className='text-sm font-medium text-green-600'>Next Week</p>
-              <p className='text-2xl font-bold text-green-700'>{availabilityStats.nextWeek}</p>
+              <p className='text-blue-600 text-sm font-medium'>Next Week</p>
+              <p className='text-2xl font-bold text-blue-700'>{availabilityStats.nextWeek}</p>
+              <p className='text-blue-600 text-sm'>Available slots</p>
             </div>
-            <Clock className='h-8 w-8 text-green-500' />
+            <Clock className='w-8 h-8 text-blue-600' />
           </div>
         </div>
-        <div className='bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4'>
+
+        <div className='bg-purple-50 border border-purple-200 rounded-xl p-6'>
           <div className='flex items-center justify-between'>
             <div>
-              <p className='text-sm font-medium text-purple-600'>Total Slots</p>
+              <p className='text-purple-600 text-sm font-medium'>Total</p>
               <p className='text-2xl font-bold text-purple-700'>{availabilityStats.total}</p>
+              <p className='text-purple-600 text-sm'>Available slots</p>
             </div>
-            <Settings className='h-8 w-8 text-purple-500' />
+            <Users className='w-8 h-8 text-purple-600' />
           </div>
         </div>
       </div>
 
-      {/* Calendar and Time Slots */}
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-        <div>
-          <h3 className='text-lg font-semibold text-gray-800 mb-4'>Calendar Overview</h3>
-          <CalendarGrid
-            selectedDate={selectedDate}
-            onDateSelect={setSelectedDate}
-            availableDates={availableDates}
-            timezone={timezone}
-            currentMonth={currentMonth}
-            setCurrentMonth={setCurrentMonth}
-          />
+        {/* Calendar */}
+        <div className='bg-gray-50 rounded-xl p-6'>
+          <div className='flex items-center justify-between mb-6'>
+            <h3 className='text-lg font-semibold text-gray-800'>
+              {currentMonth.toFormat('MMMM yyyy')}
+            </h3>
+            <div className='flex gap-2'>
+              <button
+                onClick={() => setCurrentMonth(currentMonth.minus({ months: 1 }))}
+                className='p-2 rounded-lg hover:bg-gray-200 transition-colors'
+              >
+                ←
+              </button>
+              <button
+                onClick={() => setCurrentMonth(currentMonth.plus({ months: 1 }))}
+                className='p-2 rounded-lg hover:bg-gray-200 transition-colors'
+              >
+                →
+              </button>
+            </div>
+          </div>
+
+          {/* Calendar Grid */}
+          <div className='grid grid-cols-7 gap-1 mb-4'>
+            {dayNames.map((day) => (
+              <div key={day} className='text-center text-sm font-medium text-gray-500 py-2'>
+                {day.slice(0, 3)}
+              </div>
+            ))}
+          </div>
+
+          <div className='grid grid-cols-7 gap-1'>
+            {generateCalendarDays().map(renderCalendarDay)}
+          </div>
+
+          {/* Legend */}
+          <div className='flex items-center justify-center gap-4 mt-4 text-xs'>
+            <div className='flex items-center gap-1'>
+              <div className='w-3 h-3 bg-green-200 rounded'></div>
+              <span>Available</span>
+            </div>
+            <div className='flex items-center gap-1'>
+              <div className='w-3 h-3 bg-purple-200 rounded'></div>
+              <span>Selected</span>
+            </div>
+          </div>
         </div>
 
-        <div>
+        {/* Selected Date Details */}
+        <div className='bg-gray-50 rounded-xl p-6'>
           <h3 className='text-lg font-semibold text-gray-800 mb-4'>
             {selectedDate.toFormat('EEEE, MMMM d')}
           </h3>
-          {slotsForSelectedDate.length === 0 ? (
-            <div className='text-center py-8 text-gray-500'>
-              <Clock className='h-12 w-12 mx-auto mb-2 text-gray-300' />
-              <p>No available slots for this date</p>
-            </div>
-          ) : (
-            <div className='space-y-2 max-h-60 overflow-y-auto'>
-              {slotsForSelectedDate.map((slot, idx) => {
-                const start = createDate(slot.start, timezone);
-                const end = createDate(slot.end, timezone);
-                return (
-                  <div
-                    key={idx}
-                    className='flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200'
-                  >
-                    <span className='font-medium text-green-700'>
-                      {start.toFormat('h:mm a')} - {end.toFormat('h:mm a')}
-                    </span>
-                    <span className='text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full'>
-                      Available
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* Summary */}
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-200'>
-        <div>
-          <h4 className='font-semibold text-gray-800 mb-2'>Working Hours</h4>
-          {workingHours.length === 0 ? (
-            <p className='text-gray-500 text-sm'>No working hours set</p>
-          ) : (
-            <div className='space-y-1'>
-              {workingHours.map((hours, idx) => (
-                <div key={idx} className='text-sm text-gray-600'>
-                  {DAYS_OF_WEEK.find((d) => d.value === hours.dayOfWeek)?.label}: {hours.startTime}{' '}
-                  - {hours.endTime}
-                </div>
-              ))}
+          {slotsForSelectedDate.length > 0 ? (
+            <div className='space-y-2'>
+              <h4 className='text-sm font-medium text-gray-600 mb-2'>Available Times</h4>
+              <div className='grid grid-cols-2 gap-2'>
+                {slotsForSelectedDate.map((slot, index) => (
+                  <div
+                    key={index}
+                    className='bg-white border border-gray-200 rounded-lg p-3 text-center'
+                  >
+                    <div className='text-sm font-medium text-gray-900'>
+                      {DateTime.fromISO(slot.start).toFormat('h:mm a')}
+                    </div>
+                    <div className='text-xs text-gray-500'>
+                      {DateTime.fromISO(slot.end).toFormat('h:mm a')}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          )}
-        </div>
-        <div>
-          <h4 className='font-semibold text-gray-800 mb-2'>Blocked Times</h4>
-          {blockedTimes.length === 0 ? (
-            <p className='text-gray-500 text-sm'>No blocked times</p>
           ) : (
-            <div className='space-y-1 max-h-32 overflow-y-auto'>
-              {blockedTimes.slice(0, 3).map((blocked, idx) => (
-                <div key={idx} className='text-sm text-gray-600'>
-                  {blocked.date}: {blocked.startTime} - {blocked.endTime}
-                  {blocked.reason && <span className='text-gray-400'> ({blocked.reason})</span>}
-                </div>
-              ))}
-              {blockedTimes.length > 3 && (
-                <p className='text-xs text-gray-400'>...and {blockedTimes.length - 3} more</p>
-              )}
+            <div className='text-center py-8'>
+              <Calendar className='w-12 h-12 text-gray-300 mx-auto mb-2' />
+              <p className='text-gray-500'>No availability for this date</p>
             </div>
           )}
         </div>
