@@ -32,6 +32,7 @@ export function StripeConnectIntegration({ therapistId }: StripeConnectIntegrati
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
 
   // Fetch current Connect status
   const fetchStatus = async () => {
@@ -86,6 +87,37 @@ export function StripeConnectIntegration({ therapistId }: StripeConnectIntegrati
     }
   };
 
+  // Disconnect Stripe account
+  const handleDisconnect = async () => {
+    setIsConnecting(true);
+    try {
+      // Track analytics
+      if (therapistId) {
+        trackTherapistIntegrations.bankConnectionAttempted(therapistId, {
+          user_id: `therapist_${therapistId}`,
+        });
+      }
+
+      const response = await fetch('/api/stripe/connect/disconnect', {
+        method: 'POST',
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        await fetchStatus();
+        toast.success('Bank account disconnected successfully');
+      } else {
+        toast.error(data.error || 'Failed to disconnect bank account');
+      }
+    } catch (error) {
+      console.error('Error disconnecting bank account:', error);
+      toast.error('Failed to disconnect bank account');
+    } finally {
+      setIsConnecting(false);
+      setShowDisconnectConfirm(false);
+    }
+  };
+
   // Refresh onboarding link
   const handleRefreshOnboarding = async () => {
     setIsConnecting(true);
@@ -126,12 +158,25 @@ export function StripeConnectIntegration({ therapistId }: StripeConnectIntegrati
   }
 
   return (
-    <ConnectIntegrationCard
-      status={status}
-      isConnecting={isConnecting}
-      onConnect={handleConnect}
-      onRefreshOnboarding={handleRefreshOnboarding}
-    />
+    <>
+      <ConnectIntegrationCard
+        status={status}
+        isConnecting={isConnecting}
+        onConnect={handleConnect}
+        onDisconnect={() => setShowDisconnectConfirm(true)}
+        onRefreshOnboarding={handleRefreshOnboarding}
+      />
+
+      {/* Disconnect Confirmation Modal */}
+      {showDisconnectConfirm && (
+        <DisconnectConfirmationModal
+          isOpen={showDisconnectConfirm}
+          onClose={() => setShowDisconnectConfirm(false)}
+          onConfirm={handleDisconnect}
+          isLoading={isConnecting}
+        />
+      )}
+    </>
   );
 }
 
@@ -164,11 +209,13 @@ function ConnectIntegrationCard({
   status,
   isConnecting,
   onConnect,
+  onDisconnect,
   onRefreshOnboarding,
 }: {
   status: ConnectStatus;
   isConnecting: boolean;
   onConnect: () => void;
+  onDisconnect: () => void;
   onRefreshOnboarding: () => void;
 }) {
   const getStatusColor = () => {
@@ -220,6 +267,7 @@ function ConnectIntegrationCard({
             status={status}
             isConnecting={isConnecting}
             onConnect={onConnect}
+            onDisconnect={onDisconnect}
             onRefreshOnboarding={onRefreshOnboarding}
           />
           <InfoSection />
@@ -296,11 +344,13 @@ function ActionSection({
   status,
   isConnecting,
   onConnect,
+  onDisconnect,
   onRefreshOnboarding,
 }: {
   status: ConnectStatus;
   isConnecting: boolean;
   onConnect: () => void;
+  onDisconnect: () => void;
   onRefreshOnboarding: () => void;
 }) {
   if (!status.connected) {
@@ -322,29 +372,49 @@ function ActionSection({
 
   if (status.requiresAction) {
     return (
-      <button
-        onClick={onRefreshOnboarding}
-        disabled={isConnecting}
-        className='w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:opacity-50'
-      >
-        {isConnecting ? (
-          <Loader2 className='animate-spin h-4 w-4 mr-2' />
-        ) : (
-          <AlertTriangle className='h-4 w-4 mr-2' />
-        )}
-        {isConnecting ? 'Loading...' : 'Complete Setup'}
-      </button>
+      <div className='space-y-3'>
+        <button
+          onClick={onRefreshOnboarding}
+          disabled={isConnecting}
+          className='w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:opacity-50'
+        >
+          {isConnecting ? (
+            <Loader2 className='animate-spin h-4 w-4 mr-2' />
+          ) : (
+            <AlertTriangle className='h-4 w-4 mr-2' />
+          )}
+          {isConnecting ? 'Loading...' : 'Complete Setup'}
+        </button>
+        <button
+          onClick={onDisconnect}
+          disabled={isConnecting}
+          className='w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50'
+        >
+          <XCircle className='h-4 w-4 mr-2' />
+          Disconnect Account
+        </button>
+      </div>
     );
   }
 
   return (
-    <div className='text-center'>
-      <p className='text-sm text-green-600 font-medium mb-2'>
-        ✓ Bank account connected successfully
-      </p>
-      <p className='text-xs text-gray-500'>
-        You'll receive payments within 2-7 business days after sessions are completed
-      </p>
+    <div className='space-y-3'>
+      <div className='text-center'>
+        <p className='text-sm text-green-600 font-medium mb-2'>
+          ✓ Bank account connected successfully
+        </p>
+        <p className='text-xs text-gray-500 mb-4'>
+          You'll receive payments within 2-7 business days after sessions are completed
+        </p>
+      </div>
+      <button
+        onClick={onDisconnect}
+        disabled={isConnecting}
+        className='w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50'
+      >
+        <XCircle className='h-4 w-4 mr-2' />
+        Disconnect Account
+      </button>
     </div>
   );
 }
@@ -363,6 +433,48 @@ function InfoSection() {
             <li>• Standard transfer time: 2-7 business days</li>
             <li>• All transactions are handled securely through Stripe</li>
           </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Disconnect confirmation modal
+function DisconnectConfirmationModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  isLoading,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  isLoading: boolean;
+}) {
+  return (
+    <div
+      className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center ${isOpen ? '' : 'hidden'}`}
+    >
+      <div className='bg-white p-8 rounded-lg shadow-lg'>
+        <h2 className='text-xl font-semibold mb-4'>Disconnect Bank Account</h2>
+        <p className='text-base text-gray-700 mb-6'>
+          Are you sure you want to disconnect your bank account? This action cannot be undone.
+        </p>
+        <div className='flex justify-end gap-2'>
+          <button
+            onClick={onClose}
+            disabled={isLoading}
+            className='px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:opacity-50'
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isLoading}
+            className='px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50'
+          >
+            {isLoading ? 'Disconnecting...' : 'Disconnect'}
+          </button>
         </div>
       </div>
     </div>

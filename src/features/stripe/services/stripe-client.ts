@@ -6,7 +6,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 
 // Initialize Stripe with latest API version and TypeScript support
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2025-04-30.basil', // Latest API version as of 2025
+  apiVersion: '2025-05-28.basil', // Latest API version as of 2025
   typescript: true,
   telemetry: false, // Disable telemetry for privacy
   timeout: 20000, // 20 second timeout
