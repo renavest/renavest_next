@@ -18,6 +18,7 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
   const { user } = useUser();
   const router = useRouter();
   const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [currentUserTherapistId, setCurrentUserTherapistId] = useState<number | null>(null);
   const { isConnected, isChecking, bookingMode } = useMarketplaceIntegration(advisor);
 
@@ -43,6 +44,16 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
   const isBookingSelf = !!(
     currentUserTherapistId && advisor.therapistId === currentUserTherapistId
   );
+
+  const handleImageLoad = () => {
+    setIsLoading(false);
+    setHasError(false);
+  };
+
+  const handleImageError = () => {
+    setIsLoading(false);
+    setHasError(true);
+  };
 
   const handleBookSession = async () => {
     // Prevent self-booking
@@ -167,16 +178,29 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
   return (
     <div className='md:w-1/3'>
       <div className='aspect-[3/4] w-full relative rounded-xl overflow-hidden'>
+        {isLoading && !hasError && (
+          <div className='absolute inset-0 bg-gray-100 rounded-xl flex items-center justify-center z-10'>
+            <div className='flex flex-col items-center space-y-2'>
+              <div className='w-10 h-10 border-3 border-purple-200 border-t-purple-600 rounded-full animate-spin'></div>
+              <span className='text-sm text-gray-500 font-medium'>Loading...</span>
+            </div>
+          </div>
+        )}
         <Image
           width={350}
           height={350}
           src={hasError ? '/experts/placeholderexp.png' : advisor.profileUrl || ''}
           alt={advisor.name}
-          className={cn('h-full w-full object-cover', 'transition-opacity duration-300')}
+          className={cn(
+            'h-full w-full object-cover',
+            'transition-opacity duration-300',
+            isLoading ? 'opacity-0' : 'opacity-100',
+          )}
           placeholder='blur'
           blurDataURL='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
           priority
-          onError={() => setHasError(true)}
+          onError={handleImageError}
+          onLoad={handleImageLoad}
           onClick={() => {
             // Track profile view event
             posthog.capture('therapist_profile_viewed', {

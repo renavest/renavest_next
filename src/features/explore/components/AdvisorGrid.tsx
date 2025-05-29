@@ -85,10 +85,12 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
     >
       <div className='group relative aspect-[4/5] sm:aspect-[3/4] w-full overflow-hidden'>
         {!imageLoadState.isLoaded && !imageLoadState.hasError && (
-          <div
-            className='absolute inset-0 bg-gray-200 animate-pulse'
-            aria-label='Image loading placeholder'
-          />
+          <div className='absolute inset-0 bg-gray-100 rounded-2xl flex items-center justify-center'>
+            <div className='flex flex-col items-center space-y-2'>
+              <div className='w-8 h-8 border-3 border-purple-200 border-t-purple-600 rounded-full animate-spin'></div>
+              <span className='text-xs text-gray-500 font-medium'>Loading...</span>
+            </div>
+          </div>
         )}
 
         {imageLoadState.hasError ? (
@@ -114,6 +116,11 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
             )}
             onLoad={handleImageLoad}
             onError={handleImageError}
+            loading='lazy'
+            style={{
+              // Add better caching headers via style
+              imageRendering: 'auto',
+            }}
           />
         )}
 

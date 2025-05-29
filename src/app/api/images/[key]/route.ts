@@ -93,8 +93,9 @@ export async function GET(
       headers.set('Pragma', 'no-cache');
       headers.set('Expires', '0');
     } else {
-      // For normal requests, allow some caching
-      headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+      // For normal requests, allow longer caching with revalidation
+      headers.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800'); // 1 day cache, 1 week stale
+      headers.set('Vary', 'Accept-Encoding');
     }
 
     // Convert the stream to bytes to avoid stream handling issues
