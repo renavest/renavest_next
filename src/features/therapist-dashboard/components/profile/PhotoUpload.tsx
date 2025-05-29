@@ -2,6 +2,8 @@
 import { Camera, Loader2, Upload, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 
+import { trackTherapistDashboard } from '@/src/features/posthog/therapistTracking';
+import { therapistIdSignal } from '@/src/features/therapist-dashboard/state/therapistDashboardState';
 import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
 
 import { profileRefreshTriggerSignal } from '../../state/profileState';
@@ -191,6 +193,13 @@ export function PhotoUpload({
 
       setDebugInfo(`Upload successful!`);
       setJustUploaded(true);
+
+      // Track photo upload
+      if (therapistIdSignal.value) {
+        trackTherapistDashboard.profilePhotoUploaded(therapistIdSignal.value, {
+          user_id: `therapist_${therapistIdSignal.value}`,
+        });
+      }
 
       // Call the callback with the new photo URL
       onPhotoUploaded(result.profileUrl!);

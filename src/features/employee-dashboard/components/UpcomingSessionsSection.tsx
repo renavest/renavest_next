@@ -3,7 +3,7 @@
 import { Calendar, Clock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-import { TherapistImage } from '@/src/components/ui/TherapistImage';
+import { TherapistImage } from '@/src/features/therapist-dashboard/components/TherapistImage';
 import { formatDateTime } from '@/src/features/booking/utils/dateTimeUtils';
 import { trackUIInteraction } from '@/src/features/posthog/tracking';
 import { createDate } from '@/src/utils/timezone';

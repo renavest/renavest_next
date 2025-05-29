@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
 import { therapists, users } from '@/src/db/schema';
+import { trackTherapistServerSide } from '@/src/features/posthog/therapistTracking';
 
 export async function GET() {
   try {
@@ -100,6 +101,16 @@ export async function POST(request: Request) {
         .set(therapistUpdates)
         .where(eq(therapists.id, therapistResult[0].id));
     }
+
+    // Track the profile update with changed fields
+    const changedFields = [...Object.keys(userUpdates), ...Object.keys(therapistUpdates)];
+    if (changedFields.length > 0) {
+      await trackTherapistServerSide.profileUpdated(therapistResult[0].id, changedFields, {
+        user_id: userId,
+        email: userEmail,
+      });
+    }
+
     // Return updated profile
     const updatedUser = await db
       .select()

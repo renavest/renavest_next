@@ -4,6 +4,7 @@ import { Loader2, X } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 
 import { useGoogleCalendarIntegration } from '@/src/features/google-calendar/utils/googleCalendarIntegration';
+import { trackTherapistDashboard } from '@/src/features/posthog/therapistTracking';
 import {
   therapistIdSignal,
   initializeTherapistId,
@@ -103,10 +104,22 @@ export default function TherapistProfileCard() {
       console.log('Loading profile for therapist ID:', currentTherapistId);
       profileLoadedRef.current = true;
       profileActions.loadProfile();
+
+      // Track profile page view
+      trackTherapistDashboard.profileViewed(currentTherapistId, {
+        user_id: `therapist_${currentTherapistId}`,
+      });
     }
   }, [therapistIdSignal.value, loading]);
 
   const openEditModal = () => {
+    // Track profile edit attempt
+    const currentTherapistId = getValidTherapistId();
+    if (currentTherapistId) {
+      trackTherapistDashboard.profileEditAttempted(currentTherapistId, {
+        user_id: `therapist_${currentTherapistId}`,
+      });
+    }
     profileActions.openModal();
   };
 

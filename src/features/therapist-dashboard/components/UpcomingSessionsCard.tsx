@@ -2,6 +2,8 @@
 
 import { Calendar, Video } from 'lucide-react';
 
+import { trackTherapistSessions } from '@/src/features/posthog/therapistTracking';
+import { therapistIdSignal } from '@/src/features/therapist-dashboard/state/therapistDashboardState';
 import { UpcomingSession } from '@/src/features/therapist-dashboard/types';
 import { createDate } from '@/src/utils/timezone';
 
@@ -68,7 +70,18 @@ export function UpcomingSessionsCard({
                       target='_blank'
                       rel='noopener noreferrer'
                       className='flex items-center gap-1 px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded-md transition-colors'
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // Track session join
+                        if (therapistIdSignal.value) {
+                          trackTherapistSessions.sessionJoined(
+                            therapistIdSignal.value,
+                            parseInt(session.id, 10) || 0,
+                            'google_meet',
+                            { user_id: `therapist_${therapistIdSignal.value}` },
+                          );
+                        }
+                      }}
                     >
                       <Video className='h-3 w-3' />
                       Join Meet

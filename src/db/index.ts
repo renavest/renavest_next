@@ -6,7 +6,7 @@ import * as schema from './schema';
 
 // Load environment variables from .env.local or .env.production based on NODE_ENV
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local';
-dotenv.config({ path: '.env.production' });
+dotenv.config({ path: envFile });
 
 // Create a connection pool
 const pool = new Pool({
@@ -19,17 +19,6 @@ const pool = new Pool({
     rejectUnauthorized: false,
     ca: process.env.CA_CERT || undefined,
   },
-});
-
-// Log the pool connection details
-console.log('Database connection pool created with the following details:');
-console.log('Host:', process.env.DB_HOST || 'localhost');
-console.log('User:', process.env.DB_USER || 'postgres');
-console.log('Database:', process.env.DB_DATABASE || 'renavest');
-console.log('Port:', parseInt(process.env.DB_PORT || '5432'));
-console.log('SSL:', {
-  rejectUnauthorized: false,
-  ca: process.env.CA_CERT ? 'Configured' : 'Not configured',
 });
 
 // Create the Drizzle database instance
