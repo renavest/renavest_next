@@ -14,8 +14,6 @@ import { useState, useEffect } from 'react';
 
 import { useGoogleCalendarIntegration, fetchTherapistId } from '../utils/googleCalendarIntegration';
 
-import { WorkingHoursSection } from './WorkingHoursSection';
-
 // Google icon SVG
 const GoogleIcon = (
   <svg className='w-5 h-5 mr-2' width='20' height='20' viewBox='0 0 48 48'>
@@ -171,14 +169,12 @@ function ConnectedStatus({
   isLoading,
   onReconnect,
   onDisconnect,
-  therapistId,
 }: {
   calendarEmail: string | null | undefined;
   lastSynced: string | null | undefined;
   isLoading: boolean;
   onReconnect: () => void;
   onDisconnect: () => void;
-  therapistId: number;
 }) {
   return (
     <div>
@@ -209,8 +205,26 @@ function ConnectedStatus({
         </div>
       </div>
 
-      {/* Working Hours Section */}
-      <WorkingHoursSection therapistId={therapistId} />
+      {/* Availability Management Link */}
+      <div className='border-t border-gray-200 p-6'>
+        <div className='flex items-center justify-between'>
+          <div>
+            <h4 className='text-md font-semibold text-gray-900 mb-1'>
+              Availability & Working Hours
+            </h4>
+            <p className='text-sm text-gray-600'>
+              Manage your working hours and blocked time slots for client bookings.
+            </p>
+          </div>
+          <a
+            href='/therapist/availability'
+            className='inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500'
+          >
+            <Calendar className='w-4 h-4 mr-2' />
+            Manage Availability
+          </a>
+        </div>
+      </div>
     </div>
   );
 }
@@ -372,7 +386,6 @@ export function GoogleCalendarIntegration() {
               isLoading={isLoading}
               onReconnect={handleReconnect}
               onDisconnect={handleDisconnect}
-              therapistId={parseInt(therapistId)}
             />
           ) : (
             <DisconnectedStatus

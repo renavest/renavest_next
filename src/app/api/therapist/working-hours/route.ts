@@ -1,147 +1,186 @@
-import { auth, currentUser } from '@clerk/nextjs/server';
+import { currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { db } from '@/src/db';
-import { therapistAvailability } from '@/src/db/schema';
+import { users, therapists, therapistAvailability } from '@/src/db/schema';
 
-// Validation schemas
 const WorkingHoursSchema = z.object({
+  dayOfWeek: z.number().min(0).max(6),
+  startTime: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/),
+  endTime: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/),
+  isRecurring: z.boolean().default(true),
+});
+
+const GetWorkingHoursSchema = z.object({
+  therapistId: z.string(),
+});
+
+const SetWorkingHoursSchema = z.object({
   therapistId: z.number(),
-  workingHours: z.array(
-    z.object({
-      id: z.number().optional(),
-      dayOfWeek: z.number().min(0).max(6),
-      startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
-      endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
-      isRecurring: z.boolean().default(true),
-    }),
-  ),
+  workingHours: z.array(WorkingHoursSchema),
 });
 
 // GET - Fetch working hours for a therapist
 export async function GET(req: NextRequest) {
   try {
-    auth.protect();
     const user = await currentUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const searchParams = req.nextUrl.searchParams;
-    const therapistIdParam = searchParams.get('therapistId');
-
-    if (!therapistIdParam) {
-      return NextResponse.json({ error: 'Therapist ID is required' }, { status: 400 });
-    }
-
-    const therapistId = parseInt(therapistIdParam);
-
-    // Verify the therapist exists and belongs to the current user
-    const therapist = await db.query.therapists.findFirst({
-      where: (therapists, { eq }) => eq(therapists.id, therapistId),
-      with: {
-        user: true,
-      },
+    const { therapistId } = GetWorkingHoursSchema.parse({
+      therapistId: searchParams.get('therapistId'),
     });
 
-    if (!therapist || therapist.user?.email !== user.emailAddresses[0]?.emailAddress) {
-      return NextResponse.json({ error: 'Therapist not found or unauthorized' }, { status: 404 });
+    const therapistIdNum = parseInt(therapistId);
+
+    // Get the internal user record
+    const userRecord = await db.select().from(users).where(eq(users.clerkId, user.id)).limit(1);
+    if (userRecord.length === 0) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    const userId = userRecord[0].id;
+
+    // Verify therapist ownership
+    const therapistRecord = await db
+      .select()
+      .from(therapists)
+      .where(eq(therapists.id, therapistIdNum))
+      .limit(1);
+
+    if (therapistRecord.length === 0) {
+      return NextResponse.json({ error: 'Therapist not found' }, { status: 404 });
+    }
+
+    // Only allow therapists to access their own working hours
+    if (therapistRecord[0].userId !== userId) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
     // Fetch working hours
-    const workingHours = await db.query.therapistAvailability.findMany({
-      where: (availability, { eq }) => eq(availability.therapistId, therapistId),
-      orderBy: (availability, { asc }) => [
-        asc(availability.dayOfWeek),
-        asc(availability.startTime),
-      ],
-    });
+    const workingHoursResult = await db
+      .select()
+      .from(therapistAvailability)
+      .where(eq(therapistAvailability.therapistId, therapistIdNum))
+      .orderBy(therapistAvailability.dayOfWeek, therapistAvailability.startTime);
+
+    const workingHours = workingHoursResult.map((hours) => ({
+      id: hours.id,
+      dayOfWeek: hours.dayOfWeek,
+      startTime: hours.startTime,
+      endTime: hours.endTime,
+      isRecurring: hours.isRecurring,
+    }));
 
     return NextResponse.json({
       success: true,
-      workingHours: workingHours.map((hour) => ({
-        id: hour.id,
-        dayOfWeek: hour.dayOfWeek,
-        startTime: hour.startTime,
-        endTime: hour.endTime,
-        isRecurring: hour.isRecurring,
-      })),
+      workingHours,
     });
   } catch (error) {
-    console.error('Error fetching working hours:', error);
-    return NextResponse.json({ error: 'Failed to fetch working hours' }, { status: 500 });
+    console.error('[GET WORKING HOURS] Error:', error);
+
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        {
+          error: 'Invalid request parameters',
+          details: error.errors,
+        },
+        { status: 400 },
+      );
+    }
+
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-// POST - Save working hours for a therapist
+// POST - Update working hours for a therapist
 export async function POST(req: NextRequest) {
   try {
-    auth.protect();
     const user = await currentUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await req.json();
-    const validatedData = WorkingHoursSchema.parse(body);
+    const { therapistId, workingHours } = SetWorkingHoursSchema.parse(body);
 
-    // Verify the therapist exists and belongs to the current user
-    const therapist = await db.query.therapists.findFirst({
-      where: (therapists, { eq }) => eq(therapists.id, validatedData.therapistId),
-      with: {
-        user: true,
-      },
-    });
-
-    if (!therapist || therapist.user?.email !== user.emailAddresses[0]?.emailAddress) {
-      return NextResponse.json({ error: 'Therapist not found or unauthorized' }, { status: 404 });
+    // Get the internal user record
+    const userRecord = await db.select().from(users).where(eq(users.clerkId, user.id)).limit(1);
+    if (userRecord.length === 0) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Delete existing working hours for this therapist
+    const userId = userRecord[0].id;
+
+    // Verify therapist ownership
+    const therapistRecord = await db
+      .select()
+      .from(therapists)
+      .where(eq(therapists.id, therapistId))
+      .limit(1);
+
+    if (therapistRecord.length === 0) {
+      return NextResponse.json({ error: 'Therapist not found' }, { status: 404 });
+    }
+
+    if (therapistRecord[0].userId !== userId) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    }
+
+    // Validate working hours
+    for (const hours of workingHours) {
+      const [startHour, startMin] = hours.startTime.split(':').map(Number);
+      const [endHour, endMin] = hours.endTime.split(':').map(Number);
+      const startMinutes = startHour * 60 + startMin;
+      const endMinutes = endHour * 60 + endMin;
+
+      if (startMinutes >= endMinutes) {
+        return NextResponse.json(
+          { error: 'Start time must be before end time for all working hours' },
+          { status: 400 },
+        );
+      }
+    }
+
+    // Delete existing working hours
     await db
       .delete(therapistAvailability)
-      .where(eq(therapistAvailability.therapistId, validatedData.therapistId));
+      .where(eq(therapistAvailability.therapistId, therapistId));
 
     // Insert new working hours
-    const newWorkingHours = [];
-    for (const hours of validatedData.workingHours) {
-      const [inserted] = await db
-        .insert(therapistAvailability)
-        .values({
-          therapistId: validatedData.therapistId,
-          dayOfWeek: hours.dayOfWeek,
-          startTime: hours.startTime,
-          endTime: hours.endTime,
-          isRecurring: hours.isRecurring,
-        })
-        .returning();
+    if (workingHours.length > 0) {
+      const workingHoursToInsert = workingHours.map((hours) => ({
+        therapistId,
+        dayOfWeek: hours.dayOfWeek,
+        startTime: hours.startTime,
+        endTime: hours.endTime,
+        isRecurring: hours.isRecurring,
+      }));
 
-      newWorkingHours.push({
-        id: inserted.id,
-        dayOfWeek: inserted.dayOfWeek,
-        startTime: inserted.startTime,
-        endTime: inserted.endTime,
-        isRecurring: inserted.isRecurring,
-      });
+      await db.insert(therapistAvailability).values(workingHoursToInsert);
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Working hours saved successfully',
-      workingHours: newWorkingHours,
+      message: 'Working hours updated successfully',
     });
   } catch (error) {
-    console.error('Error saving working hours:', error);
+    console.error('[SET WORKING HOURS] Error:', error);
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid working hours data', details: error.errors },
+        {
+          error: 'Invalid request parameters',
+          details: error.errors,
+        },
         { status: 400 },
       );
     }
 
-    return NextResponse.json({ error: 'Failed to save working hours' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
