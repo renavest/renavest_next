@@ -69,8 +69,11 @@ export function OverviewView({
   const generateCalendarDays = () => {
     const startOfMonth = currentMonth.startOf('month');
     const endOfMonth = currentMonth.endOf('month');
-    const startOfCalendar = startOfMonth.startOf('week');
-    const endOfCalendar = endOfMonth.endOf('week');
+
+    // Get the Sunday before the first day of the month
+    const startOfCalendar = startOfMonth.startOf('week', { useLocaleWeeks: false });
+    // Get the Saturday after the last day of the month
+    const endOfCalendar = endOfMonth.endOf('week', { useLocaleWeeks: false });
 
     const days = [];
     let current = startOfCalendar;
