@@ -11,7 +11,7 @@ import { cn } from '@/src/lib/utils';
 import { Advisor } from '@/src/shared/types';
 import { COLORS } from '@/src/styles/colors';
 
-import { advisorSignal, isOpenSignal } from './state/advisorSignals';
+import { advisorSignal, isOpenSignal, advisorActions } from './state/advisorSignals';
 import { useMarketplaceIntegration } from './utils/useMarketplaceIntegration';
 
 const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
@@ -299,8 +299,7 @@ const AdvisorModal = () => {
   }
 
   const handleClose = () => {
-    isOpenSignal.value = false;
-    advisorSignal.value = null;
+    advisorActions.closeAdvisorModal();
   };
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
