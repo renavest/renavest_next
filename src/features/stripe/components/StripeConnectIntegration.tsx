@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle, DollarSign, Loader2, AlertTriangle, XCircle, Bank } from 'lucide-react';
+import { CheckCircle, DollarSign, Loader2, AlertTriangle, XCircle, CreditCard } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
@@ -127,7 +127,7 @@ export function StripeConnectIntegration({ therapistId }: StripeConnectIntegrati
       <div className='w-full bg-white shadow-lg rounded-xl overflow-hidden border border-purple-100'>
         <div className='px-6 py-5 flex flex-col items-center'>
           <div className='flex items-center justify-center gap-2 mb-2'>
-            <Bank className='h-6 w-6 text-purple-700' />
+            <CreditCard className='h-6 w-6 text-purple-700' />
             <h3 className='text-xl font-semibold leading-6 text-purple-700'>
               Bank Account Integration
             </h3>
@@ -219,7 +219,7 @@ export function StripeConnectIntegration({ therapistId }: StripeConnectIntegrati
     <div className='w-full bg-white shadow-lg rounded-xl overflow-hidden border border-purple-100'>
       <div className='px-6 py-5 flex flex-col items-center'>
         <div className='flex items-center justify-center gap-2 mb-2'>
-          <Bank className='h-6 w-6 text-purple-700' />
+          <CreditCard className='h-6 w-6 text-purple-700' />
           <h3 className='text-xl font-semibold leading-6 text-purple-700'>
             Bank Account Integration
           </h3>
