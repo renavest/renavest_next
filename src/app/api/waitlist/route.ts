@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
             <h1 style="color: #9071FF; font-size: 28px; font-weight: bold; margin: 0;">New Waitlist Signup</h1>
           </div>
           
-          <div style="background: linear-gradient(135deg, #f3f0ff 0%, #fdf2f8 100%); border-radius: 16px; padding: 24px; margin-bottom: 24px; border: 1px solid #e5d5ff;">
+          <div style="background: linear-gradient(135deg, #9071FF10 0%, #faf9f6 100%); border-radius: 16px; padding: 24px; margin-bottom: 24px; border: 1px solid #9071FF20;">
             <h2 style="color: #1f2937; font-size: 20px; margin-top: 0; margin-bottom: 16px;">
               📧 New Email Subscription
             </h2>
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
       html: `
         <div style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 30px;">
-            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #9071FF 0%, #ec4899 100%); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+            <div style="width: 80px; height: 80px; background: #9071FF; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
               <span style="font-size: 32px;">🎉</span>
             </div>
             <h1 style="color: #1f2937; font-size: 32px; font-weight: bold; margin: 0; line-height: 1.2;">
@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
             </h1>
           </div>
           
-          <div style="background: linear-gradient(135deg, #f3f0ff 0%, #fdf2f8 100%); border-radius: 16px; padding: 24px; margin-bottom: 24px; border: 1px solid #e5d5ff;">
+          <div style="background: linear-gradient(135deg, #9071FF10 0%, #faf9f6 100%); border-radius: 16px; padding: 24px; margin-bottom: 24px; border: 1px solid #9071FF20;">
             <p style="color: #374151; font-size: 18px; line-height: 1.6; margin: 0;">
               Thank you for joining the <strong style="color: #9071FF;">Renavest waitlist</strong>! 
               You're now part of an exclusive group that will be the first to experience the future of financial wellness.
@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
           </div>
           
           <div style="text-align: center; margin-bottom: 32px;">
-            <a href="https://renavestapp.com" style="display: inline-block; background: linear-gradient(135deg, #9071FF 0%, #ec4899 100%); color: white; text-decoration: none; padding: 16px 32px; border-radius: 50px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(144, 113, 255, 0.3); transition: all 0.3s ease;">
+            <a href="https://renavestapp.com" style="display: inline-block; background: #9071FF; color: white; text-decoration: none; padding: 16px 32px; border-radius: 50px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(144, 113, 255, 0.3); transition: all 0.3s ease;">
               Visit Our Website
             </a>
           </div>
