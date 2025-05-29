@@ -1,6 +1,6 @@
 'use client';
 import { Award } from 'lucide-react';
-import React, { useState } from 'react';
+import React from 'react';
 
 import { cn } from '@/src/lib/utils';
 import { Advisor } from '@/src/shared/types';
@@ -9,34 +9,43 @@ import { COLORS } from '@/src/styles/colors';
 import OnboardingModalServerWrapper from '../../onboarding/components/OnboardingModalServerWrapper';
 
 import AdvisorModal from './AdvisorModal';
-import { advisorSignal, isOpenSignal } from './state/advisorSignals';
+import {
+  advisorImageLoadingSignal,
+  advisorImageErrorSignal,
+  advisorActions,
+} from './state/advisorSignals';
 
 interface AdvisorCardProps {
   advisor: Advisor;
-  onClick: () => void;
 }
 
-const useImageLoadState = () => {
-  const [imageLoadState, setImageLoadState] = useState({
-    isLoaded: false,
-    hasError: false,
-  });
+const useImageLoadState = (advisorId: string) => {
+  // Use global signals instead of local state
+  const isLoaded = !advisorImageLoadingSignal.value[advisorId];
+  const hasError = advisorImageErrorSignal.value[advisorId] || false;
 
   const handleImageLoad = () => {
-    setImageLoadState({
-      isLoaded: true,
-      hasError: false,
-    });
+    advisorActions.setImageLoading(advisorId, false);
+    advisorActions.setImageError(advisorId, false);
   };
 
   const handleImageError = () => {
-    setImageLoadState({
-      isLoaded: false,
-      hasError: true,
-    });
+    advisorActions.setImageLoading(advisorId, false);
+    advisorActions.setImageError(advisorId, true);
   };
 
-  return { imageLoadState, handleImageLoad, handleImageError };
+  // Initialize loading state
+  React.useEffect(() => {
+    if (advisorImageLoadingSignal.value[advisorId] === undefined) {
+      advisorActions.setImageLoading(advisorId, true);
+    }
+  }, [advisorId]);
+
+  return {
+    imageLoadState: { isLoaded, hasError },
+    handleImageLoad,
+    handleImageError,
+  };
 };
 
 const renderExpertiseTags = (expertiseTags: string[]) => {
@@ -69,15 +78,19 @@ const renderExpertiseTags = (expertiseTags: string[]) => {
   );
 };
 
-const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
-  const { imageLoadState, handleImageLoad, handleImageError } = useImageLoadState();
+const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor }) => {
+  const { imageLoadState, handleImageLoad, handleImageError } = useImageLoadState(advisor.id);
 
   // Limit expertise tags and add ellipsis if more exist
   const expertiseTags = advisor.expertise?.split(',') || [];
 
+  const handleClick = () => {
+    advisorActions.openAdvisorModal(advisor);
+  };
+
   return (
     <div
-      onClick={onClick}
+      onClick={handleClick}
       className={cn(
         'relative rounded-2xl flex flex-col mb-4 p-2 sm:p-4 transition-all duration-300 cursor-pointer',
         'hover:bg-purple-50',
@@ -85,10 +98,12 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
     >
       <div className='group relative aspect-[4/5] sm:aspect-[3/4] w-full overflow-hidden'>
         {!imageLoadState.isLoaded && !imageLoadState.hasError && (
-          <div
-            className='absolute inset-0 bg-gray-200 animate-pulse'
-            aria-label='Image loading placeholder'
-          />
+          <div className='absolute inset-0 bg-gray-100 rounded-2xl flex items-center justify-center'>
+            <div className='flex flex-col items-center space-y-2'>
+              <div className='w-8 h-8 border-3 border-purple-200 border-t-purple-600 rounded-full animate-spin'></div>
+              <span className='text-xs text-gray-500 font-medium'>Loading...</span>
+            </div>
+          </div>
         )}
 
         {imageLoadState.hasError ? (
@@ -114,6 +129,11 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
             )}
             onLoad={handleImageLoad}
             onError={handleImageError}
+            loading='lazy'
+            style={{
+              // Add better caching headers via style
+              imageRendering: 'auto',
+            }}
           />
         )}
 
@@ -154,22 +174,19 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, onClick }) => {
 };
 
 const AdvisorGrid: React.FC<{ advisors: Advisor[] }> = ({ advisors }) => {
-  // Update the signals when an advisor is clicked.
-  const handleAdvisorClick = (advisor: Advisor) => {
-    advisorSignal.value = advisor;
-    isOpenSignal.value = true;
-  };
+  // Set advisors in global state when component receives them
+  React.useEffect(() => {
+    if (advisors.length > 0) {
+      advisorActions.setAdvisors(advisors);
+    }
+  }, [advisors]);
 
   return (
     <OnboardingModalServerWrapper>
       <div className='max-w-7xl mx-auto px-3 sm:px-6 lg:px-8'>
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8'>
           {advisors.map((advisor) => (
-            <AdvisorCard
-              key={advisor.id}
-              advisor={advisor}
-              onClick={() => handleAdvisorClick(advisor)}
-            />
+            <AdvisorCard key={advisor.id} advisor={advisor} />
           ))}
         </div>
 

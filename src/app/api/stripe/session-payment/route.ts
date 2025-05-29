@@ -181,7 +181,7 @@ export async function POST(req: NextRequest) {
       amount: outOfPocketCents,
       currency: 'usd',
       customer: stripeCustomerId,
-      capture_method: 'automatic_async', // Use automatic_async as the new default
+      capture_method: 'manual', // Use manual capture to delay payment until session completion
       automatic_payment_methods: {
         enabled: true,
         allow_redirects: 'never', // Prevent redirects for therapy session payments

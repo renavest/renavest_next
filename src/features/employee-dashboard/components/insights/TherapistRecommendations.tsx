@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import posthog from 'posthog-js';
 import { useEffect, useState } from 'react';
 
-import { TherapistImage } from '@/src/components/ui/TherapistImage';
+import { TherapistImage } from '@/src/features/therapist-dashboard/components/TherapistImage';
 
 interface Therapist {
   id: number;

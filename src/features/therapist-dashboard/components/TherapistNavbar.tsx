@@ -8,6 +8,10 @@ import { useEffect } from 'react';
 
 import { LogoutButton } from '@/src/features/auth/components/auth/LogoutButton';
 import { fetchTherapistId } from '@/src/features/google-calendar/utils/googleCalendarIntegration';
+import {
+  trackTherapistDashboard,
+  trackTherapistMarketplace,
+} from '@/src/features/posthog/therapistTracking';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
@@ -43,6 +47,24 @@ export default function TherapistNavbar({
     }
     getTherapistId();
   }, [user?.id]);
+
+  const handleMarketplaceClick = () => {
+    if (therapistIdSignal.value) {
+      trackTherapistMarketplace.marketplaceViewed(therapistIdSignal.value, {
+        user_id: user?.id,
+        email: user?.emailAddresses?.[0]?.emailAddress,
+      });
+    }
+  };
+
+  const handleProfileClick = () => {
+    if (therapistIdSignal.value) {
+      trackTherapistDashboard.navigationClicked('profile', therapistIdSignal.value, {
+        user_id: user?.id,
+        email: user?.emailAddresses?.[0]?.emailAddress,
+      });
+    }
+  };
 
   return (
     <header
@@ -85,6 +107,7 @@ export default function TherapistNavbar({
         <div className='flex items-center gap-3'>
           <Link
             href='/explore'
+            onClick={handleMarketplaceClick}
             className='flex items-center gap-1.5 text-gray-700 hover:text-gray-900 transition-colors text-sm px-3 py-2 rounded-lg hover:bg-gray-100 border border-transparent hover:border-gray-200'
           >
             <svg className='h-4 w-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -99,6 +122,7 @@ export default function TherapistNavbar({
           </Link>
           <Link
             href='/therapist/profile'
+            onClick={handleProfileClick}
             className='flex items-center gap-1.5 text-gray-700 hover:text-gray-900 transition-colors text-sm px-3 py-2 rounded-lg hover:bg-gray-100 border border-transparent hover:border-gray-200'
           >
             <User className='h-4 w-4' />

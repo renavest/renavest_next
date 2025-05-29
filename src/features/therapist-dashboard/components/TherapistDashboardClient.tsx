@@ -1,10 +1,14 @@
 'use client';
 
-import { UserCircle2, ChevronRight } from 'lucide-react';
+import { UserCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useCallback } from 'react';
 
-import { useGoogleCalendarIntegration } from '@/src/features/google-calendar/utils/googleCalendarIntegration';
+import {
+  trackTherapistDashboard,
+  trackTherapistClientManagement,
+  trackTherapistSessions,
+} from '@/src/features/posthog/therapistTracking';
 import { AddNewClientSection } from '@/src/features/therapist-dashboard/components/AddNewClientSection';
 import TherapistNavbar from '@/src/features/therapist-dashboard/components/TherapistNavbar';
 import { TherapistStatisticsCard } from '@/src/features/therapist-dashboard/components/TherapistStatisticsCard';
@@ -26,22 +30,37 @@ import {
 import { COLORS } from '@/src/styles/colors';
 
 const QuickActionsSection = () => {
-  const { status: calendarStatus } = useGoogleCalendarIntegration(therapistIdSignal.value || 0);
+  const handleProfileClick = () => {
+    if (therapistIdSignal.value) {
+      trackTherapistDashboard.quickActionClicked('view_profile', therapistIdSignal.value, {
+        user_id: `therapist_${therapistIdSignal.value}`,
+      });
+    }
+  };
 
-  const calendarText = calendarStatus.isConnected
-    ? 'Manage Calendar Integration'
-    : 'Connect Google Calendar';
+  const handleIntegrationsClick = () => {
+    if (therapistIdSignal.value) {
+      trackTherapistDashboard.quickActionClicked('manage_integrations', therapistIdSignal.value, {
+        user_id: `therapist_${therapistIdSignal.value}`,
+      });
+    }
+  };
 
-  const calendarDescription = calendarStatus.isConnected
-    ? 'View and manage your calendar settings'
-    : 'Connect your Google Calendar to sync sessions';
+  const handleAvailabilityClick = () => {
+    if (therapistIdSignal.value) {
+      trackTherapistDashboard.quickActionClicked('manage_availability', therapistIdSignal.value, {
+        user_id: `therapist_${therapistIdSignal.value}`,
+      });
+    }
+  };
 
   return (
     <div className='mt-6'>
       <h2 className='text-xl font-semibold text-gray-800 mb-4'>Quick Actions</h2>
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
         <Link
           href='/therapist/profile'
+          onClick={handleProfileClick}
           className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all group'
         >
           <div className='flex items-center gap-4'>
@@ -68,20 +87,13 @@ const QuickActionsSection = () => {
         </Link>
         <Link
           href='/therapist/integrations'
+          onClick={handleIntegrationsClick}
           className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all group'
         >
           <div className='flex items-center gap-4'>
-            <div
-              className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
-                calendarStatus.isConnected
-                  ? 'bg-green-100 group-hover:bg-green-200'
-                  : 'bg-blue-100 group-hover:bg-blue-200'
-              }`}
-            >
+            <div className='w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200 transition-colors'>
               <svg
-                className={`w-6 h-6 ${
-                  calendarStatus.isConnected ? 'text-green-600' : 'text-blue-600'
-                }`}
+                className='w-6 h-6 text-blue-600'
                 fill='none'
                 stroke='currentColor'
                 viewBox='0 0 24 24'
@@ -90,13 +102,42 @@ const QuickActionsSection = () => {
                   strokeLinecap='round'
                   strokeLinejoin='round'
                   strokeWidth={2}
-                  d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'
+                  d='M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z'
                 />
               </svg>
             </div>
             <div>
-              <h3 className='text-lg font-semibold text-gray-800'>{calendarText}</h3>
-              <p className='text-gray-500 text-sm'>{calendarDescription}</p>
+              <h3 className='text-lg font-semibold text-gray-800'>Manage Integrations</h3>
+              <p className='text-gray-500 text-sm'>
+                Connect your bank account, calendar, and other tools
+              </p>
+            </div>
+          </div>
+        </Link>
+        <Link
+          href='/therapist/availability'
+          onClick={handleAvailabilityClick}
+          className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all group'
+        >
+          <div className='flex items-center gap-4'>
+            <div className='w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center group-hover:bg-amber-200 transition-colors'>
+              <svg
+                className='w-6 h-6 text-amber-600'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
+                />
+              </svg>
+            </div>
+            <div>
+              <h3 className='text-lg font-semibold text-gray-800'>Manage Availability</h3>
+              <p className='text-gray-500 text-sm'>Set working hours and block time slots</p>
             </div>
           </div>
         </Link>
@@ -115,53 +156,72 @@ const ClientSidebar = ({
   selectedClient: Client | null;
   onClientSelect: (client: Client) => void;
   onAddClientClick: () => void;
-}) => (
-  <div className='bg-white border-r border-gray-100 p-4 space-y-2 h-full overflow-y-auto flex flex-col'>
-    <h3 className='text-lg font-semibold text-gray-800 mb-4'>Your Clients</h3>
-    {clients.map((client) => (
-      <div
-        key={client.id}
-        onClick={() => onClientSelect(client)}
-        className={`
-          flex items-center justify-between p-4 rounded-xl cursor-pointer transition-all
-          border-2
-          ${selectedClient?.id === client.id ? 'border-purple-500 bg-purple-50 shadow-md' : 'border-gray-200 bg-white hover:bg-purple-50 hover:border-purple-300 shadow-sm'}
-          group
-        `}
-        tabIndex={0}
-        role='button'
-        aria-pressed={selectedClient?.id === client.id}
-      >
-        <div className='flex items-center'>
-          <UserCircle2 className='h-8 w-8 mr-3 text-purple-600' />
-          <div>
-            <p className='font-medium text-gray-800'>
-              {client.firstName} {client.lastName || ''}
-            </p>
-            <p className='text-xs text-gray-500'>{client.email}</p>
-          </div>
-        </div>
-        <ChevronRight className='h-5 w-5 text-purple-400 group-hover:text-purple-600 transition-colors' />
+}) => {
+  const handleClientSelect = (client: Client) => {
+    // Track client selection
+    if (therapistIdSignal.value) {
+      trackTherapistClientManagement.clientSelected(therapistIdSignal.value, client.id, {
+        user_id: `therapist_${therapistIdSignal.value}`,
+      });
+    }
+    onClientSelect(client);
+  };
+
+  const handleAddClientClick = () => {
+    // Track add client modal opening
+    if (therapistIdSignal.value) {
+      trackTherapistClientManagement.addClientModalOpened(therapistIdSignal.value, {
+        user_id: `therapist_${therapistIdSignal.value}`,
+      });
+    }
+    onAddClientClick();
+  };
+
+  return (
+    <div className='p-6 h-full flex flex-col'>
+      <h2 className='text-xl font-semibold text-gray-800 mb-4'>Your Clients ({clients.length})</h2>
+      <div className='flex-1 overflow-y-auto space-y-2'>
+        {clients.map((client) => (
+          <button
+            key={client.id}
+            onClick={() => handleClientSelect(client)}
+            className={`w-full text-left p-3 rounded-lg border transition-all ${
+              selectedClient?.id === client.id
+                ? 'bg-purple-50 border-purple-200 shadow-sm'
+                : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+            }`}
+          >
+            <div className='flex items-center gap-3'>
+              <UserCircle2 className='h-8 w-8 text-gray-400' />
+              <div>
+                <p className='font-medium text-gray-900'>
+                  {client.firstName} {client.lastName}
+                </p>
+                <p className='text-sm text-gray-500'>{client.email}</p>
+              </div>
+            </div>
+          </button>
+        ))}
       </div>
-    ))}
-    <button
-      onClick={onAddClientClick}
-      className='mt-4 w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg shadow p-3 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2'
-      aria-label='Invite a Client to Renavest'
-    >
-      <svg
-        className='w-5 h-5'
-        fill='none'
-        stroke='currentColor'
-        strokeWidth={2}
-        viewBox='0 0 24 24'
+      <button
+        onClick={handleAddClientClick}
+        className='mt-4 w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg shadow p-3 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2'
+        aria-label='Invite a Client to Renavest'
       >
-        <path strokeLinecap='round' strokeLinejoin='round' d='M12 4v16m8-8H4' />
-      </svg>
-      <span className='font-medium'>Invite a Client</span>
-    </button>
-  </div>
-);
+        <svg
+          className='w-5 h-5'
+          fill='none'
+          stroke='currentColor'
+          strokeWidth={2}
+          viewBox='0 0 24 24'
+        >
+          <path strokeLinecap='round' strokeLinejoin='round' d='M12 4v16m8-8H4' />
+        </svg>
+        <span className='font-medium'>Invite a Client</span>
+      </button>
+    </div>
+  );
+};
 
 const ClientDetailView = ({
   client,
@@ -316,8 +376,35 @@ export default function TherapistDashboardPage({
     if (initialTherapistId) {
       therapistIdSignal.value = initialTherapistId;
       therapistPageLoadedSignal.value = true;
+
+      // Track dashboard page view
+      trackTherapistDashboard.pageViewed(initialTherapistId, {
+        user_id: `therapist_${initialTherapistId}`,
+      });
     }
   }, [initialTherapistId]);
+
+  // Track client list viewed when clients change
+  useEffect(() => {
+    if (therapistIdSignal.value && clientsSignal.value.length > 0) {
+      trackTherapistClientManagement.clientListViewed(
+        therapistIdSignal.value,
+        clientsSignal.value.length,
+        { user_id: `therapist_${therapistIdSignal.value}` },
+      );
+    }
+  }, [clientsSignal.value]);
+
+  // Track sessions viewed when sessions change
+  useEffect(() => {
+    if (therapistIdSignal.value && upcomingSessionsSignal.value.length > 0) {
+      trackTherapistSessions.sessionsViewed(
+        therapistIdSignal.value,
+        upcomingSessionsSignal.value.length,
+        { user_id: `therapist_${therapistIdSignal.value}` },
+      );
+    }
+  }, [upcomingSessionsSignal.value]);
 
   // Function to refresh data from the server
   const refreshData = useCallback(async () => {

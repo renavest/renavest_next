@@ -2,6 +2,7 @@
 import React from 'react';
 
 import { ProfileFormData } from '../../types/profile';
+
 import { PhotoUpload } from './PhotoUpload';
 
 interface ProfileFormFieldsProps {

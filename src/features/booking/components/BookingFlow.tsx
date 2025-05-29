@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { useCalendlyEventListener } from 'react-calendly';
 
 import AlternativeBooking from '@/src/features/booking/components/AlternativeBooking';
-// import BillingCheckWrapper from '@/src/features/booking/components/BillingCheckWrapper'; // TODO: Re-enable when billing integration is complete
+import BillingCheckWrapper from '@/src/features/booking/components/BillingCheckWrapper';
 import { BookingForm } from '@/src/features/booking/components/form/BookingForm';
 import { getInitials } from '@/src/features/booking/utils/stringUtils';
 
@@ -106,8 +106,11 @@ export default function UnifiedBookingFlow({ advisor, userId, userEmail }: Booki
     return <AlternativeBooking advisor={advisor} bookingURL={advisor.bookingURL} />;
   }
 
+  // Check if we should enable billing checks (only in development for now)
+  const shouldCheckBilling = process.env.NODE_ENV === 'development';
+
   // If active therapist with Google Calendar integration, show internal booking
-  return (
+  const bookingForm = (
     <BookingForm
       advisorId={advisor.id}
       onConfirm={handleBookingConfirmation}
@@ -117,19 +120,14 @@ export default function UnifiedBookingFlow({ advisor, userId, userEmail }: Booki
     />
   );
 
-  // TODO: Re-enable billing check once Stripe integration is fully complete
-  // return (
-  //   <BillingCheckWrapper
-  //     advisorId={advisor.id}
-  //     shouldCheckBilling={true} // Always check billing for direct bookings
-  //   >
-  //     <BookingForm
-  //       advisorId={advisor.id}
-  //       onConfirm={handleBookingConfirmation}
-  //       advisorName={advisor.name}
-  //       advisorImage={advisor.profileUrl}
-  //       advisorInitials={getInitials(advisor.name)}
-  //     />
-  //   </BillingCheckWrapper>
-  // );
+  // Conditionally wrap with billing check only in development
+  if (shouldCheckBilling) {
+    return (
+      <BillingCheckWrapper advisorId={advisor.id} shouldCheckBilling={true}>
+        {bookingForm}
+      </BillingCheckWrapper>
+    );
+  }
+
+  return bookingForm;
 }

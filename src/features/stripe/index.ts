@@ -11,6 +11,7 @@ export {
   syncStripeDataToKV,
   getSubscriptionStatus,
 } from './utils/stripe-operations';
+export { StripeConnectIntegration } from './components/StripeConnectIntegration';
 export type {
   StripeSubCache,
   SubscriptionStatus,
