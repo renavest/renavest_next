@@ -148,7 +148,7 @@ export function OverviewView({
             {dayNames.map((day) => (
               <div
                 key={day}
-                className='h-8 flex items-center justify-center text-sm font-medium text-gray-500'
+                className='w-10 h-8 flex items-center justify-center text-sm font-medium text-gray-500'
               >
                 {day.slice(0, 3)}
               </div>
@@ -164,12 +164,6 @@ export function OverviewView({
             <div className='flex items-center gap-2'>
               <div className='w-2 h-2 bg-green-500 rounded-full'></div>
               <span>Available</span>
-            </div>
-            <div className='flex items-center gap-2'>
-              <div className='w-6 h-6 bg-purple-200 rounded flex items-center justify-center'>
-                <span className='text-xs'>•</span>
-              </div>
-              <span>Selected</span>
             </div>
           </div>
         </div>
