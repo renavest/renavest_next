@@ -86,7 +86,11 @@ export function AvailabilityManagement({ therapistId }: AvailabilityManagementPr
     try {
       const response = await fetch(`/api/therapist/working-hours?therapistId=${therapistId}`);
       const data = await response.json();
-      if (data.error) throw new Error(data.error);
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch working hours');
+      }
+
       setWorkingHours(data.workingHours || []);
     } catch (error) {
       console.error('Error fetching working hours:', error);
@@ -99,7 +103,11 @@ export function AvailabilityManagement({ therapistId }: AvailabilityManagementPr
         `/api/therapist/blocked-times?therapistId=${therapistId}&month=${currentMonth.toISODate()}`,
       );
       const data = await response.json();
-      if (data.error) throw new Error(data.error);
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch blocked times');
+      }
+
       setBlockedTimes(data.blockedTimes || []);
     } catch (error) {
       console.error('Error fetching blocked times:', error);
@@ -116,7 +124,11 @@ export function AvailabilityManagement({ therapistId }: AvailabilityManagementPr
         `/api/sessions/availability?therapistId=${therapistId}&startDate=${startDate.toISO()}&endDate=${endDate.toISO()}&timezone=${timezone}`,
       );
       const data = await response.json();
-      if (data.error) throw new Error(data.error);
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch availability');
+      }
+
       setAvailableSlots(data.slots || []);
     } catch (error) {
       console.error('Error fetching availability:', error);
