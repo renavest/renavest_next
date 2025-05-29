@@ -2,7 +2,7 @@
 
 import { UserCircle2 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 
 import {
   trackTherapistDashboard,
@@ -30,6 +30,28 @@ import {
 import { COLORS } from '@/src/styles/colors';
 
 const QuickActionsSection = () => {
+  const [calendarIntegrated, setCalendarIntegrated] = useState<boolean>(false);
+
+  // Check Google Calendar integration status
+  useEffect(() => {
+    const checkIntegration = async () => {
+      if (!therapistIdSignal.value) return;
+
+      try {
+        const response = await fetch(
+          `/api/google-calendar/status?therapistId=${therapistIdSignal.value}`,
+        );
+        const data = await response.json();
+        setCalendarIntegrated(data.isConnected && data.integrationStatus === 'connected');
+      } catch (error) {
+        console.error('Error checking calendar integration:', error);
+        setCalendarIntegrated(false);
+      }
+    };
+
+    checkIntegration();
+  }, [therapistIdSignal.value]);
+
   const handleProfileClick = () => {
     if (therapistIdSignal.value) {
       trackTherapistDashboard.quickActionClicked('view_profile', therapistIdSignal.value, {
@@ -57,7 +79,9 @@ const QuickActionsSection = () => {
   return (
     <div className='mt-6'>
       <h2 className='text-xl font-semibold text-gray-800 mb-4'>Quick Actions</h2>
-      <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+      <div
+        className={`grid grid-cols-1 gap-4 ${calendarIntegrated ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}
+      >
         <Link
           href='/therapist/profile'
           onClick={handleProfileClick}
@@ -109,38 +133,43 @@ const QuickActionsSection = () => {
             <div>
               <h3 className='text-lg font-semibold text-gray-800'>Manage Integrations</h3>
               <p className='text-gray-500 text-sm'>
-                Connect your bank account, calendar, and other tools
+                {calendarIntegrated
+                  ? 'Connect your bank account, calendar, and other tools'
+                  : 'Connect your Google Calendar to manage availability'}
               </p>
             </div>
           </div>
         </Link>
-        <Link
-          href='/therapist/availability'
-          onClick={handleAvailabilityClick}
-          className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all group'
-        >
-          <div className='flex items-center gap-4'>
-            <div className='w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center group-hover:bg-amber-200 transition-colors'>
-              <svg
-                className='w-6 h-6 text-amber-600'
-                fill='none'
-                stroke='currentColor'
-                viewBox='0 0 24 24'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
-                />
-              </svg>
+        {/* Only show availability card if Google Calendar is connected */}
+        {calendarIntegrated && (
+          <Link
+            href='/therapist/availability'
+            onClick={handleAvailabilityClick}
+            className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all group'
+          >
+            <div className='flex items-center gap-4'>
+              <div className='w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center group-hover:bg-amber-200 transition-colors'>
+                <svg
+                  className='w-6 h-6 text-amber-600'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
+                  />
+                </svg>
+              </div>
+              <div>
+                <h3 className='text-lg font-semibold text-gray-800'>Manage Availability</h3>
+                <p className='text-gray-500 text-sm'>Set working hours and block time slots</p>
+              </div>
             </div>
-            <div>
-              <h3 className='text-lg font-semibold text-gray-800'>Manage Availability</h3>
-              <p className='text-gray-500 text-sm'>Set working hours and block time slots</p>
-            </div>
-          </div>
-        </Link>
+          </Link>
+        )}
       </div>
     </div>
   );
