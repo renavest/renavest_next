@@ -10,6 +10,7 @@ import {
   trackTherapistSessions,
 } from '@/src/features/posthog/therapistTracking';
 import { AddNewClientSection } from '@/src/features/therapist-dashboard/components/AddNewClientSection';
+import { ClientNotesSection } from '@/src/features/therapist-dashboard/components/ClientNotesSection';
 import TherapistNavbar from '@/src/features/therapist-dashboard/components/TherapistNavbar';
 import { TherapistStatisticsCard } from '@/src/features/therapist-dashboard/components/TherapistStatisticsCard';
 import { UpcomingSessionsCard } from '@/src/features/therapist-dashboard/components/UpcomingSessionsCard';
@@ -272,7 +273,7 @@ const ClientDetailView = ({
     );
 
   return (
-    <div className='p-6 space-y-6'>
+    <div className='p-6 space-y-6 max-h-full overflow-y-auto'>
       <div className='flex items-center gap-4 mb-6'>
         <UserCircle2 className='h-12 w-12 text-purple-600' />
         <div>
@@ -283,11 +284,15 @@ const ClientDetailView = ({
         </div>
       </div>
 
-      <div className='grid md:grid-cols-1 gap-6'>
+      <div className='space-y-6'>
         <UpcomingSessionsCard
           sessions={clientSessions}
           onSessionClick={() => {}} // Disable click functionality
         />
+
+        {therapistIdSignal.value && (
+          <ClientNotesSection client={client} therapistId={therapistIdSignal.value} />
+        )}
       </div>
     </div>
   );
