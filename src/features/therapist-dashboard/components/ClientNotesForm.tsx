@@ -30,7 +30,6 @@ export function ClientNotesForm({
 }: ClientNotesFormProps) {
   const [title, setTitle] = useState(template?.name || '');
   const [content, setContent] = useState<ClientNoteContent>(template?.template || {});
-  const [isConfidential, setIsConfidential] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -42,7 +41,7 @@ export function ClientNotesForm({
         userId: parseInt(client.id),
         title: title.trim(),
         content,
-        isConfidential,
+        isConfidential: true,
       });
       onClose();
     } catch (error) {
@@ -118,21 +117,6 @@ export function ClientNotesForm({
                 ))}
               </select>
             </div>
-          </div>
-
-          {/* Confidentiality */}
-          <div className='flex items-center gap-3'>
-            <input
-              type='checkbox'
-              id='confidential'
-              checked={isConfidential}
-              onChange={(e) => setIsConfidential(e.target.checked)}
-              className='rounded border-gray-300 text-purple-600 focus:ring-purple-500'
-            />
-            <label htmlFor='confidential' className='flex items-center gap-2 text-sm text-gray-700'>
-              <Lock className='w-4 h-4' />
-              Mark as confidential
-            </label>
           </div>
 
           {/* Flexible Content Fields */}

@@ -1,8 +1,9 @@
 'use client';
-import { Plus, FileText, Search, Filter, Calendar, Lock, Unlock } from 'lucide-react';
+import { Plus, FileText, Search, Filter, Calendar, Lock, Unlock, Download } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { ClientNote, NoteCategory, Client, CreateNoteRequest } from '../types';
+import { exportClientNotes } from '../utils/notesExport';
 
 import { ClientNotesForm } from './ClientNotesForm';
 
@@ -26,6 +27,7 @@ export function ClientNotesSection({ client, therapistId }: ClientNotesSectionPr
   const [showNewNoteForm, setShowNewNoteForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<NoteCategory | 'all'>('all');
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     fetchNotes();
@@ -65,6 +67,17 @@ export function ClientNotesSection({ client, therapistId }: ClientNotesSectionPr
     }
   };
 
+  const handleExportNotes = async () => {
+    try {
+      setExporting(true);
+      exportClientNotes(notes, client);
+    } catch (error) {
+      console.error('Error exporting notes:', error);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const filteredNotes = notes.filter((note) => {
     const matchesSearch =
       note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -93,16 +106,28 @@ export function ClientNotesSection({ client, therapistId }: ClientNotesSectionPr
         <div>
           <h3 className='text-lg font-semibold text-gray-900'>Clinical Notes</h3>
           <p className='text-sm text-gray-500'>
-            Documentation for {client.firstName} {client.lastName}
+            Confidential documentation for {client.firstName} {client.lastName}
           </p>
         </div>
-        <button
-          onClick={() => setShowNewNoteForm(true)}
-          className='inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors'
-        >
-          <Plus className='w-4 h-4' />
-          New Note
-        </button>
+        <div className='flex gap-2'>
+          {notes.length > 0 && (
+            <button
+              onClick={handleExportNotes}
+              disabled={exporting}
+              className='inline-flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors'
+            >
+              <Download className='w-4 h-4' />
+              {exporting ? 'Exporting...' : 'Export Notes'}
+            </button>
+          )}
+          <button
+            onClick={() => setShowNewNoteForm(true)}
+            className='inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors'
+          >
+            <Plus className='w-4 h-4' />
+            New Note
+          </button>
+        </div>
       </div>
 
       {/* Search and Filter */}
