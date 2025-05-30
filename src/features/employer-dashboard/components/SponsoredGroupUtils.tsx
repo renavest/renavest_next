@@ -1,5 +1,5 @@
-import React from 'react';
 import { Heart, Sparkles, Users } from 'lucide-react';
+import React from 'react';
 
 /**
  * Utility functions for sponsored group styling and emotional design
