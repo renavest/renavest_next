@@ -1,5 +1,5 @@
 'use client';
-import { Plus, FileText, Search, Filter, Calendar, Lock, Unlock, Download } from 'lucide-react';
+import { Plus, FileText, Search, Filter, Calendar, Lock, Download, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { ClientNote, NoteCategory, Client, CreateNoteRequest } from '../types';
@@ -21,10 +21,184 @@ const categoryColors: Record<NoteCategory, string> = {
   discharge: 'bg-orange-100 text-orange-800',
 };
 
+// Note Detail Modal Component
+function NoteDetailModal({ note, onClose }: { note: ClientNote; onClose: () => void }) {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  return (
+    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50'>
+      <div className='bg-white rounded-xl shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden'>
+        {/* Header */}
+        <div className='p-6 border-b border-gray-200 flex items-center justify-between'>
+          <div className='flex items-center gap-3'>
+            <h3 className='text-xl font-semibold text-gray-900'>{note.title}</h3>
+            {note.content.category && (
+              <span
+                className={`px-2 py-1 text-xs rounded-full ${categoryColors[note.content.category]}`}
+              >
+                {note.content.category}
+              </span>
+            )}
+            {note.isConfidential && (
+              <div title='Confidential'>
+                <Lock className='w-4 h-4 text-red-500' />
+              </div>
+            )}
+          </div>
+          <button onClick={onClose} className='p-2 text-gray-400 hover:text-gray-600 rounded-lg'>
+            <X className='w-5 h-5' />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className='p-6 max-h-[70vh] overflow-y-auto space-y-6'>
+          <div className='text-sm text-gray-500 mb-4'>
+            <Calendar className='w-4 h-4 inline mr-2' />
+            {formatDate(note.createdAt)}
+          </div>
+
+          {note.content.keyObservations && note.content.keyObservations.length > 0 && (
+            <div>
+              <h4 className='font-semibold text-gray-900 mb-2'>Key Observations</h4>
+              <ul className='list-disc list-inside space-y-1 text-gray-700'>
+                {note.content.keyObservations.map((obs, index) => (
+                  <li key={index}>{obs}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {note.content.clinicalAssessment && (
+            <div>
+              <h4 className='font-semibold text-gray-900 mb-2'>Clinical Assessment</h4>
+              <p className='text-gray-700 whitespace-pre-wrap'>{note.content.clinicalAssessment}</p>
+            </div>
+          )}
+
+          {note.content.treatmentPlan && (
+            <div>
+              <h4 className='font-semibold text-gray-900 mb-2'>Treatment Plan</h4>
+              <p className='text-gray-700 whitespace-pre-wrap'>{note.content.treatmentPlan}</p>
+            </div>
+          )}
+
+          {note.content.riskAssessment && (
+            <div>
+              <h4 className='font-semibold text-gray-900 mb-2'>Risk Assessment</h4>
+              <p className='text-gray-700 whitespace-pre-wrap'>{note.content.riskAssessment}</p>
+            </div>
+          )}
+
+          {note.content.additionalContext && (
+            <div>
+              <h4 className='font-semibold text-gray-900 mb-2'>Additional Notes</h4>
+              <p className='text-gray-700 whitespace-pre-wrap'>{note.content.additionalContext}</p>
+            </div>
+          )}
+
+          {note.content.actionItems && note.content.actionItems.length > 0 && (
+            <div>
+              <h4 className='font-semibold text-gray-900 mb-2'>Action Items</h4>
+              <ul className='list-disc list-inside space-y-1 text-gray-700'>
+                {note.content.actionItems.map((item, index) => (
+                  <li key={index}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {note.content.followUpNeeded && note.content.followUpNeeded.length > 0 && (
+            <div>
+              <h4 className='font-semibold text-gray-900 mb-2'>Follow Up Needed</h4>
+              <ul className='list-disc list-inside space-y-1 text-gray-700'>
+                {note.content.followUpNeeded.map((item, index) => (
+                  <li key={index}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Note Preview Card Component
+function NotePreviewCard({ note, onClick }: { note: ClientNote; onClick: () => void }) {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  return (
+    <div
+      onClick={onClick}
+      className='bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer'
+    >
+      <div className='flex items-start justify-between mb-2'>
+        <div className='flex items-center gap-3'>
+          <h4 className='font-medium text-gray-900'>{note.title}</h4>
+          {note.content.category && (
+            <span
+              className={`px-2 py-1 text-xs rounded-full ${categoryColors[note.content.category]}`}
+            >
+              {note.content.category}
+            </span>
+          )}
+          {note.isConfidential && (
+            <div title='Confidential'>
+              <Lock className='w-4 h-4 text-red-500' />
+            </div>
+          )}
+        </div>
+        <div className='flex items-center gap-2 text-sm text-gray-500'>
+          <Calendar className='w-4 h-4' />
+          {formatDate(note.createdAt)}
+        </div>
+      </div>
+
+      {/* Preview content */}
+      <div className='text-sm text-gray-600 space-y-1'>
+        {note.content.keyObservations && note.content.keyObservations.length > 0 && (
+          <p>
+            <strong>Key Observations:</strong> {note.content.keyObservations.slice(0, 2).join(', ')}
+            {note.content.keyObservations.length > 2 ? '...' : ''}
+          </p>
+        )}
+        {note.content.additionalContext && (
+          <p className='truncate'>
+            <strong>Notes:</strong> {note.content.additionalContext}
+          </p>
+        )}
+        {note.content.actionItems && note.content.actionItems.length > 0 && (
+          <p>
+            <strong>Action Items:</strong> {note.content.actionItems.length} items
+          </p>
+        )}
+        <p className='text-xs text-purple-600 mt-2'>Click to view full note →</p>
+      </div>
+    </div>
+  );
+}
+
 export function ClientNotesSection({ client, therapistId }: ClientNotesSectionProps) {
   const [notes, setNotes] = useState<ClientNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNewNoteForm, setShowNewNoteForm] = useState(false);
+  const [selectedNote, setSelectedNote] = useState<ClientNote | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<NoteCategory | 'all'>('all');
   const [exporting, setExporting] = useState(false);
@@ -57,7 +231,7 @@ export function ClientNotesSection({ client, therapistId }: ClientNotesSectionPr
       });
 
       if (response.ok) {
-        await fetchNotes(); // Refresh the notes list
+        await fetchNotes();
       } else {
         throw new Error('Failed to save note');
       }
@@ -88,16 +262,6 @@ export function ClientNotesSection({ client, therapistId }: ClientNotesSectionPr
 
     return matchesSearch && matchesCategory;
   });
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
 
   return (
     <div className='space-y-6'>
@@ -178,58 +342,7 @@ export function ClientNotesSection({ client, therapistId }: ClientNotesSectionPr
           </div>
         ) : (
           filteredNotes.map((note) => (
-            <div
-              key={note.id}
-              className='bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer'
-            >
-              <div className='flex items-start justify-between mb-2'>
-                <div className='flex items-center gap-3'>
-                  <h4 className='font-medium text-gray-900'>{note.title}</h4>
-                  {note.content.category && (
-                    <span
-                      className={`px-2 py-1 text-xs rounded-full ${categoryColors[note.content.category]}`}
-                    >
-                      {note.content.category}
-                    </span>
-                  )}
-                  {note.isConfidential && (
-                    <div title='Confidential'>
-                      <Lock className='w-4 h-4 text-red-500' />
-                    </div>
-                  )}
-                  {!note.isConfidential && (
-                    <div title='Not confidential'>
-                      <Unlock className='w-4 h-4 text-gray-400' />
-                    </div>
-                  )}
-                </div>
-                <div className='flex items-center gap-2 text-sm text-gray-500'>
-                  <Calendar className='w-4 h-4' />
-                  {formatDate(note.createdAt)}
-                </div>
-              </div>
-
-              {/* Preview content */}
-              <div className='text-sm text-gray-600 space-y-1'>
-                {note.content.keyObservations && note.content.keyObservations.length > 0 && (
-                  <p>
-                    <strong>Key Observations:</strong>{' '}
-                    {note.content.keyObservations.slice(0, 2).join(', ')}
-                    {note.content.keyObservations.length > 2 ? '...' : ''}
-                  </p>
-                )}
-                {note.content.additionalContext && (
-                  <p className='truncate'>
-                    <strong>Notes:</strong> {note.content.additionalContext}
-                  </p>
-                )}
-                {note.content.actionItems && note.content.actionItems.length > 0 && (
-                  <p>
-                    <strong>Action Items:</strong> {note.content.actionItems.length} items
-                  </p>
-                )}
-              </div>
-            </div>
+            <NotePreviewCard key={note.id} note={note} onClick={() => setSelectedNote(note)} />
           ))
         )}
       </div>
@@ -242,6 +355,11 @@ export function ClientNotesSection({ client, therapistId }: ClientNotesSectionPr
           onSave={handleSaveNote}
           onClose={() => setShowNewNoteForm(false)}
         />
+      )}
+
+      {/* Note Detail Modal */}
+      {selectedNote && (
+        <NoteDetailModal note={selectedNote} onClose={() => setSelectedNote(null)} />
       )}
     </div>
   );
