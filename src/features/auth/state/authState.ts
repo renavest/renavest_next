@@ -17,6 +17,10 @@ export const password = signal('');
 // --- Role Selection State ---
 export const selectedRole = signal<UserRole>(null);
 
+// --- NEW: Sponsored Group State ---
+export const selectedSponsoredGroup = signal<string | null>(null);
+export const isGroupSignup = signal(false);
+
 // Initial Onboarding Data (collected across steps BEFORE Clerk signup for Employee role)
 // These signals hold the state of the multi-step form for employees
 export const firstName = signal('');
@@ -47,6 +51,8 @@ export const resetPasswordNewPassword = signal(''); // New password entered by u
 // Keeps email and password as they are used in Login/Signup steps
 const resetSignupState = () => {
   selectedRole.value = null; // Reset role selection
+  selectedSponsoredGroup.value = null;
+  isGroupSignup.value = false;
   firstName.value = '';
   lastName.value = '';
   agreeToTerms.value = false;
@@ -73,11 +79,11 @@ const resetVerificationResetState = () => {
 };
 
 // Clears all authentication-related state and goes back to the start
-const resetAuthState = () => {
+export const resetAuthState = () => {
   authErrorSignal.value = null;
   email.value = '';
   password.value = '';
-  resetSignupState(); // Also clears selectedRole
+  resetSignupState(); // Also clears selectedRole and sponsored group
   resetVerificationResetState();
   currentStep.value = OnboardingStep.LOGIN; // Go back to the start
 };

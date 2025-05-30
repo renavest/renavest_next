@@ -1,5 +1,4 @@
 import { eq, and, gte, isNull, or } from 'drizzle-orm';
-import type { PgTransaction } from 'drizzle-orm/pg-core';
 
 import { db } from '@/src/db';
 import {
@@ -9,7 +8,6 @@ import {
   sponsoredGroupMembers,
   employerSubsidies,
   bookingSessions,
-  sessionPayments,
 } from '@/src/db/schema';
 
 // Type for transaction context
@@ -46,7 +44,7 @@ export async function calculateSessionSubsidies(
 ): Promise<SubsidyCalculationResult> {
   const dbContext = txOrDb || db;
 
-  const { userId, totalSessionCostCents, bookingSessionId } = data;
+  const { userId, totalSessionCostCents } = data;
 
   let remainingCostToSubsidize = totalSessionCostCents;
   let subsidyFromGroupCents = 0;
@@ -194,7 +192,11 @@ export async function calculateSessionSubsidies(
   }
 
   // TIER 3: Apply employer default percentage subsidy
-  if (remainingCostToSubsidize > 0 && user.employer?.defaultSubsidyPercentage > 0) {
+  if (
+    remainingCostToSubsidize > 0 &&
+    user.employer?.defaultSubsidyPercentage &&
+    user.employer.defaultSubsidyPercentage > 0
+  ) {
     const percentageSubsidy = Math.round(
       (remainingCostToSubsidize * user.employer.defaultSubsidyPercentage) / 100,
     );
@@ -235,7 +237,7 @@ export async function applySubsidies(
 ): Promise<void> {
   const dbContext = txOrDb || db;
 
-  const { bookingSessionId, userId } = bookingSessionData;
+  const { bookingSessionId } = bookingSessionData;
   const {
     subsidyFromGroupCents,
     subsidyFromEmployerDirectCents,

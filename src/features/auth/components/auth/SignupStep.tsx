@@ -23,6 +23,7 @@ import {
   selectedEthnicity,
   agreeToTerms,
   currentStep,
+  selectedSponsoredGroup,
 } from '../../state/authState';
 import { OnboardingStep } from '../../types';
 import { checkEmailEligibility } from '../../utils/emailEligibilityUtil';
@@ -324,6 +325,7 @@ export function SignupStep() {
           maritalStatus: selectedMaritalStatus.value,
           ethnicity: selectedEthnicity.value,
           agreeToTerms: agreeToTerms.value,
+          sponsoredGroupName: selectedSponsoredGroup.value,
         },
       });
       if (result.status === 'complete' || result.status === 'missing_requirements') {

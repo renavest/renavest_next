@@ -1,10 +1,11 @@
 'use client';
 
+import { Users, Sparkles, Heart, TrendingUp } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { Users, TrendingUp, CreditCard } from 'lucide-react';
 
 import MetricCard from '@/src/shared/components/MetricCard';
-import { COLORS } from '@/src/styles/colors';
+
+import { SponsoredGroupCard } from './SponsoredGroupCard';
 
 interface SponsoredGroup {
   id: number;
@@ -31,7 +32,7 @@ export function SponsoredGroupsSection() {
     try {
       setLoading(true);
       const response = await fetch('/api/employer/sponsored-groups');
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch sponsored groups');
       }
@@ -47,20 +48,31 @@ export function SponsoredGroupsSection() {
 
   const totalGroups = sponsoredGroups.length;
   const totalMembers = sponsoredGroups.reduce((sum, group) => sum + group.memberCount, 0);
-  const totalCreditsAllocated = sponsoredGroups.reduce((sum, group) => sum + group.allocatedSessionCredits, 0);
-  const totalCreditsRemaining = sponsoredGroups.reduce((sum, group) => sum + group.remainingSessionCredits, 0);
-  const creditsUtilization = totalCreditsAllocated > 0 
-    ? Math.round(((totalCreditsAllocated - totalCreditsRemaining) / totalCreditsAllocated) * 100)
-    : 0;
+  const totalCreditsAllocated = sponsoredGroups.reduce(
+    (sum, group) => sum + group.allocatedSessionCredits,
+    0,
+  );
+  const totalCreditsRemaining = sponsoredGroups.reduce(
+    (sum, group) => sum + group.remainingSessionCredits,
+    0,
+  );
+  const creditsUtilization =
+    totalCreditsAllocated > 0
+      ? Math.round(((totalCreditsAllocated - totalCreditsRemaining) / totalCreditsAllocated) * 100)
+      : 0;
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-48 mb-4"></div>
-          <div className="space-y-3">
-            <div className="h-4 bg-gray-200 rounded"></div>
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+      <div className='bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-8 border border-purple-100 shadow-sm'>
+        <div className='animate-pulse'>
+          <div className='flex items-center gap-3 mb-6'>
+            <div className='h-8 w-8 bg-purple-200 rounded-full'></div>
+            <div className='h-6 bg-purple-200 rounded w-48'></div>
+          </div>
+          <div className='space-y-4'>
+            <div className='h-4 bg-purple-200 rounded w-full'></div>
+            <div className='h-4 bg-purple-200 rounded w-3/4'></div>
+            <div className='h-4 bg-purple-200 rounded w-1/2'></div>
           </div>
         </div>
       </div>
@@ -69,145 +81,105 @@ export function SponsoredGroupsSection() {
 
   if (error) {
     return (
-      <div className="bg-white rounded-xl p-6 border border-red-200 shadow-sm">
-        <h3 className="text-lg font-semibold text-red-600 mb-2">Error Loading Sponsored Groups</h3>
-        <p className="text-red-500 mb-4">{error}</p>
-        <button 
-          onClick={fetchSponsoredGroups}
-          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-        >
-          Retry
-        </button>
+      <div className='bg-gradient-to-br from-red-50 to-pink-50 rounded-2xl p-8 border border-red-200 shadow-sm'>
+        <div className='text-center'>
+          <div className='mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4'>
+            <span className='text-2xl'>😔</span>
+          </div>
+          <h3 className='text-lg font-semibold text-red-700 mb-2'>Oops! Something went wrong</h3>
+          <p className='text-red-600 mb-6'>{error}</p>
+          <button
+            onClick={fetchSponsoredGroups}
+            className='px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg'
+          >
+            ✨ Try Again
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Overview Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className='space-y-8'>
+      {/* Enhanced Overview Metrics with Emotional Design */}
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
         <MetricCard
-          title="Active Sponsored Groups"
+          title='Active Sponsored Groups'
           value={totalGroups.toString()}
-          subtitle="Groups with members"
-          className="bg-blue-50 border border-blue-200 shadow-sm rounded-xl"
-          titleClassName="text-gray-600"
-          valueClassName="text-blue-600"
-          subtitleClassName="text-gray-500"
+          subtitle='Empowering teams together'
+          className='bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 shadow-md rounded-2xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1'
+          titleClassName='text-purple-700 font-semibold'
+          valueClassName='text-purple-800 text-3xl font-bold'
+          subtitleClassName='text-purple-600'
         />
-        
+
         <MetricCard
-          title="Total Members"
+          title='Total Members'
           value={totalMembers.toString()}
-          subtitle="Across all groups"
-          className="bg-green-50 border border-green-200 shadow-sm rounded-xl"
-          titleClassName="text-gray-600"
-          valueClassName="text-green-600"
-          subtitleClassName="text-gray-500"
+          subtitle="Lives we're transforming"
+          className='bg-gradient-to-br from-green-50 to-emerald-100 border border-green-200 shadow-md rounded-2xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1'
+          titleClassName='text-green-700 font-semibold'
+          valueClassName='text-green-800 text-3xl font-bold'
+          subtitleClassName='text-green-600'
         />
-        
+
         <MetricCard
-          title="Credits Utilization"
+          title='Credits Utilization'
           value={`${creditsUtilization}%`}
           subtitle={`${totalCreditsRemaining} of ${totalCreditsAllocated} remaining`}
-          className="bg-purple-50 border border-purple-200 shadow-sm rounded-xl"
-          titleClassName="text-gray-600"
-          valueClassName="text-purple-600"
-          subtitleClassName="text-gray-500"
+          className='bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200 shadow-md rounded-2xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1'
+          titleClassName='text-blue-700 font-semibold'
+          valueClassName='text-blue-800 text-3xl font-bold'
+          subtitleClassName='text-blue-600'
         />
       </div>
 
-      {/* Sponsored Groups List */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-800">Sponsored Groups</h3>
-          <p className="text-sm text-gray-600 mt-1">
-            Manage your organization's sponsored groups and track their usage
+      {/* Sponsored Groups List with Enhanced Emotional Design */}
+      <div className='bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden'>
+        <div className='px-8 py-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white'>
+          <div className='flex items-center gap-3 mb-2'>
+            <div className='flex items-center justify-center w-10 h-10 bg-white bg-opacity-20 rounded-full'>
+              <Heart className='w-5 h-5' />
+            </div>
+            <h3 className='text-xl font-bold'>Sponsored Groups</h3>
+          </div>
+          <p className='text-purple-100 leading-relaxed'>
+            Nurture your organization's sponsored groups and celebrate their wellness journey
           </p>
         </div>
 
         {sponsoredGroups.length === 0 ? (
-          <div className="p-8 text-center">
-            <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <Users className="w-8 h-8 text-gray-400" />
+          <div className='p-12 text-center bg-gradient-to-br from-gray-50 to-purple-50'>
+            <div className='mx-auto w-20 h-20 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mb-6 shadow-lg'>
+              <div className='relative'>
+                <Users className='w-8 h-8 text-purple-600' />
+                <Sparkles className='w-4 h-4 text-pink-500 absolute -top-1 -right-1 animate-pulse' />
+              </div>
             </div>
-            <h4 className="text-lg font-medium text-gray-900 mb-2">No Sponsored Groups Yet</h4>
-            <p className="text-gray-600 mb-4">
-              Sponsored groups will appear here when employees join through group signup links.
+            <h4 className='text-xl font-bold text-gray-800 mb-3'>
+              Ready to Begin Something Beautiful? ✨
+            </h4>
+            <p className='text-gray-600 mb-6 max-w-md mx-auto leading-relaxed'>
+              Your sponsored groups will bloom here when employees join through their personalized
+              signup links. Each group represents a community growing stronger together.
             </p>
+            <div className='inline-flex items-center gap-2 text-purple-600 bg-purple-50 px-4 py-2 rounded-full text-sm font-medium'>
+              <TrendingUp className='w-4 h-4' />
+              <span>Great things are coming! 🌟</span>
+            </div>
           </div>
         ) : (
-          <div className="divide-y divide-gray-200">
-            {sponsoredGroups.map((group) => (
-              <div key={group.id} className="p-6 hover:bg-gray-50 transition-colors">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h4 className="text-lg font-medium text-gray-900">{group.name}</h4>
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        group.isActive 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {group.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 capitalize">
-                        {group.groupType}
-                      </span>
-                    </div>
-                    
-                    {group.description && (
-                      <p className="text-gray-600 mb-3">{group.description}</p>
-                    )}
-                    
-                    <div className="flex items-center gap-6 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <Users className="w-4 h-4" />
-                        <span>{group.memberCount} members</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <CreditCard className="w-4 h-4" />
-                        <span>{group.remainingSessionCredits} of {group.allocatedSessionCredits} credits remaining</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <TrendingUp className="w-4 h-4" />
-                        <span>
-                          {group.allocatedSessionCredits > 0 
-                            ? Math.round(((group.allocatedSessionCredits - group.remainingSessionCredits) / group.allocatedSessionCredits) * 100)
-                            : 0
-                          }% utilized
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 ml-4">
-                    <button className="px-3 py-1.5 text-sm text-blue-600 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors">
-                      View Details
-                    </button>
-                    <button className="px-3 py-1.5 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                      Manage Credits
-                    </button>
-                  </div>
-                </div>
-                
-                {/* Progress bar for credits */}
-                <div className="mt-4">
-                  <div className="flex justify-between text-xs text-gray-500 mb-1">
-                    <span>Session Credits Usage</span>
-                    <span>{group.allocatedSessionCredits - group.remainingSessionCredits} / {group.allocatedSessionCredits} used</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
-                      style={{ 
-                        width: group.allocatedSessionCredits > 0 
-                          ? `${((group.allocatedSessionCredits - group.remainingSessionCredits) / group.allocatedSessionCredits) * 100}%` 
-                          : '0%' 
-                      }}
-                    ></div>
-                  </div>
-                </div>
+          <div className='divide-y divide-gray-100'>
+            {sponsoredGroups.map((group, index) => (
+              <div
+                key={group.id}
+                className='opacity-0 animate-fade-in-up'
+                style={{
+                  animationDelay: `${index * 100}ms`,
+                  animationFillMode: 'forwards',
+                }}
+              >
+                <SponsoredGroupCard group={group} />
               </div>
             ))}
           </div>
@@ -215,4 +187,4 @@ export function SponsoredGroupsSection() {
       </div>
     </div>
   );
-} 
+}

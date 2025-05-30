@@ -3,9 +3,9 @@ import { eq, and, count } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
-import { users, employers, sponsoredGroups, sponsoredGroupMembers } from '@/src/db/schema';
+import { users, sponsoredGroups, sponsoredGroupMembers } from '@/src/db/schema';
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     const user = await currentUser();
 
