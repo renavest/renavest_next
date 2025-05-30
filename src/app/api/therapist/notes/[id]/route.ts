@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/src/db';
 import { clientNotes, therapists, users } from '@/src/db/schema';
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await currentUser();
     if (!user) {
@@ -32,7 +32,8 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     }
 
     const therapistId = therapistRecord[0].id;
-    const noteId = parseInt(params.id);
+    const { id } = await params;
+    const noteId = parseInt(id);
 
     if (isNaN(noteId)) {
       return NextResponse.json({ error: 'Invalid note ID' }, { status: 400 });
