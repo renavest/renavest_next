@@ -1,6 +1,5 @@
 'use client';
-import { ArrowRight, Heart, TrendingUp, Shield } from 'lucide-react';
-import Link from 'next/link';
+import { ArrowRight, Heart, TrendingUp, Shield, Brain } from 'lucide-react';
 import posthog from 'posthog-js';
 import { useEffect, useRef, useState } from 'react';
 
@@ -41,6 +40,16 @@ function WhatIsFinancialTherapySection() {
     }
   };
 
+  const handleBookDemoClick = () => {
+    if (typeof window !== 'undefined') {
+      posthog.capture('book_demo_clicked', {
+        source: 'financial_therapy_section',
+        url: window.location.href,
+      });
+      window.open('https://calendly.com/rameau-stan/one-on-one', '_blank');
+    }
+  };
+
   return (
     <>
       <span id='what-is-financial-therapy' className='block scroll-mt-16'></span>
@@ -51,13 +60,13 @@ function WhatIsFinancialTherapySection() {
               WHAT IS FINANCIAL THERAPY?
             </span>
             <h2 className='text-3xl md:text-4xl font-bold text-gray-900 mb-6'>
-              Financial Therapy:{' '}
-              <span className='text-[#9071FF]'>Beyond Traditional Financial Wellness</span>
+              Financial Therapy <span className='text-[#9071FF]'>Actually Talks About Money</span>
             </h2>
             <p className='text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed'>
-              Unlike standard financial education or advice, financial therapy addresses the
-              emotional and psychological factors that drive financial behavior. Our financial
-              therapists help your employees:
+              Regular therapy avoids money talk. Financial therapy makes it the focus.
+              <span className='block mt-2 font-medium text-gray-800'>
+                Heal your employees' relationship with money.
+              </span>
             </p>
           </div>
 
@@ -66,15 +75,12 @@ function WhatIsFinancialTherapySection() {
               className='text-center group hover:transform hover:scale-105 transition-all duration-300'
               onMouseEnter={() => trackCardHover('overcome_anxiety')}
             >
-              <div className='w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:shadow-lg transition-shadow duration-300'>
+              <div className='w-16 h-16 bg-[#9071FF] rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:shadow-lg group-hover:shadow-[#9071FF]/20 transition-all duration-300'>
                 <Heart className='h-8 w-8 text-white' />
               </div>
-              <h3 className='text-lg font-semibold mb-3 text-gray-900'>
-                Overcome Financial Anxiety & Stress
-              </h3>
+              <h3 className='text-lg font-semibold mb-3 text-gray-900'>Address Money Anxiety</h3>
               <p className='text-gray-600 text-sm leading-relaxed'>
-                Identify and address the root causes of financial anxiety and stress with expert
-                support.
+                Target the emotional roots of financial stress, not just the symptoms.
               </p>
             </div>
 
@@ -82,14 +88,14 @@ function WhatIsFinancialTherapySection() {
               className='text-center group hover:transform hover:scale-105 transition-all duration-300'
               onMouseEnter={() => trackCardHover('build_habits')}
             >
-              <div className='w-16 h-16 bg-gradient-to-br from-blue-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:shadow-lg transition-shadow duration-300'>
+              <div className='w-16 h-16 bg-[#7c3aed] rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:shadow-lg group-hover:shadow-[#7c3aed]/20 transition-all duration-300'>
                 <TrendingUp className='h-8 w-8 text-white' />
               </div>
               <h3 className='text-lg font-semibold mb-3 text-gray-900'>
-                Build Healthier Money Habits
+                Break Destructive Patterns
               </h3>
               <p className='text-gray-600 text-sm leading-relaxed'>
-                Develop sustainable, positive money habits through behavioral change techniques.
+                Stop the cycle of financial behaviors that damage both wallet and wellbeing.
               </p>
             </div>
 
@@ -97,12 +103,12 @@ function WhatIsFinancialTherapySection() {
               className='text-center group hover:transform hover:scale-105 transition-all duration-300'
               onMouseEnter={() => trackCardHover('reduce_stress')}
             >
-              <div className='w-16 h-16 bg-gradient-to-br from-emerald-500 to-green-500 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:shadow-lg transition-shadow duration-300'>
+              <div className='w-16 h-16 bg-[#6366f1] rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:shadow-lg group-hover:shadow-[#6366f1]/20 transition-all duration-300'>
                 <Shield className='h-8 w-8 text-white' />
               </div>
-              <h3 className='text-lg font-semibold mb-3 text-gray-900'>Reduce Financial Stress</h3>
+              <h3 className='text-lg font-semibold mb-3 text-gray-900'>Reduce Workplace Impact</h3>
               <p className='text-gray-600 text-sm leading-relaxed'>
-                Lower cortisol levels and improve overall wellbeing through financial peace of mind.
+                Lower absenteeism and boost productivity by addressing the real problem.
               </p>
             </div>
 
@@ -110,35 +116,31 @@ function WhatIsFinancialTherapySection() {
               className='text-center group hover:transform hover:scale-105 transition-all duration-300'
               onMouseEnter={() => trackCardHover('personalized_plans')}
             >
-              <div className='w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:shadow-lg transition-shadow duration-300'>
-                <ArrowRight className='h-8 w-8 text-white' />
+              <div className='w-16 h-16 bg-[#8b5cf6] rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:shadow-lg group-hover:shadow-[#8b5cf6]/20 transition-all duration-300'>
+                <Brain className='h-8 w-8 text-white' />
               </div>
-              <h3 className='text-lg font-semibold mb-3 text-gray-900'>
-                Personalized Wellness Plans
-              </h3>
+              <h3 className='text-lg font-semibold mb-3 text-gray-900'>Evidence-Based Approach</h3>
               <p className='text-gray-600 text-sm leading-relaxed'>
-                Work with a therapist to create a financial wellness plan tailored to your unique
-                needs.
+                Proven therapeutic techniques specifically designed for financial wellness.
               </p>
             </div>
           </div>
 
-          <div className='bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl p-8 md:p-12 text-center border border-purple-100'>
+          <div className='bg-gradient-to-br from-[#9071FF]/5 via-purple-50/50 to-indigo-50/30 rounded-3xl p-8 md:p-12 text-center border border-[#9071FF]/10'>
             <h3 className='text-2xl md:text-3xl font-bold text-gray-900 mb-6'>
-              Ready to Transform Your Team's Financial Wellness?
+              Ready to See Financial Therapy in Action?
             </h3>
             <p className='text-lg text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed'>
-              All delivered through secure, confidential 1-on-1 sessions with licensed
-              professionals. Join forward-thinking companies who are investing in their employees'
-              complete financial health.
+              Book a 15-minute demo to see how financial therapy can transform your team's
+              relationship with money and your bottom line.
             </p>
-            <Link
-              href='/contact'
-              className='inline-flex items-center gap-2 px-8 py-4 bg-[#9071FF] text-white rounded-full hover:bg-[#9071FF]/90 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1'
+            <button
+              onClick={handleBookDemoClick}
+              className='inline-flex items-center gap-2 px-8 py-4 bg-[#9071FF] text-white rounded-xl hover:bg-[#9071FF]/90 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl hover:shadow-[#9071FF]/20 transform hover:-translate-y-1'
             >
-              Start Your Journey
+              Book a Demo
               <ArrowRight className='w-5 h-5' />
-            </Link>
+            </button>
           </div>
         </div>
       </section>
