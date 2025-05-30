@@ -1,6 +1,6 @@
 'use client';
 
-import { UserCircle2 } from 'lucide-react';
+import { UserCircle2, Users, FileText, Calendar, TrendingUp, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useCallback, useState } from 'react';
 
@@ -20,7 +20,6 @@ import {
   clientsSignal,
   upcomingSessionsSignal,
   statisticsSignal,
-  selectedClientSignal,
   isAddClientOpenSignal,
 } from '@/src/features/therapist-dashboard/state/therapistDashboardState';
 import {
@@ -176,124 +175,227 @@ const QuickActionsSection = () => {
   );
 };
 
-const ClientSidebar = ({
+type ClientTab = 'overview' | 'notes' | 'sessions' | 'progress';
+
+// New comprehensive client management component
+const ClientManagementSection = ({
   clients,
-  selectedClient,
-  onClientSelect,
+  upcomingSessions,
   onAddClientClick,
 }: {
   clients: Client[];
-  selectedClient: Client | null;
-  onClientSelect: (client: Client) => void;
+  upcomingSessions: UpcomingSession[];
   onAddClientClick: () => void;
 }) => {
+  const [selectedClient, setSelectedClient] = useState<Client | null>(
+    clients.length > 0 ? clients[0] : null,
+  );
+  const [activeTab, setActiveTab] = useState<ClientTab>('overview');
+
+  // Update selected client when clients list changes
+  useEffect(() => {
+    if (!selectedClient && clients.length > 0) {
+      setSelectedClient(clients[0]);
+    }
+  }, [clients, selectedClient]);
+
   const handleClientSelect = (client: Client) => {
+    setSelectedClient(client);
+    setActiveTab('overview'); // Reset to overview when switching clients
+
     // Track client selection
     if (therapistIdSignal.value) {
       trackTherapistClientManagement.clientSelected(therapistIdSignal.value, client.id, {
         user_id: `therapist_${therapistIdSignal.value}`,
       });
     }
-    onClientSelect(client);
   };
 
-  const handleAddClientClick = () => {
-    // Track add client modal opening
-    if (therapistIdSignal.value) {
-      trackTherapistClientManagement.addClientModalOpened(therapistIdSignal.value, {
-        user_id: `therapist_${therapistIdSignal.value}`,
-      });
-    }
-    onAddClientClick();
-  };
+  const clientSessions = selectedClient
+    ? upcomingSessions.filter((session) => session.clientId === selectedClient.id)
+    : [];
 
   return (
-    <div className='p-6 h-full flex flex-col'>
-      <h2 className='text-xl font-semibold text-gray-800 mb-4'>Your Clients ({clients.length})</h2>
-      <div className='flex-1 overflow-y-auto space-y-2'>
-        {clients.map((client) => (
-          <button
-            key={client.id}
-            onClick={() => handleClientSelect(client)}
-            className={`w-full text-left p-3 rounded-lg border transition-all ${
-              selectedClient?.id === client.id
-                ? 'bg-purple-50 border-purple-200 shadow-sm'
-                : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-            }`}
-          >
-            <div className='flex items-center gap-3'>
-              <UserCircle2 className='h-8 w-8 text-gray-400' />
-              <div>
-                <p className='font-medium text-gray-900'>
-                  {client.firstName} {client.lastName}
-                </p>
-                <p className='text-sm text-gray-500'>{client.email}</p>
-              </div>
+    <div className='bg-white rounded-2xl border border-gray-100 shadow-lg overflow-hidden'>
+      {/* Header with Client Selector */}
+      <div className='bg-gradient-to-r from-purple-50/50 to-indigo-50/30 p-6 border-b border-gray-100'>
+        <div className='flex items-center justify-between'>
+          <div className='flex items-center gap-4'>
+            <div className='w-2 h-12 bg-gradient-to-b from-[#9071FF] to-purple-600 rounded-full'></div>
+            <div>
+              <h2 className='text-2xl font-bold text-gray-900 mb-1'>Client Management</h2>
+              <p className='text-gray-600'>Comprehensive client care and documentation</p>
             </div>
-          </button>
-        ))}
+          </div>
+
+          {/* Client Selector Dropdown */}
+          <div className='flex items-center gap-4'>
+            <div className='flex items-center gap-3'>
+              <label className='text-sm font-medium text-gray-700'>Active Client:</label>
+              <select
+                value={selectedClient?.id || ''}
+                onChange={(e) => {
+                  const clientId = e.target.value;
+                  const client = clients.find((c) => c.id === clientId);
+                  if (client) handleClientSelect(client);
+                }}
+                className='px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#9071FF] focus:border-transparent bg-white text-gray-700 font-medium min-w-[200px]'
+              >
+                {clients.length === 0 && <option value=''>No clients yet</option>}
+                {clients.map((client) => (
+                  <option key={client.id} value={client.id}>
+                    {client.firstName} {client.lastName}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              onClick={onAddClientClick}
+              className='inline-flex items-center gap-2 px-4 py-2 bg-[#9071FF] text-white rounded-lg hover:bg-[#7c5ce8] transition-all duration-200 text-sm font-medium'
+            >
+              <Plus className='w-4 h-4' />
+              Add Client
+            </button>
+          </div>
+        </div>
+
+        {/* Selected Client Info */}
+        {selectedClient && (
+          <div className='mt-6 flex items-center gap-4 bg-white rounded-xl p-4 border border-gray-100'>
+            <UserCircle2 className='h-12 w-12 text-[#9071FF]' />
+            <div>
+              <h3 className='text-xl font-semibold text-gray-900'>
+                {selectedClient.firstName} {selectedClient.lastName || ''}
+              </h3>
+              <p className='text-gray-600'>{selectedClient.email}</p>
+            </div>
+          </div>
+        )}
       </div>
-      <button
-        onClick={handleAddClientClick}
-        className='mt-4 w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg shadow p-3 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2'
-        aria-label='Invite a Client to Renavest'
-      >
-        <svg
-          className='w-5 h-5'
-          fill='none'
-          stroke='currentColor'
-          strokeWidth={2}
-          viewBox='0 0 24 24'
-        >
-          <path strokeLinecap='round' strokeLinejoin='round' d='M12 4v16m8-8H4' />
-        </svg>
-        <span className='font-medium'>Invite a Client</span>
-      </button>
+
+      {/* Tab Navigation */}
+      {selectedClient && (
+        <>
+          <div className='border-b border-gray-100 bg-gray-50/50'>
+            <nav className='flex space-x-8 px-6'>
+              {[
+                { key: 'overview', label: 'Overview', icon: Users },
+                { key: 'notes', label: 'Clinical Notes', icon: FileText },
+                { key: 'sessions', label: 'Sessions', icon: Calendar },
+                { key: 'progress', label: 'Progress', icon: TrendingUp },
+              ].map(({ key, label, icon: Icon }) => (
+                <button
+                  key={key}
+                  onClick={() => setActiveTab(key as ClientTab)}
+                  className={`flex items-center gap-2 py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
+                    activeTab === key
+                      ? 'border-[#9071FF] text-[#9071FF]'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <Icon className='w-4 h-4' />
+                  {label}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          {/* Tab Content */}
+          <div className='p-6'>
+            {activeTab === 'overview' && (
+              <ClientOverviewTab client={selectedClient} sessions={clientSessions} />
+            )}
+            {activeTab === 'notes' && therapistIdSignal.value && (
+              <ClientNotesSection client={selectedClient} therapistId={therapistIdSignal.value} />
+            )}
+            {activeTab === 'sessions' && <ClientSessionsTab sessions={clientSessions} />}
+            {activeTab === 'progress' && <ClientProgressTab />}
+          </div>
+        </>
+      )}
+
+      {/* No Client Selected State */}
+      {!selectedClient && (
+        <div className='p-16 text-center'>
+          <div className='w-16 h-16 bg-gradient-to-br from-[#9071FF] to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6'>
+            <Users className='w-8 h-8 text-white' />
+          </div>
+          <h3 className='text-xl font-semibold text-gray-900 mb-2'>No Clients Yet</h3>
+          <p className='text-gray-600 mb-6'>Add your first client to start managing their care</p>
+          <button
+            onClick={onAddClientClick}
+            className='inline-flex items-center gap-2 px-6 py-3 bg-[#9071FF] text-white rounded-xl hover:bg-[#7c5ce8] transition-all duration-200 font-medium'
+          >
+            <Plus className='w-5 h-5' />
+            Add Your First Client
+          </button>
+        </div>
+      )}
     </div>
   );
 };
 
-const ClientDetailView = ({
+// Tab content components
+const ClientOverviewTab = ({
   client,
-  upcomingSessions,
+  sessions,
 }: {
-  client: Client | null;
-  upcomingSessions: UpcomingSession[];
+  client: Client;
+  sessions: UpcomingSession[];
 }) => {
-  // If no client is selected, show all sessions
-  const clientSessions = client
-    ? upcomingSessions.filter((session) => session.clientId === client.id)
-    : upcomingSessions;
-
-  if (!client)
-    return (
-      <div className='flex items-center justify-center h-full text-gray-500'>
-        Select a client to view details
-      </div>
-    );
-
   return (
-    <div className='p-6 space-y-6 max-h-full overflow-y-auto'>
-      <div className='flex items-center gap-4 mb-6'>
-        <UserCircle2 className='h-12 w-12 text-purple-600' />
-        <div>
-          <h2 className='text-2xl font-semibold text-gray-800'>
-            {client.firstName} {client.lastName || ''}
-          </h2>
-          <p className='text-gray-500'>{client.email}</p>
+    <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
+      <div className='space-y-6'>
+        <div className='bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200'>
+          <h4 className='text-lg font-semibold text-blue-900 mb-3'>Client Information</h4>
+          <div className='space-y-3 text-blue-800'>
+            <p>
+              <span className='font-medium'>Name:</span> {client.firstName} {client.lastName}
+            </p>
+            <p>
+              <span className='font-medium'>Email:</span> {client.email}
+            </p>
+            <p>
+              <span className='font-medium'>Status:</span> Active
+            </p>
+          </div>
+        </div>
+
+        <div className='bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-6 border border-green-200'>
+          <h4 className='text-lg font-semibold text-green-900 mb-3'>Recent Activity</h4>
+          <p className='text-green-800'>Last session: Coming soon</p>
         </div>
       </div>
 
       <div className='space-y-6'>
-        <UpcomingSessionsCard
-          sessions={clientSessions}
-          onSessionClick={() => {}} // Disable click functionality
-        />
-
-        {therapistIdSignal.value && (
-          <ClientNotesSection client={client} therapistId={therapistIdSignal.value} />
-        )}
+        <UpcomingSessionsCard sessions={sessions} onSessionClick={() => {}} />
       </div>
+    </div>
+  );
+};
+
+const ClientSessionsTab = ({ sessions }: { sessions: UpcomingSession[] }) => {
+  return (
+    <div className='space-y-6'>
+      <div className='flex items-center justify-between'>
+        <h3 className='text-xl font-semibold text-gray-900'>Session Management</h3>
+        <button className='px-4 py-2 bg-[#9071FF] text-white rounded-lg hover:bg-[#7c5ce8] transition-colors text-sm font-medium'>
+          Schedule Session
+        </button>
+      </div>
+      <UpcomingSessionsCard sessions={sessions} onSessionClick={() => {}} />
+    </div>
+  );
+};
+
+const ClientProgressTab = () => {
+  return (
+    <div className='text-center py-16'>
+      <div className='w-16 h-16 bg-gradient-to-br from-amber-100 to-amber-200 rounded-2xl flex items-center justify-center mx-auto mb-6'>
+        <TrendingUp className='w-8 h-8 text-amber-600' />
+      </div>
+      <h3 className='text-xl font-semibold text-gray-900 mb-2'>Progress Tracking</h3>
+      <p className='text-gray-600'>Progress tracking features coming soon</p>
     </div>
   );
 };
@@ -508,21 +610,13 @@ function renderDashboard(refreshData: () => Promise<void>) {
         <FutureInsightsCards />
       </div>
 
-      <div className='grid grid-cols-12 gap-6 mt-6'>
-        <div className='col-span-4 bg-white rounded-xl border border-gray-100 shadow-sm'>
-          <ClientSidebar
-            clients={clientsSignal.value}
-            selectedClient={selectedClientSignal.value}
-            onClientSelect={(client) => (selectedClientSignal.value = client)}
-            onAddClientClick={() => (isAddClientOpenSignal.value = true)}
-          />
-        </div>
-        <div className='col-span-8 bg-white rounded-xl border border-gray-100 shadow-sm'>
-          <ClientDetailView
-            client={selectedClientSignal.value}
-            upcomingSessions={upcomingSessionsSignal.value}
-          />
-        </div>
+      {/* Redesigned Client Management Section */}
+      <div className='mt-8'>
+        <ClientManagementSection
+          clients={clientsSignal.value}
+          upcomingSessions={upcomingSessionsSignal.value}
+          onAddClientClick={() => (isAddClientOpenSignal.value = true)}
+        />
       </div>
 
       {/* Add Client Modal */}

@@ -341,17 +341,17 @@ export function ClientNotesSection({ client, therapistId }: ClientNotesSectionPr
                 <button
                   onClick={handleExportNotes}
                   disabled={exporting}
-                  className='inline-flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 disabled:opacity-50 transition-all duration-200 font-medium shadow-lg hover:shadow-xl hover:-translate-y-0.5'
+                  className='inline-flex items-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50 transition-all duration-200 text-sm font-medium'
                 >
-                  <Download className='w-5 h-5' />
-                  {exporting ? 'Exporting...' : 'Export All'}
+                  <Download className='w-4 h-4' />
+                  {exporting ? 'Exporting...' : 'Export'}
                 </button>
               )}
               <button
                 onClick={() => setShowNewNoteForm(true)}
-                className='inline-flex items-center gap-2 px-6 py-3 bg-[#9071FF] text-white rounded-xl hover:bg-[#7c5ce8] transition-all duration-200 font-medium shadow-lg hover:shadow-xl hover:-translate-y-0.5'
+                className='inline-flex items-center gap-2 px-4 py-2 bg-[#9071FF] text-white rounded-lg hover:bg-[#7c5ce8] transition-all duration-200 text-sm font-medium'
               >
-                <Plus className='w-5 h-5' />
+                <Plus className='w-4 h-4' />
                 New Note
               </button>
             </div>
