@@ -20,7 +20,7 @@ export async function getOrCreateStripeCustomer(
     .select()
     .from(stripeCustomers)
     .where(eq(stripeCustomers.userId, userId))
-    .limit(1);
+    .limit(1);  
 
   if (existingCustomer.length > 0) {
     return existingCustomer[0].stripeCustomerId;
