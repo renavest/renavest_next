@@ -4,7 +4,6 @@ import { signal, effect } from '@preact-signals/safe-react';
 import { HeartHandshake, TrendingUp, BarChart3 } from 'lucide-react';
 import posthog from 'posthog-js';
 import { useState } from 'react';
-import { Parallax } from 'react-scroll-parallax';
 
 // Card content components to reduce main component size
 const CardOne = () => (
@@ -198,38 +197,36 @@ function WhatWeDoSection() {
   return (
     <>
       <span id='what-we-do' className='block scroll-mt-16'></span>
-      <section className='w-full py-24 bg-[#f9f8ff]'>
-        <Parallax
-          translateY={[-15, 15]}
-          opacity={[0.8, 1]}
-          className='max-w-4xl mx-auto text-center mb-16'
-        >
-          <h2 className='text-3xl md:text-4xl font-bold text-gray-900 mb-4'>
-            What Renavest Delivers
-          </h2>
-          <p className='text-xl text-gray-600 leading-relaxed'>
-            Purpose-built features for healing your relationship with money.
-          </p>
-        </Parallax>
-
-        <div className='max-w-5xl mx-auto mb-16'>
-          <div className='flex justify-center gap-4 mb-12'>
-            {[1, 2, 3].map((num) => (
-              <button
-                key={num}
-                onClick={() => trackCardSelection(num)}
-                className={`w-12 h-12 rounded-md flex items-center justify-center text-lg font-bold transition-all ${
-                  activeCard === num
-                    ? 'bg-[#9071FF] text-white'
-                    : 'bg-[#f0eeff] text-gray-700 hover:bg-[#e4e0ff]'
-                }`}
-              >
-                {num}
-              </button>
-            ))}
+      <section className='w-full py-20 bg-[#f9f8ff]'>
+        <div className='max-w-6xl mx-auto px-6 md:px-10'>
+          <div className='max-w-4xl mx-auto text-center mb-16'>
+            <h2 className='text-3xl md:text-4xl font-bold text-gray-900 mb-6'>
+              What Renavest Delivers
+            </h2>
+            <p className='text-xl text-gray-600 leading-relaxed'>
+              Purpose-built features for healing your relationship with money.
+            </p>
           </div>
 
-          {renderActiveCard()}
+          <div className='max-w-5xl mx-auto mb-16'>
+            <div className='flex justify-center gap-4 mb-12'>
+              {[1, 2, 3].map((num) => (
+                <button
+                  key={num}
+                  onClick={() => trackCardSelection(num)}
+                  className={`w-12 h-12 rounded-md flex items-center justify-center text-lg font-bold transition-all ${
+                    activeCard === num
+                      ? 'bg-[#9071FF] text-white'
+                      : 'bg-[#f0eeff] text-gray-700 hover:bg-[#e4e0ff]'
+                  }`}
+                >
+                  {num}
+                </button>
+              ))}
+            </div>
+
+            {renderActiveCard()}
+          </div>
         </div>
       </section>
     </>

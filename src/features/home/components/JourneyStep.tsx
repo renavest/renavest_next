@@ -2,9 +2,6 @@
 import { ArrowDownUp } from 'lucide-react';
 import React, { useEffect, useState, memo } from 'react';
 import type { ElementType } from 'react';
-import { Parallax } from 'react-scroll-parallax';
-
-import { useParallaxImage } from '@/src/features/parallax/hooks/useParallaxImage';
 
 import DataCardExample from './DataCardExample';
 import type { JourneySectionProps } from './types';
@@ -76,7 +73,6 @@ const AnimatedDescription = memo(
 
 function JourneyStep({ step, idx }: JourneySectionProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const parallaxImage = useParallaxImage();
 
   // Use passive intersection observer for better performance
   useEffect(() => {
@@ -119,10 +115,9 @@ function JourneyStep({ step, idx }: JourneySectionProps) {
         alt={step.title}
         className='w-full h-full object-cover rounded-3xl shadow-md'
         loading='lazy'
-        onLoad={parallaxImage.onLoad}
       />
     ) : null;
-  }, [step, parallaxImage]);
+  }, [step]);
 
   return (
     <div
@@ -138,53 +133,48 @@ function JourneyStep({ step, idx }: JourneySectionProps) {
       <div className='hidden lg:flex flex-row items-center gap-16'>
         <div className={`w-1/2 ${idx % 2 === 1 ? 'order-2' : 'order-1'}`}>
           <div className='max-w-xl'>
-            <Parallax translateY={[10, -10]} opacity={[0.9, 1]}>
-              <AnimatedTitle
-                title={step.title}
-                isVisible={isVisible}
-                animationDelay={animationDelay}
-                icon={step.icon}
-              />
-              <AnimatedHeading
-                title={step.title}
-                isVisible={isVisible}
-                animationDelay={animationDelay}
-              />
-              <AnimatedDescription
-                description={step.description}
-                isVisible={isVisible}
-                animationDelay={animationDelay}
-              />
-            </Parallax>
+            <AnimatedTitle
+              title={step.title}
+              isVisible={isVisible}
+              animationDelay={animationDelay}
+              icon={step.icon}
+            />
+            <AnimatedHeading
+              title={step.title}
+              isVisible={isVisible}
+              animationDelay={animationDelay}
+            />
+            <AnimatedDescription
+              description={step.description}
+              isVisible={isVisible}
+              animationDelay={animationDelay}
+            />
           </div>
         </div>
 
         <div className={`w-1/2 ${idx % 2 === 1 ? 'order-1' : 'order-2'} flex justify-center`}>
-          <Parallax translateY={[20, -20]} opacity={[0.8, 1]} scale={[0.95, 1.05]}>
-            <div className='relative w-[380px] h-[380px]'>
-              {renderImage()}
-              {step.title === 'Week 1: Opening Up' && step.therapistImage && (
-                <>
-                  <img
-                    src={step.therapistImage}
-                    alt='Financial Therapist'
-                    className='absolute top-4 right-4 w-24 h-24 object-cover rounded-lg border-4 border-white shadow-lg z-10'
-                    style={{ transitionDelay: `calc(${animationDelay} + 0.5s)` }}
-                    onLoad={parallaxImage.onLoad}
-                  />
-                  <ArrowDownUp
-                    size={64}
-                    height={300}
-                    width={64}
-                    strokeWidth={2.5}
-                    color='#B9A7E6'
-                    className='absolute right-6 bottom-10 z-10'
-                    style={{ filter: 'drop-shadow(0 2px 6px rgba(185,167,230,0.15))' }}
-                  />
-                </>
-              )}
-            </div>
-          </Parallax>
+          <div className='relative w-[380px] h-[380px]'>
+            {renderImage()}
+            {step.title === 'Week 1: Opening Up' && step.therapistImage && (
+              <>
+                <img
+                  src={step.therapistImage}
+                  alt='Financial Therapist'
+                  className='absolute top-4 right-4 w-24 h-24 object-cover rounded-lg border-4 border-white shadow-lg z-10'
+                  style={{ transitionDelay: `calc(${animationDelay} + 0.5s)` }}
+                />
+                <ArrowDownUp
+                  size={64}
+                  height={300}
+                  width={64}
+                  strokeWidth={2.5}
+                  color='#B9A7E6'
+                  className='absolute right-6 bottom-10 z-10'
+                  style={{ filter: 'drop-shadow(0 2px 6px rgba(185,167,230,0.15))' }}
+                />
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -209,7 +199,6 @@ function JourneyStep({ step, idx }: JourneySectionProps) {
                 src={step.therapistImage}
                 alt='Financial Therapist'
                 className='absolute top-4 right-4 w-16 h-16 object-cover rounded-lg border-2 border-white shadow-lg z-10'
-                onLoad={parallaxImage.onLoad}
               />
             )}
           </div>
