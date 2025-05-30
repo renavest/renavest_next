@@ -1,18 +1,17 @@
 import { currentUser } from '@clerk/nextjs/server';
-import { eq, and, gte, isNull } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
-import {
-  users,
-  therapists,
-  bookingSessions,
-  sessionPayments,
-  employerSubsidies,
-} from '@/src/db/schema';
+import { users, therapists, bookingSessions, sessionPayments } from '@/src/db/schema';
 import { stripe, getOrCreateStripeCustomer } from '@/src/features/stripe';
+import {
+  calculateSessionSubsidies,
+  applySubsidies,
+  type SubsidyApplicationData,
+} from '@/src/services/subsidyCalculation';
 
-// POST - Create PaymentIntent for session payment
+// POST - Create PaymentIntent for session payment with comprehensive subsidy logic
 export async function POST(req: NextRequest) {
   try {
     const user = await currentUser();
@@ -96,66 +95,34 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid session cost' }, { status: 400 });
     }
 
-    // Check for available employer subsidies
-    const availableSubsidies = await db
-      .select()
-      .from(employerSubsidies)
-      .where(
-        and(
-          eq(employerSubsidies.userId, userId),
-          gte(employerSubsidies.remainingCents, 1),
-          // Only unexpired subsidies
-          isNull(employerSubsidies.expiresAt), // TODO: Add proper expiry check
-        ),
-      )
-      .orderBy(employerSubsidies.createdAt); // Use oldest first
+    // Calculate subsidies using the comprehensive subsidy service
+    const subsidyData: SubsidyApplicationData = {
+      userId,
+      totalSessionCostCents: totalAmountCents,
+      bookingSessionId,
+    };
 
-    // Calculate subsidy usage
-    let subsidyUsedCents = 0;
-    const subsidiesToUpdate: Array<{ id: number; remainingCredit: number }> = [];
-
-    for (const subsidy of availableSubsidies) {
-      const remainingToSubsidize = totalAmountCents - subsidyUsedCents;
-      if (remainingToSubsidize <= 0) break;
-
-      const subsidyToUse = Math.min(subsidy.remainingCents, remainingToSubsidize);
-      subsidyUsedCents += subsidyToUse;
-
-      const remainingCredit = subsidy.remainingCents - subsidyToUse;
-      subsidiesToUpdate.push({ id: subsidy.id, remainingCredit });
-    }
-
-    const outOfPocketCents = totalAmountCents - subsidyUsedCents;
+    const subsidyResult = await calculateSessionSubsidies(subsidyData);
 
     // If fully subsidized, no payment needed
-    if (outOfPocketCents <= 0) {
-      // Create a record showing the session was paid via subsidy
+    if (subsidyResult.fullySubsidized) {
+      // Apply subsidies and create records within a transaction
       await db.transaction(async (tx) => {
-        // Update subsidies
-        for (const update of subsidiesToUpdate) {
-          if (update.remainingCredit <= 0) {
-            await tx.delete(employerSubsidies).where(eq(employerSubsidies.id, update.id));
-          } else {
-            await tx
-              .update(employerSubsidies)
-              .set({ remainingCents: update.remainingCredit })
-              .where(eq(employerSubsidies.id, update.id));
-          }
-        }
+        // Apply all subsidy updates
+        await applySubsidies(subsidyResult, subsidyData, tx);
 
         // Create session payment record
         await tx.insert(sessionPayments).values({
           bookingSessionId,
           userId,
-          stripePaymentIntentId: `subsidy_${bookingSessionId}_${Date.now()}`,
-          totalAmountCents,
-          subsidyUsedCents,
+          totalAmountCents: subsidyResult.totalAmountCents,
+          subsidyUsedCents: subsidyResult.totalSubsidyUsedCents,
           outOfPocketCents: 0,
           status: 'succeeded',
           chargedAt: new Date(),
         });
 
-        // Update booking session
+        // Update booking session status
         await tx
           .update(bookingSessions)
           .set({ status: 'completed' })
@@ -164,9 +131,15 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({
         fullySubsidized: true,
-        totalAmount: totalAmountCents,
-        subsidyUsed: subsidyUsedCents,
+        totalAmount: subsidyResult.totalAmountCents,
+        subsidyBreakdown: {
+          fromSponsoredGroup: subsidyResult.subsidyFromGroupCents,
+          fromDirectEmployerSubsidy: subsidyResult.subsidyFromEmployerDirectCents,
+          fromEmployerPercentage: subsidyResult.subsidyFromEmployerPercentageCents,
+          total: subsidyResult.totalSubsidyUsedCents,
+        },
         outOfPocket: 0,
+        sponsoringGroupId: subsidyResult.sponsoringGroupId,
       });
     }
 
@@ -176,9 +149,9 @@ export async function POST(req: NextRequest) {
     // Calculate platform fee (10% of total amount)
     const applicationFeeAmount = Math.round(totalAmountCents * 0.1);
 
-    // Create PaymentIntent
+    // Create PaymentIntent for the out-of-pocket amount
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: outOfPocketCents,
+      amount: subsidyResult.outOfPocketCents,
       currency: 'usd',
       customer: stripeCustomerId,
       capture_method: 'manual', // Use manual capture to delay payment until session completion
@@ -186,7 +159,9 @@ export async function POST(req: NextRequest) {
         enabled: true,
         allow_redirects: 'never', // Prevent redirects for therapy session payments
       },
-      application_fee_amount: applicationFeeAmount,
+      application_fee_amount: Math.round(
+        applicationFeeAmount * (subsidyResult.outOfPocketCents / totalAmountCents),
+      ), // Proportional fee
       transfer_data: {
         destination: therapistData.stripeAccountId!,
       },
@@ -194,43 +169,45 @@ export async function POST(req: NextRequest) {
         bookingSessionId: bookingSessionId.toString(),
         userId: userId.toString(),
         therapistId: therapistData.id.toString(),
-        subsidyUsedCents: subsidyUsedCents.toString(),
-        totalAmountCents: totalAmountCents.toString(),
+        totalAmountCents: subsidyResult.totalAmountCents.toString(),
+        subsidyFromGroupCents: subsidyResult.subsidyFromGroupCents.toString(),
+        subsidyFromEmployerDirectCents: subsidyResult.subsidyFromEmployerDirectCents.toString(),
+        subsidyFromEmployerPercentageCents:
+          subsidyResult.subsidyFromEmployerPercentageCents.toString(),
+        totalSubsidyUsedCents: subsidyResult.totalSubsidyUsedCents.toString(),
+        sponsoringGroupId: subsidyResult.sponsoringGroupId?.toString() || '',
       },
     });
 
-    // Store payment record and update subsidies in transaction
+    // Store payment record and apply subsidies in transaction
     await db.transaction(async (tx) => {
-      // Update subsidies
-      for (const update of subsidiesToUpdate) {
-        if (update.remainingCredit <= 0) {
-          await tx.delete(employerSubsidies).where(eq(employerSubsidies.id, update.id));
-        } else {
-          await tx
-            .update(employerSubsidies)
-            .set({ remainingCents: update.remainingCredit })
-            .where(eq(employerSubsidies.id, update.id));
-        }
-      }
+      // Apply all subsidy updates
+      await applySubsidies(subsidyResult, subsidyData, tx);
 
       // Create session payment record
       await tx.insert(sessionPayments).values({
         bookingSessionId,
         userId,
         stripePaymentIntentId: paymentIntent.id,
-        totalAmountCents,
-        subsidyUsedCents,
-        outOfPocketCents,
+        totalAmountCents: subsidyResult.totalAmountCents,
+        subsidyUsedCents: subsidyResult.totalSubsidyUsedCents,
+        outOfPocketCents: subsidyResult.outOfPocketCents,
         status: 'pending',
       });
     });
 
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
-      totalAmount: totalAmountCents,
-      subsidyUsed: subsidyUsedCents,
-      outOfPocket: outOfPocketCents,
+      totalAmount: subsidyResult.totalAmountCents,
+      subsidyBreakdown: {
+        fromSponsoredGroup: subsidyResult.subsidyFromGroupCents,
+        fromDirectEmployerSubsidy: subsidyResult.subsidyFromEmployerDirectCents,
+        fromEmployerPercentage: subsidyResult.subsidyFromEmployerPercentageCents,
+        total: subsidyResult.totalSubsidyUsedCents,
+      },
+      outOfPocket: subsidyResult.outOfPocketCents,
       paymentIntentId: paymentIntent.id,
+      sponsoringGroupId: subsidyResult.sponsoringGroupId,
     });
   } catch (error) {
     console.error('[SESSION PAYMENT API] Error creating payment intent:', error);
