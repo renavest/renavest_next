@@ -1,3 +1,4 @@
+import React from 'react';
 import { Heart, Sparkles, Users } from 'lucide-react';
 
 /**
@@ -17,18 +18,18 @@ export const getGroupTypeColor = (type: string): string => {
   }
 };
 
-export const getGroupTypeIcon = (type: string) => {
+export const getGroupTypeIcon = (type: string): React.ReactElement => {
   switch (type) {
     case 'erg':
-      return <Heart className="w-3 h-3" />;
+      return <Heart className='w-3 h-3' />;
     case 'wellness_cohort':
-      return <Sparkles className="w-3 h-3" />;
+      return <Sparkles className='w-3 h-3' />;
     default:
-      return <Users className="w-3 h-3" />;
+      return <Users className='w-3 h-3' />;
   }
 };
 
-export const getProgressBarStyle = (utilizationPercentage: number) => {
+export const getProgressBarStyle = (utilizationPercentage: number): string => {
   if (utilizationPercentage > 80) {
     return 'bg-gradient-to-r from-orange-400 to-red-500';
   } else if (utilizationPercentage > 50) {
@@ -38,26 +39,31 @@ export const getProgressBarStyle = (utilizationPercentage: number) => {
   }
 };
 
-export const getEncouragementMessage = (utilizationPercentage: number) => {
+export interface EncouragementMessage {
+  message: string;
+  className: string;
+}
+
+export const getEncouragementMessage = (utilizationPercentage: number): EncouragementMessage => {
   if (utilizationPercentage === 0) {
     return {
       message: '🌟 Ready to help your team grow!',
-      className: 'text-purple-600 bg-purple-50'
+      className: 'text-purple-600 bg-purple-50',
     };
   } else if (utilizationPercentage > 0 && utilizationPercentage < 50) {
     return {
       message: '💚 Great start! Your team is engaging with wellness.',
-      className: 'text-green-600 bg-green-50'
+      className: 'text-green-600 bg-green-50',
     };
   } else if (utilizationPercentage >= 50 && utilizationPercentage < 80) {
     return {
       message: '🎯 Excellent engagement! Consider adding more credits.',
-      className: 'text-blue-600 bg-blue-50'
+      className: 'text-blue-600 bg-blue-50',
     };
   } else {
     return {
       message: '⚡ High utilization! Time to replenish credits.',
-      className: 'text-orange-600 bg-orange-50'
+      className: 'text-orange-600 bg-orange-50',
     };
   }
-}; 
+};
