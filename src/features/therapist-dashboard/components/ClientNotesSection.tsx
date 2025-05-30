@@ -22,7 +22,17 @@ const categoryColors: Record<NoteCategory, string> = {
 };
 
 // Note Detail Modal Component
-function NoteDetailModal({ note, onClose }: { note: ClientNote; onClose: () => void }) {
+function NoteDetailModal({
+  note,
+  onClose,
+  onEdit,
+  onDelete,
+}: {
+  note: ClientNote;
+  onClose: () => void;
+  onEdit: (note: ClientNote) => void;
+  onDelete: (note: ClientNote) => void;
+}) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -31,6 +41,78 @@ function NoteDetailModal({ note, onClose }: { note: ClientNote; onClose: () => v
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  const handleEdit = () => {
+    onEdit(note);
+    onClose();
+  };
+
+  const handleDelete = () => {
+    if (
+      window.confirm('Are you sure you want to delete this note? This action cannot be undone.')
+    ) {
+      onDelete(note);
+      onClose();
+    }
+  };
+
+  const handleExportSingle = () => {
+    // Export just this note
+    const blob = new Blob(
+      [
+        `CONFIDENTIAL CLINICAL NOTE\n`,
+        `Title: ${note.title}\n`,
+        `Date: ${formatDate(note.createdAt)}\n`,
+        `Category: ${note.content.category || 'General'}\n\n`,
+
+        ...(note.content.keyObservations?.length
+          ? [
+              'KEY OBSERVATIONS:\n',
+              ...note.content.keyObservations.map((obs) => `• ${obs}\n`),
+              '\n',
+            ]
+          : []),
+
+        ...(note.content.clinicalAssessment
+          ? ['CLINICAL ASSESSMENT:\n', note.content.clinicalAssessment, '\n\n']
+          : []),
+
+        ...(note.content.treatmentPlan
+          ? ['TREATMENT PLAN:\n', note.content.treatmentPlan, '\n\n']
+          : []),
+
+        ...(note.content.riskAssessment
+          ? ['RISK ASSESSMENT:\n', note.content.riskAssessment, '\n\n']
+          : []),
+
+        ...(note.content.additionalContext
+          ? ['ADDITIONAL NOTES:\n', note.content.additionalContext, '\n\n']
+          : []),
+
+        ...(note.content.actionItems?.length
+          ? ['ACTION ITEMS:\n', ...note.content.actionItems.map((item) => `• ${item}\n`), '\n']
+          : []),
+
+        ...(note.content.followUpNeeded?.length
+          ? [
+              'FOLLOW UP NEEDED:\n',
+              ...note.content.followUpNeeded.map((item) => `• ${item}\n`),
+              '\n',
+            ]
+          : []),
+      ],
+      { type: 'text/plain' },
+    );
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Note_${note.title.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -59,7 +141,7 @@ function NoteDetailModal({ note, onClose }: { note: ClientNote; onClose: () => v
         </div>
 
         {/* Content */}
-        <div className='p-6 max-h-[70vh] overflow-y-auto space-y-6'>
+        <div className='p-6 max-h-[60vh] overflow-y-auto space-y-6'>
           <div className='text-sm text-gray-500 mb-4'>
             <Calendar className='w-4 h-4 inline mr-2' />
             {formatDate(note.createdAt)}
@@ -125,6 +207,47 @@ function NoteDetailModal({ note, onClose }: { note: ClientNote; onClose: () => v
               </ul>
             </div>
           )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className='p-6 border-t border-gray-200 flex justify-between'>
+          <div className='flex gap-3'>
+            <button
+              onClick={handleEdit}
+              className='inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors'
+            >
+              <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'
+                />
+              </svg>
+              Edit Note
+            </button>
+            <button
+              onClick={handleExportSingle}
+              className='inline-flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors'
+            >
+              <Download className='w-4 h-4' />
+              Export This Note
+            </button>
+          </div>
+          <button
+            onClick={handleDelete}
+            className='inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors'
+          >
+            <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth={2}
+                d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
+              />
+            </svg>
+            Delete Note
+          </button>
         </div>
       </div>
     </div>
@@ -199,6 +322,7 @@ export function ClientNotesSection({ client, therapistId }: ClientNotesSectionPr
   const [loading, setLoading] = useState(true);
   const [showNewNoteForm, setShowNewNoteForm] = useState(false);
   const [selectedNote, setSelectedNote] = useState<ClientNote | null>(null);
+  const [editingNote, setEditingNote] = useState<ClientNote | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<NoteCategory | 'all'>('all');
   const [exporting, setExporting] = useState(false);
@@ -238,6 +362,27 @@ export function ClientNotesSection({ client, therapistId }: ClientNotesSectionPr
     } catch (error) {
       console.error('Error saving note:', error);
       throw error;
+    }
+  };
+
+  const handleEditNote = (note: ClientNote) => {
+    setEditingNote(note);
+    setSelectedNote(null);
+  };
+
+  const handleDeleteNote = async (note: ClientNote) => {
+    try {
+      const response = await fetch(`/api/therapist/notes/${note.id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        await fetchNotes();
+      } else {
+        throw new Error('Failed to delete note');
+      }
+    } catch (error) {
+      console.error('Error deleting note:', error);
     }
   };
 
@@ -347,7 +492,7 @@ export function ClientNotesSection({ client, therapistId }: ClientNotesSectionPr
         )}
       </div>
 
-      {/* Notes Form Modal */}
+      {/* Notes Form Modal - for new notes */}
       {showNewNoteForm && (
         <ClientNotesForm
           client={client}
@@ -357,9 +502,25 @@ export function ClientNotesSection({ client, therapistId }: ClientNotesSectionPr
         />
       )}
 
+      {/* Notes Form Modal - for editing */}
+      {editingNote && (
+        <ClientNotesForm
+          client={client}
+          therapistId={therapistId}
+          existingNote={editingNote}
+          onSave={handleSaveNote}
+          onClose={() => setEditingNote(null)}
+        />
+      )}
+
       {/* Note Detail Modal */}
       {selectedNote && (
-        <NoteDetailModal note={selectedNote} onClose={() => setSelectedNote(null)} />
+        <NoteDetailModal
+          note={selectedNote}
+          onClose={() => setSelectedNote(null)}
+          onEdit={handleEditNote}
+          onDelete={handleDeleteNote}
+        />
       )}
     </div>
   );

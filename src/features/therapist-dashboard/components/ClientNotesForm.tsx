@@ -2,12 +2,20 @@
 import { useState } from 'react';
 import { X, Save, Lock, Tag } from 'lucide-react';
 
-import { ClientNoteContent, NoteCategory, NoteTemplate, CreateNoteRequest, Client } from '../types';
+import {
+  ClientNoteContent,
+  NoteCategory,
+  NoteTemplate,
+  CreateNoteRequest,
+  Client,
+  ClientNote,
+} from '../types';
 
 interface ClientNotesFormProps {
   client: Client;
   therapistId: number;
   template?: NoteTemplate;
+  existingNote?: ClientNote;
   onSave: (note: CreateNoteRequest) => Promise<void>;
   onClose: () => void;
 }
@@ -25,11 +33,14 @@ export function ClientNotesForm({
   client,
   therapistId,
   template,
+  existingNote,
   onSave,
   onClose,
 }: ClientNotesFormProps) {
-  const [title, setTitle] = useState(template?.name || '');
-  const [content, setContent] = useState<ClientNoteContent>(template?.template || {});
+  const [title, setTitle] = useState(existingNote?.title || template?.name || '');
+  const [content, setContent] = useState<ClientNoteContent>(
+    existingNote?.content || template?.template || {},
+  );
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -76,7 +87,7 @@ export function ClientNotesForm({
         <div className='p-6 border-b border-gray-200 flex items-center justify-between'>
           <div>
             <h3 className='text-xl font-semibold text-gray-900'>
-              {template ? `Create ${template.name}` : 'Create Note'}
+              {existingNote ? 'Edit Note' : template ? `Create ${template.name}` : 'Create Note'}
             </h3>
             <p className='text-sm text-gray-500'>
               For {client.firstName} {client.lastName}
