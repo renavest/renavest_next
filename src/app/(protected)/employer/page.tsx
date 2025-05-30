@@ -10,6 +10,7 @@ import EmployerNavbar from '@/src/features/employer-dashboard/components/Employe
 import { EngagementSection } from '@/src/features/employer-dashboard/components/EngagementSection';
 import { ProgramOverviewSection } from '@/src/features/employer-dashboard/components/ProgramOverviewSection';
 import { SessionsSection } from '@/src/features/employer-dashboard/components/SessionsSection';
+import { SponsoredGroupsSection } from '@/src/features/employer-dashboard/components/SponsoredGroupsSection';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
@@ -50,6 +51,11 @@ export default function EmployerDashboardView() {
         </div>
 
         <div className='space-y-16'>
+          <div>
+            <h3 className='text-xl md:text-2xl font-bold text-gray-800 mb-6'>Sponsored Groups</h3>
+            <SponsoredGroupsSection />
+          </div>
+
           <ChartsSections />
 
           <SessionsSection />
