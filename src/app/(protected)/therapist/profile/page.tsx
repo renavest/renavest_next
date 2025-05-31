@@ -1,7 +1,7 @@
 'use client';
 
+import TherapistNavbar from '@/src/features/therapist-dashboard/components/navigation/TherapistNavbar';
 import TherapistProfileCard from '@/src/features/therapist-dashboard/components/profile/TherapistProfileCard';
-import TherapistNavbar from '@/src/features/therapist-dashboard/components/TherapistNavbar';
 
 export default function ProfilePage() {
   return (

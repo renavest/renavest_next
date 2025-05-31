@@ -5,13 +5,12 @@ import { redirect } from 'next/navigation';
 
 import { db } from '@/src/db';
 import { bookingSessions, therapists, users } from '@/src/db/schema';
+import TherapistDashboardClient from '@/src/features/therapist-dashboard/components/dashboard/TherapistDashboardClient';
 import {
   Client,
   TherapistStatistics,
   UpcomingSession,
 } from '@/src/features/therapist-dashboard/types';
-
-import TherapistDashboardClient from '../../../features/therapist-dashboard/components/TherapistDashboardClient';
 
 export default async function TherapistPage() {
   const user = await currentUser();

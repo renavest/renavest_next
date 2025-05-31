@@ -8,5 +8,5 @@ Whenever you’re about to complete a user request, call the MCP interactive_fee
 
 After making a change, please add all to github (git add .) and commit.
 
-If you are not sure about file content or codebase structure pertaining to the user’s request, use your tools to read files and gather the relevant information: do NOT guess or make up an answer. Please call the list_structure and read_files when you need to explore the codebase.
+If you are not sure about file content or codebase structure pertaining to the user’s request, use your tools to read files and gather the relevant information: do NOT guess or make up an answer. Please call the list_structure and read_files when you need to explore the codebase, use the absolute path.
 If a proposed solution seems suboptimal, tell me that this is suboptimal and suggest a more robust architectural pattern.

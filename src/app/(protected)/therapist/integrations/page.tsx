@@ -15,7 +15,7 @@ import { useEffect, useState } from 'react';
 import { GoogleCalendarIntegration } from '@/src/features/google-calendar/components/GoogleCalendarIntegration';
 import { useGoogleCalendarIntegration } from '@/src/features/google-calendar/utils/googleCalendarIntegration';
 import { StripeConnectIntegration } from '@/src/features/stripe/components/StripeConnectIntegration';
-import TherapistNavbar from '@/src/features/therapist-dashboard/components/TherapistNavbar';
+import TherapistNavbar from '@/src/features/therapist-dashboard/components/navigation/TherapistNavbar';
 
 type IntegrationType = 'stripe' | 'calendar' | null;
 

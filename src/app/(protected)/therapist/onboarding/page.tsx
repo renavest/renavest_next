@@ -1,14 +1,22 @@
 'use client';
 
 import { UserButton, useUser, useClerk } from '@clerk/nextjs';
+import { currentUser } from '@clerk/nextjs/server';
 import { signal, effect } from '@preact-signals/safe-react';
+import { eq } from 'drizzle-orm';
 import { CheckCircle } from 'lucide-react';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { toast } from 'sonner';
 
+import { db } from '@/src/db';
+import { therapists, users } from '@/src/db/schema';
 import { GoogleCalendarIntegration } from '@/src/features/google-calendar/components/GoogleCalendarIntegration';
 import { fetchTherapistId } from '@/src/features/google-calendar/utils/googleCalendarIntegration';
-import TherapistDashboardHeader from '@/src/features/therapist-dashboard/components/TherapistNavbar';
+import { OnboardingModal } from '@/src/features/onboarding/components/OnboardingModal';
+import { OnboardingModalContent } from '@/src/features/onboarding/components/OnboardingModalContent';
+import { OnboardingProvider } from '@/src/features/onboarding/context/OnboardingContext';
+import TherapistDashboardHeader from '@/src/features/therapist-dashboard/components/navigation/TherapistNavbar';
 
 export default function TherapistOnboardingPage() {
   const { user, isLoaded } = useUser();
