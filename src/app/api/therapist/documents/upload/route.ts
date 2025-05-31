@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
-import { therapists, users } from '@/src/db/schema';
+import { therapists, users, therapistDocuments } from '@/src/db/schema';
 
 // Configure AWS S3
 const s3Client = new S3Client({
@@ -139,21 +139,37 @@ export async function POST(request: NextRequest) {
 
     await s3Client.send(uploadCommand);
 
-    // For now, return the document info without saving to DB
-    // This makes it flexible - you can add DB storage later
-    return NextResponse.json({
-      success: true,
-      document: {
-        id: `temp_${timestamp}`, // Temporary ID
+    // Save document to database
+    const [savedDocument] = await db
+      .insert(therapistDocuments)
+      .values({
+        therapistId,
         s3Key,
         fileName: sanitizedFileName,
         originalFileName: file.name,
+        title,
+        description: description || null,
+        category: category || 'general',
         fileSize: file.size,
         mimeType: file.type,
-        title,
-        description,
-        category: category || 'general',
-        uploadedAt: new Date().toISOString(),
+        uploadedAt: new Date(),
+      })
+      .returning();
+
+    return NextResponse.json({
+      success: true,
+      document: {
+        id: savedDocument.id.toString(),
+        s3Key: savedDocument.s3Key,
+        fileName: savedDocument.fileName,
+        originalFileName: savedDocument.originalFileName,
+        fileSize: savedDocument.fileSize,
+        mimeType: savedDocument.mimeType,
+        title: savedDocument.title,
+        description: savedDocument.description,
+        category: savedDocument.category,
+        uploadedAt: savedDocument.uploadedAt.toISOString(),
+        lastModified: savedDocument.updatedAt.toISOString(),
       },
       message: 'Document uploaded successfully',
     });

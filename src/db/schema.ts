@@ -324,6 +324,62 @@ export const clientNotes = pgTable('client_notes', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
+// === Therapist Documents ===
+export const therapistDocuments = pgTable(
+  'therapist_documents',
+  {
+    id: serial('id').primaryKey(),
+    therapistId: integer('therapist_id')
+      .references(() => therapists.id, { onDelete: 'cascade' })
+      .notNull(),
+    s3Key: text('s3_key').notNull().unique(),
+    fileName: varchar('file_name', { length: 255 }).notNull(),
+    originalFileName: varchar('original_file_name', { length: 255 }).notNull(),
+    title: varchar('title', { length: 255 }).notNull(),
+    description: text('description'),
+    category: varchar('category', { length: 100 }).default('general').notNull(),
+    fileSize: integer('file_size').notNull(),
+    mimeType: varchar('mime_type', { length: 100 }).notNull(),
+    uploadedAt: timestamp('uploaded_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    therapistDocumentsIdx: index('idx_therapist_documents').on(table.therapistId),
+  }),
+);
+
+// === Therapist Document Assignments ===
+export const therapistDocumentAssignments = pgTable(
+  'therapist_document_assignments',
+  {
+    id: serial('id').primaryKey(),
+    documentId: integer('document_id')
+      .references(() => therapistDocuments.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: integer('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    isSharedWithClient: boolean('is_shared_with_client').default(false).notNull(),
+    sharedAt: timestamp('shared_at'),
+    assignedAt: timestamp('assigned_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    documentAssignmentUix: uniqueIndex('uix_document_user_assignment').on(
+      table.documentId,
+      table.userId,
+    ),
+    documentAssignmentsIdx: index('idx_document_assignments').on(table.documentId),
+    userAssignmentsIdx: index('idx_user_assignments').on(table.userId),
+    sharedAssignmentsIdx: index('idx_shared_assignments').on(
+      table.documentId,
+      table.isSharedWithClient,
+    ),
+  }),
+);
+
 // === 9. Stripe Integration Tables ===
 export const stripeCustomers = pgTable('stripe_customers', {
   id: serial('id').primaryKey(),
@@ -415,6 +471,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   directEmployerSubsidies: many(employerSubsidies),
   bookedSessions: many(bookingSessions),
   clientNotes: many(clientNotes),
+  documentAssignments: many(therapistDocumentAssignments),
   stripeCustomer: one(stripeCustomers, {
     fields: [users.id],
     references: [stripeCustomers.userId],
@@ -442,6 +499,7 @@ export const therapistsRelations = relations(therapists, ({ one, many }) => ({
   blockedTimes: many(therapistBlockedTimes),
   sessions: many(bookingSessions),
   writtenNotes: many(clientNotes),
+  documents: many(therapistDocuments),
   payouts: many(therapistPayouts),
 }));
 
@@ -488,6 +546,28 @@ export const clientNotesRelations = relations(clientNotes, ({ one }) => ({
   }),
 }));
 
+export const therapistDocumentsRelations = relations(therapistDocuments, ({ one, many }) => ({
+  therapist: one(therapists, {
+    fields: [therapistDocuments.therapistId],
+    references: [therapists.id],
+  }),
+  assignments: many(therapistDocumentAssignments),
+}));
+
+export const therapistDocumentAssignmentsRelations = relations(
+  therapistDocumentAssignments,
+  ({ one }) => ({
+    document: one(therapistDocuments, {
+      fields: [therapistDocumentAssignments.documentId],
+      references: [therapistDocuments.id],
+    }),
+    user: one(users, {
+      fields: [therapistDocumentAssignments.userId],
+      references: [users.id],
+    }),
+  }),
+);
+
 export const stripeCustomersRelations = relations(stripeCustomers, ({ one }) => ({
   user: one(users, { fields: [stripeCustomers.userId], references: [users.id] }),
 }));
@@ -515,92 +595,3 @@ export const sessionPaymentsRelations = relations(sessionPayments, ({ one }) => 
   }),
   user: one(users, { fields: [sessionPayments.userId], references: [users.id] }),
 }));
-
-// === 11. Document Management ===
-export const documentTypeEnum = pgEnum('document_type', [
-  'session_note',
-  'assessment',
-  'treatment_plan',
-  'intake_form',
-  'worksheet',
-  'educational_material',
-  'resource',
-  'other',
-]);
-
-export const documentStatusEnum = pgEnum('document_status', ['active', 'archived', 'deleted']);
-
-export const therapistDocuments = pgTable('therapist_documents', {
-  id: serial('id').primaryKey(),
-  therapistId: integer('therapist_id')
-    .references(() => therapists.id, { onDelete: 'cascade' })
-    .notNull(),
-  fileName: varchar('file_name', { length: 255 }).notNull(),
-  originalFileName: varchar('original_file_name', { length: 255 }).notNull(),
-  s3Key: varchar('s3_key', { length: 500 }).notNull(),
-  fileSize: integer('file_size').notNull(), // in bytes
-  mimeType: varchar('mime_type', { length: 100 }).notNull(),
-  documentType: documentTypeEnum('document_type').notNull(),
-  title: varchar('title', { length: 255 }).notNull(),
-  description: text('description'),
-  status: documentStatusEnum('status').default('active').notNull(),
-  isTemplate: boolean('is_template').default(false).notNull(), // For reusable documents
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
-
-export const clientDocumentAssignments = pgTable(
-  'client_document_assignments',
-  {
-    id: serial('id').primaryKey(),
-    documentId: integer('document_id')
-      .references(() => therapistDocuments.id, { onDelete: 'cascade' })
-      .notNull(),
-    clientUserId: integer('client_user_id')
-      .references(() => users.id, { onDelete: 'cascade' })
-      .notNull(),
-    therapistId: integer('therapist_id')
-      .references(() => therapists.id, { onDelete: 'cascade' })
-      .notNull(),
-    assignedAt: timestamp('assigned_at').defaultNow().notNull(),
-    viewedAt: timestamp('viewed_at'),
-    downloadedAt: timestamp('downloaded_at'),
-    notes: text('notes'), // Therapist notes about this assignment
-    isActive: boolean('is_active').default(true).notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  (table) => ({
-    uniqueAssignment: uniqueIndex('uix_document_client_assignment').on(
-      table.documentId,
-      table.clientUserId,
-    ),
-    activeAssignmentIdx: index('idx_active_assignments').on(table.clientUserId, table.isActive),
-  }),
-);
-
-export const therapistDocumentsRelations = relations(therapistDocuments, ({ one, many }) => ({
-  therapist: one(therapists, {
-    fields: [therapistDocuments.therapistId],
-    references: [therapists.id],
-  }),
-  assignments: many(clientDocumentAssignments),
-}));
-
-export const clientDocumentAssignmentsRelations = relations(
-  clientDocumentAssignments,
-  ({ one }) => ({
-    document: one(therapistDocuments, {
-      fields: [clientDocumentAssignments.documentId],
-      references: [therapistDocuments.id],
-    }),
-    client: one(users, {
-      fields: [clientDocumentAssignments.clientUserId],
-      references: [users.id],
-    }),
-    therapist: one(therapists, {
-      fields: [clientDocumentAssignments.therapistId],
-      references: [therapists.id],
-    }),
-  }),
-);

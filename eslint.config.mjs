@@ -168,6 +168,14 @@ export default [
     },
   },
 
+  // Exception for database schema file
+  {
+    files: ['**/db/schema.ts'],
+    rules: {
+      'max-lines': ['error', { max: 800, skipBlankLines: true, skipComments: true }],
+    },
+  },
+
   // TypeScript-specific rules only for TypeScript files
   {
     files: ['**/*.{ts,tsx}'],

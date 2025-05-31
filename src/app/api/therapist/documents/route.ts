@@ -1,21 +1,14 @@
-import { S3Client, ListObjectsV2Command, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
-import { therapists, users } from '@/src/db/schema';
-
-// Configure AWS S3
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'us-east-1',
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-  },
-});
-
-const bucketName = process.env.AWS_S3_DOCUMENTS_BUCKET_NAME || '';
+import {
+  therapists,
+  users,
+  therapistDocuments,
+  therapistDocumentAssignments,
+} from '@/src/db/schema';
 
 export async function GET() {
   try {
@@ -50,50 +43,83 @@ export async function GET() {
 
     const therapistId = therapistResult[0].id;
 
-    // List objects in S3 for this therapist
-    const listCommand = new ListObjectsV2Command({
-      Bucket: bucketName,
-      Prefix: `therapist-${therapistId}/documents/`,
-      MaxKeys: 100, // Limit for now
+    // Fetch documents from database
+    const documentsResult = await db
+      .select({
+        id: therapistDocuments.id,
+        s3Key: therapistDocuments.s3Key,
+        fileName: therapistDocuments.fileName,
+        originalFileName: therapistDocuments.originalFileName,
+        title: therapistDocuments.title,
+        description: therapistDocuments.description,
+        category: therapistDocuments.category,
+        fileSize: therapistDocuments.fileSize,
+        mimeType: therapistDocuments.mimeType,
+        uploadedAt: therapistDocuments.uploadedAt,
+        updatedAt: therapistDocuments.updatedAt,
+      })
+      .from(therapistDocuments)
+      .where(eq(therapistDocuments.therapistId, therapistId))
+      .orderBy(therapistDocuments.uploadedAt);
+
+    // Fetch all assignments for these documents
+    const documentIds = documentsResult.map((doc) => doc.id);
+    const assignmentsResult =
+      documentIds.length > 0
+        ? await db
+            .select({
+              documentId: therapistDocumentAssignments.documentId,
+              userId: therapistDocumentAssignments.userId,
+              isSharedWithClient: therapistDocumentAssignments.isSharedWithClient,
+              sharedAt: therapistDocumentAssignments.sharedAt,
+              assignedAt: therapistDocumentAssignments.assignedAt,
+              userFirstName: users.firstName,
+              userLastName: users.lastName,
+              userEmail: users.email,
+            })
+            .from(therapistDocumentAssignments)
+            .leftJoin(users, eq(therapistDocumentAssignments.userId, users.id))
+            .where(inArray(therapistDocumentAssignments.documentId, documentIds))
+        : [];
+
+    // Group assignments by document ID
+    const assignmentsByDocument = new Map();
+    assignmentsResult.forEach((assignment) => {
+      if (!assignmentsByDocument.has(assignment.documentId)) {
+        assignmentsByDocument.set(assignment.documentId, []);
+      }
+      assignmentsByDocument.get(assignment.documentId).push({
+        userId: assignment.userId,
+        isSharedWithClient: assignment.isSharedWithClient,
+        sharedAt: assignment.sharedAt?.toISOString(),
+        assignedAt: assignment.assignedAt.toISOString(),
+        user: {
+          id: assignment.userId,
+          firstName: assignment.userFirstName,
+          lastName: assignment.userLastName,
+          email: assignment.userEmail,
+          fullName:
+            `${assignment.userFirstName || ''} ${assignment.userLastName || ''}`.trim() ||
+            assignment.userEmail,
+        },
+      });
     });
 
-    const listResult = await s3Client.send(listCommand);
-    const documents = [];
-
-    if (listResult.Contents) {
-      // Get metadata for each document
-      for (const object of listResult.Contents) {
-        if (!object.Key) continue;
-
-        try {
-          const headCommand = new HeadObjectCommand({
-            Bucket: bucketName,
-            Key: object.Key,
-          });
-
-          const headResult = await s3Client.send(headCommand);
-          const metadata = headResult.Metadata || {};
-
-          documents.push({
-            id: object.Key.split('/').pop()?.split('_')[0] || 'unknown',
-            s3Key: object.Key,
-            fileName: object.Key.split('/').pop() || 'unknown',
-            originalFileName: metadata['original-filename'] || object.Key.split('/').pop(),
-            fileSize: object.Size || 0,
-            mimeType: headResult.ContentType || 'application/octet-stream',
-            title: metadata.title || 'Untitled Document',
-            description: metadata.description || '',
-            category: metadata.category || 'general',
-            uploadedAt: object.LastModified?.toISOString() || new Date().toISOString(),
-            lastModified: object.LastModified?.toISOString() || new Date().toISOString(),
-          });
-        } catch (error) {
-          console.error('Error getting metadata for object:', object.Key, error);
-          // Skip this document if we can't get metadata
-          continue;
-        }
-      }
-    }
+    // Format documents for response
+    const documents = documentsResult.map((doc) => ({
+      id: doc.id.toString(),
+      s3Key: doc.s3Key,
+      fileName: doc.fileName,
+      originalFileName: doc.originalFileName,
+      fileSize: doc.fileSize,
+      mimeType: doc.mimeType,
+      title: doc.title,
+      description: doc.description,
+      category: doc.category,
+      uploadedAt: doc.uploadedAt.toISOString(),
+      lastModified: doc.updatedAt.toISOString(),
+      assignments: assignmentsByDocument.get(doc.id) || [],
+    }));
 
     // Sort by upload date (newest first)
     documents.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());

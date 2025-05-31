@@ -9,64 +9,71 @@ export async function GET() {
   try {
     const { userId, sessionClaims } = await auth();
     const metadata = sessionClaims?.metadata as { role?: string } | undefined;
+
     if (!userId || metadata?.role !== 'therapist') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Only fetch full user if needed (for email)
     const user = await currentUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
     const userEmail = user.emailAddresses[0]?.emailAddress;
-    const userResult = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.email, userEmail))
-      .limit(1);
+    const userResult = await db.select().from(users).where(eq(users.email, userEmail)).limit(1);
+
     if (!userResult.length) {
-      console.error('User not found for email:', { userEmail });
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
+
     const therapistResult = await db
-      .select({ id: therapists.id })
+      .select()
       .from(therapists)
       .where(eq(therapists.userId, userResult[0].id))
       .limit(1);
+
     if (!therapistResult.length) {
-      console.error('Therapist not found for userId:', { userId: userResult[0].id });
       return NextResponse.json({ error: 'Therapist not found' }, { status: 404 });
     }
-    // Fetch clients for this therapist (users who have booked with this therapist)
-    const clientUserIdsResult = await db
-      .select({ userId: bookingSessions.userId })
-      .from(bookingSessions)
-      .where(eq(bookingSessions.therapistId, therapistResult[0].id));
-    const uniqueClientUserIds = [...new Set(clientUserIdsResult.map((row) => row.userId))];
-    let clients: Array<{ id: string; firstName: string; lastName?: string; email: string }> = [];
-    if (uniqueClientUserIds.length > 0) {
-      const clientsResult = await db
-        .select({
-          id: users.clerkId,
-          firstName: users.firstName,
-          lastName: users.lastName,
-          email: users.email,
-        })
-        .from(users)
-        .where(
-          // @ts-ignore
-          users.id.in(uniqueClientUserIds),
-        );
-      clients = clientsResult.map((client) => ({
-        id: client.id,
-        firstName: client.firstName || '',
-        lastName: client.lastName || undefined,
-        email: client.email || '',
-      }));
-    }
-    return NextResponse.json({ clients });
+
+    const therapistId = therapistResult[0].id;
+
+    // Get all clients who have had sessions with this therapist
+    const clientsResult = await db
+      .selectDistinct({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        imageUrl: users.imageUrl,
+      })
+      .from(users)
+      .innerJoin(bookingSessions, eq(users.id, bookingSessions.userId))
+      .where(eq(bookingSessions.therapistId, therapistId))
+      .orderBy(users.firstName, users.lastName);
+
+    // Format clients for response
+    const clients = clientsResult.map((client) => ({
+      id: client.id,
+      firstName: client.firstName,
+      lastName: client.lastName,
+      email: client.email,
+      imageUrl: client.imageUrl,
+      fullName: `${client.firstName || ''} ${client.lastName || ''}`.trim() || client.email,
+    }));
+
+    return NextResponse.json({
+      clients,
+      total: clients.length,
+    });
   } catch (error) {
-    console.error('Error fetching therapist clients:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error('Error fetching clients:', error);
+    return NextResponse.json(
+      {
+        error: 'Failed to fetch clients',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 },
+    );
   }
 }

@@ -10,6 +10,21 @@ export interface TherapistDocument {
   category: string;
   uploadedAt: string;
   lastModified: string;
+  assignments?: DocumentAssignment[];
+}
+
+export interface DocumentAssignment {
+  userId: number;
+  isSharedWithClient: boolean;
+  sharedAt?: string;
+  assignedAt: string;
+  user: {
+    id: number;
+    firstName: string | null;
+    lastName: string | null;
+    email: string;
+    fullName: string;
+  };
 }
 
 export interface DocumentUploadData {
@@ -17,6 +32,15 @@ export interface DocumentUploadData {
   title: string;
   description?: string;
   category?: string;
+}
+
+export interface ClientInfo {
+  id: number;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  imageUrl: string | null;
+  fullName: string;
 }
 
 export interface ClientAssignment {
@@ -27,10 +51,6 @@ export interface ClientAssignment {
   downloadedAt?: string;
   notes?: string;
   isActive: boolean;
-}
-
-export interface DocumentWithAssignments extends TherapistDocument {
-  assignments?: ClientAssignment[];
 }
 
 export const DOCUMENT_CATEGORIES = [
