@@ -68,6 +68,14 @@ const QuickActionsSection = () => {
     }
   };
 
+  const handleDocumentsClick = () => {
+    if (therapistIdSignal.value) {
+      trackTherapistDashboard.quickActionClicked('manage_documents', therapistIdSignal.value, {
+        user_id: `therapist_${therapistIdSignal.value}`,
+      });
+    }
+  };
+
   const handleAvailabilityClick = () => {
     if (therapistIdSignal.value) {
       trackTherapistDashboard.quickActionClicked('manage_availability', therapistIdSignal.value, {
@@ -80,7 +88,7 @@ const QuickActionsSection = () => {
     <div className='mt-6'>
       <h2 className='text-xl font-semibold text-gray-800 mb-4'>Quick Actions</h2>
       <div
-        className={`grid grid-cols-1 gap-4 ${calendarIntegrated ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}
+        className={`grid grid-cols-1 gap-4 ${calendarIntegrated ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}
       >
         <Link
           href='/therapist/profile'
@@ -137,6 +145,21 @@ const QuickActionsSection = () => {
                   ? 'Connect your bank account, calendar, and other tools'
                   : 'Connect your Google Calendar to manage availability'}
               </p>
+            </div>
+          </div>
+        </Link>
+        <Link
+          href='/therapist/documents'
+          onClick={handleDocumentsClick}
+          className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all group'
+        >
+          <div className='flex items-center gap-4'>
+            <div className='w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center group-hover:bg-green-200 transition-colors'>
+              <FileText className='w-6 h-6 text-green-600' />
+            </div>
+            <div>
+              <h3 className='text-lg font-semibold text-gray-800'>Manage Documents</h3>
+              <p className='text-gray-500 text-sm'>Upload and share resources with clients</p>
             </div>
           </div>
         </Link>

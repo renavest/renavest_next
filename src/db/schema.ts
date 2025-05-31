@@ -515,3 +515,92 @@ export const sessionPaymentsRelations = relations(sessionPayments, ({ one }) => 
   }),
   user: one(users, { fields: [sessionPayments.userId], references: [users.id] }),
 }));
+
+// === 11. Document Management ===
+export const documentTypeEnum = pgEnum('document_type', [
+  'session_note',
+  'assessment',
+  'treatment_plan',
+  'intake_form',
+  'worksheet',
+  'educational_material',
+  'resource',
+  'other',
+]);
+
+export const documentStatusEnum = pgEnum('document_status', ['active', 'archived', 'deleted']);
+
+export const therapistDocuments = pgTable('therapist_documents', {
+  id: serial('id').primaryKey(),
+  therapistId: integer('therapist_id')
+    .references(() => therapists.id, { onDelete: 'cascade' })
+    .notNull(),
+  fileName: varchar('file_name', { length: 255 }).notNull(),
+  originalFileName: varchar('original_file_name', { length: 255 }).notNull(),
+  s3Key: varchar('s3_key', { length: 500 }).notNull(),
+  fileSize: integer('file_size').notNull(), // in bytes
+  mimeType: varchar('mime_type', { length: 100 }).notNull(),
+  documentType: documentTypeEnum('document_type').notNull(),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  status: documentStatusEnum('status').default('active').notNull(),
+  isTemplate: boolean('is_template').default(false).notNull(), // For reusable documents
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const clientDocumentAssignments = pgTable(
+  'client_document_assignments',
+  {
+    id: serial('id').primaryKey(),
+    documentId: integer('document_id')
+      .references(() => therapistDocuments.id, { onDelete: 'cascade' })
+      .notNull(),
+    clientUserId: integer('client_user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    therapistId: integer('therapist_id')
+      .references(() => therapists.id, { onDelete: 'cascade' })
+      .notNull(),
+    assignedAt: timestamp('assigned_at').defaultNow().notNull(),
+    viewedAt: timestamp('viewed_at'),
+    downloadedAt: timestamp('downloaded_at'),
+    notes: text('notes'), // Therapist notes about this assignment
+    isActive: boolean('is_active').default(true).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    uniqueAssignment: uniqueIndex('uix_document_client_assignment').on(
+      table.documentId,
+      table.clientUserId,
+    ),
+    activeAssignmentIdx: index('idx_active_assignments').on(table.clientUserId, table.isActive),
+  }),
+);
+
+export const therapistDocumentsRelations = relations(therapistDocuments, ({ one, many }) => ({
+  therapist: one(therapists, {
+    fields: [therapistDocuments.therapistId],
+    references: [therapists.id],
+  }),
+  assignments: many(clientDocumentAssignments),
+}));
+
+export const clientDocumentAssignmentsRelations = relations(
+  clientDocumentAssignments,
+  ({ one }) => ({
+    document: one(therapistDocuments, {
+      fields: [clientDocumentAssignments.documentId],
+      references: [therapistDocuments.id],
+    }),
+    client: one(users, {
+      fields: [clientDocumentAssignments.clientUserId],
+      references: [users.id],
+    }),
+    therapist: one(therapists, {
+      fields: [clientDocumentAssignments.therapistId],
+      references: [therapists.id],
+    }),
+  }),
+);
