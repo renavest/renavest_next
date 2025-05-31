@@ -283,31 +283,45 @@ export function DocumentList({ documents, onRefresh, loading = false }: Document
                         {/* Assignment Info */}
                         {document.assignments && document.assignments.length > 0 && (
                           <div className='mt-2'>
-                            <div className='flex items-center gap-2 text-xs text-purple-600'>
-                              <Users className='w-3 h-3' />
-                              <span>
-                                Assigned to {document.assignments.length} client
-                                {document.assignments.length !== 1 ? 's' : ''}
-                              </span>
-                              {document.assignments.some((a) => a.isSharedWithClient) && (
-                                <span className='px-2 py-1 bg-green-100 text-green-700 rounded-full'>
-                                  {document.assignments.filter((a) => a.isSharedWithClient).length}{' '}
-                                  shared
+                            <div className='flex items-center gap-2 text-xs'>
+                              <div className='flex items-center gap-1 text-purple-600'>
+                                <Users className='w-3 h-3' />
+                                <span className='font-medium'>
+                                  {document.assignments.length} client
+                                  {document.assignments.length !== 1 ? 's' : ''}
                                 </span>
+                              </div>
+                              {document.assignments.some((a) => a.isSharedWithClient) && (
+                                <div className='flex items-center gap-1'>
+                                  <div className='w-2 h-2 bg-green-500 rounded-full animate-pulse'></div>
+                                  <span className='text-green-700 font-medium'>
+                                    {
+                                      document.assignments.filter((a) => a.isSharedWithClient)
+                                        .length
+                                    }{' '}
+                                    shared
+                                  </span>
+                                </div>
                               )}
                             </div>
-                            <div className='flex flex-wrap gap-1 mt-1'>
+                            <div className='flex flex-wrap gap-1 mt-2'>
                               {document.assignments.slice(0, 3).map((assignment) => (
-                                <span
+                                <div
                                   key={assignment.userId}
-                                  className='text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full'
+                                  className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 ${
+                                    assignment.isSharedWithClient
+                                      ? 'bg-green-100 text-green-700 border border-green-200'
+                                      : 'bg-purple-100 text-purple-700 border border-purple-200'
+                                  }`}
                                 >
-                                  {assignment.user.fullName}
-                                  {assignment.isSharedWithClient && ' ✓'}
-                                </span>
+                                  <span>{assignment.user.fullName}</span>
+                                  {assignment.isSharedWithClient && (
+                                    <div className='w-1.5 h-1.5 bg-green-500 rounded-full'></div>
+                                  )}
+                                </div>
                               ))}
                               {document.assignments.length > 3 && (
-                                <span className='text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full'>
+                                <span className='text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full border border-gray-200'>
                                   +{document.assignments.length - 3} more
                                 </span>
                               )}

@@ -189,13 +189,15 @@ export function ClientDocumentsTab({ client }: ClientDocumentsTabProps) {
                     {/* Status and Metadata */}
                     <div className='flex items-center gap-4 mt-3'>
                       <div className='flex items-center gap-2'>
-                        <span className='text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full'>
+                        <span className='text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full border border-purple-200 flex items-center gap-1'>
+                          <div className='w-1.5 h-1.5 bg-purple-500 rounded-full'></div>
                           Assigned {formatDate(document.assignedAt)}
                         </span>
                         {document.isSharedWithClient && (
-                          <span className='text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full flex items-center gap-1'>
+                          <span className='text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full border border-green-200 flex items-center gap-1'>
+                            <div className='w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse'></div>
                             <Eye className='w-3 h-3' />
-                            Shared with client
+                            Visible to client
                           </span>
                         )}
                       </div>
@@ -226,12 +228,22 @@ export function ClientDocumentsTab({ client }: ClientDocumentsTabProps) {
                     >
                       <Download className='w-4 h-4' />
                     </button>
-                    {document.isSharedWithClient && (
+                    {document.isSharedWithClient ? (
                       <div
-                        className='p-2 text-green-600 bg-green-50 rounded-lg'
-                        title='Visible to client'
+                        className='px-3 py-2 bg-green-100 text-green-700 rounded-lg border border-green-200 flex items-center gap-2'
+                        title='Document is visible to client'
                       >
-                        <Share2 className='w-4 h-4' />
+                        <div className='w-2 h-2 bg-green-500 rounded-full animate-pulse'></div>
+                        <Eye className='w-4 h-4' />
+                        <span className='text-sm font-medium'>Client can see this</span>
+                      </div>
+                    ) : (
+                      <div
+                        className='px-3 py-2 bg-gray-100 text-gray-600 rounded-lg border border-gray-200 flex items-center gap-2'
+                        title='Document is in client file but not shared'
+                      >
+                        <div className='w-2 h-2 bg-gray-400 rounded-full'></div>
+                        <span className='text-sm font-medium'>Private to you</span>
                       </div>
                     )}
                   </div>
