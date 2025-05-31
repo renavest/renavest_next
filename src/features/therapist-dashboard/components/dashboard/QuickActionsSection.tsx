@@ -65,9 +65,7 @@ export const QuickActionsSection = () => {
   return (
     <div className='mt-6'>
       <h2 className='text-xl font-semibold text-gray-800 mb-4'>Quick Actions</h2>
-      <div
-        className={`grid grid-cols-1 gap-4 ${calendarIntegrated ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}
-      >
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
         <Link
           href='/therapist/profile'
           onClick={handleProfileClick}
@@ -137,7 +135,7 @@ export const QuickActionsSection = () => {
             </div>
             <div>
               <h3 className='text-lg font-semibold text-gray-800'>Manage Documents</h3>
-              <p className='text-gray-500 text-sm'>Upload and share resources with clients</p>
+              <p className='text-gray-500 text-sm'>Upload and assign resources to clients</p>
             </div>
           </div>
         </Link>

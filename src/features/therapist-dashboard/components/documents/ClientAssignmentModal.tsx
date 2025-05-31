@@ -1,6 +1,6 @@
 'use client';
 
-import { X, Search, Users, Share2, UserPlus, Check } from 'lucide-react';
+import { X, Search, Users, Eye, UserPlus, FileText } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { ClientInfo, TherapistDocument } from '../../types/documents';
@@ -11,6 +11,194 @@ interface ClientAssignmentModalProps {
   document: TherapistDocument;
   onAssignmentUpdate: () => void;
 }
+
+// Helper component for the info banner
+const InfoBanner = () => (
+  <div className='px-6 py-4 bg-purple-50 border-b border-purple-100'>
+    <div className='flex items-start gap-3'>
+      <div className='w-5 h-5 bg-purple-200 rounded-full flex items-center justify-center mt-0.5'>
+        <div className='w-2 h-2 bg-purple-600 rounded-full'></div>
+      </div>
+      <div className='text-sm'>
+        <p className='text-purple-800 font-medium mb-1'>How document access works:</p>
+        <ul className='text-purple-700 space-y-1'>
+          <li>
+            • <strong>Assign:</strong> Add document to your client's file (private to you)
+          </li>
+          <li>
+            • <strong>Share:</strong> Make document visible to the client in their portal
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+);
+
+// Helper component for client row
+const ClientRow = ({
+  client,
+  document,
+  isProcessing,
+  onAssign,
+  onUnassign,
+  onToggleShare,
+}: {
+  client: ClientInfo;
+  document: TherapistDocument;
+  isProcessing: boolean;
+  onAssign: (clientId: number) => void;
+  onUnassign: (clientId: number) => void;
+  onToggleShare: (clientId: number, currentlyShared: boolean) => void;
+}) => {
+  const assignedClientIds = new Set(document.assignments?.map((a) => a.userId) || []);
+  const isAssigned = assignedClientIds.has(client.id);
+  const assignment = document.assignments?.find((a) => a.userId === client.id);
+  const isShared = assignment?.isSharedWithClient || false;
+
+  return (
+    <div className='p-4 hover:bg-gray-50 transition-colors'>
+      <div className='flex items-center justify-between'>
+        <div className='flex items-center gap-3'>
+          <div className='w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center'>
+            <span className='text-sm font-medium text-gray-600'>
+              {client.fullName.charAt(0).toUpperCase()}
+            </span>
+          </div>
+          <div>
+            <p className='font-medium text-gray-800'>{client.fullName}</p>
+            <p className='text-sm text-gray-500'>{client.email}</p>
+            {isAssigned && assignment && (
+              <div className='flex items-center gap-2 mt-1'>
+                <span className='text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full'>
+                  Assigned {new Date(assignment.assignedAt).toLocaleDateString()}
+                </span>
+                {isShared && (
+                  <span className='text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full'>
+                    Shared with client
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className='flex items-center gap-2'>
+          {isAssigned ? (
+            <>
+              <button
+                onClick={() => onToggleShare(client.id, isShared)}
+                disabled={isProcessing}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isShared
+                    ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-300'
+                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-300'
+                } disabled:opacity-50`}
+              >
+                <div className='flex items-center gap-1'>
+                  <Eye className='w-4 h-4' />
+                  {isShared ? 'Shared with Client' : 'Share with Client'}
+                </div>
+              </button>
+              <button
+                onClick={() => onUnassign(client.id)}
+                disabled={isProcessing}
+                className='px-3 py-2 bg-red-100 text-red-600 hover:bg-red-200 rounded-lg transition-colors disabled:opacity-50 text-sm font-medium border border-red-300'
+              >
+                {isProcessing ? (
+                  <div className='w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin'></div>
+                ) : (
+                  'Remove from File'
+                )}
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => onAssign(client.id)}
+              disabled={isProcessing}
+              className='px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors disabled:opacity-50 text-sm font-medium border border-purple-600'
+            >
+              {isProcessing ? (
+                <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
+              ) : (
+                <div className='flex items-center gap-1'>
+                  <UserPlus className='w-4 h-4' />
+                  Add to Client File
+                </div>
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Helper component for client list content
+const ClientListContent = ({
+  loading,
+  filteredClients,
+  searchTerm,
+  document,
+  assigningClients,
+  onAssign,
+  onUnassign,
+  onToggleShare,
+  onClearSearch,
+}: {
+  loading: boolean;
+  filteredClients: ClientInfo[];
+  searchTerm: string;
+  document: TherapistDocument;
+  assigningClients: Set<number>;
+  onAssign: (clientId: number) => void;
+  onUnassign: (clientId: number) => void;
+  onToggleShare: (clientId: number, currentlyShared: boolean) => void;
+  onClearSearch: () => void;
+}) => {
+  if (loading) {
+    return (
+      <div className='p-8 text-center'>
+        <div className='animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full mx-auto mb-4'></div>
+        <p className='text-gray-500'>Loading clients...</p>
+      </div>
+    );
+  }
+
+  if (filteredClients.length === 0) {
+    return (
+      <div className='p-8 text-center'>
+        <Users className='w-12 h-12 text-gray-300 mx-auto mb-4' />
+        <p className='text-gray-500 mb-2'>
+          {searchTerm ? 'No clients match your search' : 'No clients found'}
+        </p>
+        {searchTerm && (
+          <button
+            onClick={onClearSearch}
+            className='text-purple-600 hover:text-purple-700 text-sm font-medium'
+          >
+            Clear search
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className='divide-y divide-gray-100'>
+      {filteredClients.map((client) => (
+        <ClientRow
+          key={client.id}
+          client={client}
+          document={document}
+          isProcessing={assigningClients.has(client.id)}
+          onAssign={onAssign}
+          onUnassign={onUnassign}
+          onToggleShare={onToggleShare}
+        />
+      ))}
+    </div>
+  );
+};
 
 export function ClientAssignmentModal({
   isOpen,
@@ -23,9 +211,6 @@ export function ClientAssignmentModal({
   const [searchTerm, setSearchTerm] = useState('');
   const [assigningClients, setAssigningClients] = useState<Set<number>>(new Set());
   const [error, setError] = useState<string | null>(null);
-
-  // Get currently assigned client IDs
-  const assignedClientIds = new Set(document.assignments?.map((a) => a.userId) || []);
 
   // Filter clients based on search term
   const filteredClients = clients.filter(
@@ -143,10 +328,10 @@ export function ClientAssignmentModal({
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-3'>
               <div className='w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center'>
-                <Users className='w-5 h-5 text-purple-600' />
+                <FileText className='w-5 h-5 text-purple-600' />
               </div>
               <div>
-                <h2 className='text-xl font-semibold text-gray-800'>Assign Document</h2>
+                <h2 className='text-xl font-semibold text-gray-800'>Manage Document Access</h2>
                 <p className='text-sm text-gray-600 truncate max-w-md'>{document.title}</p>
               </div>
             </div>
@@ -158,6 +343,8 @@ export function ClientAssignmentModal({
             </button>
           </div>
         </div>
+
+        <InfoBanner />
 
         {/* Search */}
         <div className='p-6 border-b border-gray-100'>
@@ -182,104 +369,17 @@ export function ClientAssignmentModal({
 
         {/* Client List */}
         <div className='flex-1 overflow-y-auto max-h-96'>
-          {loading ? (
-            <div className='p-8 text-center'>
-              <div className='animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full mx-auto mb-4'></div>
-              <p className='text-gray-500'>Loading clients...</p>
-            </div>
-          ) : filteredClients.length === 0 ? (
-            <div className='p-8 text-center'>
-              <Users className='w-12 h-12 text-gray-300 mx-auto mb-4' />
-              <p className='text-gray-500 mb-2'>
-                {searchTerm ? 'No clients match your search' : 'No clients found'}
-              </p>
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm('')}
-                  className='text-purple-600 hover:text-purple-700 text-sm font-medium'
-                >
-                  Clear search
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className='divide-y divide-gray-100'>
-              {filteredClients.map((client) => {
-                const isAssigned = assignedClientIds.has(client.id);
-                const assignment = document.assignments?.find((a) => a.userId === client.id);
-                const isShared = assignment?.isSharedWithClient || false;
-                const isProcessing = assigningClients.has(client.id);
-
-                return (
-                  <div key={client.id} className='p-4 hover:bg-gray-50 transition-colors'>
-                    <div className='flex items-center justify-between'>
-                      <div className='flex items-center gap-3'>
-                        <div className='w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center'>
-                          <span className='text-sm font-medium text-gray-600'>
-                            {client.fullName.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div>
-                          <p className='font-medium text-gray-800'>{client.fullName}</p>
-                          <p className='text-sm text-gray-500'>{client.email}</p>
-                          {isAssigned && assignment && (
-                            <p className='text-xs text-purple-600 mt-1'>
-                              Assigned {new Date(assignment.assignedAt).toLocaleDateString()}
-                              {isShared && ' • Shared'}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className='flex items-center gap-2'>
-                        {isAssigned ? (
-                          <>
-                            <button
-                              onClick={() => handleToggleShare(client.id, isShared)}
-                              disabled={isProcessing}
-                              className={`p-2 rounded-lg transition-colors ${
-                                isShared
-                                  ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                                  : 'bg-gray-100 text-gray-400 hover:bg-purple-100 hover:text-purple-600'
-                              } disabled:opacity-50`}
-                              title={isShared ? 'Document is shared' : 'Share with client'}
-                            >
-                              <Share2 className='w-4 h-4' />
-                            </button>
-                            <button
-                              onClick={() => handleUnassignClient(client.id)}
-                              disabled={isProcessing}
-                              className='p-2 bg-red-100 text-red-600 hover:bg-red-200 rounded-lg transition-colors disabled:opacity-50'
-                              title='Remove assignment'
-                            >
-                              {isProcessing ? (
-                                <div className='w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin'></div>
-                              ) : (
-                                <X className='w-4 h-4' />
-                              )}
-                            </button>
-                          </>
-                        ) : (
-                          <button
-                            onClick={() => handleAssignClient(client.id, false)}
-                            disabled={isProcessing}
-                            className='p-2 bg-purple-100 text-purple-600 hover:bg-purple-200 rounded-lg transition-colors disabled:opacity-50'
-                            title='Assign document'
-                          >
-                            {isProcessing ? (
-                              <div className='w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin'></div>
-                            ) : (
-                              <UserPlus className='w-4 h-4' />
-                            )}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          <ClientListContent
+            loading={loading}
+            filteredClients={filteredClients}
+            searchTerm={searchTerm}
+            document={document}
+            assigningClients={assigningClients}
+            onAssign={(clientId) => handleAssignClient(clientId, false)}
+            onUnassign={handleUnassignClient}
+            onToggleShare={handleToggleShare}
+            onClearSearch={() => setSearchTerm('')}
+          />
         </div>
 
         {/* Footer */}
@@ -287,7 +387,8 @@ export function ClientAssignmentModal({
           <div className='flex items-center justify-between'>
             <div className='text-sm text-gray-600'>
               {document.assignments?.length || 0} client
-              {(document.assignments?.length || 0) !== 1 ? 's' : ''} assigned
+              {(document.assignments?.length || 0) !== 1 ? 's' : ''} assigned •{' '}
+              {document.assignments?.filter((a) => a.isSharedWithClient).length || 0} shared
             </div>
             <button
               onClick={onClose}

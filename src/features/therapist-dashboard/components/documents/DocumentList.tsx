@@ -335,17 +335,23 @@ export function DocumentList({ documents, onRefresh, loading = false }: Document
                       <div className='flex items-center gap-2'>
                         <button
                           onClick={() => downloadDocument(document)}
-                          className='p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors'
+                          className='px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium'
                           title='Download'
                         >
-                          <Download className='w-4 h-4' />
+                          <div className='flex items-center gap-1'>
+                            <Download className='w-4 h-4' />
+                            Download
+                          </div>
                         </button>
                         <button
                           onClick={() => handleOpenAssignmentModal(document)}
-                          className='p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors'
-                          title='Assign to Clients'
+                          className='px-3 py-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors text-sm font-medium'
+                          title='Manage Client Access'
                         >
-                          <Share2 className='w-4 h-4' />
+                          <div className='flex items-center gap-1'>
+                            <Users className='w-4 h-4' />
+                            Manage Access
+                          </div>
                         </button>
                         <button
                           onClick={() => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { UserCircle2, Users, FileText, Calendar, TrendingUp, Plus } from 'lucide-react';
+import { UserCircle2, Users, FileText, Calendar, TrendingUp, Plus, Folder } from 'lucide-react';
 import { useEffect, useCallback, useState } from 'react';
 
 import {
@@ -9,6 +9,7 @@ import {
   trackTherapistSessions,
 } from '@/src/features/posthog/therapistTracking';
 import { AddNewClientSection } from '@/src/features/therapist-dashboard/components/clients/AddNewClientSection';
+import { ClientDocumentsTab } from '@/src/features/therapist-dashboard/components/clients/ClientDocumentsTab';
 import { ClientNotesSection } from '@/src/features/therapist-dashboard/components/clients/ClientNotesSection';
 import { TherapistStatisticsCard } from '@/src/features/therapist-dashboard/components/dashboard/TherapistStatisticsCard';
 import TherapistNavbar from '@/src/features/therapist-dashboard/components/navigation/TherapistNavbar';
@@ -30,7 +31,7 @@ import { COLORS } from '@/src/styles/colors';
 
 import { QuickActionsSection } from './QuickActionsSection';
 
-type ClientTab = 'overview' | 'notes' | 'sessions' | 'progress';
+type ClientTab = 'overview' | 'notes' | 'sessions' | 'documents' | 'progress';
 
 // New comprehensive client management component
 const ClientManagementSection = ({
@@ -136,6 +137,7 @@ const ClientManagementSection = ({
               {[
                 { key: 'overview', label: 'Overview', icon: Users },
                 { key: 'notes', label: 'Clinical Notes', icon: FileText },
+                { key: 'documents', label: 'Documents', icon: Folder },
                 { key: 'sessions', label: 'Sessions', icon: Calendar },
                 { key: 'progress', label: 'Progress', icon: TrendingUp },
               ].map(({ key, label, icon: Icon }) => (
@@ -163,6 +165,7 @@ const ClientManagementSection = ({
             {activeTab === 'notes' && therapistIdSignal.value && (
               <ClientNotesSection client={selectedClient} therapistId={therapistIdSignal.value} />
             )}
+            {activeTab === 'documents' && <ClientDocumentsTab client={selectedClient} />}
             {activeTab === 'sessions' && <ClientSessionsTab sessions={clientSessions} />}
             {activeTab === 'progress' && <ClientProgressTab />}
           </div>
