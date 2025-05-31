@@ -1,28 +1,14 @@
-export type Client = {
-  id: string;
-  firstName: string;
-  lastName?: string;
-  email: string;
-};
+// Re-export all types from organized files
+export * from './client';
+export * from './session';
+export * from './availability';
+export * from './dashboard';
+export * from './profile';
 
-export type UpcomingSession = {
-  id: string;
-  clientId: string;
-  clientName?: string;
-  sessionDate: string;
-  sessionStartTime: string;
-  status: 'scheduled' | 'completed' | 'cancelled' | 'rescheduled';
-  googleMeetLink?: string;
-  therapistTimezone?: string;
-  clientTimezone?: string;
-};
+// Import specific types for use in interfaces below
+import type { ClientNoteContent, NoteCategory } from './client';
 
-export type TherapistStatistics = {
-  totalSessions: number;
-  totalClients: number;
-  completedSessions: number;
-};
-
+// Additional dashboard-specific types that don't fit in other categories
 export interface ClientMetrics {
   totalClients: number;
   activeClients: number;
@@ -44,5 +30,26 @@ export interface EarningsMetrics {
   pendingPayouts: number;
 }
 
-// Re-export profile types
-export * from './profile';
+export interface CreateNoteRequest {
+  userId: number;
+  sessionId?: number;
+  title: string;
+  content: ClientNoteContent;
+  isConfidential?: boolean;
+}
+
+export interface UpdateNoteRequest {
+  id: number;
+  title?: string;
+  content?: ClientNoteContent;
+  isConfidential?: boolean;
+}
+
+// Template suggestions to help therapists but not constrain them
+export interface NoteTemplate {
+  id: string;
+  name: string;
+  description: string;
+  category: NoteCategory;
+  template: Partial<ClientNoteContent>;
+}

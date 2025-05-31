@@ -16,10 +16,21 @@ import {
 
 // === 1. Enums ===
 export const userRoleEnum = pgEnum('user_role', [
-  'employee',
+  'employee', // Keep original as first value
   'therapist',
   'employer_admin',
-  'super_admin',
+  'super_admin', // Keep original name
+  'individual_consumer', // B2C user not tied to an employer - ADD this as new option
+  'platform_admin', // Can be alias for super_admin in application logic
+]);
+
+export const sponsoredGroupTypeEnum = pgEnum('sponsored_group_type', [
+  'erg',
+  'department',
+  'project_team',
+  'wellness_cohort',
+  'custom_group', // For any other specific grouping
+  'company_wide', // A way to represent benefits for ALL employees of a company via a group
 ]);
 
 export const googleIntegrationStatusEnum = pgEnum('google_integration_status', [
@@ -65,6 +76,9 @@ export const employers = pgTable('employers', {
   planName: varchar('plan_name', { length: 255 }),
   allocatedSessions: integer('allocated_sessions').default(0).notNull(),
   currentSessionsBalance: integer('current_sessions_balance').default(0).notNull(),
+  // New fields for sponsored groups and subsidies
+  defaultSubsidyPercentage: integer('default_subsidy_percentage').default(0).notNull(), // Company-wide session subsidy % (0-100) if no other subsidy applies
+  allowsSponsoredGroups: boolean('allows_sponsored_groups').default(true).notNull(), // Does this employer utilize sponsored groups?
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -81,7 +95,7 @@ export const users = pgTable('users', {
   role: userRoleEnum('role').notNull().default('employee'),
   isActive: boolean('is_active').default(true).notNull(),
   employerId: integer('employer_id').references(() => employers.id, { onDelete: 'set null' }),
-  // Stripe subscription fields
+  // Stripe subscription fields (for individual B2C users)
   subscriptionStatus: varchar('subscription_status', { length: 50 }),
   stripeSubscriptionId: varchar('stripe_subscription_id', { length: 255 }).unique(),
   subscriptionEndDate: timestamp('subscription_end_date'),
@@ -90,7 +104,63 @@ export const users = pgTable('users', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-// === 4. Therapists ===
+// === 4. Sponsored Groups & Memberships ===
+export const sponsoredGroups = pgTable(
+  'sponsored_groups',
+  {
+    id: serial('id').primaryKey(),
+    employerId: integer('employer_id')
+      .references(() => employers.id, { onDelete: 'cascade' })
+      .notNull(),
+    groupType: sponsoredGroupTypeEnum('group_type').notNull(),
+    name: varchar('name', { length: 255 }).notNull(),
+    description: text('description'),
+    isActive: boolean('is_active').default(true).notNull(),
+    // Group-specific budget/benefit allocation
+    allocatedSessionCredits: integer('allocated_session_credits').default(0).notNull(), // Total session credits/budget for this group from the employer
+    remainingSessionCredits: integer('remaining_session_credits').default(0).notNull(),
+    // Optional: metadata for type-specific info (e.g., ERG charter, department code)
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    remainingCreditsNonNegative: check(
+      'remaining_credits_non_negative',
+      sql`${table.remainingSessionCredits} >= 0`,
+    ),
+    allocatedCreditsNonNegative: check(
+      'allocated_credits_non_negative',
+      sql`${table.allocatedSessionCredits} >= 0`,
+    ),
+    activeGroupIdx: index('idx_active_sponsored_groups').on(table.employerId, table.isActive),
+  }),
+);
+
+export const sponsoredGroupMembers = pgTable(
+  'sponsored_group_members',
+  {
+    id: serial('id').primaryKey(),
+    groupId: integer('group_id')
+      .references(() => sponsoredGroups.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: integer('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    roleInGroup: varchar('role_in_group', { length: 50 }).default('member').notNull(), // e.g., member, leader, coordinator
+    isActive: boolean('is_active').default(true).notNull(),
+    joinedAt: timestamp('joined_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    userGroupUix: uniqueIndex('uix_user_sponsored_group').on(t.userId, t.groupId),
+    groupMemberIdx: index('idx_group_member').on(t.groupId),
+    activeMemberIdx: index('idx_active_group_members').on(t.groupId, t.isActive),
+  }),
+);
+
+// === 5. Therapists ===
 export const therapists = pgTable('therapists', {
   id: serial('id').primaryKey(),
   userId: integer('user_id')
@@ -130,7 +200,7 @@ export const therapists = pgTable('therapists', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-// === 5. UserOnboarding ===
+// === 6. UserOnboarding ===
 export const userOnboarding = pgTable('user_onboarding', {
   id: serial('id').primaryKey(),
   userId: integer('user_id')
@@ -143,7 +213,7 @@ export const userOnboarding = pgTable('user_onboarding', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-// === 6. Therapist Availability & Blocks ===
+// === 7. Therapist Availability & Blocks ===
 export const therapistAvailability = pgTable('therapist_availability', {
   id: serial('id').primaryKey(),
   therapistId: integer('therapist_id')
@@ -171,7 +241,7 @@ export const therapistBlockedTimes = pgTable('therapist_blocked_times', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-// === 7. Booking Sessions & Client Notes ===
+// === 8. Booking Sessions & Client Notes ===
 export const bookingSessions = pgTable(
   'booking_sessions',
   {
@@ -189,13 +259,20 @@ export const bookingSessions = pgTable(
     status: sessionStatusEnum('status').default('pending').notNull(),
     googleEventId: text('google_event_id'),
     cancellationReason: text('cancellation_reason'),
-    metadata: jsonb('metadata'),
+    metadata: jsonb('metadata'), // Includes timezones, meet links etc.
+    // Subsidy tracking at session level
+    sponsoringGroupId: integer('sponsoring_group_id').references(() => sponsoredGroups.id, {
+      onDelete: 'set null',
+    }),
+    subsidyFromGroupCents: integer('subsidy_from_group_cents').default(0),
+    subsidyFromEmployerDirectCents: integer('subsidy_from_employer_direct_cents').default(0), // From employerSubsidies or defaultEmployerPercentage
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   (t) => ({
     // prevent double booking same start time per therapist
     therapistSlotUix: uniqueIndex('uix_therapist_slot').on(t.therapistId, t.sessionStartTime),
+    sponsoringGroupIdx: index('idx_sponsoring_group').on(t.sponsoringGroupId),
   }),
 );
 
@@ -247,7 +324,63 @@ export const clientNotes = pgTable('client_notes', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-// === 8. Stripe Integration Tables ===
+// === Therapist Documents ===
+export const therapistDocuments = pgTable(
+  'therapist_documents',
+  {
+    id: serial('id').primaryKey(),
+    therapistId: integer('therapist_id')
+      .references(() => therapists.id, { onDelete: 'cascade' })
+      .notNull(),
+    s3Key: text('s3_key').notNull().unique(),
+    fileName: varchar('file_name', { length: 255 }).notNull(),
+    originalFileName: varchar('original_file_name', { length: 255 }).notNull(),
+    title: varchar('title', { length: 255 }).notNull(),
+    description: text('description'),
+    category: varchar('category', { length: 100 }).default('general').notNull(),
+    fileSize: integer('file_size').notNull(),
+    mimeType: varchar('mime_type', { length: 100 }).notNull(),
+    uploadedAt: timestamp('uploaded_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    therapistDocumentsIdx: index('idx_therapist_documents').on(table.therapistId),
+  }),
+);
+
+// === Therapist Document Assignments ===
+export const therapistDocumentAssignments = pgTable(
+  'therapist_document_assignments',
+  {
+    id: serial('id').primaryKey(),
+    documentId: integer('document_id')
+      .references(() => therapistDocuments.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: integer('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    isSharedWithClient: boolean('is_shared_with_client').default(false).notNull(),
+    sharedAt: timestamp('shared_at'),
+    assignedAt: timestamp('assigned_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    documentAssignmentUix: uniqueIndex('uix_document_user_assignment').on(
+      table.documentId,
+      table.userId,
+    ),
+    documentAssignmentsIdx: index('idx_document_assignments').on(table.documentId),
+    userAssignmentsIdx: index('idx_user_assignments').on(table.userId),
+    sharedAssignmentsIdx: index('idx_shared_assignments').on(
+      table.documentId,
+      table.isSharedWithClient,
+    ),
+  }),
+);
+
+// === 9. Stripe Integration Tables ===
 export const stripeCustomers = pgTable('stripe_customers', {
   id: serial('id').primaryKey(),
   userId: integer('user_id')
@@ -259,6 +392,7 @@ export const stripeCustomers = pgTable('stripe_customers', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+// Enhanced employer subsidies table (for direct employer-to-employee subsidies)
 export const employerSubsidies = pgTable(
   'employer_subsidies',
   {
@@ -302,6 +436,7 @@ export const therapistPayouts = pgTable('therapist_payouts', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+// Enhanced session payments table with detailed subsidy tracking
 export const sessionPayments = pgTable('session_payments', {
   id: serial('id').primaryKey(),
   bookingSessionId: integer('booking_session_id')
@@ -311,27 +446,51 @@ export const sessionPayments = pgTable('session_payments', {
   userId: integer('user_id')
     .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
-  stripePaymentIntentId: varchar('stripe_payment_intent_id', { length: 255 }).notNull().unique(),
-  totalAmountCents: integer('total_amount_cents').notNull(),
-  subsidyUsedCents: integer('subsidy_used_cents').default(0).notNull(),
-  outOfPocketCents: integer('out_of_pocket_cents').notNull(),
+  totalAmountCents: integer('total_amount_cents').notNull(), // Full cost of the session before any subsidies
+  subsidyUsedCents: integer('subsidy_used_cents').default(0).notNull(), // Total subsidy from all sources (group + employer)
+  outOfPocketCents: integer('out_of_pocket_cents').notNull(), // Actual amount charged to user or covered by employer fully
+  stripePaymentIntentId: varchar('stripe_payment_intent_id', { length: 255 }).unique(), // Can be null if fully subsidized without Stripe
   status: paymentStatusEnum('status').default('pending').notNull(),
   chargedAt: timestamp('charged_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-// === 9. Relations ===
+// === 10. Relations ===
 export const employersRelations = relations(employers, ({ many }) => ({
   employees: many(users),
+  sponsoredGroups: many(sponsoredGroups),
+  directSubsidies: many(employerSubsidies),
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
   employer: one(employers, { fields: [users.employerId], references: [employers.id] }),
   therapistProfile: one(therapists, { fields: [users.id], references: [therapists.userId] }),
   onboarding: one(userOnboarding, { fields: [users.id], references: [userOnboarding.userId] }),
+  sponsoredGroupMemberships: many(sponsoredGroupMembers),
+  directEmployerSubsidies: many(employerSubsidies),
   bookedSessions: many(bookingSessions),
   clientNotes: many(clientNotes),
+  documentAssignments: many(therapistDocumentAssignments),
+  stripeCustomer: one(stripeCustomers, {
+    fields: [users.id],
+    references: [stripeCustomers.userId],
+  }),
+  sessionPayments: many(sessionPayments),
+}));
+
+export const sponsoredGroupsRelations = relations(sponsoredGroups, ({ one, many }) => ({
+  employer: one(employers, { fields: [sponsoredGroups.employerId], references: [employers.id] }),
+  members: many(sponsoredGroupMembers),
+  subsidizedSessions: many(bookingSessions),
+}));
+
+export const sponsoredGroupMembersRelations = relations(sponsoredGroupMembers, ({ one }) => ({
+  group: one(sponsoredGroups, {
+    fields: [sponsoredGroupMembers.groupId],
+    references: [sponsoredGroups.id],
+  }),
+  user: one(users, { fields: [sponsoredGroupMembers.userId], references: [users.id] }),
 }));
 
 export const therapistsRelations = relations(therapists, ({ one, many }) => ({
@@ -340,6 +499,8 @@ export const therapistsRelations = relations(therapists, ({ one, many }) => ({
   blockedTimes: many(therapistBlockedTimes),
   sessions: many(bookingSessions),
   writtenNotes: many(clientNotes),
+  documents: many(therapistDocuments),
+  payouts: many(therapistPayouts),
 }));
 
 export const userOnboardingRelations = relations(userOnboarding, ({ one }) => ({
@@ -366,6 +527,14 @@ export const bookingSessionsRelations = relations(bookingSessions, ({ one }) => 
     fields: [bookingSessions.therapistId],
     references: [therapists.id],
   }),
+  sponsoringGroup: one(sponsoredGroups, {
+    fields: [bookingSessions.sponsoringGroupId],
+    references: [sponsoredGroups.id],
+  }),
+  payment: one(sessionPayments, {
+    fields: [bookingSessions.id],
+    references: [sessionPayments.bookingSessionId],
+  }),
 }));
 
 export const clientNotesRelations = relations(clientNotes, ({ one }) => ({
@@ -375,4 +544,54 @@ export const clientNotesRelations = relations(clientNotes, ({ one }) => ({
     fields: [clientNotes.sessionId],
     references: [bookingSessions.id],
   }),
+}));
+
+export const therapistDocumentsRelations = relations(therapistDocuments, ({ one, many }) => ({
+  therapist: one(therapists, {
+    fields: [therapistDocuments.therapistId],
+    references: [therapists.id],
+  }),
+  assignments: many(therapistDocumentAssignments),
+}));
+
+export const therapistDocumentAssignmentsRelations = relations(
+  therapistDocumentAssignments,
+  ({ one }) => ({
+    document: one(therapistDocuments, {
+      fields: [therapistDocumentAssignments.documentId],
+      references: [therapistDocuments.id],
+    }),
+    user: one(users, {
+      fields: [therapistDocumentAssignments.userId],
+      references: [users.id],
+    }),
+  }),
+);
+
+export const stripeCustomersRelations = relations(stripeCustomers, ({ one }) => ({
+  user: one(users, { fields: [stripeCustomers.userId], references: [users.id] }),
+}));
+
+export const employerSubsidiesRelations = relations(employerSubsidies, ({ one }) => ({
+  employer: one(employers, { fields: [employerSubsidies.employerId], references: [employers.id] }),
+  user: one(users, { fields: [employerSubsidies.userId], references: [users.id] }),
+}));
+
+export const therapistPayoutsRelations = relations(therapistPayouts, ({ one }) => ({
+  therapist: one(therapists, {
+    fields: [therapistPayouts.therapistId],
+    references: [therapists.id],
+  }),
+  session: one(bookingSessions, {
+    fields: [therapistPayouts.bookingSessionId],
+    references: [bookingSessions.id],
+  }),
+}));
+
+export const sessionPaymentsRelations = relations(sessionPayments, ({ one }) => ({
+  session: one(bookingSessions, {
+    fields: [sessionPayments.bookingSessionId],
+    references: [bookingSessions.id],
+  }),
+  user: one(users, { fields: [sessionPayments.userId], references: [users.id] }),
 }));

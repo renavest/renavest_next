@@ -1,13 +1,16 @@
-import { Calendar, Clock, Users } from 'lucide-react';
+import { Calendar, Clock, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
 import { DateTime } from 'luxon';
 
 import {
-  availabilityStatsSignal,
-  selectedDateSignal,
+  workingHoursSignal,
+  blockedTimesSignal,
   currentMonthSignal,
+  selectedDateSignal,
+  viewModeSignal,
+  availabilityStatsSignal,
   availableDatesSignal,
   slotsForSelectedDateSignal,
-} from '../../state/availabilityState';
+} from '../../../state/availabilityState';
 
 export function OverviewView() {
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -113,7 +116,7 @@ export function OverviewView() {
               </p>
               <p className='text-purple-600 text-sm'>Available slots</p>
             </div>
-            <Users className='w-8 h-8 text-purple-600' />
+            <TrendingUp className='w-8 h-8 text-purple-600' />
           </div>
         </div>
       </div>

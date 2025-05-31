@@ -23,6 +23,27 @@ export function getTherapistImageUrl(
     return key;
   }
 
+  // If it's already an API route URL, don't double-process it
+  if (key.startsWith('/api/images/')) {
+    console.log('Key is already an API route, returning as-is');
+    return key;
+  }
+
+  // If the key contains URL-encoded characters or malformed API paths, extract the original name
+  if (key.includes('%2F') || key.includes('api-images-therapists')) {
+    console.log('Detected malformed/encoded key, extracting original name');
+    // Try to extract the therapist name from malformed URLs
+    const match = key.match(/(?:therapists[%2F-]+)?([a-z-]+)(?:\.jpg|\.jpeg|\.png)?/i);
+    if (match && match[1]) {
+      const extractedName = match[1].replace(/[^a-z-]/gi, '-').toLowerCase();
+      console.log('Extracted name:', extractedName);
+      key = extractedName;
+    } else {
+      console.log('Could not extract name from malformed key, using placeholder');
+      return '/experts/placeholderexp.png';
+    }
+  }
+
   // Always use the API route for consistency between dev and prod
   // Determine the S3 key
   let s3Key: string;

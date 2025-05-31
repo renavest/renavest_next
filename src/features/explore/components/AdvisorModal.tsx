@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import posthog from 'posthog-js';
 import { useState, useEffect } from 'react';
+import React from 'react';
 import { toast } from 'sonner';
 
 import { cn } from '@/src/lib/utils';
@@ -26,7 +27,14 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
   const [currentUserTherapistId, setCurrentUserTherapistId] = useState<number | null>(null);
   const { isConnected, isChecking, bookingMode } = useMarketplaceIntegration(advisor);
 
-  // Use global signals for image loading state
+  // Initialize loading state immediately if not set
+  React.useMemo(() => {
+    if (advisorImageLoadingSignal.value[advisor.id] === undefined) {
+      advisorActions.setImageLoading(advisor.id, true);
+    }
+  }, [advisor.id]);
+
+  // Use global signals with proper fallbacks
   const isLoading = advisorImageLoadingSignal.value[advisor.id] !== false;
   const hasError = advisorImageErrorSignal.value[advisor.id] || false;
 
@@ -47,13 +55,6 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
     };
     fetchCurrentUserTherapistId();
   }, [user]);
-
-  // Initialize loading state if not set
-  useEffect(() => {
-    if (advisorImageLoadingSignal.value[advisor.id] === undefined) {
-      advisorActions.setImageLoading(advisor.id, true);
-    }
-  }, [advisor.id]);
 
   // Check if user is trying to book themselves
   const isBookingSelf = !!(
@@ -208,14 +209,22 @@ const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
           alt={advisor.name}
           className={cn(
             'h-full w-full object-cover',
-            'transition-opacity duration-300',
+            'transition-opacity duration-500',
             isLoading ? 'opacity-0' : 'opacity-100',
+            // Ensure no background shows through during loading
+            'bg-gray-100',
           )}
+          sizes='(max-width: 640px) 300px, (max-width: 768px) 350px, 400px'
           placeholder='blur'
-          blurDataURL='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+          blurDataURL='data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=='
           priority
+          quality={85}
           onError={handleImageError}
           onLoad={handleImageLoad}
+          style={{
+            // Prevent any default browser styling that might cause flashing
+            backgroundColor: '#f3f4f6', // gray-100 fallback
+          }}
           onClick={() => {
             // Track profile view event
             posthog.capture('therapist_profile_viewed', {

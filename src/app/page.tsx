@@ -21,7 +21,6 @@ import PilotCohortBanner from '@/src/features/home/components/PilotCohortBanner'
 import TestimonialSection from '@/src/features/home/components/TestimonialSection';
 import WhatIsFinancialTherapySection from '@/src/features/home/components/WhatIsFinancialTherapySection';
 import WhatWeDoSection from '@/src/features/home/components/WhatWeDoSection';
-import ParallaxWrapper from '@/src/features/parallax/ParallaxWrapper';
 import { setupReferralAttribution } from '@/src/lib/referralTracking';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -129,15 +128,13 @@ function HomeContent() {
 
       <div className={`min-h-screen bg-white ${inter.className}`}>
         <Navbar />
-        <ParallaxWrapper>
-          <HeroSection />
-          <BusinessImpactSection />
-          <WhatWeDoSection />
-          <WhatIsFinancialTherapySection />
-          <JasmineJourneySection />
-          <TestimonialSection />
-          <PilotCohortBanner />
-        </ParallaxWrapper>
+        <HeroSection />
+        <BusinessImpactSection />
+        <WhatWeDoSection />
+        <WhatIsFinancialTherapySection />
+        <JasmineJourneySection />
+        <TestimonialSection />
+        <PilotCohortBanner />
         <Footer />
       </div>
     </>

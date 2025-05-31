@@ -8,7 +8,7 @@ import {
   loadingSignal,
   fetchData,
   currentMonthSignal,
-} from '../state/availabilityState';
+} from '../../state/availabilityState';
 
 import { BlockedTimeView } from './availability/BlockedTimeView';
 import { OverviewView } from './availability/OverviewView';

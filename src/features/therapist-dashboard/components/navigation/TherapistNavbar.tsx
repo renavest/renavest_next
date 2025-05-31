@@ -15,8 +15,8 @@ import {
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
-import { isHeaderScrolledSignal } from '../../employee-dashboard/state/dashboardState';
-import { therapistIdSignal } from '../state/therapistDashboardState';
+import { isHeaderScrolledSignal } from '../../../employee-dashboard/state/dashboardState';
+import { therapistIdSignal } from '../../state/therapistDashboardState';
 
 export default function TherapistNavbar({
   pageTitle = 'Therapist Dashboard',

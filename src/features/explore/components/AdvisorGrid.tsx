@@ -1,5 +1,6 @@
 'use client';
 import { Award } from 'lucide-react';
+import Image from 'next/image';
 import React from 'react';
 
 import { cn } from '@/src/lib/utils';
@@ -17,12 +18,21 @@ import {
 
 interface AdvisorCardProps {
   advisor: Advisor;
+  priority: boolean;
 }
 
 const useImageLoadState = (advisorId: string) => {
-  // Use global signals instead of local state
-  const isLoaded = !advisorImageLoadingSignal.value[advisorId];
+  // Initialize loading state immediately if not set
+  React.useMemo(() => {
+    if (advisorImageLoadingSignal.value[advisorId] === undefined) {
+      advisorActions.setImageLoading(advisorId, true);
+    }
+  }, [advisorId]);
+
+  // Use global signals with proper fallbacks
+  const isLoading = advisorImageLoadingSignal.value[advisorId] !== false;
   const hasError = advisorImageErrorSignal.value[advisorId] || false;
+  const isLoaded = !isLoading && !hasError;
 
   const handleImageLoad = () => {
     advisorActions.setImageLoading(advisorId, false);
@@ -34,15 +44,8 @@ const useImageLoadState = (advisorId: string) => {
     advisorActions.setImageError(advisorId, true);
   };
 
-  // Initialize loading state
-  React.useEffect(() => {
-    if (advisorImageLoadingSignal.value[advisorId] === undefined) {
-      advisorActions.setImageLoading(advisorId, true);
-    }
-  }, [advisorId]);
-
   return {
-    imageLoadState: { isLoaded, hasError },
+    imageLoadState: { isLoaded, hasError, isLoading },
     handleImageLoad,
     handleImageError,
   };
@@ -78,7 +81,7 @@ const renderExpertiseTags = (expertiseTags: string[]) => {
   );
 };
 
-const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor }) => {
+const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, priority }) => {
   const { imageLoadState, handleImageLoad, handleImageError } = useImageLoadState(advisor.id);
 
   // Limit expertise tags and add ellipsis if more exist
@@ -97,8 +100,9 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor }) => {
       )}
     >
       <div className='group relative aspect-[4/5] sm:aspect-[3/4] w-full overflow-hidden'>
-        {!imageLoadState.isLoaded && !imageLoadState.hasError && (
-          <div className='absolute inset-0 bg-gray-100 rounded-2xl flex items-center justify-center'>
+        {/* Loading spinner - show when loading and no error */}
+        {imageLoadState.isLoading && !imageLoadState.hasError && (
+          <div className='absolute inset-0 bg-gray-100 rounded-2xl flex items-center justify-center z-10'>
             <div className='flex flex-col items-center space-y-2'>
               <div className='w-8 h-8 border-3 border-purple-200 border-t-purple-600 rounded-full animate-spin'></div>
               <span className='text-xs text-gray-500 font-medium'>Loading...</span>
@@ -106,36 +110,33 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor }) => {
           </div>
         )}
 
-        {imageLoadState.hasError ? (
-          <img
-            src='/experts/placeholderexp.png'
-            alt={advisor.name}
-            className={cn(
-              'h-full w-full rounded-2xl object-cover object-center transition-transform duration-500',
-              'group-hover:scale-110',
-              'opacity-100',
-              'overflow-hidden',
-            )}
-          />
-        ) : (
-          <img
-            src={advisor.profileUrl as string}
-            alt={advisor.name}
-            className={cn(
-              'h-full w-full rounded-2xl object-cover object-center transition-transform duration-500',
-              'group-hover:scale-110',
-              !imageLoadState.isLoaded ? 'opacity-0' : 'opacity-100',
-              'overflow-hidden',
-            )}
-            onLoad={handleImageLoad}
-            onError={handleImageError}
-            loading='lazy'
-            style={{
-              // Add better caching headers via style
-              imageRendering: 'auto',
-            }}
-          />
-        )}
+        {/* Main image */}
+        <Image
+          src={
+            imageLoadState.hasError ? '/experts/placeholderexp.png' : (advisor.profileUrl as string)
+          }
+          alt={advisor.name}
+          fill
+          className={cn(
+            'rounded-2xl object-cover object-center transition-all duration-500',
+            'group-hover:scale-110',
+            // Smooth opacity transition based on loading state
+            imageLoadState.isLoaded ? 'opacity-100' : 'opacity-0',
+            // Ensure no background shows through during loading
+            'bg-gray-100',
+            'overflow-hidden',
+          )}
+          sizes='(max-width: 640px) 280px, (max-width: 768px) 320px, (max-width: 1024px) 280px, 320px'
+          onLoad={handleImageLoad}
+          onError={handleImageError}
+          placeholder='blur'
+          blurDataURL='data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=='
+          quality={85}
+          priority={priority}
+          style={{
+            backgroundColor: '#f3f4f6', // gray-100 fallback
+          }}
+        />
 
         <div className='absolute top-2 sm:top-4 left-2 sm:left-4 bg-white/90 backdrop-blur-sm px-2 sm:px-3 py-1 rounded-full text-xs font-medium tracking-wide text-gray-700 shadow-sm'>
           {advisor.yoe} years of experience
@@ -185,8 +186,12 @@ const AdvisorGrid: React.FC<{ advisors: Advisor[] }> = ({ advisors }) => {
     <OnboardingModalServerWrapper>
       <div className='max-w-7xl mx-auto px-3 sm:px-6 lg:px-8'>
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8'>
-          {advisors.map((advisor) => (
-            <AdvisorCard key={advisor.id} advisor={advisor} />
+          {advisors.map((advisor, index) => (
+            <AdvisorCard
+              key={advisor.id}
+              advisor={advisor}
+              priority={index < 3} // Priority load first 3 images
+            />
           ))}
         </div>
 

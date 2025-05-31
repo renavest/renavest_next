@@ -109,6 +109,89 @@ export const trackTherapistDashboard = {
       ...userContext,
     });
   },
+
+  // Document management tracking
+  documentUploaded: (
+    therapistId: number,
+    documentContext: {
+      user_id?: string;
+      document_type?: string;
+      file_type?: string;
+      file_size?: number;
+    } = {},
+  ) => {
+    if (typeof window === 'undefined') return;
+
+    posthog.capture('therapist_dashboard:document_uploaded_v1', {
+      therapist_id: therapistId,
+      document_type: documentContext.document_type || 'general',
+      file_type: documentContext.file_type,
+      file_size: documentContext.file_size,
+      upload_timestamp: new Date().toISOString(),
+      url: window.location.href,
+      ...documentContext,
+    });
+  },
+
+  documentDownloaded: (
+    therapistId: number,
+    documentContext: {
+      user_id?: string;
+      document_id?: string;
+      document_type?: string;
+    } = {},
+  ) => {
+    if (typeof window === 'undefined') return;
+
+    posthog.capture('therapist_dashboard:document_downloaded_v1', {
+      therapist_id: therapistId,
+      document_id: documentContext.document_id,
+      document_type: documentContext.document_type,
+      download_timestamp: new Date().toISOString(),
+      url: window.location.href,
+      ...documentContext,
+    });
+  },
+
+  documentsViewed: (
+    therapistId: number,
+    documentContext: {
+      user_id?: string;
+      document_count?: number;
+    } = {},
+  ) => {
+    if (typeof window === 'undefined') return;
+
+    posthog.capture('therapist_dashboard:documents_viewed_v1', {
+      therapist_id: therapistId,
+      document_count: documentContext.document_count || 0,
+      viewed_timestamp: new Date().toISOString(),
+      url: window.location.href,
+      ...documentContext,
+    });
+  },
+
+  documentAssigned: (
+    therapistId: number,
+    assignmentContext: {
+      user_id?: string;
+      document_id?: string;
+      client_id?: string;
+      document_type?: string;
+    } = {},
+  ) => {
+    if (typeof window === 'undefined') return;
+
+    posthog.capture('therapist_dashboard:document_assigned_v1', {
+      therapist_id: therapistId,
+      document_id: assignmentContext.document_id,
+      client_id: assignmentContext.client_id,
+      document_type: assignmentContext.document_type,
+      assigned_timestamp: new Date().toISOString(),
+      url: window.location.href,
+      ...assignmentContext,
+    });
+  },
 };
 
 /**

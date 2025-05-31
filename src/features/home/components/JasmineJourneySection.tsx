@@ -2,7 +2,6 @@
 
 import { Frown, HeartHandshake, PieChart, TrendingUp, Users } from 'lucide-react';
 import { useRef } from 'react';
-import { Parallax } from 'react-scroll-parallax';
 
 import { journeySectionTitleSignal } from '@/src/features/utm/utmCustomDemo';
 
@@ -76,11 +75,9 @@ function AnimatedInsight({ children, index }: { children: React.ReactNode; index
       className={`transition-all duration-[1200ms] ease-out transform
         flex justify-center my-12`}
     >
-      <Parallax opacity={[0.8, 1]} scale={[0.95, 1.05]}>
-        <span className='inline-block bg-[#F3F0FF] text-[#9071FF] px-10 py-5 rounded-full font-medium text-lg shadow-sm'>
-          {children}
-        </span>
-      </Parallax>
+      <span className='inline-block bg-[#F3F0FF] text-[#9071FF] px-10 py-5 rounded-full font-medium text-lg shadow-sm'>
+        {children}
+      </span>
     </div>
   );
 }
@@ -100,19 +97,17 @@ function JasmineJourneySection() {
       >
         <div className='max-w-7xl w-full px-4 md:px-10 mb-12 md:mb-20'>
           <div className='max-w-3xl mx-auto text-center'>
-            <Parallax translateY={[-5, 5]}>
-              <span className='px-4 md:px-6 py-1.5 md:py-2.5 bg-[#9071FF]/10 text-[#9071FF] font-medium rounded-full text-xs md:text-sm mb-4 md:mb-6 inline-block'>
-                EMPLOYEE JOURNEY
-              </span>
-              <h2 className='text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 md:mb-6 leading-tight'>
-                {journeySectionTitleSignal.value}
-              </h2>
-              <h3 className='text-base md:text-xl lg:text-2xl text-gray-700 mb-0 font-medium px-2 md:px-0'>
-                88% of employees bring money worries to work. Jasmine was one of them—until she
-                found a financial therapist who listened. When employees feel supported, they show
-                up differently for your business.
-              </h3>
-            </Parallax>
+            <span className='px-4 md:px-6 py-1.5 md:py-2.5 bg-[#9071FF]/10 text-[#9071FF] font-medium rounded-full text-xs md:text-sm mb-4 md:mb-6 inline-block'>
+              EMPLOYEE JOURNEY
+            </span>
+            <h2 className='text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 md:mb-6 leading-tight'>
+              {journeySectionTitleSignal.value}
+            </h2>
+            <h3 className='text-base md:text-xl lg:text-2xl text-gray-700 mb-0 font-medium px-2 md:px-0'>
+              88% of employees bring money worries to work. Jasmine was one of them—until she found
+              a financial therapist who listened. When employees feel supported, they show up
+              differently for your business.
+            </h3>
           </div>
         </div>
 

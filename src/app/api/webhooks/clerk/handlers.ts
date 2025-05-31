@@ -16,6 +16,11 @@ import type { users as usersTable } from '@/src/db/schema';
 import { getOrCreateStripeCustomer } from '@/src/features/stripe';
 import { createDate } from '@/src/utils/timezone';
 
+import {
+  associateUserWithEmployerAndSponsoredGroup,
+  synchronizeSponsoredGroupToClerk,
+} from './sponsoredGroupHelpers';
+
 // Import clerkClient for role synchronization
 
 // Proper Drizzle transaction type
@@ -383,6 +388,24 @@ export async function handleUserCreateOrUpdate(
         }
       }
 
+      // NEW: Associate employee users with their employer and potentially a sponsored group
+      if (finalUser.role === 'employee') {
+        // Extract sponsored group name from unsafeMetadata if provided during signup
+        const sponsoredGroupName = unsafeMetadata?.sponsoredGroupName as string | undefined;
+
+        await associateUserWithEmployerAndSponsoredGroup(
+          tx,
+          finalUser,
+          primaryEmail,
+          sponsoredGroupName,
+        );
+
+        // Store sponsored group name in Clerk metadata for client-side access
+        if (sponsoredGroupName) {
+          await synchronizeSponsoredGroupToClerk(id, sponsoredGroupName);
+        }
+      }
+
       // Process onboarding data if present in unsafeMetadata (for new signups)
       if (eventType === 'user.created' && finalUser && unsafeMetadata) {
         await processOnboardingData(tx, finalUser, unsafeMetadata);
@@ -624,12 +647,12 @@ async function validateRoleAuthorization(
     return 'employee';
   }
 
-  // If no specific role requested or no authorization found, default to employee
-  // This allows for manual approval later if needed
-  console.log('⚠️ No specific authorization found, defaulting to employee role', {
+  // If no specific role requested or no authorization found, default to individual_consumer
+  // This allows B2C users to sign up independently
+  console.log('⚠️ No employer authorization found, defaulting to individual_consumer role', {
     email: normalizedEmail,
     domain: emailDomain,
     requestedRole,
   });
-  return 'employee';
+  return 'individual_consumer';
 }

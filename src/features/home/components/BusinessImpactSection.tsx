@@ -3,7 +3,6 @@
 import { TrendingUp, Users, Shield } from 'lucide-react';
 import posthog from 'posthog-js';
 import { useEffect, useState, useRef } from 'react';
-import { Parallax } from 'react-scroll-parallax';
 
 function BusinessImpactSection() {
   const [isVisible, setIsVisible] = useState(false);
@@ -59,11 +58,7 @@ function BusinessImpactSection() {
           className={`max-w-6xl mx-auto px-6 md:px-10 transform transition-all duration-1000
           ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}
         >
-          <Parallax
-            translateY={[-15, 15]}
-            opacity={[0.8, 1]}
-            className='max-w-3xl mx-auto text-center mb-20'
-          >
+          <div className='max-w-3xl mx-auto text-center mb-20'>
             <span className='px-4 py-2 bg-[#9071FF]/10 text-[#9071FF] font-medium rounded-full text-sm mb-4 inline-block'>
               THE BUSINESS IMPACT
             </span>
@@ -75,10 +70,10 @@ function BusinessImpactSection() {
               feel and behave better with their money. By addressing financial stress, you unlock
               unprecedented workplace performance.
             </p>
-          </Parallax>
+          </div>
 
           <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
-            <Parallax translateY={[20, -20]} scale={[0.9, 1]} className='group'>
+            <div className='group'>
               <div
                 className='bg-white rounded-2xl shadow-lg p-8 h-full hover:shadow-xl transition-shadow duration-300'
                 onMouseEnter={() => trackStatHover('productivity', '34% increase in productivity')}
@@ -92,9 +87,9 @@ function BusinessImpactSection() {
                   their core responsibilities.
                 </p>
               </div>
-            </Parallax>
+            </div>
 
-            <Parallax translateY={[30, -30]} scale={[0.9, 1]} className='group'>
+            <div className='group'>
               <div
                 className='bg-white rounded-2xl shadow-lg p-8 h-full hover:shadow-xl transition-shadow duration-300'
                 onMouseEnter={() => trackStatHover('retention', '48% improvement in retention')}
@@ -108,9 +103,9 @@ function BusinessImpactSection() {
                   likely to stay with their employer.
                 </p>
               </div>
-            </Parallax>
+            </div>
 
-            <Parallax translateY={[40, -40]} scale={[0.9, 1]} className='group'>
+            <div className='group'>
               <div
                 className='bg-white rounded-2xl shadow-lg p-8 h-full hover:shadow-xl transition-shadow duration-300'
                 onMouseEnter={() =>
@@ -128,7 +123,7 @@ function BusinessImpactSection() {
                   days and absences.
                 </p>
               </div>
-            </Parallax>
+            </div>
           </div>
         </div>
       </section>

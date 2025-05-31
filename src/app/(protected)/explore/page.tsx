@@ -225,7 +225,18 @@ export default async function Home() {
         </section>
         <main className='pb-12'>
           {allAdvisors.length > 0 ? (
-            <AdvisorGrid advisors={allAdvisors} />
+            <>
+              {/* Preload first few images for better performance */}
+              {allAdvisors.slice(0, 3).map((advisor) => (
+                <link
+                  key={`preload-${advisor.id}`}
+                  rel='preload'
+                  as='image'
+                  href={advisor.profileUrl}
+                />
+              ))}
+              <AdvisorGrid advisors={allAdvisors} />
+            </>
           ) : (
             <div className='text-center text-gray-600'>
               No therapists available at the moment. Please check back later.

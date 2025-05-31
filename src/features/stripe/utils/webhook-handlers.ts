@@ -123,3 +123,4 @@ export async function handleSetupIntentFailed(setupIntent: Stripe.SetupIntent) {
     });
   }
 }
+
