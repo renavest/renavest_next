@@ -1,14 +1,13 @@
-import { Plus, Trash2, Check, X } from 'lucide-react';
+import { Clock, Plus, Trash2, Save } from 'lucide-react';
 
 import {
   workingHoursSignal,
-  editingWorkingHoursSignal,
+  showAddWorkingHoursSignal,
+  newWorkingHoursSignal,
   savingWorkingHoursSignal,
-  addWorkingHour,
-  updateWorkingHour,
-  removeWorkingHour,
   saveWorkingHours,
-} from '../../state/availabilityState';
+  removeWorkingHours,
+} from '../../../state/availabilityState';
 
 interface WorkingHoursViewProps {
   therapistId: number;

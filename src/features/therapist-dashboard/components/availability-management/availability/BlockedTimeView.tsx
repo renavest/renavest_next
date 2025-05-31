@@ -1,4 +1,4 @@
-import { Plus, Trash2, Calendar, Clock } from 'lucide-react';
+import { Plus, Trash2, Calendar, Clock, AlertTriangle } from 'lucide-react';
 import { DateTime } from 'luxon';
 
 import {
@@ -9,7 +9,9 @@ import {
   selectedDateSignal,
   saveBlockedTime,
   removeBlockedTime,
-} from '../../state/availabilityState';
+  addBlockedTime,
+  loadingSignal,
+} from '../../../state/availabilityState';
 
 interface BlockedTimeViewProps {
   therapistId: number;

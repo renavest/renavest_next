@@ -9,11 +9,14 @@ import {
   Clock,
   List,
   BarChart3,
+  User,
+  Tag,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 
-import { ClientNote, NoteCategory, Client, CreateNoteRequest } from '../types';
-import { exportClientNotes } from '../utils/notesExport';
+import { trackTherapistClientManagement } from '@/src/features/posthog/therapistTracking';
+import { ClientNote, NoteCategory, Client, CreateNoteRequest } from '../../types';
+import { exportClientNotes } from '../../utils/notesExport';
 
 import { ClientNotesForm } from './ClientNotesForm';
 import { NoteDetailModal } from './NoteDetailModal';
