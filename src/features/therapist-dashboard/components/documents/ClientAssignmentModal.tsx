@@ -2,6 +2,7 @@
 
 import { X, Search, Users, Eye, UserPlus, FileText } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import { ClientInfo, TherapistDocument } from '../../types/documents';
 
@@ -14,21 +15,19 @@ interface ClientAssignmentModalProps {
 
 // Helper component for the info banner
 const InfoBanner = () => (
-  <div className='px-6 py-4 bg-purple-50 border-b border-purple-100'>
+  <div className='bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6'>
     <div className='flex items-start gap-3'>
-      <div className='w-5 h-5 bg-purple-200 rounded-full flex items-center justify-center mt-0.5'>
-        <div className='w-2 h-2 bg-purple-600 rounded-full'></div>
-      </div>
+      <FileText className='w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0' />
       <div className='text-sm'>
-        <p className='text-purple-800 font-medium mb-1'>How document access works:</p>
-        <ul className='text-purple-700 space-y-1'>
-          <li>
-            • <strong>Assign:</strong> Add document to your client's file (private to you)
-          </li>
-          <li>
-            • <strong>Share:</strong> Make document visible to the client in their portal
-          </li>
-        </ul>
+        <p className='font-medium text-purple-800 mb-1'>Document Assignment</p>
+        <p className='text-purple-700'>
+          <span className='font-medium'>Step 1:</span> Add document to client's file (private to
+          you)
+        </p>
+        <p className='text-purple-700'>
+          <span className='font-medium'>Step 2:</span> Optionally share with client (they can see
+          it)
+        </p>
       </div>
     </div>
   </div>
@@ -56,85 +55,44 @@ const ClientRow = ({
   const isShared = assignment?.isSharedWithClient || false;
 
   return (
-    <div className='p-4 hover:bg-gray-50 transition-colors'>
+    <div className='p-4 hover:bg-gray-50 transition-colors border-l-4 border-l-transparent hover:border-l-purple-200'>
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-3'>
-          <div className='w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center'>
-            <span className='text-sm font-medium text-gray-600'>
+          <div className='w-10 h-10 bg-gradient-to-br from-purple-100 to-purple-200 rounded-full flex items-center justify-center'>
+            <span className='text-sm font-medium text-purple-700'>
               {client.fullName.charAt(0).toUpperCase()}
             </span>
           </div>
           <div>
             <p className='font-medium text-gray-800'>{client.fullName}</p>
             <p className='text-sm text-gray-500'>{client.email}</p>
-            {isAssigned && assignment && (
-              <div className='flex items-center gap-2 mt-1'>
-                <span className='text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full border border-purple-200 flex items-center gap-1'>
+
+            {/* Status Display */}
+            {isAssigned && (
+              <div className='flex items-center gap-2 mt-2'>
+                <div className='flex items-center gap-1 text-xs px-2 py-1 bg-purple-50 text-purple-700 rounded-full border border-purple-100'>
                   <div className='w-1.5 h-1.5 bg-purple-500 rounded-full'></div>
-                  Assigned {new Date(assignment.assignedAt).toLocaleDateString()}
-                </span>
+                  In Client File
+                </div>
                 {isShared && (
-                  <span className='text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full border border-green-200 flex items-center gap-1'>
-                    <div className='w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse'></div>
-                    Shared with client
-                  </span>
+                  <div className='flex items-center gap-1 text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded-full border border-purple-200'>
+                    <Eye className='w-3 h-3' />
+                    Client Can See
+                  </div>
                 )}
               </div>
             )}
           </div>
         </div>
 
+        {/* Action Buttons */}
         <div className='flex items-center gap-2'>
-          {isAssigned ? (
-            <>
-              <button
-                onClick={() => onToggleShare(client.id, isShared)}
-                disabled={isProcessing}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                  isShared
-                    ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-300 shadow-sm'
-                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-300 hover:shadow-sm'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                <div className='flex items-center gap-1'>
-                  {isShared ? (
-                    <>
-                      <div className='w-2 h-2 bg-green-500 rounded-full animate-pulse'></div>
-                      <Eye className='w-4 h-4' />
-                      Visible to Client
-                    </>
-                  ) : (
-                    <>
-                      <Eye className='w-4 h-4' />
-                      Share with Client
-                    </>
-                  )}
-                </div>
-              </button>
-
-              <button
-                onClick={() => onUnassign(client.id)}
-                disabled={isProcessing}
-                className='px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium border border-red-200 hover:border-red-300'
-              >
-                {isProcessing ? (
-                  <div className='flex items-center gap-2'>
-                    <div className='w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin'></div>
-                    Removing...
-                  </div>
-                ) : (
-                  <div className='flex items-center gap-1'>
-                    <X className='w-4 h-4' />
-                    Remove from File
-                  </div>
-                )}
-              </button>
-            </>
-          ) : (
+          {!isAssigned ? (
+            // Step 1: Add to client file
             <button
               onClick={() => onAssign(client.id)}
               disabled={isProcessing}
-              className='px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium border border-purple-600 hover:shadow-md'
+              className='px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium shadow-sm hover:shadow-md'
             >
               {isProcessing ? (
                 <div className='flex items-center gap-2'>
@@ -148,6 +106,65 @@ const ClientRow = ({
                 </div>
               )}
             </button>
+          ) : (
+            // Step 2: Share options when already assigned
+            <div className='flex items-center gap-2'>
+              {!isShared ? (
+                <button
+                  onClick={() => onToggleShare(client.id, false)}
+                  disabled={isProcessing}
+                  className='px-3 py-2 bg-purple-100 text-purple-700 hover:bg-purple-200 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium border border-purple-200'
+                >
+                  {isProcessing ? (
+                    <div className='flex items-center gap-1'>
+                      <div className='w-3 h-3 border border-purple-600 border-t-transparent rounded-full animate-spin'></div>
+                      Sharing...
+                    </div>
+                  ) : (
+                    <div className='flex items-center gap-1'>
+                      <Eye className='w-4 h-4' />
+                      Share with Client
+                    </div>
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={() => onToggleShare(client.id, true)}
+                  disabled={isProcessing}
+                  className='px-3 py-2 bg-purple-200 text-purple-800 hover:bg-purple-300 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium border border-purple-300'
+                >
+                  {isProcessing ? (
+                    <div className='flex items-center gap-1'>
+                      <div className='w-3 h-3 border border-purple-800 border-t-transparent rounded-full animate-spin'></div>
+                      Updating...
+                    </div>
+                  ) : (
+                    <div className='flex items-center gap-1'>
+                      <Eye className='w-4 h-4' />
+                      Stop Sharing
+                    </div>
+                  )}
+                </button>
+              )}
+
+              <button
+                onClick={() => onUnassign(client.id)}
+                disabled={isProcessing}
+                className='px-3 py-2 bg-gray-100 text-gray-600 hover:bg-gray-200 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium border border-gray-200'
+              >
+                {isProcessing ? (
+                  <div className='flex items-center gap-1'>
+                    <div className='w-3 h-3 border border-gray-600 border-t-transparent rounded-full animate-spin'></div>
+                    Removing...
+                  </div>
+                ) : (
+                  <div className='flex items-center gap-1'>
+                    <X className='w-4 h-4' />
+                    Remove
+                  </div>
+                )}
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -213,13 +230,134 @@ const ClientListContent = ({
           client={client}
           document={document}
           isProcessing={assigningClients.has(client.id)}
-          onAssign={onAssign}
-          onUnassign={onUnassign}
-          onToggleShare={onToggleShare}
+          onAssign={(clientId) => onAssign(clientId)}
+          onUnassign={(clientId) => onUnassign(clientId)}
+          onToggleShare={(clientId, currentlyShared) => onToggleShare(clientId, currentlyShared)}
         />
       ))}
     </div>
   );
+};
+
+// Helper functions for document assignment actions
+const useDocumentAssignment = (
+  document: TherapistDocument,
+  onAssignmentUpdate: () => void,
+  setAssigningClients: React.Dispatch<React.SetStateAction<Set<number>>>,
+  setError: React.Dispatch<React.SetStateAction<string | null>>,
+) => {
+  const handleAssignClient = async (clientId: number) => {
+    try {
+      setAssigningClients((prev) => new Set(prev).add(clientId));
+      setError(null);
+
+      const response = await fetch('/api/therapist/documents/assign', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          documentId: document.id,
+          clientId,
+          shareWithClient: false,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to assign document');
+      }
+
+      onAssignmentUpdate();
+      toast.success('Document added to client file');
+    } catch (err) {
+      console.error('Error assigning document:', err);
+      setError(err instanceof Error ? err.message : 'Failed to assign document');
+    } finally {
+      setAssigningClients((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(clientId);
+        return newSet;
+      });
+    }
+  };
+
+  const handleUnassignClient = async (clientId: number) => {
+    try {
+      setAssigningClients((prev) => new Set(prev).add(clientId));
+      setError(null);
+
+      const response = await fetch('/api/therapist/documents/assign', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          documentId: document.id,
+          clientId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to remove assignment');
+      }
+
+      onAssignmentUpdate();
+      toast.success('Document removed from client file');
+    } catch (err) {
+      console.error('Error removing assignment:', err);
+      setError(err instanceof Error ? err.message : 'Failed to remove assignment');
+    } finally {
+      setAssigningClients((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(clientId);
+        return newSet;
+      });
+    }
+  };
+
+  const handleToggleShare = async (clientId: number, currentlyShared: boolean) => {
+    try {
+      setAssigningClients((prev) => new Set(prev).add(clientId));
+      setError(null);
+
+      const response = await fetch('/api/therapist/documents/assign', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          documentId: document.id,
+          clientId,
+          shareWithClient: !currentlyShared,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update sharing status');
+      }
+
+      onAssignmentUpdate();
+      toast.success(
+        currentlyShared
+          ? 'Document is no longer shared with client'
+          : 'Document is now shared with client',
+      );
+    } catch (err) {
+      console.error('Error toggling document share:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update sharing status');
+    } finally {
+      setAssigningClients((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(clientId);
+        return newSet;
+      });
+    }
+  };
+
+  return { handleAssignClient, handleUnassignClient, handleToggleShare };
 };
 
 export function ClientAssignmentModal({
@@ -267,78 +405,12 @@ export function ClientAssignmentModal({
     }
   }, [isOpen]);
 
-  const handleAssignClient = async (clientId: number, shareWithClient: boolean = false) => {
-    try {
-      setAssigningClients((prev) => new Set(prev).add(clientId));
-      setError(null);
-
-      const response = await fetch('/api/therapist/documents/assign', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          documentId: document.id,
-          clientId,
-          shareWithClient,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to assign document');
-      }
-
-      onAssignmentUpdate();
-    } catch (err) {
-      console.error('Error assigning document:', err);
-      setError(err instanceof Error ? err.message : 'Failed to assign document');
-    } finally {
-      setAssigningClients((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(clientId);
-        return newSet;
-      });
-    }
-  };
-
-  const handleUnassignClient = async (clientId: number) => {
-    try {
-      setAssigningClients((prev) => new Set(prev).add(clientId));
-      setError(null);
-
-      const response = await fetch('/api/therapist/documents/assign', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          documentId: document.id,
-          clientId,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to remove assignment');
-      }
-
-      onAssignmentUpdate();
-    } catch (err) {
-      console.error('Error removing assignment:', err);
-      setError(err instanceof Error ? err.message : 'Failed to remove assignment');
-    } finally {
-      setAssigningClients((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(clientId);
-        return newSet;
-      });
-    }
-  };
-
-  const handleToggleShare = async (clientId: number, currentlyShared: boolean) => {
-    await handleAssignClient(clientId, !currentlyShared);
-  };
+  const { handleAssignClient, handleUnassignClient, handleToggleShare } = useDocumentAssignment(
+    document,
+    onAssignmentUpdate,
+    setAssigningClients,
+    setError,
+  );
 
   if (!isOpen) return null;
 
@@ -397,9 +469,11 @@ export function ClientAssignmentModal({
             searchTerm={searchTerm}
             document={document}
             assigningClients={assigningClients}
-            onAssign={(clientId) => handleAssignClient(clientId, false)}
-            onUnassign={handleUnassignClient}
-            onToggleShare={handleToggleShare}
+            onAssign={(clientId) => handleAssignClient(clientId)}
+            onUnassign={(clientId) => handleUnassignClient(clientId)}
+            onToggleShare={(clientId, currentlyShared) =>
+              handleToggleShare(clientId, currentlyShared)
+            }
             onClearSearch={() => setSearchTerm('')}
           />
         </div>

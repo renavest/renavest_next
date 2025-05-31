@@ -170,7 +170,7 @@ export default [
 
   // Exception for database schema file
   {
-    files: ['**/db/schema.ts'],
+    files: ['**/db/schema.ts', '**/api/webhooks/clerk/handlers.ts'],
     rules: {
       'max-lines': ['error', { max: 800, skipBlankLines: true, skipComments: true }],
     },

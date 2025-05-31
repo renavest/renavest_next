@@ -34,6 +34,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     }
     const isInternal = user && user.email && user.email.endsWith('@renavest.com');
     if (isDev || isInternal) return;
+
     if (!posthog.__initialized) {
       posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
         api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
@@ -50,18 +51,30 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       });
       posthog.__initialized = true;
     }
+
     // Register super properties
     posthog.register({ app_version: process.env.NEXT_PUBLIC_APP_VERSION });
+
     // Identify user if available
     if (user && user.id) {
       posthog.identify(user.id, {
-        role: user.role,
-        email: user.email,
-        email_domain: user.email?.split('@')[1],
+        $set: {
+          role: user.role,
+          email: user.email,
+          email_domain: user.email?.split('@')[1],
+          last_seen: new Date().toISOString(),
+        },
+        $set_once: {
+          first_seen: new Date().toISOString(),
+        },
       });
+
       // Group analytics for company
       if (user.companyId) {
-        posthog.group('company', user.companyId, { name: user.companyName });
+        posthog.group('company', user.companyId, {
+          name: user.companyName,
+          last_active: new Date().toISOString(),
+        });
       }
     }
   }, []);

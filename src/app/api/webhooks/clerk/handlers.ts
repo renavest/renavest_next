@@ -13,6 +13,11 @@ import {
   userOnboarding,
 } from '@/src/db/schema';
 import type { users as usersTable } from '@/src/db/schema';
+import {
+  trackUserCreatedServerSide,
+  trackUserUpdatedServerSide,
+  trackUserActivityServerSide,
+} from '@/src/features/posthog/authTrackingServer';
 import { getOrCreateStripeCustomer } from '@/src/features/stripe';
 import { createDate } from '@/src/utils/timezone';
 
@@ -77,7 +82,11 @@ function safelyParseDate(timestamp: string | number | null, fallbackDate: Date):
  * Handles the creation of a new user in the database.
  */
 async function createUser(
-  tx: PgTransaction<any, any, any>,
+  tx: PgTransaction<
+    NodePgQueryResultHKT,
+    Record<string, never>,
+    ExtractTablesWithRelations<Record<string, never>>
+  >,
   data: WebhookUserData,
   primaryEmail: string,
   now: Date,
@@ -417,6 +426,24 @@ export async function handleUserCreateOrUpdate(
         finalRole: finalUser.role,
         email: finalUser.email,
       });
+
+      // Track authentication events in PostHog
+      if (eventType === 'user.created') {
+        await trackUserCreatedServerSide(finalUser.clerkId, finalUser.email, finalUser.role, {
+          signup_method: 'email_password',
+          onboarding_completed: !!unsafeMetadata,
+        });
+      } else if (eventType === 'user.updated') {
+        await trackUserUpdatedServerSide(
+          finalUser.clerkId,
+          finalUser.email,
+          finalUser.role,
+          [], // changedFields - empty array since we don't track specific field changes
+          {
+            update_source: 'webhook',
+          },
+        );
+      }
     });
 
     // Create Stripe customer for new users (outside transaction to avoid blocking)

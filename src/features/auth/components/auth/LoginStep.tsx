@@ -3,7 +3,15 @@
 'use client';
 
 import { useClerk, useUser, useSignIn } from '@clerk/nextjs';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
+import {
+  trackAuthPageView,
+  trackLoginAttempt,
+  trackLoginSuccess,
+  trackLoginError,
+  identifyAuthenticatedUser,
+} from '@/src/features/auth/utils/authTracking';
 
 import {
   email,
@@ -154,6 +162,11 @@ export function LoginStep() {
   const { setActive } = useClerk();
   const { redirectToRole } = useRoleBasedRedirect();
 
+  // Track page view on component mount
+  useEffect(() => {
+    trackAuthPageView('login');
+  }, []);
+
   const onLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     authErrorSignal.value = null;
@@ -170,6 +183,12 @@ export function LoginStep() {
     }
 
     setIsLoading(true);
+
+    // Track login attempt
+    trackLoginAttempt('email_password', {
+      email_domain: email.value.split('@')[1],
+    });
+
     try {
       if (signIn) {
         const result = await signIn.create({
@@ -181,11 +200,34 @@ export function LoginStep() {
           await setActive({ session: result.createdSessionId });
 
           if (user) {
+            // Track successful login
+            trackLoginSuccess(
+              'email_password',
+              (user.publicMetadata?.role as string) || 'unknown',
+              {
+                email_domain: email.value.split('@')[1],
+              },
+            );
+
+            // Identify user in PostHog
+            identifyAuthenticatedUser(
+              user.id,
+              user.emailAddresses[0]?.emailAddress || email.value,
+              (user.publicMetadata?.role as string) || 'unknown',
+              user.publicMetadata?.companyId as string,
+              user.publicMetadata?.companyName as string,
+            );
+
             redirectToRole(user);
           }
         }
       }
     } catch (error) {
+      // Track login error
+      trackLoginError('email_password', error, {
+        email_domain: email.value.split('@')[1],
+      });
+
       // More detailed error handling
       if (error instanceof Error) {
         authErrorSignal.value = error.message || 'Login failed. Please try again.';
