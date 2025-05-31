@@ -26,6 +26,12 @@ import {
   selectedSponsoredGroup,
 } from '../../state/authState';
 import { OnboardingStep } from '../../types';
+import {
+  trackAuthPageView,
+  trackSignupAttempt,
+  trackSignupSuccess,
+  trackSignupError,
+} from '../../utils/authTracking';
 import { checkEmailEligibility } from '../../utils/emailEligibilityUtil';
 import { setOnboardingData } from '../../utils/onboardingStorage';
 import { getRouteForRole } from '../../utils/routerUtil';
@@ -244,6 +250,11 @@ export function SignupStep() {
   const { user, isLoaded: userLoaded } = useUser();
   const router = useRouter();
 
+  // Track page view on component mount
+  React.useEffect(() => {
+    trackAuthPageView('signup');
+  }, []);
+
   // CRITICAL: Prevent authenticated users from accessing signup
   // This prevents role changes after initial signup
   React.useEffect(() => {
@@ -289,6 +300,14 @@ export function SignupStep() {
 
     // Store onboarding data in localStorage
     const onboardingData = getOnboardingDataFromSignals();
+
+    // Track signup attempt
+    trackSignupAttempt(selectedRole.value || 'unknown', 'email_password', {
+      email_domain: email.value.split('@')[1],
+      has_onboarding_data: Object.keys(onboardingData).length > 0,
+      sponsored_group: selectedSponsoredGroup.value,
+    });
+
     try {
       const error = validateSignupForm();
       if (error) {
@@ -328,7 +347,15 @@ export function SignupStep() {
           sponsoredGroupName: selectedSponsoredGroup.value,
         },
       });
+
       if (result.status === 'complete' || result.status === 'missing_requirements') {
+        // Track successful signup
+        trackSignupSuccess(selectedRole.value || 'unknown', 'email_password', {
+          email_domain: email.value.split('@')[1],
+          verification_required: result.status === 'missing_requirements',
+          sponsored_group: selectedSponsoredGroup.value,
+        });
+
         verificationEmailAddress.value = email.value;
         signUp.prepareVerification({ strategy: 'email_code' });
         currentStep.value = OnboardingStep.EMAIL_VERIFICATION;
@@ -336,7 +363,14 @@ export function SignupStep() {
         authErrorSignal.value = 'Signup requires further verification.';
       }
     } catch (err: unknown) {
-      authErrorSignal.value = handleSignupError(err);
+      const errorMessage = handleSignupError(err);
+      authErrorSignal.value = errorMessage;
+
+      // Track signup error
+      trackSignupError(selectedRole.value || 'unknown', err, 'email_password', {
+        email_domain: email.value.split('@')[1],
+        sponsored_group: selectedSponsoredGroup.value,
+      });
     } finally {
       isSignupLoading.value = false; // Always reset loading state
     }

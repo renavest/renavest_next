@@ -1,10 +1,13 @@
 'use client';
 
+import { useEffect } from 'react';
+
 import { cn } from '@/src/lib/utils';
 import type { UserRole } from '@/src/shared/types';
 
 import { selectedRole, currentStep } from '../../state/authState';
 import { OnboardingStep } from '../../types';
+import { trackAuthPageView, trackSignupStepComplete } from '../../utils/authTracking';
 
 const ROLE_OPTIONS = [
   {
@@ -25,8 +28,18 @@ const ROLE_OPTIONS = [
 ];
 
 export function RoleSelectionStep() {
+  // Track page view on component mount
+  useEffect(() => {
+    trackAuthPageView('role_selection');
+  }, []);
+
   const onRoleSelect = (role: UserRole) => {
     selectedRole.value = role;
+
+    // Track role selection
+    trackSignupStepComplete('role_selection', 1, {
+      selected_role: role,
+    });
   };
   const onContinue = () => {
     if (selectedRole.value === 'employee') {
