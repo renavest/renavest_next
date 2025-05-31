@@ -1,28 +1,14 @@
-export type Client = {
-  id: string;
-  firstName: string;
-  lastName?: string;
-  email: string;
-};
+// Re-export all types from organized files
+export * from './client';
+export * from './session';
+export * from './availability';
+export * from './dashboard';
+export * from './profile';
 
-export type UpcomingSession = {
-  id: string;
-  clientId: string;
-  clientName?: string;
-  sessionDate: string;
-  sessionStartTime: string;
-  status: 'scheduled' | 'completed' | 'cancelled' | 'rescheduled';
-  googleMeetLink?: string;
-  therapistTimezone?: string;
-  clientTimezone?: string;
-};
+// Import specific types for use in interfaces below
+import type { ClientNoteContent, NoteCategory } from './client';
 
-export type TherapistStatistics = {
-  totalSessions: number;
-  totalClients: number;
-  completedSessions: number;
-};
-
+// Additional dashboard-specific types that don't fit in other categories
 export interface ClientMetrics {
   totalClients: number;
   activeClients: number;
@@ -42,53 +28,6 @@ export interface EarningsMetrics {
   previousMonthEarnings: number;
   projectedEarnings: number;
   pendingPayouts: number;
-}
-
-// Re-export profile types
-export * from './profile';
-
-// Notes and Documentation Types - Flexible structure that works with existing DB schema
-export type NoteCategory = 'session' | 'intake' | 'progress' | 'crisis' | 'general' | 'discharge';
-
-// Extending the existing schema's content type to be more flexible
-export interface ClientNoteContent {
-  // Original schema fields (maintained for compatibility)
-  keyObservations?: string[];
-  progressNotes?: string[];
-  actionItems?: string[];
-  emotionalState?: string;
-  additionalContext?: string;
-
-  // Extended fields for flexibility - therapists can use any combination
-  category?: NoteCategory;
-  tags?: string[];
-
-  // Structured sections (optional - therapists can choose what to use)
-  clinicalAssessment?: string;
-  treatmentPlan?: string;
-  riskAssessment?: string;
-  progressTracking?: string;
-  financialHistory?: string;
-  sessionObjectives?: string[];
-  interventionsUsed?: string[];
-  clientResponse?: string;
-  homeworkAssigned?: string[];
-  followUpNeeded?: string[];
-
-  // Completely flexible field for any custom content
-  customSections?: Record<string, unknown>;
-}
-
-export interface ClientNote {
-  id: number;
-  userId: number;
-  therapistId: number;
-  sessionId?: number;
-  title: string;
-  content: ClientNoteContent;
-  isConfidential: boolean;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface CreateNoteRequest {

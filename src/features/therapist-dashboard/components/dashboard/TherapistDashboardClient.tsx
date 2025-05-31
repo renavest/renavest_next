@@ -9,11 +9,11 @@ import {
   trackTherapistClientManagement,
   trackTherapistSessions,
 } from '@/src/features/posthog/therapistTracking';
-import { AddNewClientSection } from '@/src/features/therapist-dashboard/components/AddNewClientSection';
-import { ClientNotesSection } from '@/src/features/therapist-dashboard/components/ClientNotesSection';
-import TherapistNavbar from '@/src/features/therapist-dashboard/components/TherapistNavbar';
-import { TherapistStatisticsCard } from '@/src/features/therapist-dashboard/components/TherapistStatisticsCard';
-import { UpcomingSessionsCard } from '@/src/features/therapist-dashboard/components/UpcomingSessionsCard';
+import { AddNewClientSection } from '@/src/features/therapist-dashboard/components/clients/AddNewClientSection';
+import { ClientNotesSection } from '@/src/features/therapist-dashboard/components/clients/ClientNotesSection';
+import { TherapistStatisticsCard } from '@/src/features/therapist-dashboard/components/dashboard/TherapistStatisticsCard';
+import TherapistNavbar from '@/src/features/therapist-dashboard/components/navigation/TherapistNavbar';
+import { UpcomingSessionsCard } from '@/src/features/therapist-dashboard/components/sessions/UpcomingSessionsCard';
 import {
   therapistIdSignal,
   therapistPageLoadedSignal,
