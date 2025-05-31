@@ -1,12 +1,13 @@
-import { Clock, Plus, Trash2, Save } from 'lucide-react';
+import { Clock, Plus, Trash2, Save, Check, X } from 'lucide-react';
 
 import {
   workingHoursSignal,
-  showAddWorkingHoursSignal,
-  newWorkingHoursSignal,
+  editingWorkingHoursSignal,
   savingWorkingHoursSignal,
+  addWorkingHour,
+  updateWorkingHour,
+  removeWorkingHour,
   saveWorkingHours,
-  removeWorkingHours,
 } from '../../../state/availabilityState';
 
 interface WorkingHoursViewProps {

@@ -204,9 +204,9 @@ const ClientOverviewTab = ({
   return (
     <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
       <div className='space-y-6'>
-        <div className='bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200'>
-          <h4 className='text-lg font-semibold text-blue-900 mb-3'>Client Information</h4>
-          <div className='space-y-3 text-blue-800'>
+        <div className='bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200'>
+          <h4 className='text-lg font-semibold text-purple-900 mb-3'>Client Information</h4>
+          <div className='space-y-3 text-purple-800'>
             <p>
               <span className='font-medium'>Name:</span> {client.firstName} {client.lastName}
             </p>
@@ -219,9 +219,9 @@ const ClientOverviewTab = ({
           </div>
         </div>
 
-        <div className='bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-6 border border-green-200'>
-          <h4 className='text-lg font-semibold text-green-900 mb-3'>Recent Activity</h4>
-          <p className='text-green-800'>Last session: Coming soon</p>
+        <div className='bg-gradient-to-r from-purple-50/70 to-purple-100/70 rounded-xl p-6 border border-purple-200/70'>
+          <h4 className='text-lg font-semibold text-purple-900 mb-3'>Recent Activity</h4>
+          <p className='text-purple-800'>Last session: Coming soon</p>
         </div>
       </div>
 

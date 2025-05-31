@@ -68,14 +68,14 @@ const ClientRow = ({
             <p className='font-medium text-gray-800'>{client.fullName}</p>
             <p className='text-sm text-gray-500'>{client.email}</p>
             {isAssigned && assignment && (
-              <div className='flex items-center gap-2 mt-1'>
-                <span className='text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full border border-purple-200 flex items-center gap-1'>
-                  <div className='w-1.5 h-1.5 bg-purple-500 rounded-full'></div>
+              <div className='flex flex-col gap-1 mt-1'>
+                <span className='text-xs px-2 py-0.5 bg-purple-50 text-purple-700 rounded-full border border-purple-100 flex items-center gap-1 w-fit'>
+                  <div className='w-1 h-1 bg-purple-500 rounded-full'></div>
                   Assigned {new Date(assignment.assignedAt).toLocaleDateString()}
                 </span>
                 {isShared && (
-                  <span className='text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full border border-green-200 flex items-center gap-1'>
-                    <div className='w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse'></div>
+                  <span className='text-xs px-2 py-0.5 bg-purple-100 text-purple-800 rounded-full border border-purple-200 flex items-center gap-1 w-fit'>
+                    <div className='w-1 h-1 bg-purple-600 rounded-full animate-pulse'></div>
                     Shared with client
                   </span>
                 )}
@@ -90,22 +90,22 @@ const ClientRow = ({
               <button
                 onClick={() => onToggleShare(client.id, isShared)}
                 disabled={isProcessing}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                   isShared
-                    ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-300 shadow-sm'
-                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-300 hover:shadow-sm'
+                    ? 'bg-purple-100 text-purple-700 hover:bg-purple-200 border border-purple-200'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
                 } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 <div className='flex items-center gap-1'>
                   {isShared ? (
                     <>
-                      <div className='w-2 h-2 bg-green-500 rounded-full animate-pulse'></div>
-                      <Eye className='w-4 h-4' />
+                      <div className='w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse'></div>
+                      <Eye className='w-3 h-3' />
                       Visible to Client
                     </>
                   ) : (
                     <>
-                      <Eye className='w-4 h-4' />
+                      <Eye className='w-3 h-3' />
                       Share with Client
                     </>
                   )}
@@ -115,16 +115,16 @@ const ClientRow = ({
               <button
                 onClick={() => onUnassign(client.id)}
                 disabled={isProcessing}
-                className='px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium border border-red-200 hover:border-red-300'
+                className='px-3 py-1.5 bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-700 rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium border border-gray-200'
               >
                 {isProcessing ? (
-                  <div className='flex items-center gap-2'>
-                    <div className='w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin'></div>
+                  <div className='flex items-center gap-1'>
+                    <div className='w-3 h-3 border border-gray-600 border-t-transparent rounded-full animate-spin'></div>
                     Removing...
                   </div>
                 ) : (
                   <div className='flex items-center gap-1'>
-                    <X className='w-4 h-4' />
+                    <X className='w-3 h-3' />
                     Remove from File
                   </div>
                 )}
@@ -134,7 +134,7 @@ const ClientRow = ({
             <button
               onClick={() => onAssign(client.id)}
               disabled={isProcessing}
-              className='px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium border border-purple-600 hover:shadow-md'
+              className='px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium shadow-sm hover:shadow-md'
             >
               {isProcessing ? (
                 <div className='flex items-center gap-2'>
