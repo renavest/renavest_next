@@ -254,7 +254,7 @@ const ClientManagementSection = ({
               className='inline-flex items-center gap-2 px-4 py-2 bg-[#9071FF] text-white rounded-lg hover:bg-[#7c5ce8] transition-all duration-200 text-sm font-medium'
             >
               <Plus className='w-4 h-4' />
-              Add Client
+              Invite Client
             </button>
           </div>
         </div>
