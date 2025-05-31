@@ -1,5 +1,6 @@
 'use client';
 import { Award } from 'lucide-react';
+import Image from 'next/image';
 import React from 'react';
 
 import { cn } from '@/src/lib/utils';
@@ -17,6 +18,7 @@ import {
 
 interface AdvisorCardProps {
   advisor: Advisor;
+  priority: boolean;
 }
 
 const useImageLoadState = (advisorId: string) => {
@@ -79,7 +81,7 @@ const renderExpertiseTags = (expertiseTags: string[]) => {
   );
 };
 
-const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor }) => {
+const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor, priority }) => {
   const { imageLoadState, handleImageLoad, handleImageError } = useImageLoadState(advisor.id);
 
   // Limit expertise tags and add ellipsis if more exist
@@ -109,13 +111,14 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor }) => {
         )}
 
         {/* Main image */}
-        <img
+        <Image
           src={
             imageLoadState.hasError ? '/experts/placeholderexp.png' : (advisor.profileUrl as string)
           }
           alt={advisor.name}
+          fill
           className={cn(
-            'h-full w-full rounded-2xl object-cover object-center transition-all duration-500',
+            'rounded-2xl object-cover object-center transition-all duration-500',
             'group-hover:scale-110',
             // Smooth opacity transition based on loading state
             imageLoadState.isLoaded ? 'opacity-100' : 'opacity-0',
@@ -123,12 +126,14 @@ const AdvisorCard: React.FC<AdvisorCardProps> = ({ advisor }) => {
             'bg-gray-100',
             'overflow-hidden',
           )}
+          sizes='(max-width: 640px) 280px, (max-width: 768px) 320px, (max-width: 1024px) 280px, 320px'
           onLoad={handleImageLoad}
           onError={handleImageError}
-          loading='lazy'
+          placeholder='blur'
+          blurDataURL='data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=='
+          quality={85}
+          priority={priority}
           style={{
-            // Prevent any default browser styling that might cause flashing
-            imageRendering: 'auto',
             backgroundColor: '#f3f4f6', // gray-100 fallback
           }}
         />
@@ -181,8 +186,12 @@ const AdvisorGrid: React.FC<{ advisors: Advisor[] }> = ({ advisors }) => {
     <OnboardingModalServerWrapper>
       <div className='max-w-7xl mx-auto px-3 sm:px-6 lg:px-8'>
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8'>
-          {advisors.map((advisor) => (
-            <AdvisorCard key={advisor.id} advisor={advisor} />
+          {advisors.map((advisor, index) => (
+            <AdvisorCard
+              key={advisor.id}
+              advisor={advisor}
+              priority={index < 3} // Priority load first 3 images
+            />
           ))}
         </div>
 
