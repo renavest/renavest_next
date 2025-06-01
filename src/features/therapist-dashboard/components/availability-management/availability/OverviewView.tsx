@@ -16,7 +16,7 @@ interface OverviewViewProps {
   therapistId: number;
 }
 
-export function OverviewView({ therapistId }: OverviewViewProps) {
+export function OverviewView({ therapistId: _therapistId }: OverviewViewProps) {
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   const renderCalendarDay = (day: DateTime) => {
