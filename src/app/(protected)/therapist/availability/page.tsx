@@ -4,8 +4,8 @@ import { redirect } from 'next/navigation';
 
 import { db } from '@/src/db';
 import { users, therapists } from '@/src/db/schema';
-import TherapistNavbar from '@/src/features/therapist-dashboard/components/navigation/TherapistNavbar';
 import { AvailabilityManagement } from '@/src/features/therapist-dashboard/components/availability-management/AvailabilityManagement';
+import TherapistNavbar from '@/src/features/therapist-dashboard/components/navigation/TherapistNavbar';
 
 export const metadata = {
   title: 'Availability Management - Renavest',

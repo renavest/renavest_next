@@ -1,6 +1,6 @@
 'use client';
-import { useState } from 'react';
 import { X, Save, Lock, Tag } from 'lucide-react';
+import { useState } from 'react';
 
 import {
   ClientNoteContent,

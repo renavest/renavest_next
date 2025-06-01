@@ -12,7 +12,11 @@ import {
   slotsForSelectedDateSignal,
 } from '../../../state/availabilityState';
 
-export function OverviewView() {
+interface OverviewViewProps {
+  therapistId: number;
+}
+
+export function OverviewView({ therapistId }: OverviewViewProps) {
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   const renderCalendarDay = (day: DateTime) => {

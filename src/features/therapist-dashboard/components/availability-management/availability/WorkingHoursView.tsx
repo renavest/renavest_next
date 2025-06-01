@@ -9,6 +9,7 @@ import {
   removeWorkingHour,
   saveWorkingHours,
 } from '../../../state/availabilityState';
+import type { WorkingHours } from '../../../types/availability';
 
 interface WorkingHoursViewProps {
   therapistId: number;

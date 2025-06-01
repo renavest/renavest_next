@@ -15,6 +15,7 @@ import {
 import { useEffect, useState, useMemo } from 'react';
 
 import { trackTherapistClientManagement } from '@/src/features/posthog/therapistTracking';
+
 import { ClientNote, NoteCategory, Client, CreateNoteRequest } from '../../types';
 import { exportClientNotes } from '../../utils/notesExport';
 
