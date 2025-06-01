@@ -1,4 +1,11 @@
 import { useEffect, useCallback } from 'react';
+
+import {
+  trackTherapistDashboard,
+  trackTherapistClientManagement,
+  trackTherapistSessions,
+} from '@/src/features/posthog/therapistTracking';
+
 import {
   therapistIdSignal,
   therapistPageLoadedSignal,
@@ -6,11 +13,6 @@ import {
   upcomingSessionsSignal,
   statisticsSignal,
 } from '../state/therapistDashboardState';
-import {
-  trackTherapistDashboard,
-  trackTherapistClientManagement,
-  trackTherapistSessions,
-} from '@/src/features/posthog/therapistTracking';
 
 export function useTherapistDashboard(initialTherapistId?: number) {
   // Initialize therapist ID from props

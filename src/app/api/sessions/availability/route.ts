@@ -25,6 +25,7 @@ const GetAvailabilitySchema = z.object({
   startDate: z.string(),
   endDate: z.string(),
   timezone: z.string(), // Client's timezone
+  view: z.string(),
 });
 
 // Type for time slots throughout the application
@@ -47,6 +48,7 @@ export async function GET(req: NextRequest) {
       startDate: searchParams.get('startDate'),
       endDate: searchParams.get('endDate'),
       timezone: searchParams.get('timezone') || 'UTC',
+      view: searchParams.get('view') || 'client',
     });
 
     const therapistId = parseInt(validatedData.therapistId);
@@ -214,6 +216,7 @@ export async function GET(req: NextRequest) {
         createDate(validatedData.endDate, 'UTC').toJSDate(),
         therapistTimezone,
         validatedData.timezone,
+        validatedData.view,
       );
 
       console.log(
@@ -292,13 +295,16 @@ function processAvailability(
   endDate: Date,
   therapistTimezone: string,
   clientTimezone: string,
+  view: string,
 ) {
   const availableSlots: TimeSlot[] = [];
   const slotDuration = 60; // minutes
   let currentDate = createDate(startDate, therapistTimezone);
 
   while (currentDate.toJSDate() <= endDate) {
-    const dayOfWeek = currentDate.weekday % 7; // Convert Luxon weekday to JS day of week
+    // Luxon weekday: Monday=1, Tuesday=2, ..., Sunday=7
+    // Database stores: Monday=1, Tuesday=2, ..., Sunday=7 (same as Luxon)
+    const dayOfWeek = currentDate.weekday;
     const workingHoursForDay = workingHours?.hours.find((h) => h.daysOfWeek.includes(dayOfWeek));
 
     if (workingHoursForDay) {
@@ -336,18 +342,31 @@ function processAvailability(
           );
 
         if (!isSlotBusy) {
-          // Convert slot times to client's timezone
-          const clientSlotStartDateTime = createDate(slotStart, therapistTimezone).setZone(
-            clientTimezone,
-          );
-          const clientSlotEndDateTime = createDate(slotEnd, therapistTimezone).setZone(
-            clientTimezone,
-          );
+          // For therapist dashboard, show times in therapist's timezone
+          // For client booking, convert to client's timezone
+          if (view === 'therapist') {
+            // Keep in therapist timezone for therapist dashboard
+            const therapistSlotStartDateTime = createDate(slotStart, therapistTimezone);
+            const therapistSlotEndDateTime = createDate(slotEnd, therapistTimezone);
 
-          availableSlots.push({
-            start: clientSlotStartDateTime.toISO() || '',
-            end: clientSlotEndDateTime.toISO() || '',
-          });
+            availableSlots.push({
+              start: therapistSlotStartDateTime.toISO() || '',
+              end: therapistSlotEndDateTime.toISO() || '',
+            });
+          } else {
+            // Convert to client timezone for booking interface
+            const clientSlotStartDateTime = createDate(slotStart, therapistTimezone).setZone(
+              clientTimezone,
+            );
+            const clientSlotEndDateTime = createDate(slotEnd, therapistTimezone).setZone(
+              clientTimezone,
+            );
+
+            availableSlots.push({
+              start: clientSlotStartDateTime.toISO() || '',
+              end: clientSlotEndDateTime.toISO() || '',
+            });
+          }
         }
 
         slotStart = slotEnd;

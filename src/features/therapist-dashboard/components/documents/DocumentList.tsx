@@ -22,6 +22,7 @@ import {
   DOCUMENT_CATEGORIES,
   FILE_TYPE_LABELS,
 } from '../../types/documents';
+
 import { ClientAssignmentModal } from './ClientAssignmentModal';
 
 interface DocumentListProps {
