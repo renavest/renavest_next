@@ -7,6 +7,7 @@ import {
   availabilityStatsSignal,
   availableDatesSignal,
   slotsForSelectedDateSignal,
+  therapistTimezoneSignal,
 } from '../../../state/availabilityState';
 
 interface OverviewViewProps {
@@ -182,7 +183,14 @@ export function OverviewView({ therapistId: _therapistId }: OverviewViewProps) {
 
           {slotsForSelectedDateSignal.value.length > 0 ? (
             <div className='space-y-2'>
-              <h4 className='text-sm font-medium text-gray-600 mb-2'>Available Times</h4>
+              <div className='flex items-center justify-between mb-3'>
+                <h4 className='text-sm font-medium text-gray-600'>Available Times</h4>
+                {therapistTimezoneSignal.value && (
+                  <span className='text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-md'>
+                    {therapistTimezoneSignal.value}
+                  </span>
+                )}
+              </div>
               <div className='grid grid-cols-2 gap-2'>
                 {slotsForSelectedDateSignal.value.map((slot, index) => (
                   <div

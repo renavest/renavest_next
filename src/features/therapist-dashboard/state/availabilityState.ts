@@ -43,6 +43,7 @@ export const viewModeSignal = signal<ViewMode>('overview');
 export const workingHoursSignal = signal<WorkingHours[]>([]);
 export const blockedTimesSignal = signal<BlockedTime[]>([]);
 export const availableSlotsSignal = signal<TimeSlot[]>([]);
+export const therapistTimezoneSignal = signal<string>('');
 
 // Loading state signals
 export const loadingSignal = signal(true);
@@ -181,7 +182,7 @@ export const fetchAvailability = async (therapistId: number) => {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     const response = await fetch(
-      `/api/sessions/availability?therapistId=${therapistId}&startDate=${startDate.toISO()}&endDate=${endDate.toISO()}&timezone=${timezone}`,
+      `/api/sessions/availability?therapistId=${therapistId}&startDate=${startDate.toISO()}&endDate=${endDate.toISO()}&timezone=${timezone}&view=therapist`,
     );
     const data = await response.json();
 
@@ -190,6 +191,7 @@ export const fetchAvailability = async (therapistId: number) => {
     }
 
     availableSlotsSignal.value = data.slots || [];
+    therapistTimezoneSignal.value = data.therapistTimezone || timezone;
   } catch (error) {
     console.error('Error fetching availability:', error);
   }
