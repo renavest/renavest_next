@@ -1,12 +1,9 @@
-import { Calendar, Clock, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
+import { Calendar, Clock, TrendingUp } from 'lucide-react';
 import { DateTime } from 'luxon';
 
 import {
-  workingHoursSignal,
-  blockedTimesSignal,
   currentMonthSignal,
   selectedDateSignal,
-  viewModeSignal,
   availabilityStatsSignal,
   availableDatesSignal,
   slotsForSelectedDateSignal,

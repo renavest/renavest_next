@@ -1,4 +1,4 @@
-import { Heart, TrendingUp, Users, Target, AlertTriangle, Lightbulb } from 'lucide-react';
+import { Heart, TrendingUp, Users, Target, AlertTriangle } from 'lucide-react';
 
 // Enhanced financial stress insights with more emotional appeal
 const financialStressInsights = [
@@ -105,29 +105,25 @@ export default function EmployeeInsightsCard() {
 
           <div className='border-t border-gray-200 pt-4'>
             <div className='flex items-center gap-2 mb-2'>
-              <Lightbulb className='w-4 h-4 text-green-600' />
               <p className='text-xs text-gray-500 font-medium'>RECOMMENDED ACTION</p>
             </div>
-            <p className='text-sm font-semibold text-green-700 mb-3'>{insight.action}</p>
-            <button className='w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:shadow-lg transition-all duration-200 transform hover:scale-105'>
-              Schedule Intervention
-            </button>
+            <p className='text-sm font-semibold text-green-700'>{insight.action}</p>
           </div>
         </div>
 
         {/* Quick stats */}
         <div className='grid grid-cols-3 gap-3 mt-4'>
           <div className='text-center'>
-            <p className='text-lg font-bold text-purple-700'>78%</p>
-            <p className='text-xs text-gray-600'>Stress Reduction</p>
+            <p className='text-lg font-bold text-purple-700'>185</p>
+            <p className='text-xs text-gray-600'>Daily Active Users</p>
           </div>
           <div className='text-center'>
-            <p className='text-lg font-bold text-green-700'>3.2x</p>
-            <p className='text-xs text-gray-600'>ROI on Wellbeing</p>
+            <p className='text-lg font-bold text-green-700'>4.2</p>
+            <p className='text-xs text-gray-600'>Avg Sessions/Employee</p>
           </div>
           <div className='text-center'>
-            <p className='text-lg font-bold text-blue-700'>94%</p>
-            <p className='text-xs text-gray-600'>Would Recommend</p>
+            <p className='text-lg font-bold text-blue-700'>68%</p>
+            <p className='text-xs text-gray-600'>Therapist Utilization</p>
           </div>
         </div>
       </div>

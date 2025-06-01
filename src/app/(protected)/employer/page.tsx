@@ -11,7 +11,6 @@ import EmployerNavbar from '@/src/features/employer-dashboard/components/Employe
 import { EngagementSection } from '@/src/features/employer-dashboard/components/EngagementSection';
 import { ProgramOverviewSection } from '@/src/features/employer-dashboard/components/ProgramOverviewSection';
 import { SessionsSection } from '@/src/features/employer-dashboard/components/SessionsSection';
-import { SponsoredGroupsSection } from '@/src/features/employer-dashboard/components/SponsoredGroupsSection';
 
 export default function EmployerDashboardView() {
   const { user, isLoaded, isSignedIn } = useUser();
@@ -52,10 +51,10 @@ export default function EmployerDashboardView() {
               </div>
               <div>
                 <h1 className='text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-700 to-blue-700 bg-clip-text text-transparent'>
-                  Employee Wellbeing Impact
+                  ERG Wellbeing Program
                 </h1>
                 <p className='text-gray-600 text-lg'>
-                  Transforming lives, one conversation at a time
+                  Supporting your community's mental health needs
                 </p>
               </div>
             </div>
@@ -65,30 +64,30 @@ export default function EmployerDashboardView() {
               <div className='text-center'>
                 <div className='flex items-center justify-center mb-2'>
                   <Sparkles className='w-5 h-5 text-yellow-500 mr-1' />
-                  <span className='text-2xl font-bold text-purple-700'>92%</span>
+                  <span className='text-2xl font-bold text-purple-700'>2,840</span>
                 </div>
-                <p className='text-sm text-gray-600'>Employee Satisfaction</p>
+                <p className='text-sm text-gray-600'>Sessions Completed</p>
               </div>
               <div className='text-center'>
                 <div className='flex items-center justify-center mb-2'>
                   <TrendingUp className='w-5 h-5 text-green-500 mr-1' />
-                  <span className='text-2xl font-bold text-green-700'>35%</span>
+                  <span className='text-2xl font-bold text-green-700'>87%</span>
                 </div>
-                <p className='text-sm text-gray-600'>Stress Reduction</p>
+                <p className='text-sm text-gray-600'>Platform Adoption</p>
               </div>
               <div className='text-center'>
                 <div className='flex items-center justify-center mb-2'>
                   <Users className='w-5 h-5 text-blue-500 mr-1' />
-                  <span className='text-2xl font-bold text-blue-700'>400</span>
+                  <span className='text-2xl font-bold text-blue-700'>650</span>
                 </div>
                 <p className='text-sm text-gray-600'>Active Participants</p>
               </div>
               <div className='text-center'>
                 <div className='flex items-center justify-center mb-2'>
                   <Award className='w-5 h-5 text-purple-500 mr-1' />
-                  <span className='text-2xl font-bold text-purple-700'>89%</span>
+                  <span className='text-2xl font-bold text-purple-700'>28</span>
                 </div>
-                <p className='text-sm text-gray-600'>Would Recommend</p>
+                <p className='text-sm text-gray-600'>Requesting More Credits</p>
               </div>
             </div>
           </div>
@@ -111,24 +110,6 @@ export default function EmployerDashboardView() {
         </div>
 
         <div className='space-y-16'>
-          {/* Sponsored Groups with better visual hierarchy */}
-          <div className='bg-white rounded-2xl shadow-lg border border-gray-100 p-8'>
-            <div className='flex items-center gap-3 mb-6'>
-              <div className='p-2 bg-gradient-to-r from-green-500 to-teal-500 rounded-lg'>
-                <Users className='w-5 h-5 text-white' />
-              </div>
-              <div>
-                <h3 className='text-xl md:text-2xl font-bold text-gray-800'>
-                  Employee Resource Groups
-                </h3>
-                <p className='text-gray-600'>
-                  Supporting diverse communities within your organization
-                </p>
-              </div>
-            </div>
-            <SponsoredGroupsSection />
-          </div>
-
           {/* Charts in a container */}
           <div className='bg-white rounded-2xl shadow-lg border border-gray-100 p-8'>
             <div className='flex items-center gap-3 mb-6'>
@@ -176,14 +157,14 @@ export default function EmployerDashboardView() {
           </div>
         </div>
 
-        {/* Call to Action Footer */}
-        <div className='mt-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-8 text-white text-center'>
-          <h3 className='text-2xl font-bold mb-2'>Ready to Expand Your Program?</h3>
-          <p className='text-purple-100 mb-6'>
-            Connect with our team to scale your employee wellbeing initiative
+        {/* Support Footer */}
+        <div className='mt-16 bg-gray-50 rounded-2xl p-6 text-center border border-gray-200'>
+          <h3 className='text-xl font-semibold text-gray-800 mb-2'>Need Help with Your Program?</h3>
+          <p className='text-gray-600 mb-4'>
+            Our team is here to support your ERG's mental health initiative
           </p>
-          <button className='bg-white text-purple-600 px-8 py-3 rounded-xl font-semibold hover:bg-purple-50 transition-colors'>
-            Schedule a Strategy Call
+          <button className='bg-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors'>
+            Contact Support
           </button>
         </div>
       </main>

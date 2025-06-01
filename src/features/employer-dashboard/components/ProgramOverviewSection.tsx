@@ -54,10 +54,8 @@ export function ProgramOverviewSection() {
               </div>
 
               <div className='bg-white rounded-lg p-3 border border-green-100'>
-                <p className='text-xs text-gray-500 mb-1'>IMPACT HIGHLIGHT</p>
-                <p className='text-sm font-semibold text-gray-700'>
-                  86% report improved work-life balance
-                </p>
+                <p className='text-xs text-gray-500 mb-1'>UTILIZATION TREND</p>
+                <p className='text-sm font-semibold text-gray-700'>+12% growth in monthly usage</p>
               </div>
             </div>
           </div>
