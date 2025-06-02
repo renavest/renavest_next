@@ -35,7 +35,7 @@ function TestimonialCard({
         space... This work is transformational and will absolutely change lives."
       </p>
       <div className='text-center'>
-        <span className='block font-semibold text-gray-900 text-lg'>Essma Litim</span>
+        <span className='block font-semibold text-gray-900 text-lg'>Essmaa Litim</span>
         <span className='text-gray-600'>Renavest User</span>
       </div>
     </div>

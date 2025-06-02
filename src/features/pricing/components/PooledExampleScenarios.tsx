@@ -6,7 +6,8 @@ interface ExampleScenario {
   totalBudget: number;
   sessionsPerEmployee: number;
   includeSubscription: boolean;
-  subscriptionCost: number;
+  subscriptionSubsidyPercentage: number;
+  sessionSubsidyPercentage: number;
   description: string;
   highlights: string[];
 }
@@ -16,7 +17,8 @@ interface PooledExampleScenariosProps {
   setTotalBudget: (value: number) => void;
   setSessionsPerEmployeePerYear: (value: number) => void;
   setIncludeSubscription: (value: boolean) => void;
-  setMonthlySubscriptionCost: (value: number) => void;
+  setSubscriptionSubsidyPercentage: (value: number) => void;
+  setSessionSubsidyPercentage: (value: number) => void;
 }
 
 export default function PooledExampleScenarios({
@@ -24,8 +26,11 @@ export default function PooledExampleScenarios({
   setTotalBudget,
   setSessionsPerEmployeePerYear,
   setIncludeSubscription,
-  setMonthlySubscriptionCost,
+  setSubscriptionSubsidyPercentage,
+  setSessionSubsidyPercentage,
 }: PooledExampleScenariosProps) {
+  const fixedSubscriptionCost = 10;
+
   const exampleScenarios: ExampleScenario[] = [
     {
       title: 'Starter Package',
@@ -33,9 +38,10 @@ export default function PooledExampleScenarios({
       totalBudget: 7500,
       sessionsPerEmployee: 2,
       includeSubscription: false,
-      subscriptionCost: 0,
+      subscriptionSubsidyPercentage: 0,
+      sessionSubsidyPercentage: 50,
       description: 'Perfect for small teams starting their financial wellness journey.',
-      highlights: ['Pay-as-you-go model', 'Free trial included', '2 sessions max per employee'],
+      highlights: ['Pay-as-you-go sessions only', 'Free trial included', '50% session subsidy'],
     },
     {
       title: 'Growth Company',
@@ -43,12 +49,13 @@ export default function PooledExampleScenarios({
       totalBudget: 25000,
       sessionsPerEmployee: 3,
       includeSubscription: true,
-      subscriptionCost: 12,
+      subscriptionSubsidyPercentage: 100,
+      sessionSubsidyPercentage: 75,
       description: 'Comprehensive support for growing teams with ongoing engagement.',
       highlights: [
-        'Session pool + subscription',
+        'Full subscription coverage ($10/month)',
         'Messaging & content access',
-        '3 sessions max per employee',
+        '75% session subsidy',
       ],
     },
     {
@@ -57,12 +64,13 @@ export default function PooledExampleScenarios({
       totalBudget: 100000,
       sessionsPerEmployee: 4,
       includeSubscription: true,
-      subscriptionCost: 15,
+      subscriptionSubsidyPercentage: 100,
+      sessionSubsidyPercentage: 90,
       description: 'Full-scale financial wellness program for large organizations.',
       highlights: [
         'Comprehensive coverage',
-        'Premium subscription features',
-        '4 sessions max per employee',
+        'Premium subscription features ($10/month)',
+        '90% session subsidy',
       ],
     },
   ];
@@ -72,15 +80,16 @@ export default function PooledExampleScenarios({
     setTotalBudget(scenario.totalBudget);
     setSessionsPerEmployeePerYear(scenario.sessionsPerEmployee);
     setIncludeSubscription(scenario.includeSubscription);
-    setMonthlySubscriptionCost(scenario.subscriptionCost);
+    setSubscriptionSubsidyPercentage(scenario.subscriptionSubsidyPercentage);
+    setSessionSubsidyPercentage(scenario.sessionSubsidyPercentage);
   };
 
   return (
     <div className='mt-16'>
       <h2 className='text-3xl font-bold text-center mb-4'>Example Budget Scenarios</h2>
       <p className='text-center text-gray-600 mb-12 max-w-2xl mx-auto'>
-        Explore how different budget allocations and subscription options work for various company
-        sizes. Click any scenario to see the calculations.
+        Explore how different budget allocations and subsidy options work for various company sizes.
+        All scenarios use our fixed $10/month subscription model.
       </p>
 
       <div className='grid md:grid-cols-3 gap-8'>
@@ -101,7 +110,7 @@ export default function PooledExampleScenarios({
                 </span>
               </div>
               <div className='flex justify-between'>
-                <span className='text-sm text-gray-600'>Annual Budget Pool:</span>
+                <span className='text-sm text-gray-600'>Annual Session Pool:</span>
                 <span className='font-medium text-gray-800'>
                   ${scenario.totalBudget.toLocaleString()}
                 </span>
@@ -114,8 +123,14 @@ export default function PooledExampleScenarios({
                 <span className='text-sm text-gray-600'>Subscription:</span>
                 <span className='font-medium text-gray-800'>
                   {scenario.includeSubscription
-                    ? `$${scenario.subscriptionCost}/mo`
+                    ? `${scenario.subscriptionSubsidyPercentage}% covered`
                     : 'Not included'}
+                </span>
+              </div>
+              <div className='flex justify-between'>
+                <span className='text-sm text-gray-600'>Session Subsidy:</span>
+                <span className='font-medium text-gray-800'>
+                  {scenario.sessionSubsidyPercentage}%
                 </span>
               </div>
             </div>
@@ -148,18 +163,18 @@ export default function PooledExampleScenarios({
         <h3 className='text-xl font-semibold text-gray-800 mb-3'>Need a Custom Scenario?</h3>
         <p className='text-gray-600 mb-4 max-w-2xl mx-auto'>
           Every organization is unique. Use the calculator above to model your specific budget,
-          employee count, and subscription preferences. Our pooled session model gives you
-          flexibility to start small and scale up.
+          employee count, and subsidy preferences. Our simple model has one fixed subscription cost
+          ($10/month) and flexible session subsidies.
         </p>
         <div className='flex flex-wrap justify-center gap-4 text-sm text-gray-700'>
           <span className='bg-white px-3 py-1 rounded-full shadow-sm'>
-            💡 Pay only for sessions used
+            💰 Fixed $10/month subscription
           </span>
           <span className='bg-white px-3 py-1 rounded-full shadow-sm'>
-            🎯 Free trial boosts engagement
+            🎯 Pay only for sessions used
           </span>
           <span className='bg-white px-3 py-1 rounded-full shadow-sm'>
-            📈 Flexible budget allocation
+            📈 Flexible subsidy percentages
           </span>
         </div>
       </div>

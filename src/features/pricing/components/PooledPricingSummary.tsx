@@ -10,6 +10,8 @@ interface PooledPricingSummaryProps {
   averageSessionCost: number;
   includeSubscription: boolean;
   monthlySubscriptionCost: number;
+  subscriptionSubsidyPercentage: number;
+  sessionSubsidyPercentage: number;
 }
 
 export default function PooledPricingSummary({
@@ -20,6 +22,8 @@ export default function PooledPricingSummary({
   averageSessionCost,
   includeSubscription,
   monthlySubscriptionCost,
+  subscriptionSubsidyPercentage,
+  sessionSubsidyPercentage,
 }: PooledPricingSummaryProps) {
   // Calculate session pool metrics
   const maxPossibleSessions = employeeCount * sessionsPerEmployeePerYear;
@@ -27,22 +31,29 @@ export default function PooledPricingSummary({
   const sessionCreditsFromBudget = Math.floor(totalBudget / averageSessionCost);
   const budgetUtilization = Math.min((maxSessionBudgetNeeded / totalBudget) * 100, 100);
 
-  // Calculate subscription costs
-  const annualSubscriptionCost = includeSubscription
-    ? employeeCount * monthlySubscriptionCost * 12
+  // Calculate subscription costs (what company actually pays)
+  const companySubscriptionCostPerEmployee = includeSubscription
+    ? (monthlySubscriptionCost * subscriptionSubsidyPercentage) / 100
     : 0;
-  const monthlySubscriptionTotal = includeSubscription
-    ? employeeCount * monthlySubscriptionCost
+  const employeeSubscriptionCostPerEmployee = includeSubscription
+    ? monthlySubscriptionCost - companySubscriptionCostPerEmployee
     : 0;
 
-  // Total costs
-  const totalAnnualCost = totalBudget + annualSubscriptionCost;
-  const totalMonthlyCost = totalBudget / 12 + monthlySubscriptionTotal;
+  const annualCompanySubscriptionCost = companySubscriptionCostPerEmployee * employeeCount * 12;
+  const monthlyCompanySubscriptionTotal = companySubscriptionCostPerEmployee * employeeCount;
+
+  // Calculate session costs (what company subsidizes)
+  const companySessionCostPerSession = (averageSessionCost * sessionSubsidyPercentage) / 100;
+  const employeeSessionCostPerSession = averageSessionCost - companySessionCostPerSession;
+
+  // Total costs (company pays)
+  const totalAnnualCost = totalBudget + annualCompanySubscriptionCost;
+  const totalMonthlyCost = totalBudget / 12 + monthlyCompanySubscriptionTotal;
 
   const currentTotal = billingCycle === 'monthly' ? totalMonthlyCost : totalAnnualCost;
   const currentSessionBudget = billingCycle === 'monthly' ? totalBudget / 12 : totalBudget;
   const currentSubscriptionCost =
-    billingCycle === 'monthly' ? monthlySubscriptionTotal : annualSubscriptionCost;
+    billingCycle === 'monthly' ? monthlyCompanySubscriptionTotal : annualCompanySubscriptionCost;
 
   // Calculate per-employee costs
   const costPerEmployee = employeeCount > 0 ? currentTotal / employeeCount : 0;
@@ -84,6 +95,72 @@ export default function PooledPricingSummary({
               ).toLocaleString()}
             </div>
             <div className='text-sm text-purple-700'>{billingCycle} session credits</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Company vs Employee Cost Breakdown */}
+      <div className='bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200'>
+        <h3 className='text-lg font-semibold text-blue-800 mb-4 text-center'>
+          💰 Cost Sharing Breakdown
+        </h3>
+        <div className='grid md:grid-cols-2 gap-6'>
+          {/* Subscription Costs */}
+          {includeSubscription && (
+            <div className='bg-white rounded-lg p-4 border border-blue-200'>
+              <h4 className='font-semibold text-blue-800 mb-3'>Monthly Subscription</h4>
+              <div className='space-y-2 text-sm'>
+                <div className='flex justify-between'>
+                  <span className='text-gray-600'>Company pays per employee:</span>
+                  <span className='font-bold text-blue-700'>
+                    ${companySubscriptionCostPerEmployee.toFixed(2)}/month
+                  </span>
+                </div>
+                <div className='flex justify-between'>
+                  <span className='text-gray-600'>Employee pays per month:</span>
+                  <span className='font-bold text-gray-700'>
+                    ${employeeSubscriptionCostPerEmployee.toFixed(2)}/month
+                  </span>
+                </div>
+                <div className='border-t pt-2 mt-2'>
+                  <div className='flex justify-between'>
+                    <span className='text-gray-600'>Total company cost:</span>
+                    <span className='font-bold text-blue-700'>
+                      ${currentSubscriptionCost.toLocaleString()}/
+                      {billingCycle === 'monthly' ? 'month' : 'year'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Session Costs */}
+          <div className='bg-white rounded-lg p-4 border border-green-200'>
+            <h4 className='font-semibold text-green-800 mb-3'>Per Session Costs</h4>
+            <div className='space-y-2 text-sm'>
+              <div className='flex justify-between'>
+                <span className='text-gray-600'>Company subsidy per session:</span>
+                <span className='font-bold text-green-700'>
+                  ${companySessionCostPerSession.toFixed(2)} ({sessionSubsidyPercentage}%)
+                </span>
+              </div>
+              <div className='flex justify-between'>
+                <span className='text-gray-600'>Employee pays per session:</span>
+                <span className='font-bold text-gray-700'>
+                  ${employeeSessionCostPerSession.toFixed(2)} ({100 - sessionSubsidyPercentage}%)
+                </span>
+              </div>
+              <div className='border-t pt-2 mt-2'>
+                <div className='flex justify-between'>
+                  <span className='text-gray-600'>Session budget pool:</span>
+                  <span className='font-bold text-green-700'>
+                    ${currentSessionBudget.toLocaleString()}/
+                    {billingCycle === 'monthly' ? 'month' : 'year'}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -134,8 +211,10 @@ export default function PooledPricingSummary({
               <p className='text-indigo-700 font-medium mb-3'>24/7 messaging & content access</p>
               <div className='bg-indigo-50 rounded-lg p-3'>
                 <p className='text-sm text-indigo-700'>
-                  <span className='font-semibold'>${monthlySubscriptionCost}/month</span> per
-                  employee
+                  <span className='font-semibold'>
+                    ${companySubscriptionCostPerEmployee.toFixed(2)}/month
+                  </span>{' '}
+                  per employee (company pays)
                   <span className='block text-xs mt-1'>Ongoing engagement between sessions</span>
                 </p>
               </div>
@@ -181,10 +260,12 @@ export default function PooledPricingSummary({
           </div>
 
           <div className='text-center bg-white rounded-lg p-4 border border-green-200'>
-            <div className='text-3xl font-bold text-blue-600 mb-2'>FREE</div>
-            <div className='text-sm font-medium text-green-800'>Trial + Messaging</div>
+            <div className='text-3xl font-bold text-blue-600 mb-2'>
+              ${employeeSessionCostPerSession.toFixed(0)}
+            </div>
+            <div className='text-sm font-medium text-green-800'>Employee Pays Per Session</div>
             <div className='text-xs text-green-700 mt-1'>
-              Risk-free way to explore financial wellness
+              Affordable access with company subsidy
             </div>
           </div>
 
@@ -214,7 +295,9 @@ export default function PooledPricingSummary({
             </p>
             <p className='text-sm text-yellow-700 mb-3'>
               If everyone used all sessions:{' '}
-              <span className='font-bold'>${maxSessionBudgetNeeded.toLocaleString()}</span>
+              <span className='font-bold'>
+                ${(maxPossibleSessions * companySessionCostPerSession).toLocaleString()}
+              </span>
             </p>
             <div className='w-full bg-yellow-200 rounded-full h-3 mb-2'>
               <div
@@ -223,9 +306,7 @@ export default function PooledPricingSummary({
               />
             </div>
             <p className='text-xs text-yellow-700'>
-              {budgetUtilization > 100
-                ? '✅ Budget covers maximum usage with room to spare'
-                : `Budget efficiency: ${budgetUtilization.toFixed(1)}% if fully utilized`}
+              Budget efficiency: {budgetUtilization.toFixed(1)}% if fully utilized
             </p>
           </div>
 
