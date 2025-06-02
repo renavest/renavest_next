@@ -1,6 +1,6 @@
 'use client';
 
-import { Calculator, CreditCard, Users, TrendingUp } from 'lucide-react';
+import { Calculator, CreditCard, Users, TrendingUp, Heart, Shield } from 'lucide-react';
 
 interface PooledPricingSummaryProps {
   billingCycle: 'monthly' | 'yearly';
@@ -44,162 +44,255 @@ export default function PooledPricingSummary({
   const currentSubscriptionCost =
     billingCycle === 'monthly' ? monthlySubscriptionTotal : annualSubscriptionCost;
 
+  // Calculate per-employee costs
+  const costPerEmployee = employeeCount > 0 ? currentTotal / employeeCount : 0;
+  const sessionBudgetPerEmployee = employeeCount > 0 ? currentSessionBudget / employeeCount : 0;
+
   return (
     <div className='space-y-6'>
-      {/* Total Investment Overview */}
-      <div className='bg-white rounded-xl p-6 shadow-md border border-gray-100'>
-        <div className='flex items-center mb-4'>
-          <Calculator className='w-6 h-6 text-purple-600 mr-3' />
-          <h2 className='text-2xl font-bold text-gray-900'>
-            Your {billingCycle === 'monthly' ? 'Monthly' : 'Annual'} Investment
+      {/* Hero Investment Card */}
+      <div className='bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl p-8 text-center border border-purple-200 shadow-lg'>
+        <div className='flex items-center justify-center mb-4'>
+          <Heart className='w-8 h-8 text-purple-600 mr-3' />
+          <h2 className='text-2xl font-bold text-purple-800'>
+            Your {billingCycle === 'monthly' ? 'Monthly' : 'Annual'} Investment in Employee
+            Wellbeing
           </h2>
+          <Heart className='w-8 h-8 text-purple-600 ml-3' />
         </div>
-        <div className='text-4xl font-bold text-purple-600 mb-2'>
+        <div className='text-5xl font-bold text-purple-600 mb-3'>
           ${currentTotal.toLocaleString(undefined, { maximumFractionDigits: 2 })}
         </div>
-        <p className='text-gray-600'>
-          Total {billingCycle} investment for {employeeCount.toLocaleString()} employees
+        <p className='text-lg text-purple-700 mb-4'>
+          Supporting {employeeCount.toLocaleString()} employees
         </p>
+        <div className='flex justify-center space-x-8'>
+          <div className='text-center'>
+            <div className='text-2xl font-bold text-purple-600'>
+              ${costPerEmployee.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+            </div>
+            <div className='text-sm text-purple-700'>
+              per employee/{billingCycle === 'monthly' ? 'month' : 'year'}
+            </div>
+          </div>
+          <div className='text-center'>
+            <div className='text-2xl font-bold text-purple-600'>
+              {Math.floor(
+                billingCycle === 'monthly'
+                  ? sessionCreditsFromBudget / 12
+                  : sessionCreditsFromBudget,
+              ).toLocaleString()}
+            </div>
+            <div className='text-sm text-purple-700'>{billingCycle} session credits</div>
+          </div>
+        </div>
       </div>
 
-      {/* Budget Breakdown */}
+      {/* Simple Cost Breakdown */}
       <div className='grid md:grid-cols-2 gap-6'>
-        {/* Session Pool */}
-        <div className='bg-blue-50 rounded-xl p-6 border border-blue-200'>
+        {/* Session Credits */}
+        <div className='bg-white rounded-xl p-6 border border-blue-200 shadow-md'>
           <div className='flex items-center mb-4'>
             <CreditCard className='w-6 h-6 text-blue-600 mr-3' />
             <h3 className='text-lg font-semibold text-blue-800'>Session Credit Pool</h3>
           </div>
-          <div className='space-y-3'>
-            <div>
-              <p className='text-2xl font-bold text-blue-600'>
-                ${currentSessionBudget.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-              </p>
-              <p className='text-sm text-blue-700'>
-                {billingCycle === 'monthly' ? 'Monthly' : 'Annual'} session budget
-              </p>
+          <div className='text-center'>
+            <div className='text-3xl font-bold text-blue-600 mb-2'>
+              ${currentSessionBudget.toLocaleString(undefined, { maximumFractionDigits: 2 })}
             </div>
-            <div>
-              <p className='text-lg font-semibold text-blue-600'>
-                {Math.floor(
-                  billingCycle === 'monthly'
-                    ? sessionCreditsFromBudget / 12
-                    : sessionCreditsFromBudget,
-                ).toLocaleString()}{' '}
-                credits
-              </p>
+            <p className='text-blue-700 font-medium mb-3'>
+              {Math.floor(
+                billingCycle === 'monthly'
+                  ? sessionCreditsFromBudget / 12
+                  : sessionCreditsFromBudget,
+              ).toLocaleString()}{' '}
+              session credits available
+            </p>
+            <div className='bg-blue-50 rounded-lg p-3'>
               <p className='text-sm text-blue-700'>
-                Available {billingCycle} session credits ({averageSessionCost}/session)
+                <span className='font-semibold'>${sessionBudgetPerEmployee.toFixed(0)}</span> per
+                employee
+                <span className='block text-xs mt-1'>Only charged when sessions are booked</span>
               </p>
             </div>
           </div>
         </div>
 
-        {/* Subscription Layer */}
-        <div className='bg-indigo-50 rounded-xl p-6 border border-indigo-200'>
+        {/* Subscription Support */}
+        <div className='bg-white rounded-xl p-6 border border-indigo-200 shadow-md'>
           <div className='flex items-center mb-4'>
             <Users className='w-6 h-6 text-indigo-600 mr-3' />
             <h3 className='text-lg font-semibold text-indigo-800'>
-              {includeSubscription ? 'Subscription Layer' : 'Subscription Layer (Optional)'}
+              {includeSubscription ? 'Ongoing Support' : 'Optional: Ongoing Support'}
             </h3>
           </div>
           {includeSubscription ? (
-            <div className='space-y-3'>
-              <div>
-                <p className='text-2xl font-bold text-indigo-600'>
-                  $
-                  {currentSubscriptionCost.toLocaleString(undefined, {
-                    maximumFractionDigits: 2,
-                  })}
-                </p>
-                <p className='text-sm text-indigo-700'>
-                  {billingCycle === 'monthly' ? 'Monthly' : 'Annual'} subscription cost
-                </p>
+            <div className='text-center'>
+              <div className='text-3xl font-bold text-indigo-600 mb-2'>
+                ${currentSubscriptionCost.toLocaleString(undefined, { maximumFractionDigits: 2 })}
               </div>
-              <div>
-                <p className='text-lg font-semibold text-indigo-600'>
-                  ${monthlySubscriptionCost}/employee/month
+              <p className='text-indigo-700 font-medium mb-3'>24/7 messaging & content access</p>
+              <div className='bg-indigo-50 rounded-lg p-3'>
+                <p className='text-sm text-indigo-700'>
+                  <span className='font-semibold'>${monthlySubscriptionCost}/month</span> per
+                  employee
+                  <span className='block text-xs mt-1'>Ongoing engagement between sessions</span>
                 </p>
-                <p className='text-sm text-indigo-700'>Includes messaging, content & onboarding</p>
               </div>
             </div>
           ) : (
-            <div className='space-y-3'>
-              <p className='text-lg text-indigo-700'>Add ongoing support for your employees</p>
-              <ul className='text-sm text-indigo-600 space-y-1'>
-                <li>• Therapist messaging access</li>
-                <li>• Educational content library</li>
-                <li>• Onboarding & engagement tools</li>
-              </ul>
+            <div className='text-center py-8'>
+              <div className='text-2xl font-bold text-gray-400 mb-2'>$0</div>
+              <p className='text-gray-500 mb-4'>Not included</p>
+              <button
+                onClick={() => {
+                  /* This would be handled by parent component */
+                }}
+                className='text-indigo-600 hover:text-indigo-800 font-medium text-sm'
+              >
+                Consider adding for better engagement →
+              </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* Impact Metrics */}
-      <div className='bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-6 border border-green-200'>
-        <div className='flex items-center mb-4'>
-          <TrendingUp className='w-6 h-6 text-green-600 mr-3' />
-          <h3 className='text-xl font-semibold text-green-800'>Employee Impact & Benefits</h3>
+      {/* Employee Impact Story */}
+      <div className='bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200'>
+        <div className='text-center mb-6'>
+          <div className='flex items-center justify-center mb-3'>
+            <TrendingUp className='w-7 h-7 text-green-600 mr-3' />
+            <h3 className='text-xl font-semibold text-green-800'>
+              What This Means for Your Employees
+            </h3>
+          </div>
+          <p className='text-green-700'>Here's the real impact of your investment:</p>
         </div>
-        <div className='grid md:grid-cols-3 gap-4'>
-          <div className='text-center'>
-            <p className='text-2xl font-bold text-green-600'>
-              {sessionsPerEmployeePerYear} sessions
-            </p>
-            <p className='text-sm text-green-700'>Max per employee per year</p>
+
+        <div className='grid md:grid-cols-3 gap-6'>
+          <div className='text-center bg-white rounded-lg p-4 border border-green-200'>
+            <div className='text-3xl font-bold text-green-600 mb-2'>
+              {sessionsPerEmployeePerYear}
+            </div>
+            <div className='text-sm font-medium text-green-800'>Max Sessions/Year</div>
+            <div className='text-xs text-green-700 mt-1'>
+              Professional financial therapy when they need it
+            </div>
           </div>
-          <div className='text-center'>
-            <p className='text-2xl font-bold text-blue-600'>FREE</p>
-            <p className='text-sm text-blue-700'>20-min consultation + messaging</p>
+
+          <div className='text-center bg-white rounded-lg p-4 border border-green-200'>
+            <div className='text-3xl font-bold text-blue-600 mb-2'>FREE</div>
+            <div className='text-sm font-medium text-green-800'>Trial + Messaging</div>
+            <div className='text-xs text-green-700 mt-1'>
+              Risk-free way to explore financial wellness
+            </div>
           </div>
-          <div className='text-center'>
-            <p className='text-2xl font-bold text-purple-600'>40-60%</p>
-            <p className='text-sm text-purple-700'>Higher engagement with free trial</p>
+
+          <div className='text-center bg-white rounded-lg p-4 border border-green-200'>
+            <div className='text-3xl font-bold text-purple-600 mb-2'>24/7</div>
+            <div className='text-sm font-medium text-green-800'>Peace of Mind</div>
+            <div className='text-xs text-green-700 mt-1'>
+              Know help is available when stress hits
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Budget Efficiency */}
+      {/* Budget Safety & Efficiency */}
       <div className='bg-yellow-50 rounded-xl p-6 border border-yellow-200'>
-        <h3 className='text-lg font-semibold text-yellow-800 mb-3'>Budget Efficiency</h3>
-        <div className='space-y-3'>
-          <div className='flex justify-between items-center'>
-            <span className='text-yellow-700'>Budget vs. Max Needed:</span>
-            <span className='font-semibold text-yellow-800'>
-              ${totalBudget.toLocaleString()} vs ${maxSessionBudgetNeeded.toLocaleString()}
-            </span>
+        <div className='flex items-center mb-4'>
+          <Shield className='w-6 h-6 text-yellow-600 mr-3' />
+          <h3 className='text-lg font-semibold text-yellow-800'>Your Budget Protection</h3>
+        </div>
+
+        <div className='grid md:grid-cols-2 gap-6'>
+          <div>
+            <h4 className='font-semibold text-yellow-800 mb-2'>Pay-As-You-Go Safety</h4>
+            <p className='text-sm text-yellow-700 mb-3'>
+              Your session budget:{' '}
+              <span className='font-bold'>${totalBudget.toLocaleString()}</span>
+            </p>
+            <p className='text-sm text-yellow-700 mb-3'>
+              If everyone used all sessions:{' '}
+              <span className='font-bold'>${maxSessionBudgetNeeded.toLocaleString()}</span>
+            </p>
+            <div className='w-full bg-yellow-200 rounded-full h-3 mb-2'>
+              <div
+                className='bg-yellow-500 h-3 rounded-full transition-all duration-500'
+                style={{ width: `${Math.min(budgetUtilization, 100)}%` }}
+              />
+            </div>
+            <p className='text-xs text-yellow-700'>
+              {budgetUtilization > 100
+                ? '✅ Budget covers maximum usage with room to spare'
+                : `Budget efficiency: ${budgetUtilization.toFixed(1)}% if fully utilized`}
+            </p>
           </div>
-          <div className='w-full bg-yellow-200 rounded-full h-3'>
-            <div
-              className='bg-yellow-500 h-3 rounded-full transition-all duration-500'
-              style={{ width: `${Math.min(budgetUtilization, 100)}%` }}
-            />
+
+          <div>
+            <h4 className='font-semibold text-yellow-800 mb-2'>Typical Usage Reality</h4>
+            <div className='space-y-2 text-sm text-yellow-700'>
+              <p>📊 Most companies see 30-50% utilization in year 1</p>
+              <p>📈 Usage grows to 60-80% as awareness increases</p>
+              <p>💡 Free trial significantly boosts engagement</p>
+              <p>🎯 High-stress periods see usage spikes</p>
+            </div>
           </div>
-          <p className='text-sm text-yellow-700'>
-            {budgetUtilization > 100
-              ? 'Budget covers all possible sessions with room for growth'
-              : `${budgetUtilization.toFixed(1)}% budget utilization if all employees use max sessions`}
-          </p>
         </div>
       </div>
 
-      {/* Value Proposition */}
-      <div className='bg-gray-50 rounded-xl p-6 border border-gray-200'>
-        <h3 className='text-lg font-semibold text-gray-800 mb-3'>What This Gets You</h3>
-        <div className='grid md:grid-cols-2 gap-4'>
-          <ul className='list-disc pl-5 text-sm text-gray-700 space-y-1'>
-            <li>Pay-as-you-go session model (low risk)</li>
-            <li>Licensed financial therapy for your team</li>
-            <li>Free trial to boost engagement</li>
-            <li>Confidential, personalized employee support</li>
-          </ul>
-          <ul className='list-disc pl-5 text-sm text-gray-700 space-y-1'>
-            <li>Actionable, anonymized workforce insights</li>
-            <li>Up to 34% productivity boost</li>
-            <li>22% reduction in absenteeism</li>
-            <li>13% lower employee turnover</li>
-          </ul>
+      {/* ROI & Value Proposition */}
+      <div className='bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200'>
+        <h3 className='text-xl font-semibold text-purple-800 mb-4 text-center'>
+          💰 Return on Your Investment
+        </h3>
+        <div className='grid md:grid-cols-2 gap-6'>
+          <div>
+            <h4 className='font-semibold text-purple-800 mb-3'>Quantifiable Benefits</h4>
+            <ul className='space-y-2 text-sm text-purple-700'>
+              <li className='flex items-center'>
+                <span className='w-2 h-2 bg-purple-500 rounded-full mr-3'></span>
+                <span>
+                  <strong>34% productivity increase</strong> - less financial stress means more
+                  focus
+                </span>
+              </li>
+              <li className='flex items-center'>
+                <span className='w-2 h-2 bg-purple-500 rounded-full mr-3'></span>
+                <span>
+                  <strong>22% reduction in absenteeism</strong> - better mental health = better
+                  attendance
+                </span>
+              </li>
+              <li className='flex items-center'>
+                <span className='w-2 h-2 bg-purple-500 rounded-full mr-3'></span>
+                <span>
+                  <strong>13% lower turnover</strong> - employees feel supported and valued
+                </span>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4 className='font-semibold text-purple-800 mb-3'>Intangible Value</h4>
+            <ul className='space-y-2 text-sm text-purple-700'>
+              <li className='flex items-center'>
+                <span className='w-2 h-2 bg-pink-500 rounded-full mr-3'></span>
+                <span>Enhanced employer brand & recruiting advantage</span>
+              </li>
+              <li className='flex items-center'>
+                <span className='w-2 h-2 bg-pink-500 rounded-full mr-3'></span>
+                <span>Improved team morale and workplace culture</span>
+              </li>
+              <li className='flex items-center'>
+                <span className='w-2 h-2 bg-pink-500 rounded-full mr-3'></span>
+                <span>Reduced manager burden dealing with stressed employees</span>
+              </li>
+              <li className='flex items-center'>
+                <span className='w-2 h-2 bg-pink-500 rounded-full mr-3'></span>
+                <span>Demonstration of genuine care for employee wellbeing</span>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
