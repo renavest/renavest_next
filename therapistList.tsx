@@ -21,7 +21,7 @@ export const therapistList = [
     google_calendar_refresh_token: null,
     google_calendar_email: null,
     google_calendar_integration_status: 'not_connected',
-    google_calendar_integration_date: null, 
+    google_calendar_integration_date: null,
     created_at: '2025-04-20 01:08:50.114',
     updated_at: '2025-04-20 01:08:50.114',
     email: 'paigevic98@gmail.com',
@@ -364,7 +364,7 @@ export const therapistList = [
     google_calendar_integration_date: null,
     created_at: '2025-04-20 01:08:55.206',
     updated_at: '2025-04-20 01:08:55.206',
-    email: 'sarahcarrfp@gmail.com',
+    email: 'sarahcarr.fp@gmail.com',
   },
   {
     id: 15,
