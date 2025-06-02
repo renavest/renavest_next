@@ -196,9 +196,9 @@ export default function PricingCalculator({
         </div>
       </div>
 
-      <div className='grid xl:grid-cols-3 gap-8'>
+      <div className='space-y-8'>
         {/* Input Configuration */}
-        <div className='xl:col-span-1'>
+        <div>
           <div className='bg-white rounded-2xl p-6 shadow-lg border border-purple-100'>
             <h3 className='text-xl font-semibold text-purple-800 mb-6 text-center'>
               📊 Configure Your Program
@@ -222,7 +222,7 @@ export default function PricingCalculator({
         </div>
 
         {/* Pricing Summary */}
-        <div className='xl:col-span-2'>
+        <div>
           <div className='bg-white rounded-2xl p-6 shadow-lg border border-green-100'>
             <h3 className='text-xl font-semibold text-green-800 mb-6 text-center'>
               💰 Your Investment & Employee Impact
