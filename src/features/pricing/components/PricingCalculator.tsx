@@ -1,328 +1,256 @@
 'use client';
 
-import { Coins, Users, Clock, Percent, Activity } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { Heart, Shield, TrendingUp } from 'lucide-react';
+import { useState } from 'react';
 
-import PricingSummaryCards from './PricingSummaryCards';
+import PooledExampleScenarios from './PooledExampleScenarios';
+import PooledPricingSummary from './PooledPricingSummary';
+import PooledSessionInputs from './PooledSessionInputs';
 
 interface PricingCalculatorProps {
   initialEmployeeCount?: number;
-  initialSessionsPerYear?: number;
-  initialSubsidyPercentage?: number;
-  initialUtilizationRate?: number;
+  initialTotalBudget?: number;
+  initialSessionsPerEmployeePerYear?: number;
   initialAverageSessionCost?: number;
-}
-
-interface ExampleScenario {
-  title: string;
-  employees: number;
-  sessions: number;
-  subsidyPercentage: number;
-  description: string;
+  initialIncludeSubscription?: boolean;
+  initialSubscriptionSubsidyPercentage?: number;
+  initialSessionSubsidyPercentage?: number;
 }
 
 export default function PricingCalculator({
   initialEmployeeCount = 50,
-  initialSessionsPerYear = 2,
-  initialSubsidyPercentage = 75,
-  initialUtilizationRate = 50,
+  initialTotalBudget = 15000,
+  initialSessionsPerEmployeePerYear = 3,
   initialAverageSessionCost = 150,
+  initialIncludeSubscription = true,
+  initialSubscriptionSubsidyPercentage = 100,
+  initialSessionSubsidyPercentage = 80,
 }: PricingCalculatorProps) {
   const [employeeCount, setEmployeeCount] = useState(initialEmployeeCount);
-  const [sessionsPerYear, setSessionsPerYear] = useState(initialSessionsPerYear);
-  const [subsidyPercentage, setSubsidyPercentage] = useState(initialSubsidyPercentage);
-  const [utilizationRate, setUtilizationRate] = useState(initialUtilizationRate);
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  const [totalBudget, setTotalBudget] = useState(initialTotalBudget);
+  const [sessionsPerEmployeePerYear, setSessionsPerEmployeePerYear] = useState(
+    initialSessionsPerEmployeePerYear,
+  );
   const [averageSessionCost, setAverageSessionCost] = useState(initialAverageSessionCost);
+  const [includeSubscription, setIncludeSubscription] = useState(initialIncludeSubscription);
+  const [subscriptionSubsidyPercentage, setSubscriptionSubsidyPercentage] = useState(
+    initialSubscriptionSubsidyPercentage,
+  );
+  const [sessionSubsidyPercentage, setSessionSubsidyPercentage] = useState(
+    initialSessionSubsidyPercentage,
+  );
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
 
-  const calculatePricing = useMemo(() => {
-    // Utilization-based calculations
-    const totalUtilizedSessions = employeeCount * sessionsPerYear * (utilizationRate / 100);
-    const totalSessionCost = totalUtilizedSessions * averageSessionCost;
-    const employerCost = totalSessionCost * (subsidyPercentage / 100);
-    const employeeCost = totalSessionCost * ((100 - subsidyPercentage) / 100);
-    const perEmployeeUtilizedSessions = sessionsPerYear * (utilizationRate / 100);
-
-    // Max possible per-employee cost (if fully utilized)
-    const maxPerEmployeeEmployerCost =
-      sessionsPerYear * averageSessionCost * (subsidyPercentage / 100);
-    const maxPerEmployeeEmployeeCost =
-      sessionsPerYear * averageSessionCost * ((100 - subsidyPercentage) / 100);
-
-    return {
-      monthly: {
-        totalUtilizedSessions: totalUtilizedSessions / 12,
-        totalSessionCost: totalSessionCost / 12,
-        employerCost: employerCost / 12,
-        employeeCost: employeeCost / 12,
-        maxPerEmployeeEmployerCost: maxPerEmployeeEmployerCost / 12,
-        maxPerEmployeeEmployeeCost: maxPerEmployeeEmployeeCost / 12,
-        perEmployeeUtilizedSessions: perEmployeeUtilizedSessions / 12,
-      },
-      yearly: {
-        totalUtilizedSessions,
-        totalSessionCost,
-        employerCost,
-        employeeCost,
-        maxPerEmployeeEmployerCost,
-        maxPerEmployeeEmployeeCost,
-        perEmployeeUtilizedSessions,
-      },
-    };
-  }, [employeeCount, sessionsPerYear, averageSessionCost, subsidyPercentage, utilizationRate]);
-
-  const currentPricing = calculatePricing[billingCycle];
+  const fixedMonthlySubscriptionCost = 10;
 
   const toggleBillingCycle = () => {
     setBillingCycle(billingCycle === 'monthly' ? 'yearly' : 'monthly');
   };
 
-  const exampleScenarios: ExampleScenario[] = [
-    {
-      title: 'Small Team',
-      employees: 25,
-      sessions: 1,
-      subsidyPercentage: 50,
-      description:
-        'Perfect for startups and small businesses looking to provide initial financial wellness support.',
-    },
-    {
-      title: 'Growing Company',
-      employees: 100,
-      sessions: 2,
-      subsidyPercentage: 75,
-      description:
-        'Ideal for mid-sized companies investing in comprehensive employee financial health.',
-    },
-    {
-      title: 'Enterprise Solution',
-      employees: 500,
-      sessions: 4,
-      subsidyPercentage: 90,
-      description:
-        'Comprehensive financial wellness program for large organizations committed to employee well-being.',
-    },
-  ];
-
   return (
-    <div className='bg-purple-50 rounded-2xl p-8 shadow-lg'>
-      <div className='text-center mb-8'>
-        <h2 className='text-3xl font-bold text-gray-900 mb-4'>
-          Financial Therapy Pricing Calculator
-        </h2>
-        <p className='text-gray-600 max-w-2xl mx-auto'>
-          Understand the cost of providing comprehensive financial wellness support for each
-          individual employee in your organization.
+    <div className='bg-gradient-to-br from-purple-50 via-blue-50 to-green-50 rounded-3xl p-8 shadow-xl'>
+      {/* Emotional Header */}
+      <div className='text-center mb-10'>
+        <div className='flex justify-center items-center mb-4'>
+          <Heart className='w-8 h-8 text-red-500 mr-3' />
+          <h2 className='text-4xl font-bold text-gray-900'>
+            Invest in Your Team's Financial Wellness
+          </h2>
+          <Heart className='w-8 h-8 text-red-500 ml-3' />
+        </div>
+        <p className='text-lg text-gray-700 max-w-4xl mx-auto leading-relaxed'>
+          Help your employees reduce financial stress, improve focus at work, and build a more
+          productive, engaged workforce. Our flexible model lets you start small and grow your
+          impact.
+        </p>
+
+        {/* Key Benefits Preview */}
+        <div className='flex flex-wrap justify-center gap-6 mt-6'>
+          <div className='flex items-center bg-white px-4 py-2 rounded-full shadow-md'>
+            <Shield className='w-5 h-5 text-green-600 mr-2' />
+            <span className='text-sm font-medium text-gray-700'>
+              Risk-Free: Pay Only for Sessions Used
+            </span>
+          </div>
+          <div className='flex items-center bg-white px-4 py-2 rounded-full shadow-md'>
+            <TrendingUp className='w-5 h-5 text-blue-600 mr-2' />
+            <span className='text-sm font-medium text-gray-700'>34% Productivity Increase</span>
+          </div>
+          <div className='flex items-center bg-white px-4 py-2 rounded-full shadow-md'>
+            <Heart className='w-5 h-5 text-red-500 mr-2' />
+            <span className='text-sm font-medium text-gray-700'>Free Trial Included</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Pricing Model Clarification */}
+      <div className='bg-white rounded-2xl p-6 mb-8 shadow-lg border border-blue-100'>
+        <h3 className='text-xl font-semibold text-blue-800 mb-4 text-center'>
+          💡 Our Simple, Risk-Free Pricing Model
+        </h3>
+        <div className='grid md:grid-cols-2 gap-6'>
+          <div className='bg-blue-50 rounded-xl p-4 border border-blue-200'>
+            <h4 className='font-semibold text-blue-800 mb-2'>
+              💰 Fixed Monthly Subscription ($10/employee)
+            </h4>
+            <p className='text-sm text-blue-700 mb-2'>
+              <strong>Your only guaranteed monthly cost</strong>
+            </p>
+            <ul className='text-sm text-blue-700 space-y-1'>
+              <li>• FREE 20-minute consultation</li>
+              <li>• 24/7 messaging with therapist</li>
+              <li>• Access to financial resources</li>
+              <li>• Ongoing check-ins and support</li>
+            </ul>
+          </div>
+          <div className='bg-green-50 rounded-xl p-4 border border-green-200'>
+            <h4 className='font-semibold text-green-800 mb-2'>
+              🎯 Session Pool (Pay-as-you-go only)
+            </h4>
+            <p className='text-sm text-green-700 mb-2'>
+              <strong>Zero risk - only charged when sessions are booked</strong>
+            </p>
+            <ul className='text-sm text-green-700 space-y-1'>
+              <li>• Full 1-hour therapy sessions (~$150)</li>
+              <li>• You choose subsidy percentage</li>
+              <li>• Employees pay remainder</li>
+              <li>• Budget pool for planning only</li>
+            </ul>
+          </div>
+        </div>
+        <p className='text-center text-gray-600 mt-4 text-sm'>
+          ✨ <strong>Total Predictability:</strong> Only subscription is charged monthly -
+          everything else is pay-per-use
         </p>
       </div>
 
-      {/* Billing Cycle Toggle */}
-      <div className='flex justify-center items-center mb-6'>
-        <span
-          className={`mr-4 ${billingCycle === 'monthly' ? 'font-bold text-purple-700' : 'text-gray-500'}`}
-        >
-          Monthly
-        </span>
-        <div
-          className='w-14 h-7 bg-purple-200 rounded-full relative cursor-pointer'
-          onClick={toggleBillingCycle}
-        >
-          <div
-            className={`w-7 h-7 bg-purple-600 rounded-full absolute top-0 transition-all duration-300 
-              ${billingCycle === 'yearly' ? 'right-0' : 'right-7'}`}
-          />
+      {/* Step-by-Step Guidance */}
+      <div className='bg-white rounded-2xl p-6 mb-8 shadow-lg border border-purple-100'>
+        <h3 className='text-xl font-semibold text-purple-800 mb-4 text-center'>
+          🎯 Three Simple Steps to Get Started
+        </h3>
+        <div className='grid md:grid-cols-3 gap-4'>
+          <div className='text-center'>
+            <div className='w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3'>
+              <span className='text-purple-600 font-bold text-lg'>1</span>
+            </div>
+            <h4 className='font-semibold text-gray-800 mb-2'>Team Size</h4>
+            <p className='text-sm text-gray-600'>Tell us how many employees you want to support</p>
+          </div>
+          <div className='text-center'>
+            <div className='w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3'>
+              <span className='text-blue-600 font-bold text-lg'>2</span>
+            </div>
+            <h4 className='font-semibold text-gray-800 mb-2'>Subscription Level</h4>
+            <p className='text-sm text-gray-600'>Choose monthly support and subsidy percentage</p>
+          </div>
+          <div className='text-center'>
+            <div className='w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3'>
+              <span className='text-green-600 font-bold text-lg'>3</span>
+            </div>
+            <h4 className='font-semibold text-gray-800 mb-2'>Session Pool Planning</h4>
+            <p className='text-sm text-gray-600'>
+              Set session subsidy percentage and see pool size
+            </p>
+          </div>
         </div>
-        <span
-          className={`ml-4 ${billingCycle === 'yearly' ? 'font-bold text-purple-700' : 'text-gray-500'}`}
-        >
-          Yearly
-        </span>
       </div>
 
-      <div className='grid md:grid-cols-3 gap-8'>
-        {/* Inputs Column */}
-        <div className='md:col-span-1 space-y-6'>
-          {/* Employee Count Input */}
-          <div className='bg-white rounded-xl p-6 shadow-md border border-gray-100'>
-            <div className='flex items-center mb-4'>
-              <Users className='w-6 h-6 text-purple-600 mr-3' />
-              <label htmlFor='employeeCount' className='block text-lg font-semibold text-gray-800'>
-                Number of Employees
-              </label>
+      {/* Billing Cycle Toggle with Better Context */}
+      <div className='flex justify-center items-center mb-8'>
+        <div className='bg-white rounded-xl p-4 shadow-md border border-gray-100'>
+          <p className='text-sm text-gray-600 text-center mb-3'>
+            View your investment breakdown by:
+          </p>
+          <div className='flex items-center'>
+            <span
+              className={`mr-4 px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                billingCycle === 'monthly'
+                  ? 'bg-purple-100 font-bold text-purple-700'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              onClick={() => setBillingCycle('monthly')}
+            >
+              Monthly
+            </span>
+            <div
+              className='w-14 h-7 bg-purple-200 rounded-full relative cursor-pointer'
+              onClick={toggleBillingCycle}
+            >
+              <div
+                className={`w-7 h-7 bg-purple-600 rounded-full absolute top-0 transition-all duration-300 shadow-sm
+                  ${billingCycle === 'yearly' ? 'right-0' : 'right-7'}`}
+              />
             </div>
-            <input
-              type='number'
-              id='employeeCount'
-              value={employeeCount || ''}
-              onChange={(e) => {
-                const value = e.target.value === '' ? '' : Number(e.target.value);
-                setEmployeeCount(value as number);
-              }}
-              min={1}
-              className='block w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 text-lg'
-            />
+            <span
+              className={`ml-4 px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                billingCycle === 'yearly'
+                  ? 'bg-purple-100 font-bold text-purple-700'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              onClick={() => setBillingCycle('yearly')}
+            >
+              Annual
+            </span>
           </div>
+        </div>
+      </div>
 
-          {/* Sessions per Year Input */}
-          <div className='bg-white rounded-xl p-6 shadow-md border border-gray-100'>
-            <div className='flex items-center mb-4'>
-              <Clock className='w-6 h-6 text-blue-600 mr-3' />
-              <label
-                htmlFor='sessionsPerYear'
-                className='block text-lg font-semibold text-gray-800'
-              >
-                Sessions per Employee per Year
-              </label>
-            </div>
-            <input
-              type='number'
-              id='sessionsPerYear'
-              value={sessionsPerYear || ''}
-              onChange={(e) => {
-                const value = e.target.value === '' ? '' : Number(e.target.value);
-                setSessionsPerYear(value as number);
-              }}
-              min={1}
-              max={12}
-              className='block w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 text-lg'
+      <div className='grid xl:grid-cols-3 gap-8'>
+        {/* Input Configuration */}
+        <div className='xl:col-span-1'>
+          <div className='bg-white rounded-2xl p-6 shadow-lg border border-purple-100'>
+            <h3 className='text-xl font-semibold text-purple-800 mb-6 text-center'>
+              📊 Configure Your Program
+            </h3>
+            <PooledSessionInputs
+              employeeCount={employeeCount}
+              sessionsPerEmployeePerYear={sessionsPerEmployeePerYear}
+              averageSessionCost={averageSessionCost}
+              includeSubscription={includeSubscription}
+              subscriptionSubsidyPercentage={subscriptionSubsidyPercentage}
+              sessionSubsidyPercentage={sessionSubsidyPercentage}
+              setEmployeeCount={setEmployeeCount}
+              setTotalBudget={setTotalBudget}
+              setSessionsPerEmployeePerYear={setSessionsPerEmployeePerYear}
+              setAverageSessionCost={setAverageSessionCost}
+              setIncludeSubscription={setIncludeSubscription}
+              setSubscriptionSubsidyPercentage={setSubscriptionSubsidyPercentage}
+              setSessionSubsidyPercentage={setSessionSubsidyPercentage}
             />
-            <p className='mt-2 text-sm text-gray-600'>
-              Financial therapists recommend 5 sessions per year for comprehensive wellness.
-            </p>
-          </div>
-
-          {/* Utilization Rate Input */}
-          <div className='bg-white rounded-xl p-6 shadow-md border border-gray-100'>
-            <div className='flex items-center mb-4'>
-              <Activity className='w-6 h-6 text-green-600 mr-3' />
-              <label
-                htmlFor='utilizationRate'
-                className='block text-lg font-semibold text-gray-800'
-              >
-                Program Utilization Rate
-              </label>
-            </div>
-            <input
-              type='number'
-              id='utilizationRate'
-              value={utilizationRate || ''}
-              onChange={(e) => {
-                const value = e.target.value === '' ? '' : Number(e.target.value);
-                setUtilizationRate(value as number);
-              }}
-              min={0}
-              max={100}
-              className='block w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 text-lg'
-            />
-            <p className='mt-2 text-sm text-gray-600'>
-              Percentage of employees expected to use financial therapy sessions
-            </p>
-          </div>
-
-          {/* Subsidy Percentage Input */}
-          <div className='bg-white rounded-xl p-6 shadow-md border border-gray-100'>
-            <div className='flex items-center mb-4'>
-              <Percent className='w-6 h-6 text-green-600 mr-3' />
-              <label
-                htmlFor='subsidyPercentage'
-                className='block text-lg font-semibold text-gray-800'
-              >
-                Company Subsidy Percentage
-              </label>
-            </div>
-            <input
-              type='number'
-              id='subsidyPercentage'
-              value={subsidyPercentage || ''}
-              onChange={(e) => {
-                const value = e.target.value === '' ? '' : Number(e.target.value);
-                setSubsidyPercentage(value as number);
-              }}
-              min={0}
-              max={100}
-              className='block w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 text-lg'
-            />
-            <p className='mt-2 text-sm text-gray-600'>
-              Adjust how much of the session cost your company will cover
-            </p>
-          </div>
-
-          {/* Average Session Cost */}
-          <div className='bg-white rounded-xl p-6 shadow-md border border-gray-100'>
-            <div className='flex items-center mb-4'>
-              <Coins className='w-6 h-6 text-yellow-600 mr-3' />
-              <label
-                htmlFor='averageSessionCost'
-                className='block text-lg font-semibold text-gray-800'
-              >
-                Average Session Cost
-              </label>
-            </div>
-            <input
-              type='number'
-              id='averageSessionCost'
-              value={averageSessionCost || ''}
-              onChange={(e) => {
-                const value = e.target.value === '' ? '' : Number(e.target.value);
-                setAverageSessionCost(value as number);
-              }}
-              min={0}
-              className='block w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 text-lg'
-            />
-            <p className='mt-2 text-sm text-gray-600'>
-              Cost per financial therapy session used in calculations
-            </p>
           </div>
         </div>
 
-        {/* Cost Breakdown and Insights Column */}
-        <div className='md:col-span-2 space-y-6'>
-          <PricingSummaryCards
-            billingCycle={billingCycle}
-            currentPricing={currentPricing}
-            sessionsPerYear={sessionsPerYear}
-          />
+        {/* Pricing Summary */}
+        <div className='xl:col-span-2'>
+          <div className='bg-white rounded-2xl p-6 shadow-lg border border-green-100'>
+            <h3 className='text-xl font-semibold text-green-800 mb-6 text-center'>
+              💰 Your Investment & Employee Impact
+            </h3>
+            <PooledPricingSummary
+              billingCycle={billingCycle}
+              employeeCount={employeeCount}
+              totalBudget={totalBudget}
+              sessionsPerEmployeePerYear={sessionsPerEmployeePerYear}
+              averageSessionCost={averageSessionCost}
+              includeSubscription={includeSubscription}
+              monthlySubscriptionCost={fixedMonthlySubscriptionCost}
+              subscriptionSubsidyPercentage={subscriptionSubsidyPercentage}
+              sessionSubsidyPercentage={sessionSubsidyPercentage}
+            />
+          </div>
         </div>
       </div>
 
       {/* Example Scenarios */}
-      <div className='mt-16'>
-        <h2 className='text-3xl font-bold text-center mb-12'>Example Scenarios</h2>
-        <div className='grid md:grid-cols-3 gap-8'>
-          {exampleScenarios.map((scenario) => (
-            <div
-              key={scenario.title}
-              className='bg-white rounded-xl p-6 shadow-md border border-gray-100 hover:shadow-lg transition-shadow'
-            >
-              <h3 className='text-xl font-semibold text-gray-800 mb-4'>{scenario.title}</h3>
-              <div className='mb-4'>
-                <p className='text-sm text-gray-600'>
-                  <span className='font-medium text-gray-800'>{scenario.employees}</span> Employees
-                </p>
-                <p className='text-sm text-gray-600'>
-                  <span className='font-medium text-gray-800'>{scenario.sessions}</span> Sessions
-                  per Employee
-                </p>
-                <p className='text-sm text-gray-600'>
-                  <span className='font-medium text-gray-800'>{scenario.subsidyPercentage}%</span>{' '}
-                  Company Subsidy
-                </p>
-              </div>
-              <p className='text-sm text-gray-600 mb-4'>{scenario.description}</p>
-              <button
-                onClick={() => {
-                  setEmployeeCount(scenario.employees);
-                  setSessionsPerYear(scenario.sessions);
-                  setSubsidyPercentage(scenario.subsidyPercentage);
-                }}
-                className='w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors'
-              >
-                Calculate This Scenario
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
+      <PooledExampleScenarios
+        setEmployeeCount={setEmployeeCount}
+        setTotalBudget={setTotalBudget}
+        setSessionsPerEmployeePerYear={setSessionsPerEmployeePerYear}
+        setIncludeSubscription={setIncludeSubscription}
+        setSubscriptionSubsidyPercentage={setSubscriptionSubsidyPercentage}
+        setSessionSubsidyPercentage={setSessionSubsidyPercentage}
+      />
     </div>
   );
 }

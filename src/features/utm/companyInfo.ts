@@ -154,6 +154,13 @@ const companyInfo: Record<string, CompanyInfo> = {
     about:
       'Redcon is a financial wellness platform that helps users manage their finances and improve their financial health.',
   },
+  irythm: {
+    logoSrc: '/logos/zio.png',
+    title: 'iRhythm',
+    headline: 'Welcome to the Renavest × iRhythm Integration',
+    about:
+      'iRhythm is a leading digital healthcare company that creates trusted solutions that detect, predict, and prevent disease. ',
+  },
 };
 
 export default companyInfo;
