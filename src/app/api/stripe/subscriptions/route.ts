@@ -6,7 +6,6 @@ import { db } from '@/src/db';
 import { users, stripeCustomers } from '@/src/db/schema';
 import {
   stripe,
-  STRIPE_CONFIG,
   getOrCreateStripeCustomer,
   getSubscriptionStatus,
   syncStripeDataToKV,
@@ -201,7 +200,7 @@ export async function PATCH(req: NextRequest) {
         id: updatedSubscription.id,
         status: updatedSubscription.status,
         cancelAtPeriodEnd: updatedSubscription.cancel_at_period_end,
-        currentPeriodEnd: updatedSubscription.current_period_end,
+        currentPeriodEnd: updatedSubscription.items.data[0]?.current_period_end || null,
       },
     });
   } catch (error) {

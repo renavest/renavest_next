@@ -28,29 +28,15 @@ export default function SessionCompletePage() {
 
   const fetchCompletableSessions = async () => {
     try {
-      setLoading(true);
-      const response = await fetch('/api/therapist/sessions/complete');
-
+      const response = await fetch('/api/therapist/sessions/completable');
       if (!response.ok) {
         throw new Error('Failed to fetch sessions');
       }
-
       const data = await response.json();
-
-      if (data.success) {
-        // Convert date strings to Date objects
-        const sessionsWithDates = data.sessions.map((session: any) => ({
-          ...session,
-          sessionDate: new Date(session.sessionDate),
-          sessionStartTime: new Date(session.sessionStartTime),
-          sessionEndTime: new Date(session.sessionEndTime),
-        }));
-        setSessions(sessionsWithDates);
-      } else {
-        setError('Failed to load sessions');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load sessions');
+      setSessions(data.sessions || []);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -70,21 +56,11 @@ export default function SessionCompletePage() {
         throw new Error('Failed to complete session');
       }
 
-      const data = await response.json();
-
-      if (data.success) {
-        // Update the session status locally
-        setSessions((prev) =>
-          prev.map((session) =>
-            session.id === sessionId ? { ...session, status: 'completed' } : session,
-          ),
-        );
-      } else {
-        throw new Error(data.error || 'Failed to complete session');
-      }
-    } catch (err) {
-      console.error('Error completing session:', err);
-      throw err; // Re-throw to let the component handle the error
+      // Refresh the sessions list
+      await fetchCompletableSessions();
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to complete session';
+      setError(errorMessage);
     }
   };
 
@@ -104,10 +80,10 @@ export default function SessionCompletePage() {
         <div className='text-center'>
           <div className='text-lg text-red-600'>Error: {error}</div>
           <button
-            onClick={fetchCompletableSessions}
-            className='mt-4 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700'
+            onClick={() => window.location.reload()}
+            className='mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700'
           >
-            Try Again
+            Retry
           </button>
         </div>
       </div>
@@ -115,23 +91,23 @@ export default function SessionCompletePage() {
   }
 
   return (
-    <div className='container mx-auto py-8 px-4'>
+    <div className='container mx-auto py-8 px-4 max-w-4xl'>
       <div className='mb-8'>
         <h1 className='text-3xl font-bold text-gray-900 mb-2'>Session Completion</h1>
         <p className='text-gray-600'>
-          Complete your finished sessions to process payments and receive your earnings.
+          Mark your completed sessions to process payments and close out sessions.
         </p>
       </div>
 
       {sessions.length === 0 ? (
         <div className='text-center py-12'>
-          <div className='text-gray-500 text-lg'>No sessions ready for completion</div>
-          <p className='text-gray-400 mt-2'>
-            Sessions will appear here after they've ended and are ready for completion.
+          <div className='text-xl text-gray-500 mb-4'>No sessions to complete</div>
+          <p className='text-gray-400'>
+            Completed sessions will appear here for you to confirm and process payment.
           </p>
         </div>
       ) : (
-        <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
+        <div className='space-y-4'>
           {sessions.map((session) => (
             <SessionCompletionCard
               key={session.id}

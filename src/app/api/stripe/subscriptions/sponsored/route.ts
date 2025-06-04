@@ -4,13 +4,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { db } from '@/src/db';
-import { users, employers, sponsoredGroups, sponsoredGroupMembers } from '@/src/db/schema';
+import { users, sponsoredGroupMembers } from '@/src/db/schema';
 import { stripe, getOrCreateStripeCustomer } from '@/src/features/stripe';
 
 const SponsoredSubscriptionSchema = z.object({
   priceId: z.string(),
   successUrl: z.string().optional(),
-  cancelUrl: z.string().optional(),
 });
 
 // POST - Create immediate subscription with employer sponsorship
@@ -23,7 +22,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { priceId, successUrl, cancelUrl } = SponsoredSubscriptionSchema.parse(body);
+    const { priceId, successUrl } = SponsoredSubscriptionSchema.parse(body);
 
     // Get the internal user record
     const userRecord = await db.select().from(users).where(eq(users.clerkId, user.id)).limit(1);
@@ -104,6 +103,17 @@ export async function POST(req: NextRequest) {
       expand: ['latest_invoice.payment_intent'],
     });
 
+    // Extract client secret from expanded payment intent
+    let clientSecret: string | null = null;
+    const latestInvoice = subscription.latest_invoice;
+
+    if (latestInvoice && typeof latestInvoice === 'object' && 'payment_intent' in latestInvoice) {
+      const paymentIntent = latestInvoice.payment_intent;
+      if (paymentIntent && typeof paymentIntent === 'object' && 'client_secret' in paymentIntent) {
+        clientSecret = paymentIntent.client_secret as string;
+      }
+    }
+
     // Note: In a production environment, you'd want to:
     // 1. Set up the employer's payment method as the default for these subscriptions
     // 2. Handle billing coordination between employer and employee
@@ -112,7 +122,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       subscriptionId: subscription.id,
-      clientSecret: subscription.latest_invoice?.payment_intent?.client_secret,
+      clientSecret,
       status: subscription.status,
       sponsorInfo: {
         name: sponsorName,
