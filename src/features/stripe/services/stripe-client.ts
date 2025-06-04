@@ -36,8 +36,10 @@ export const STRIPE_CONFIG = {
 
   // Payment settings
   PAYMENT: {
-    // Default capture method - automatic_async is now default as of 2024-04-10
+    // Default capture method for subscriptions - automatic_async is default as of 2024-04-10
     DEFAULT_CAPTURE_METHOD: 'automatic_async' as const,
+    // Manual capture for session-based payments - only capture after session completion
+    SESSION_CAPTURE_METHOD: 'manual' as const,
     // Currency
     DEFAULT_CURRENCY: 'usd' as const,
     // Statement descriptor limits
