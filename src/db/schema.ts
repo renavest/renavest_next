@@ -66,6 +66,15 @@ export const payoutStatusEnum = pgEnum('payout_status', [
 
 export const payoutTypeEnum = pgEnum('payout_type', ['session_fee', 'async_credit', 'refund']);
 
+// Chat-related enums
+export const chatChannelStatusEnum = pgEnum('chat_channel_status', [
+  'active',
+  'archived',
+  'blocked',
+]);
+
+export const messageStatusEnum = pgEnum('message_status', ['sent', 'delivered', 'read', 'failed']);
+
 // === 2. Employers ===
 export const employers = pgTable('employers', {
   id: serial('id').primaryKey(),
@@ -456,6 +465,89 @@ export const sessionPayments = pgTable('session_payments', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+// === Chat Feature Tables ===
+
+// Therapist chat preferences
+export const therapistChatPreferences = pgTable('therapist_chat_preferences', {
+  id: serial('id').primaryKey(),
+  therapistId: integer('therapist_id')
+    .references(() => therapists.id, { onDelete: 'cascade' })
+    .notNull()
+    .unique(),
+  acceptingChats: boolean('accepting_chats').default(false).notNull(),
+  maxActiveChats: integer('max_active_chats').default(5).notNull(),
+  autoReplyEnabled: boolean('auto_reply_enabled').default(false).notNull(),
+  autoReplyMessage: text('auto_reply_message'),
+  businessHoursOnly: boolean('business_hours_only').default(true).notNull(),
+  businessHoursStart: varchar('business_hours_start', { length: 5 }).default('09:00').notNull(),
+  businessHoursEnd: varchar('business_hours_end', { length: 5 }).default('17:00').notNull(),
+  timezone: varchar('timezone', { length: 50 }).default('UTC').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Chat channels between therapists and prospects
+export const chatChannels = pgTable(
+  'chat_channels',
+  {
+    id: serial('id').primaryKey(),
+    chimeChannelArn: varchar('chime_channel_arn', { length: 500 }).notNull().unique(),
+    therapistId: integer('therapist_id')
+      .references(() => therapists.id, { onDelete: 'cascade' })
+      .notNull(),
+    prospectUserId: integer('prospect_user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    status: chatChannelStatusEnum('status').default('active').notNull(),
+    lastMessageAt: timestamp('last_message_at'),
+    lastMessagePreview: text('last_message_preview'),
+    unreadCountTherapist: integer('unread_count_therapist').default(0).notNull(),
+    unreadCountProspect: integer('unread_count_prospect').default(0).notNull(),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    // Ensure unique channel per therapist-prospect pair
+    uniqueChannelIdx: uniqueIndex('uix_therapist_prospect_channel').on(
+      table.therapistId,
+      table.prospectUserId,
+    ),
+    therapistActiveChatsIdx: index('idx_therapist_active_chats')
+      .on(table.therapistId)
+      .where(sql`${table.status} = 'active'`),
+    lastMessageIdx: index('idx_channels_last_message').on(table.lastMessageAt),
+  }),
+);
+
+// Chat messages tracking (local copy for analytics/reporting)
+export const chatMessages = pgTable(
+  'chat_messages',
+  {
+    id: serial('id').primaryKey(),
+    channelId: integer('channel_id')
+      .references(() => chatChannels.id, { onDelete: 'cascade' })
+      .notNull(),
+    chimeMessageId: varchar('chime_message_id', { length: 255 }).notNull(),
+    senderId: integer('sender_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    content: text('content').notNull(),
+    messageType: varchar('message_type', { length: 50 }).default('STANDARD').notNull(),
+    status: messageStatusEnum('status').default('sent').notNull(),
+    readByTherapistAt: timestamp('read_by_therapist_at'),
+    readByProspectAt: timestamp('read_by_prospect_at'),
+    metadata: jsonb('metadata'),
+    sentAt: timestamp('sent_at').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    channelMessagesIdx: index('idx_channel_messages').on(table.channelId, table.sentAt),
+    chimeMessageUniqueIdx: uniqueIndex('uix_chime_message_id').on(table.chimeMessageId),
+    unreadMessagesIdx: index('idx_unread_messages').on(table.channelId, table.status),
+  }),
+);
+
 // === 10. Relations ===
 export const employersRelations = relations(employers, ({ many }) => ({
   employees: many(users),
@@ -594,4 +686,35 @@ export const sessionPaymentsRelations = relations(sessionPayments, ({ one }) => 
     references: [bookingSessions.id],
   }),
   user: one(users, { fields: [sessionPayments.userId], references: [users.id] }),
+}));
+
+// Chat relations
+export const therapistChatPreferencesRelations = relations(therapistChatPreferences, ({ one }) => ({
+  therapist: one(therapists, {
+    fields: [therapistChatPreferences.therapistId],
+    references: [therapists.id],
+  }),
+}));
+
+export const chatChannelsRelations = relations(chatChannels, ({ one, many }) => ({
+  therapist: one(therapists, {
+    fields: [chatChannels.therapistId],
+    references: [therapists.id],
+  }),
+  prospectUser: one(users, {
+    fields: [chatChannels.prospectUserId],
+    references: [users.id],
+  }),
+  messages: many(chatMessages),
+}));
+
+export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
+  channel: one(chatChannels, {
+    fields: [chatMessages.channelId],
+    references: [chatChannels.id],
+  }),
+  sender: one(users, {
+    fields: [chatMessages.senderId],
+    references: [users.id],
+  }),
 }));

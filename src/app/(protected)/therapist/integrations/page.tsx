@@ -309,136 +309,97 @@ function IntegrationsStatusHeader({
   );
 }
 
-export default function IntegrationsPage() {
-  const { user } = useUser();
-  const [therapistId, setTherapistId] = useState<number | null>(null);
-  const [selectedIntegration, setSelectedIntegration] = useState<IntegrationType>(null);
-  const [stripeStatus, setStripeStatus] = useState<StripeStatus | null>(null);
-  const [stripeLoading, setStripeLoading] = useState(true);
+// Stripe Integration View Component
+function StripeIntegrationView({ therapistId }: { therapistId: number }) {
+  return (
+    <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen'>
+      <TherapistNavbar
+        pageTitle='Stripe Integration'
+        showBackButton={true}
+        backButtonHref='/therapist/integrations'
+      />
 
-  // Get Google Calendar integration status
-  const {
-    status: { isConnected: calendarConnected, isLoading: calendarLoading, calendarEmail },
-  } = useGoogleCalendarIntegration(therapistId || 0);
+      <div className='max-w-4xl mx-auto mt-10'>
+        <div className='mb-8'>
+          <button
+            onClick={() => window.history.back()}
+            className='flex items-center text-purple-600 hover:text-purple-700 mb-4'
+          >
+            <ChevronRight className='w-4 h-4 mr-2 rotate-180' />
+            Back to Integrations
+          </button>
 
-  // Get therapist ID from user metadata or API
-  useEffect(() => {
-    const getTherapistId = async () => {
-      if (user?.publicMetadata?.therapistId) {
-        setTherapistId(user.publicMetadata.therapistId as number);
-      } else if (user?.id) {
-        // Fallback to API call if not in metadata
-        try {
-          const response = await fetch('/api/therapist/profile');
-          if (response.ok) {
-            const data = await response.json();
-            setTherapistId(data.therapist?.id || null);
-          }
-        } catch (error) {
-          console.error('Error fetching therapist ID:', error);
-        }
-      }
-    };
-
-    getTherapistId();
-  }, [user]);
-
-  // Fetch Stripe status when therapistId is available - only in development
-  useEffect(() => {
-    const fetchStripeStatus = async () => {
-      if (!therapistId || !isDevelopment) return;
-
-      setStripeLoading(true);
-      try {
-        const response = await fetch('/api/stripe/connect/status');
-        const data = await response.json();
-        if (response.ok) {
-          setStripeStatus(data);
-        }
-      } catch (error) {
-        console.error('Error fetching Stripe status:', error);
-      } finally {
-        setStripeLoading(false);
-      }
-    };
-
-    fetchStripeStatus();
-  }, [therapistId]);
-
-  if (selectedIntegration === 'stripe' && isDevelopment) {
-    return (
-      <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen'>
-        <TherapistNavbar
-          pageTitle='Stripe Integration'
-          showBackButton={true}
-          backButtonHref='/therapist/integrations'
-        />
-
-        <div className='max-w-4xl mx-auto mt-10'>
-          <div className='mb-8'>
-            <button
-              onClick={() => setSelectedIntegration(null)}
-              className='flex items-center text-purple-600 hover:text-purple-700 mb-4'
-            >
-              <ChevronRight className='w-4 h-4 mr-2 rotate-180' />
-              Back to Integrations
-            </button>
-
-            {/* Development Warning */}
-            <div className='bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6'>
-              <div className='flex items-center gap-2 mb-2'>
-                <AlertTriangle className='w-5 h-5 text-orange-600' />
-                <span className='font-medium text-orange-800'>Development Mode Only</span>
-              </div>
-              <p className='text-orange-700 text-sm'>
-                Stripe payment functionality is only available in development environment. This will
-                be hidden in production.
-              </p>
+          {/* Development Warning */}
+          <div className='bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6'>
+            <div className='flex items-center gap-2 mb-2'>
+              <AlertTriangle className='w-5 h-5 text-orange-600' />
+              <span className='font-medium text-orange-800'>Development Mode Only</span>
             </div>
-
-            <h1 className='text-3xl font-bold text-gray-900 mb-3'>Stripe Payment Integration</h1>
-            <p className='text-gray-600 text-lg'>
-              Connect your bank account to receive payments from client sessions.
+            <p className='text-orange-700 text-sm'>
+              Stripe payment functionality is only available in development environment. This will
+              be hidden in production.
             </p>
           </div>
 
-          {therapistId && <StripeConnectIntegration therapistId={therapistId} />}
+          <h1 className='text-3xl font-bold text-gray-900 mb-3'>Stripe Payment Integration</h1>
+          <p className='text-gray-600 text-lg'>
+            Connect your bank account to receive payments from client sessions.
+          </p>
         </div>
+
+        <StripeConnectIntegration therapistId={therapistId} />
       </div>
-    );
-  }
+    </div>
+  );
+}
 
-  if (selectedIntegration === 'calendar') {
-    return (
-      <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen'>
-        <TherapistNavbar
-          pageTitle='Google Calendar Integration'
-          showBackButton={true}
-          backButtonHref='/therapist/integrations'
-        />
+// Calendar Integration View Component
+function CalendarIntegrationView() {
+  return (
+    <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen'>
+      <TherapistNavbar
+        pageTitle='Google Calendar Integration'
+        showBackButton={true}
+        backButtonHref='/therapist/integrations'
+      />
 
-        <div className='max-w-4xl mx-auto mt-10'>
-          <div className='mb-8'>
-            <button
-              onClick={() => setSelectedIntegration(null)}
-              className='flex items-center text-purple-600 hover:text-purple-700 mb-4'
-            >
-              <ChevronRight className='w-4 h-4 mr-2 rotate-180' />
-              Back to Integrations
-            </button>
-            <h1 className='text-3xl font-bold text-gray-900 mb-3'>Google Calendar Integration</h1>
-            <p className='text-gray-600 text-lg'>
-              Sync your Renavest sessions with your Google Calendar and manage availability.
-            </p>
-          </div>
-
-          <GoogleCalendarIntegration />
+      <div className='max-w-4xl mx-auto mt-10'>
+        <div className='mb-8'>
+          <button
+            onClick={() => window.history.back()}
+            className='flex items-center text-purple-600 hover:text-purple-700 mb-4'
+          >
+            <ChevronRight className='w-4 h-4 mr-2 rotate-180' />
+            Back to Integrations
+          </button>
+          <h1 className='text-3xl font-bold text-gray-900 mb-3'>Google Calendar Integration</h1>
+          <p className='text-gray-600 text-lg'>
+            Sync your Renavest sessions with your Google Calendar and manage availability.
+          </p>
         </div>
-      </div>
-    );
-  }
 
-  // Main integrations overview page
+        <GoogleCalendarIntegration />
+      </div>
+    </div>
+  );
+}
+
+// Main Integrations Overview Component
+function IntegrationsOverview({
+  stripeStatus,
+  calendarConnected,
+  stripeLoading,
+  calendarLoading,
+  calendarEmail,
+  onSelectIntegration,
+}: {
+  stripeStatus: StripeStatus | null;
+  calendarConnected: boolean;
+  stripeLoading: boolean;
+  calendarLoading: boolean;
+  calendarEmail?: string | null;
+  onSelectIntegration: (type: IntegrationType) => void;
+}) {
   return (
     <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen'>
       <TherapistNavbar pageTitle='Integrations' showBackButton={true} backButtonHref='/therapist' />
@@ -449,7 +410,7 @@ export default function IntegrationsPage() {
           <h1 className='text-3xl font-bold text-gray-900 mb-3'>Integrations</h1>
           <IntegrationsStatusHeader
             stripeStatus={stripeStatus}
-            calendarConnected={calendarConnected || false}
+            calendarConnected={calendarConnected}
             stripeLoading={stripeLoading}
             calendarLoading={calendarLoading}
           />
@@ -461,7 +422,7 @@ export default function IntegrationsPage() {
           {/* Stripe Integration Card - Only in Development */}
           {isDevelopment && (
             <StripeCard
-              onClick={() => setSelectedIntegration('stripe')}
+              onClick={() => onSelectIntegration('stripe')}
               status={stripeStatus}
               isLoading={stripeLoading}
             />
@@ -469,9 +430,9 @@ export default function IntegrationsPage() {
 
           {/* Google Calendar Integration Card */}
           <CalendarCard
-            onClick={() => setSelectedIntegration('calendar')}
+            onClick={() => onSelectIntegration('calendar')}
             isLoading={calendarLoading}
-            isConnected={calendarConnected || false}
+            isConnected={calendarConnected}
             calendarEmail={calendarEmail}
           />
         </div>
@@ -535,5 +496,82 @@ export default function IntegrationsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function IntegrationsPage() {
+  const { user } = useUser();
+  const [therapistId, setTherapistId] = useState<number | null>(null);
+  const [selectedIntegration, setSelectedIntegration] = useState<IntegrationType>(null);
+  const [stripeStatus, setStripeStatus] = useState<StripeStatus | null>(null);
+  const [stripeLoading, setStripeLoading] = useState(true);
+
+  // Get Google Calendar integration status
+  const {
+    status: { isConnected: calendarConnected, isLoading: calendarLoading, calendarEmail },
+  } = useGoogleCalendarIntegration(therapistId || 0);
+
+  // Get therapist ID from user metadata or API
+  useEffect(() => {
+    const getTherapistId = async () => {
+      if (user?.publicMetadata?.therapistId) {
+        setTherapistId(user.publicMetadata.therapistId as number);
+      } else if (user?.id) {
+        // Fallback to API call if not in metadata
+        try {
+          const response = await fetch('/api/therapist/profile');
+          if (response.ok) {
+            const data = await response.json();
+            setTherapistId(data.therapist?.id || null);
+          }
+        } catch (error) {
+          console.error('Error fetching therapist ID:', error);
+        }
+      }
+    };
+
+    getTherapistId();
+  }, [user]);
+
+  // Fetch Stripe status when therapistId is available - only in development
+  useEffect(() => {
+    const fetchStripeStatus = async () => {
+      if (!therapistId || !isDevelopment) return;
+
+      setStripeLoading(true);
+      try {
+        const response = await fetch('/api/stripe/connect/status');
+        const data = await response.json();
+        if (response.ok) {
+          setStripeStatus(data);
+        }
+      } catch (error) {
+        console.error('Error fetching Stripe status:', error);
+      } finally {
+        setStripeLoading(false);
+      }
+    };
+
+    fetchStripeStatus();
+  }, [therapistId]);
+
+  if (selectedIntegration === 'stripe' && isDevelopment && therapistId) {
+    return <StripeIntegrationView therapistId={therapistId} />;
+  }
+
+  if (selectedIntegration === 'calendar') {
+    return <CalendarIntegrationView />;
+  }
+
+  // Main integrations overview page
+  return (
+    <IntegrationsOverview
+      stripeStatus={stripeStatus}
+      calendarConnected={calendarConnected || false}
+      stripeLoading={stripeLoading}
+      calendarLoading={calendarLoading}
+      calendarEmail={calendarEmail}
+      onSelectIntegration={setSelectedIntegration}
+    />
   );
 }
