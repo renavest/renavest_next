@@ -12,6 +12,7 @@ import { COLORS } from '@/src/styles/colors';
 // import OnboardingModal from '../../onboarding/components/OnboardingModal';
 // import { onboardingSignal } from '../../onboarding/state/onboardingState';
 
+import ChatSection from './ChatSection';
 import ComingSoon from './ComingSoon';
 import ConsultationBanner from './ConsultationBanner';
 import EmployeeNavbar from './EmployeeNavbar';
@@ -187,6 +188,9 @@ export default function LimitedDashboardClient() {
                 />
               </div>
             </div>
+
+            {/* Chat Section */}
+            <ChatSection />
           </div>
 
           {/* Share link panel and resources */}

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
 import { Send, MessageCircle, X } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 
 interface Message {
   id: number;
@@ -63,12 +63,12 @@ export default function ChatInterface({
     }
   }, [isOpen]);
 
-  // Auto-refresh messages every 30 seconds when channel is active
+  // Auto-refresh messages every 5 seconds when channel is active
   useEffect(() => {
     if (activeChannel) {
       const interval = setInterval(() => {
         loadMessages(activeChannel.id);
-      }, 30000);
+      }, 5000);
       return () => clearInterval(interval);
     }
   }, [activeChannel]);
@@ -200,10 +200,6 @@ export default function ChatInterface({
 
   const formatTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const formatDate = (timestamp: string) => {
-    return new Date(timestamp).toLocaleDateString();
   };
 
   if (process.env.NEXT_PUBLIC_ENABLE_CHAT_FEATURE !== 'true') {
