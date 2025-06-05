@@ -49,9 +49,8 @@ export async function GET(_req: Request, { params }: { params: { channelId: stri
       return new Response('Unauthorized', { status: 401 });
     }
 
-    const awaitedParams = await params;
-    const channelId = parseInt(awaitedParams.channelId, 10);
-    if (isNaN(channelId)) {
+    const channelIdNum = parseInt(params.channelId);
+    if (isNaN(channelIdNum)) {
       return new Response('Invalid channel ID', { status: 400 });
     }
 
@@ -76,7 +75,7 @@ export async function GET(_req: Request, { params }: { params: { channelId: stri
       .from(chatChannels)
       .where(
         and(
-          eq(chatChannels.id, channelId),
+          eq(chatChannels.id, channelIdNum),
           isTherapist.length > 0
             ? eq(chatChannels.therapistId, isTherapist[0].id)
             : eq(chatChannels.prospectUserId, dbUserId),
@@ -88,19 +87,32 @@ export async function GET(_req: Request, { params }: { params: { channelId: stri
       return new Response('Channel not found or access denied', { status: 403 });
     }
 
-    console.log(`🚀 Starting real-time SSE for user ${userId} on channel ${channelId}`);
+    console.log(`🚀 Starting real-time SSE for user ${userId} on channel ${channelIdNum}`);
 
     const encoder = new TextEncoder();
     let lastMessageTimestamp = Date.now();
+    let isClosed = false;
 
     const stream = new ReadableStream({
       async start(controller) {
+        // Helper function to safely enqueue data
+        const safeEnqueue = (data: Uint8Array) => {
+          if (!isClosed) {
+            try {
+              controller.enqueue(data);
+            } catch {
+              console.log('Controller closed, stopping enqueue attempts');
+              isClosed = true;
+            }
+          }
+        };
+
         // Send initial connection message
-        controller.enqueue(
+        safeEnqueue(
           encoder.encode(
             `data:${JSON.stringify({
               type: 'connected',
-              channelId,
+              channelId: channelIdNum,
               timestamp: Date.now(),
             })}\n\n`,
           ),
@@ -108,8 +120,10 @@ export async function GET(_req: Request, { params }: { params: { channelId: stri
 
         // Load and send initial message history
         try {
-          const history = await redis.lrange<string>(getChatMessagesKey(channelId), -50, -1);
-          console.log(`📚 Loaded ${history.length} messages from Redis for channel ${channelId}`);
+          const history = await redis.lrange<string>(getChatMessagesKey(channelIdNum), -50, -1);
+          console.log(
+            `📚 Loaded ${history.length} messages from Redis for channel ${channelIdNum}`,
+          );
 
           if (history.length === 0) {
             // Fallback to database if no Redis history
@@ -128,29 +142,31 @@ export async function GET(_req: Request, { params }: { params: { channelId: stri
               })
               .from(chatMessages)
               .innerJoin(users, eq(chatMessages.senderId, users.id))
-              .where(eq(chatMessages.channelId, channelId))
+              .where(eq(chatMessages.channelId, channelIdNum))
               .orderBy(desc(chatMessages.sentAt))
               .limit(50);
 
             for (const msg of dbMessages.reverse()) {
+              if (isClosed) break;
               const redisMessage = {
                 id: msg.messageId,
                 text: msg.content,
                 author: `${msg.senderFirstName} ${msg.senderLastName}`.trim(),
                 authorEmail: msg.senderEmail,
-                channelId: channelId,
+                channelId: channelIdNum,
                 ts: msg.sentAt.getTime(),
                 messageType: msg.messageType,
               };
-              controller.enqueue(encoder.encode(`data:${JSON.stringify(redisMessage)}\n\n`));
+              safeEnqueue(encoder.encode(`data:${JSON.stringify(redisMessage)}\n\n`));
               lastMessageTimestamp = msg.sentAt.getTime();
             }
           } else {
             // Send Redis history
             history.forEach((messageData) => {
+              if (isClosed) return;
               const parsedMessage = parseRedisMessage(messageData);
               if (parsedMessage) {
-                controller.enqueue(encoder.encode(`data:${parsedMessage.messageStr}\n\n`));
+                safeEnqueue(encoder.encode(`data:${parsedMessage.messageStr}\n\n`));
                 if (parsedMessage.message.ts && parsedMessage.message.ts > lastMessageTimestamp) {
                   lastMessageTimestamp = parsedMessage.message.ts;
                 }
@@ -162,72 +178,70 @@ export async function GET(_req: Request, { params }: { params: { channelId: stri
         }
 
         // Start intelligent polling for new messages
-        const startPolling = () => {
-          const pollInterval = setInterval(async () => {
-            try {
-              // Check for new messages since our last timestamp
-              const recentMessages = await redis.lrange<string>(
-                getChatMessagesKey(channelId),
-                -10,
-                -1,
-              );
+        const pollInterval = setInterval(async () => {
+          if (isClosed) {
+            clearInterval(pollInterval);
+            return;
+          }
 
-              for (const messageData of recentMessages) {
-                const parsedMessage = parseRedisMessage(messageData);
-                if (parsedMessage) {
-                  if (parsedMessage.message.ts && parsedMessage.message.ts > lastMessageTimestamp) {
-                    console.log(`📨 New message detected: ${parsedMessage.message.id}`);
-                    controller.enqueue(encoder.encode(`data:${parsedMessage.messageStr}\n\n`));
-                    lastMessageTimestamp = parsedMessage.message.ts;
-                  }
+          try {
+            // Check for new messages since our last timestamp
+            const recentMessages = await redis.lrange<string>(
+              getChatMessagesKey(channelIdNum),
+              -10,
+              -1,
+            );
+
+            for (const messageData of recentMessages) {
+              if (isClosed) break;
+              const parsedMessage = parseRedisMessage(messageData);
+              if (parsedMessage) {
+                if (parsedMessage.message.ts && parsedMessage.message.ts > lastMessageTimestamp) {
+                  console.log(`📨 New message detected: ${parsedMessage.message.id}`);
+                  safeEnqueue(encoder.encode(`data:${parsedMessage.messageStr}\n\n`));
+                  lastMessageTimestamp = parsedMessage.message.ts;
                 }
               }
-            } catch (error) {
+            }
+          } catch (error) {
+            if (!isClosed) {
               console.error('❌ Polling error:', error);
             }
-          }, 1000); // Poll every 1 second for responsiveness
-
-          // Store interval for cleanup
-          (
-            controller as ReadableStreamDefaultController & { pollInterval: NodeJS.Timeout }
-          ).pollInterval = pollInterval;
-        };
-
-        // Start polling
-        startPolling();
+          }
+        }, 1000); // Poll every 1 second for responsiveness
 
         // Send periodic heartbeat to keep connection alive
         const heartbeatInterval = setInterval(() => {
-          try {
-            controller.enqueue(
-              encoder.encode(
-                `data:${JSON.stringify({ type: 'heartbeat', timestamp: Date.now() })}\n\n`,
-              ),
-            );
-          } catch {
-            console.log('Heartbeat failed, connection likely closed');
+          if (isClosed) {
             clearInterval(heartbeatInterval);
+            return;
           }
+
+          safeEnqueue(
+            encoder.encode(
+              `data:${JSON.stringify({ type: 'heartbeat', timestamp: Date.now() })}\n\n`,
+            ),
+          );
         }, 30000); // Every 30 seconds
 
-        // Store heartbeat interval for cleanup
+        // Store intervals for cleanup
         (
-          controller as ReadableStreamDefaultController & {
-            pollInterval: NodeJS.Timeout;
-            heartbeatInterval: NodeJS.Timeout;
-          }
+          controller as ReadableStreamDefaultController & { pollInterval: NodeJS.Timeout }
+        ).pollInterval = pollInterval;
+        (
+          controller as ReadableStreamDefaultController & { heartbeatInterval: NodeJS.Timeout }
         ).heartbeatInterval = heartbeatInterval;
       },
 
       cancel() {
-        console.log(`🔌 Closing SSE stream for user ${userId} on channel ${channelId}`);
+        console.log(`🔌 Closing SSE stream for user ${userId} on channel ${channelIdNum}`);
+        isClosed = true;
 
         // Clean up intervals
-        const extendedController = this as {
+        const extendedController = this as ReadableStreamDefaultController & {
           pollInterval?: NodeJS.Timeout;
           heartbeatInterval?: NodeJS.Timeout;
         };
-
         if (extendedController.pollInterval) {
           clearInterval(extendedController.pollInterval);
         }
