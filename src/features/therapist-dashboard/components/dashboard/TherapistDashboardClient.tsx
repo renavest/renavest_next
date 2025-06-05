@@ -88,10 +88,10 @@ const ClientManagementSection = ({
   return (
     <div className='bg-white rounded-2xl border border-gray-100 shadow-lg overflow-hidden'>
       {/* Header with Client Selector */}
-      <div className='bg-gradient-to-r from-purple-50/50 to-indigo-50/30 p-6 border-b border-gray-100'>
+      <div className='bg-gray-50 p-6 border-b border-gray-100'>
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-4'>
-            <div className='w-2 h-12 bg-gradient-to-b from-[#9071FF] to-purple-600 rounded-full'></div>
+            <div className='w-2 h-12 bg-[#9071FF] rounded-full'></div>
             <div>
               <h2 className='text-2xl font-bold text-gray-900 mb-1'>Client Management</h2>
               <p className='text-gray-600'>Comprehensive client care and documentation</p>
@@ -191,7 +191,7 @@ const ClientManagementSection = ({
       {/* No Client Selected State */}
       {!selectedClient && (
         <div className='p-16 text-center'>
-          <div className='w-16 h-16 bg-gradient-to-br from-[#9071FF] to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6'>
+          <div className='w-16 h-16 bg-[#9071FF] rounded-2xl flex items-center justify-center mx-auto mb-6'>
             <Users className='w-8 h-8 text-white' />
           </div>
           <h3 className='text-xl font-semibold text-gray-900 mb-2'>No Clients Yet</h3>
@@ -220,7 +220,7 @@ const ClientOverviewTab = ({
   return (
     <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
       <div className='space-y-6'>
-        <div className='bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200'>
+        <div className='bg-purple-50 rounded-xl p-6 border border-purple-200'>
           <h4 className='text-lg font-semibold text-purple-900 mb-3'>Client Information</h4>
           <div className='space-y-3 text-purple-800'>
             <p>
@@ -235,7 +235,7 @@ const ClientOverviewTab = ({
           </div>
         </div>
 
-        <div className='bg-gradient-to-r from-purple-50/70 to-purple-100/70 rounded-xl p-6 border border-purple-200/70'>
+        <div className='bg-purple-50 rounded-xl p-6 border border-purple-200'>
           <h4 className='text-lg font-semibold text-purple-900 mb-3'>Recent Activity</h4>
           <p className='text-purple-800'>Last session: Coming soon</p>
         </div>
@@ -265,7 +265,7 @@ const ClientSessionsTab = ({ sessions }: { sessions: UpcomingSession[] }) => {
 const ClientProgressTab = () => {
   return (
     <div className='text-center py-16'>
-      <div className='w-16 h-16 bg-gradient-to-br from-amber-100 to-amber-200 rounded-2xl flex items-center justify-center mx-auto mb-6'>
+      <div className='w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-6'>
         <TrendingUp className='w-8 h-8 text-amber-600' />
       </div>
       <h3 className='text-xl font-semibold text-gray-900 mb-2'>Progress Tracking</h3>
@@ -377,7 +377,7 @@ const ClientChatTab = ({ client }: { client: Client }) => {
   if (process.env.NEXT_PUBLIC_ENABLE_CHAT_FEATURE !== 'true') {
     return (
       <div className='text-center py-16'>
-        <div className='w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6'>
+        <div className='w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6'>
           <MessageCircle className='w-8 h-8 text-gray-400' />
         </div>
         <h3 className='text-xl font-semibold text-gray-900 mb-2'>Chat Feature</h3>

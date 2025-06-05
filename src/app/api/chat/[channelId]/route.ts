@@ -49,7 +49,7 @@ export async function GET(_req: Request, { params }: { params: { channelId: stri
       return new Response('Unauthorized', { status: 401 });
     }
 
-    const channelIdNum = parseInt(params.channelId);
+    const channelIdNum = parseInt(await params.channelId);
     if (isNaN(channelIdNum)) {
       return new Response('Invalid channel ID', { status: 400 });
     }

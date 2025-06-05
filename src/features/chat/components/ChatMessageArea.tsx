@@ -1,5 +1,14 @@
-import { Send, User, MessageCircle, Loader2, Heart, CheckCircle2, Lightbulb } from 'lucide-react';
-import { useRef, useEffect } from 'react';
+import {
+  Send,
+  User,
+  MessageCircle,
+  Loader2,
+  Heart,
+  CheckCircle2,
+  Lightbulb,
+  Download,
+} from 'lucide-react';
+import { useRef, useEffect, useState } from 'react';
 
 interface Message {
   id: string;
@@ -99,13 +108,52 @@ const EmptyChannelState = () => (
   </div>
 );
 
+// Helper function to export chat messages via API for compliance
+const exportChatMessages = async (messages: Message[], channel: Channel) => {
+  try {
+    const response = await fetch(`/api/chat/export?channelId=${channel.id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to export chat messages');
+    }
+
+    // Get the filename from the Content-Disposition header
+    const contentDisposition = response.headers.get('Content-Disposition');
+    const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
+    const filename = filenameMatch ? filenameMatch[1] : `chat-export-${Date.now()}.txt`;
+
+    // Create blob and download
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error exporting chat:', error);
+    alert('Failed to export chat messages. Please try again.');
+  }
+};
+
 // Chat header component - fixed name display
 const ChatHeader = ({
   activeChannel,
   connectionStatus,
+  messages,
+  onExport,
 }: {
   activeChannel: Channel;
   connectionStatus: string;
+  messages: Message[];
+  onExport: () => void;
 }) => (
   <div className='border-b border-purple-100 bg-gradient-to-r from-purple-50/30 to-white p-4'>
     <div className='flex items-center justify-between'>
@@ -123,9 +171,21 @@ const ChatHeader = ({
           </div>
         </div>
       </div>
-      <div className='text-xs text-gray-500 bg-white/80 px-3 py-1 rounded-full border border-purple-100'>
-        <Heart className='h-3 w-3 inline mr-1 text-[#9071FF]' />
-        Safe space for healing
+      <div className='flex items-center space-x-3'>
+        {messages.length > 0 && (
+          <button
+            onClick={onExport}
+            className='flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-50 border border-gray-200 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md'
+            title='Export chat for compliance'
+          >
+            <Download className='h-4 w-4' />
+            <span className='hidden sm:inline'>Export</span>
+          </button>
+        )}
+        <div className='text-xs text-gray-500 bg-white/80 px-3 py-1 rounded-full border border-purple-100'>
+          <Heart className='h-3 w-3 inline mr-1 text-[#9071FF]' />
+          Safe space for healing
+        </div>
       </div>
     </div>
   </div>
@@ -212,62 +272,64 @@ const ChatInput = ({
   onKeyPress: (e: React.KeyboardEvent) => void;
 }) => (
   <div className='border-t border-purple-100 bg-gradient-to-r from-white to-purple-50/20 p-4'>
-    <div className='flex items-end space-x-3'>
-      <div className='flex-1 relative'>
-        <textarea
-          value={newMessage}
-          onChange={(e) => onMessageChange(e.target.value)}
-          onKeyPress={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              onKeyPress(e);
-            }
-          }}
-          placeholder='Share your thoughts with compassion...'
-          rows={1}
-          className='w-full px-4 py-3 border border-purple-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#9071FF]/30 focus:border-[#9071FF] resize-none bg-white shadow-sm transition-all duration-300 hover:border-purple-300 text-gray-900 placeholder-gray-500'
-          style={{ minHeight: '44px', maxHeight: '120px' }}
-          disabled={loading || connectionStatus !== 'connected'}
-        />
+    <div className='flex justify-center'>
+      <div className='flex items-end space-x-3 w-full max-w-2xl'>
+        <div className='flex-1 relative'>
+          <textarea
+            value={newMessage}
+            onChange={(e) => onMessageChange(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                onKeyPress(e);
+              }
+            }}
+            placeholder='Share your thoughts with compassion...'
+            rows={1}
+            className='w-full px-4 py-3 border border-purple-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#9071FF]/30 focus:border-[#9071FF] resize-none bg-white shadow-sm transition-all duration-300 hover:border-purple-300 text-gray-900 placeholder-gray-500'
+            style={{ minHeight: '44px', maxHeight: '120px' }}
+            disabled={loading || connectionStatus !== 'connected'}
+          />
 
-        {loading && (
-          <div className='absolute right-3 bottom-3 flex items-center space-x-1 text-[#9071FF]'>
-            <div
-              className='w-1 h-1 bg-current rounded-full animate-bounce'
-              style={{ animationDelay: '0ms' }}
-            ></div>
-            <div
-              className='w-1 h-1 bg-current rounded-full animate-bounce'
-              style={{ animationDelay: '150ms' }}
-            ></div>
-            <div
-              className='w-1 h-1 bg-current rounded-full animate-bounce'
-              style={{ animationDelay: '300ms' }}
-            ></div>
-          </div>
-        )}
+          {loading && (
+            <div className='absolute right-3 bottom-3 flex items-center space-x-1 text-[#9071FF]'>
+              <div
+                className='w-1 h-1 bg-current rounded-full animate-bounce'
+                style={{ animationDelay: '0ms' }}
+              ></div>
+              <div
+                className='w-1 h-1 bg-current rounded-full animate-bounce'
+                style={{ animationDelay: '150ms' }}
+              ></div>
+              <div
+                className='w-1 h-1 bg-current rounded-full animate-bounce'
+                style={{ animationDelay: '300ms' }}
+              ></div>
+            </div>
+          )}
+        </div>
+
+        <button
+          onClick={onSendMessage}
+          disabled={loading || !newMessage.trim() || connectionStatus !== 'connected'}
+          className={`p-3 rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg ${
+            loading || !newMessage.trim() || connectionStatus !== 'connected'
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'
+              : 'bg-gradient-to-br from-[#9071FF] to-purple-600 text-white hover:from-[#7c5ce8] hover:to-purple-700 hover:shadow-xl'
+          }`}
+        >
+          {loading ? <Loader2 className='h-5 w-5 animate-spin' /> : <Send className='h-5 w-5' />}
+        </button>
       </div>
-
-      <button
-        onClick={onSendMessage}
-        disabled={loading || !newMessage.trim() || connectionStatus !== 'connected'}
-        className={`p-3 rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg ${
-          loading || !newMessage.trim() || connectionStatus !== 'connected'
-            ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'
-            : 'bg-gradient-to-br from-[#9071FF] to-purple-600 text-white hover:from-[#7c5ce8] hover:to-purple-700 hover:shadow-xl'
-        }`}
-      >
-        {loading ? <Loader2 className='h-5 w-5 animate-spin' /> : <Send className='h-5 w-5' />}
-      </button>
     </div>
 
-    <div className='flex items-center justify-between mt-3 text-xs'>
+    <div className='flex items-center justify-center mt-3 text-xs'>
       <div className='flex items-center space-x-2 text-gray-500'>
         <Heart className='h-3 w-3 text-[#9071FF]/60' />
         <span>Creating a space for healing conversations</span>
       </div>
       {connectionStatus !== 'connected' && (
-        <div className='text-amber-600 font-medium'>
+        <div className='text-amber-600 font-medium ml-4'>
           {connectionStatus === 'connecting' ? 'Reconnecting...' : 'Connection issue'}
         </div>
       )}
@@ -288,10 +350,44 @@ export function ChatMessageArea({
   formatTime,
 }: ChatMessageAreaProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [isUserAtBottom, setIsUserAtBottom] = useState(true);
+  const [lastMessageCount, setLastMessageCount] = useState(0);
 
+  // Check if user is at bottom of chat
+  const checkIfAtBottom = () => {
+    if (!messagesContainerRef.current) return false;
+
+    const container = messagesContainerRef.current;
+    const threshold = 50; // pixels from bottom
+    return container.scrollHeight - container.scrollTop - container.clientHeight <= threshold;
+  };
+
+  // Handle scroll events
+  const handleScroll = () => {
+    setIsUserAtBottom(checkIfAtBottom());
+  };
+
+  // Only auto-scroll if user was at bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (messages.length > lastMessageCount) {
+      if (isUserAtBottom) {
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+      setLastMessageCount(messages.length);
+    }
+  }, [messages, isUserAtBottom, lastMessageCount]);
+
+  // Reset to bottom when switching channels
+  useEffect(() => {
+    setIsUserAtBottom(true);
+    setLastMessageCount(0);
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+    }, 100);
+  }, [activeChannel?.id]);
 
   const handlePromptSelect = (prompt: string) => {
     onMessageChange(prompt);
@@ -303,11 +399,21 @@ export function ChatMessageArea({
 
   return (
     <div className='flex-1 flex flex-col bg-white'>
-      <ChatHeader activeChannel={activeChannel} connectionStatus={connectionStatus} />
+      <ChatHeader
+        activeChannel={activeChannel}
+        connectionStatus={connectionStatus}
+        messages={messages}
+        onExport={() => exportChatMessages(messages, activeChannel)}
+      />
 
       {messages.length === 0 && <ConversationStarters onSelectPrompt={handlePromptSelect} />}
 
-      <div className='flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-white to-purple-50/10'>
+      <div
+        ref={messagesContainerRef}
+        className='flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-white to-purple-50/10'
+        onScroll={handleScroll}
+        style={{ scrollBehavior: 'auto' }}
+      >
         {messages.length === 0 ? (
           <div className='flex items-center justify-center h-full'>
             <div className='text-center py-12'>
@@ -337,6 +443,29 @@ export function ChatMessageArea({
             ))}
             <div ref={messagesEndRef} />
           </>
+        )}
+
+        {/* Scroll to bottom button - shows when user is not at bottom */}
+        {!isUserAtBottom && messages.length > 0 && (
+          <div className='fixed bottom-24 right-8 z-10'>
+            <button
+              onClick={() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                setIsUserAtBottom(true);
+              }}
+              className='bg-[#9071FF] text-white p-3 rounded-full shadow-lg hover:bg-[#7c5ce8] transition-all duration-200 hover:scale-105'
+              title='Scroll to latest messages'
+            >
+              <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M19 14l-7 7m0 0l-7-7m7 7V3'
+                />
+              </svg>
+            </button>
+          </div>
         )}
       </div>
 
