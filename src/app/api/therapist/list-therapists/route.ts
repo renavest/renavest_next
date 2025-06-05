@@ -16,8 +16,8 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '2', 10);
 
-    // Fetch active therapists
-    const activeTherapists = await db
+    // First, try to get Seth Morton specifically
+    const sethMortonActive = await db
       .select({
         id: therapists.id,
         name: therapists.name,
@@ -28,10 +28,16 @@ export async function GET(request: Request) {
         isPending: sql<boolean>`false`,
       })
       .from(therapists)
-      .where(and(isNotNull(therapists.profileUrl), sql`${therapists.profileUrl} != ''`));
+      .where(
+        and(
+          isNotNull(therapists.profileUrl),
+          sql`${therapists.profileUrl} != ''`,
+          sql`${therapists.name} = 'Seth Morton'`,
+        ),
+      )
+      .limit(1);
 
-    // Fetch pending therapists
-    const pendingTherapistsData = await db
+    const sethMortonPending = await db
       .select({
         id: pendingTherapists.id,
         name: pendingTherapists.name,
@@ -43,29 +49,72 @@ export async function GET(request: Request) {
       })
       .from(pendingTherapists)
       .where(
-        and(isNotNull(pendingTherapists.profileUrl), sql`${pendingTherapists.profileUrl} != ''`),
-      );
+        and(
+          isNotNull(pendingTherapists.profileUrl),
+          sql`${pendingTherapists.profileUrl} != ''`,
+          sql`${pendingTherapists.name} = 'Seth Morton'`,
+        ),
+      )
+      .limit(1);
 
-    // Combine all therapists
-    const allTherapists = [...activeTherapists, ...pendingTherapistsData];
+    const sethMorton = [...sethMortonActive, ...sethMortonPending][0];
 
-    // Find Seth Morton and separate him from others
-    const sethMorton = allTherapists.find((therapist) => therapist.name === 'Seth Morton');
-    const otherTherapists = allTherapists.filter((therapist) => therapist.name !== 'Seth Morton');
+    // Calculate how many other therapists we need
+    const remainingLimit = sethMorton ? Math.max(0, limit - 1) : limit;
 
-    // Shuffle other therapists
+    // Fetch other active therapists (excluding Seth Morton)
+    const otherActiveTherapists = await db
+      .select({
+        id: therapists.id,
+        name: therapists.name,
+        title: therapists.title,
+        profileUrl: therapists.profileUrl,
+        previewBlurb: therapists.previewBlurb,
+        bookingURL: therapists.bookingURL,
+        isPending: sql<boolean>`false`,
+      })
+      .from(therapists)
+      .where(
+        and(
+          isNotNull(therapists.profileUrl),
+          sql`${therapists.profileUrl} != ''`,
+          sql`${therapists.name} != 'Seth Morton'`,
+        ),
+      )
+      .limit(remainingLimit);
+
+    // Fetch other pending therapists (excluding Seth Morton)
+    const otherPendingTherapists = await db
+      .select({
+        id: pendingTherapists.id,
+        name: pendingTherapists.name,
+        title: pendingTherapists.title,
+        profileUrl: pendingTherapists.profileUrl,
+        previewBlurb: pendingTherapists.previewBlurb,
+        bookingURL: pendingTherapists.bookingURL,
+        isPending: sql<boolean>`true`,
+      })
+      .from(pendingTherapists)
+      .where(
+        and(
+          isNotNull(pendingTherapists.profileUrl),
+          sql`${pendingTherapists.profileUrl} != ''`,
+          sql`${pendingTherapists.name} != 'Seth Morton'`,
+        ),
+      )
+      .limit(remainingLimit);
+
+    // Combine other therapists and shuffle them
+    const otherTherapists = [...otherActiveTherapists, ...otherPendingTherapists];
     const shuffledOthers = otherTherapists.sort(() => Math.random() - 0.5);
+    const limitedOthers = shuffledOthers.slice(0, remainingLimit);
 
-    // Ensure Seth Morton is always included in the results
-    let finalTherapists = [];
+    // Build final result with Seth Morton first (if available)
+    const finalTherapists = [];
     if (sethMorton) {
       finalTherapists.push(sethMorton);
-      // Add other therapists up to the limit
-      finalTherapists.push(...shuffledOthers.slice(0, limit - 1));
-    } else {
-      // If Seth Morton is not found, just use other therapists
-      finalTherapists = shuffledOthers.slice(0, limit);
     }
+    finalTherapists.push(...limitedOthers);
 
     // Map results to use the correct image URL
     const therapistsWithImageUrl = finalTherapists.map((therapist) => ({
