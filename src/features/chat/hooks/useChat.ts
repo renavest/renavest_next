@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 
-import { type ChatMessage } from '@/src/lib/redis';
-
 interface Message {
   id: string;
   text: string;
@@ -75,7 +73,7 @@ export function useChat(channelId: number | null) {
   }, [channelId]);
 
   const sendMessage = useCallback(
-    async (text: string, author: string): Promise<boolean> => {
+    async (text: string, _author: string): Promise<boolean> => {
       if (!channelId || !text.trim()) return false;
 
       try {
