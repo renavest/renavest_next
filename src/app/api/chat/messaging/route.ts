@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
 }
 
 async function createChannel(body: CreateChannelBody, userId: string) {
-  const { therapistId, prospectUserId, channelName } = body;
+  const { therapistId, prospectUserId } = body;
 
   try {
     // Verify the user is authorized (either therapist or the prospect)
