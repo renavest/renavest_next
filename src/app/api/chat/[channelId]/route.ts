@@ -3,7 +3,6 @@ export const dynamic = 'force-dynamic';
 
 import { auth } from '@clerk/nextjs/server';
 import { eq, and, desc } from 'drizzle-orm';
-import Redis from 'ioredis';
 
 import { db } from '@/src/db';
 import { therapists, users, chatChannels, chatMessages } from '@/src/db/schema';
@@ -62,45 +61,28 @@ export async function GET(_req: Request, { params }: { params: { channelId: stri
       return new Response('Channel not found or access denied', { status: 403 });
     }
 
-    console.log(`Starting SSE stream for user ${userId} on channel ${channelId}`);
+    console.log(`🚀 Starting real-time SSE for user ${userId} on channel ${channelId}`);
 
     const encoder = new TextEncoder();
-
-    // Use Upstash Redis with proper TCP URL for pub/sub
-    const UPSTASH_REDIS_TCP_URL = process.env.UPSTASH_REDIS_TCP_URL;
-
-    if (!UPSTASH_REDIS_TCP_URL) {
-      console.error('❌ UPSTASH_REDIS_TCP_URL not configured');
-      console.error('Please add your Redis TCP URL from Upstash console to .env file');
-      console.error('Format: UPSTASH_REDIS_TCP_URL=rediss://default:password@host:6380');
-
-      // Fallback to polling-based approach if Redis pub/sub not available
-      return createPollingSSE(channelId, encoder);
-    }
-
-    let subscriber: Redis | null = null;
-
-    try {
-      subscriber = new Redis(UPSTASH_REDIS_TCP_URL);
-      await subscriber.subscribe(`channel:${channelId}`);
-      console.log(`✅ Subscribed to channel:${channelId}`);
-    } catch (error) {
-      console.error('❌ Failed to connect to Redis for pub/sub:', error);
-      console.log('🔄 Falling back to polling-based SSE');
-      return createPollingSSE(channelId, encoder);
-    }
+    let lastMessageTimestamp = Date.now();
 
     const stream = new ReadableStream({
       async start(controller) {
         // Send initial connection message
         controller.enqueue(
-          encoder.encode(`data:${JSON.stringify({ type: 'connected', channelId })}\n\n`),
+          encoder.encode(
+            `data:${JSON.stringify({
+              type: 'connected',
+              channelId,
+              timestamp: Date.now(),
+            })}\n\n`,
+          ),
         );
 
-        // Replay message history
+        // Load and send initial message history
         try {
           const history = await redis.lrange<string>(getChatMessagesKey(channelId), -50, -1);
-          console.log(`Replaying ${history.length} messages for channel ${channelId}`);
+          console.log(`📚 Loaded ${history.length} messages from Redis for channel ${channelId}`);
 
           if (history.length === 0) {
             // Fallback to database if no Redis history
@@ -134,33 +116,101 @@ export async function GET(_req: Request, { params }: { params: { channelId: stri
                 messageType: msg.messageType,
               };
               controller.enqueue(encoder.encode(`data:${JSON.stringify(redisMessage)}\n\n`));
+              lastMessageTimestamp = msg.sentAt.getTime();
             }
           } else {
             // Send Redis history
-            history.forEach((messageStr) =>
-              controller.enqueue(encoder.encode(`data:${messageStr}\n\n`)),
-            );
+            history.forEach((messageStr) => {
+              controller.enqueue(encoder.encode(`data:${messageStr}\n\n`));
+              try {
+                const msg = JSON.parse(messageStr);
+                if (msg.ts && msg.ts > lastMessageTimestamp) {
+                  lastMessageTimestamp = msg.ts;
+                }
+              } catch (e) {
+                console.warn('Could not parse message timestamp:', e);
+              }
+            });
           }
         } catch (error) {
-          console.error('Error loading message history:', error);
+          console.error('❌ Error loading message history:', error);
         }
 
-        // Listen for new messages via Redis pub/sub
-        if (subscriber) {
-          subscriber.on('message', (channel, payload) => {
-            console.log(`📨 Received message on channel ${channel}:`, payload);
-            controller.enqueue(encoder.encode(`data:${payload}\n\n`));
-          });
+        // Start intelligent polling for new messages
+        const startPolling = () => {
+          const pollInterval = setInterval(async () => {
+            try {
+              // Check for new messages since our last timestamp
+              const recentMessages = await redis.lrange<string>(
+                getChatMessagesKey(channelId),
+                -10,
+                -1,
+              );
 
-          subscriber.on('error', (error) => {
-            console.error('Redis subscriber error:', error);
-            // Don't close the controller, let it continue with polling fallback
-          });
-        }
+              for (const messageStr of recentMessages) {
+                try {
+                  const message = JSON.parse(messageStr);
+                  if (message.ts && message.ts > lastMessageTimestamp) {
+                    console.log(`📨 New message detected: ${message.id}`);
+                    controller.enqueue(encoder.encode(`data:${messageStr}\n\n`));
+                    lastMessageTimestamp = message.ts;
+                  }
+                } catch (e) {
+                  console.error('Error parsing message:', e);
+                }
+              }
+            } catch (error) {
+              console.error('❌ Polling error:', error);
+            }
+          }, 1000); // Poll every 1 second for responsiveness
+
+          // Store interval for cleanup
+          (
+            controller as ReadableStreamDefaultController & { pollInterval: NodeJS.Timeout }
+          ).pollInterval = pollInterval;
+        };
+
+        // Start polling
+        startPolling();
+
+        // Send periodic heartbeat to keep connection alive
+        const heartbeatInterval = setInterval(() => {
+          try {
+            controller.enqueue(
+              encoder.encode(
+                `data:${JSON.stringify({ type: 'heartbeat', timestamp: Date.now() })}\n\n`,
+              ),
+            );
+          } catch {
+            console.log('Heartbeat failed, connection likely closed');
+            clearInterval(heartbeatInterval);
+          }
+        }, 30000); // Every 30 seconds
+
+        // Store heartbeat interval for cleanup
+        (
+          controller as ReadableStreamDefaultController & {
+            pollInterval: NodeJS.Timeout;
+            heartbeatInterval: NodeJS.Timeout;
+          }
+        ).heartbeatInterval = heartbeatInterval;
       },
+
       cancel() {
-        console.log(`Closing SSE stream for user ${userId} on channel ${channelId}`);
-        subscriber?.disconnect();
+        console.log(`🔌 Closing SSE stream for user ${userId} on channel ${channelId}`);
+
+        // Clean up intervals
+        const extendedController = this as {
+          pollInterval?: NodeJS.Timeout;
+          heartbeatInterval?: NodeJS.Timeout;
+        };
+
+        if (extendedController.pollInterval) {
+          clearInterval(extendedController.pollInterval);
+        }
+        if (extendedController.heartbeatInterval) {
+          clearInterval(extendedController.heartbeatInterval);
+        }
       },
     });
 
@@ -171,69 +221,11 @@ export async function GET(_req: Request, { params }: { params: { channelId: stri
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Cache-Control',
+        'X-Accel-Buffering': 'no', // Disable nginx buffering
       },
     });
   } catch (error) {
-    console.error('SSE endpoint error:', error);
+    console.error('❌ SSE endpoint error:', error);
     return new Response('Internal Server Error', { status: 500 });
   }
-}
-
-// Fallback polling-based SSE when Redis pub/sub is not available
-function createPollingSSE(channelId: number, encoder: TextEncoder) {
-  let lastTimestamp = Date.now();
-
-  const stream = new ReadableStream({
-    async start(controller) {
-      // Send initial connection message
-      controller.enqueue(
-        encoder.encode(
-          `data:${JSON.stringify({ type: 'connected', channelId, mode: 'polling' })}\n\n`,
-        ),
-      );
-
-      // Poll for new messages every 2 seconds
-      const pollInterval = setInterval(async () => {
-        try {
-          const history = await redis.lrange<string>(getChatMessagesKey(channelId), -10, -1);
-
-          for (const messageStr of history) {
-            try {
-              const message = JSON.parse(messageStr);
-              if (message.ts > lastTimestamp) {
-                controller.enqueue(encoder.encode(`data:${messageStr}\n\n`));
-                lastTimestamp = message.ts;
-              }
-            } catch (e) {
-              console.error('Error parsing message:', e);
-            }
-          }
-        } catch (error) {
-          console.error('Polling error:', error);
-        }
-      }, 2000);
-
-      // Store interval ID for cleanup - extend controller type
-      (
-        controller as ReadableStreamDefaultController & { pollInterval: NodeJS.Timeout }
-      ).pollInterval = pollInterval;
-    },
-    cancel() {
-      console.log(`Closing polling SSE for channel ${channelId}`);
-      const extendedThis = this as { pollInterval?: NodeJS.Timeout };
-      if (extendedThis.pollInterval) {
-        clearInterval(extendedThis.pollInterval);
-      }
-    },
-  });
-
-  return new Response(stream, {
-    headers: {
-      'Content-Type': 'text/event-stream; charset=utf-8',
-      Connection: 'keep-alive',
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Cache-Control',
-    },
-  });
 }
