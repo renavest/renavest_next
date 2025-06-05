@@ -1,10 +1,12 @@
 'use client';
 
-import { ArrowRight, Calendar, Star } from 'lucide-react';
+import { useUser } from '@clerk/nextjs';
+import { ArrowRight, Calendar, Star, MessageCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import posthog from 'posthog-js';
 import { useEffect, useState } from 'react';
 
+import { createChannel } from '@/src/features/chat/state/chatState';
 import { TherapistImage } from '@/src/features/therapist-dashboard/components/shared/TherapistImage';
 
 interface Therapist {
@@ -27,7 +29,9 @@ export default function TherapistRecommendations({
   const [therapists, setTherapists] = useState<Therapist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [chatCreatingFor, setChatCreatingFor] = useState<number | null>(null);
   const router = useRouter();
+  const { user } = useUser();
 
   useEffect(() => {
     async function fetchTherapists() {
@@ -63,6 +67,59 @@ export default function TherapistRecommendations({
     }
   };
 
+  const handleStartChat = async (therapist: Therapist) => {
+    if (!user?.id) {
+      console.error('User not authenticated');
+      return;
+    }
+
+    try {
+      setChatCreatingFor(therapist.id);
+
+      // Track chat initiation
+      posthog.capture('therapist_chat_initiated', {
+        therapist_id: therapist.id,
+        therapist_name: therapist.name,
+        source: 'dashboard_recommendations',
+        user_id: user.id,
+      });
+
+      // Get the database user ID first
+      const userResponse = await fetch('/api/user/me');
+      if (!userResponse.ok) {
+        throw new Error('Failed to get user data');
+      }
+      const userData = await userResponse.json();
+
+      // Create chat channel
+      const success = await createChannel(therapist.id, userData.id);
+
+      if (success) {
+        // Track successful chat creation
+        posthog.capture('therapist_chat_created', {
+          therapist_id: therapist.id,
+          therapist_name: therapist.name,
+          source: 'dashboard_recommendations',
+          user_id: user.id,
+        });
+      } else {
+        throw new Error('Failed to create chat channel');
+      }
+    } catch (error) {
+      console.error('Failed to start chat:', error);
+      // Track chat creation failure
+      posthog.capture('therapist_chat_failed', {
+        therapist_id: therapist.id,
+        therapist_name: therapist.name,
+        source: 'dashboard_recommendations',
+        user_id: user.id,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    } finally {
+      setChatCreatingFor(null);
+    }
+  };
+
   const handleViewAll = () => {
     posthog.capture('view_all_therapists_clicked', {
       source: 'dashboard_recommendations',
@@ -79,7 +136,7 @@ export default function TherapistRecommendations({
           </h3>
           <p className='text-sm text-purple-600 font-medium flex items-center'>
             <Star className='w-4 h-4 mr-1' />
-            Book a FREE consultation with any of these experts
+            Book a FREE consultation or start a chat with any of these experts
           </p>
         </div>
       </div>
@@ -121,7 +178,19 @@ export default function TherapistRecommendations({
                         {therapist.previewBlurb}
                       </p>
                     </div>
-                    <div className='flex-shrink-0'>
+                    <div className='flex-shrink-0 flex flex-col sm:flex-row gap-2'>
+                      {/* Chat Feature - only show if enabled */}
+                      {process.env.NEXT_PUBLIC_ENABLE_CHAT_FEATURE === 'true' && (
+                        <button
+                          onClick={() => handleStartChat(therapist)}
+                          disabled={chatCreatingFor === therapist.id}
+                          className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 md:px-4 md:py-3 rounded-lg font-medium transition-all duration-300 flex items-center gap-2 shadow-sm hover:shadow-md group-hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed'
+                        >
+                          <MessageCircle className='w-4 h-4' />
+                          {chatCreatingFor === therapist.id ? 'Starting...' : 'Chat'}
+                        </button>
+                      )}
+
                       <button
                         onClick={() => handleBookFreeSession(therapist)}
                         className='bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 md:px-6 md:py-3 rounded-lg font-medium transition-all duration-300 flex items-center gap-2 shadow-sm hover:shadow-md group-hover:scale-105'

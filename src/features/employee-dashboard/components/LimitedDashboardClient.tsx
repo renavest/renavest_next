@@ -5,6 +5,7 @@ import posthog from 'posthog-js';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
+import ChatInterface from '@/src/features/chat/components/ChatInterface';
 import { firstNameSignal } from '@/src/features/utm/utmCustomDemo';
 import { trackReferralShare } from '@/src/lib/referralTracking';
 import { COLORS } from '@/src/styles/colors';
@@ -252,6 +253,9 @@ export default function LimitedDashboardClient() {
         onClose={() => setIsQuizModalOpen(false)}
         onComplete={handleQuizComplete}
       />
+
+      {/* Chat Interface */}
+      <ChatInterface userRole='prospect' />
     </div>
   );
 }
