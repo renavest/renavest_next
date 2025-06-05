@@ -66,15 +66,6 @@ export default function TherapistNavbar({
     }
   };
 
-  const handleSessionsClick = () => {
-    if (therapistIdSignal.value) {
-      trackTherapistDashboard.navigationClicked('sessions', therapistIdSignal.value, {
-        user_id: user?.id,
-        email: user?.emailAddresses?.[0]?.emailAddress,
-      });
-    }
-  };
-
   return (
     <header
       className={cn(

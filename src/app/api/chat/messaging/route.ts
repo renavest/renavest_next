@@ -1,15 +1,5 @@
-import {
-  ChimeSDKIdentityClient,
-  CreateAppInstanceUserCommand,
-} from '@aws-sdk/client-chime-sdk-identity';
-import {
-  ChimeSDKMessagingClient,
-  CreateChannelCommand,
-  SendChannelMessageCommand,
-  CreateChannelMembershipCommand,
-} from '@aws-sdk/client-chime-sdk-messaging';
 import { auth } from '@clerk/nextjs/server';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc, isNull } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
@@ -17,29 +7,6 @@ import { therapists, users, chatChannels, chatMessages } from '@/src/db/schema';
 
 // Feature flag check
 const CHAT_FEATURE_ENABLED = process.env.NEXT_PUBLIC_ENABLE_CHAT_FEATURE === 'true';
-
-// Initialize Chime SDK clients only if enabled
-const chimeMessagingClient = CHAT_FEATURE_ENABLED
-  ? new ChimeSDKMessagingClient({
-      region: process.env.AWS_REGION || 'us-east-1',
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-      },
-    })
-  : null;
-
-const chimeIdentityClient = CHAT_FEATURE_ENABLED
-  ? new ChimeSDKIdentityClient({
-      region: process.env.AWS_REGION || 'us-east-1',
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-      },
-    })
-  : null;
-
-const APP_INSTANCE_ARN = process.env.AWS_CHIME_APP_INSTANCE_ARN!;
 
 // Type definitions for request bodies
 interface CreateChannelBody {
@@ -57,6 +24,7 @@ interface SendMessageBody {
 interface GetMessagesBody {
   channelId: number;
   maxResults?: number;
+  lastMessageId?: number;
 }
 
 export async function POST(request: NextRequest) {
@@ -88,6 +56,8 @@ export async function POST(request: NextRequest) {
         return await listChannels(userId);
       case 'get_messages':
         return await getChannelMessages(body as GetMessagesBody, userId);
+      case 'mark_read':
+        return await markMessagesAsRead(body as { channelId: number }, userId);
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
@@ -97,28 +67,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function createAppInstanceUser(userId: string, displayName: string) {
-  if (!chimeIdentityClient) throw new Error('Chime identity client not initialized');
-
-  const command = new CreateAppInstanceUserCommand({
-    AppInstanceArn: APP_INSTANCE_ARN,
-    AppInstanceUserId: userId,
-    Name: displayName,
-  });
-
-  const response = await chimeIdentityClient.send(command);
-  return response.AppInstanceUserArn!;
-}
-
 async function createChannel(body: CreateChannelBody, userId: string) {
-  if (!chimeMessagingClient) {
-    return NextResponse.json({
-      success: true,
-      channelArn: `mock-channel-arn-${Date.now()}`,
-      message: 'Chat feature is not enabled - mock response',
-    });
-  }
-
   const { therapistId, prospectUserId, channelName } = body;
 
   try {
@@ -145,6 +94,14 @@ async function createChannel(body: CreateChannelBody, userId: string) {
       return NextResponse.json({ error: 'Prospect not found' }, { status: 404 });
     }
 
+    // Verify user is either the therapist or the prospect
+    const isTherapist = therapist[0].userId === user[0].id;
+    const isProspect = prospect[0].id === user[0].id;
+
+    if (!isTherapist && !isProspect) {
+      return NextResponse.json({ error: 'Not authorized to create this channel' }, { status: 403 });
+    }
+
     // Check if channel already exists
     const existingChannel = await db
       .select()
@@ -161,49 +118,16 @@ async function createChannel(body: CreateChannelBody, userId: string) {
       return NextResponse.json({
         success: true,
         channelId: existingChannel[0].id,
-        channelArn: existingChannel[0].chimeChannelArn,
         message: 'Channel already exists',
       });
     }
 
-    // Create AppInstance users if they don't exist
-    const therapistUserArn = await createAppInstanceUser(
-      therapist[0].userId.toString(),
-      therapist[0].name,
-    );
-    const prospectDisplayName =
-      `${prospect[0].firstName} ${prospect[0].lastName}`.trim() || 'Client';
-    const prospectUserArn = await createAppInstanceUser(prospect[0].clerkId, prospectDisplayName);
-
-    // Create Chime channel
-    const channelNameFormatted = channelName || `Therapy Session - ${therapist[0].name}`;
-    const createChannelCommand = new CreateChannelCommand({
-      AppInstanceArn: APP_INSTANCE_ARN,
-      Name: channelNameFormatted,
-      Mode: 'RESTRICTED', // Private channel
-      Privacy: 'PRIVATE',
-      ClientRequestToken: `channel-${therapistId}-${prospectUserId}-${Date.now()}`,
-      ChimeBearer: therapistUserArn,
-    });
-
-    const channelResponse = await chimeMessagingClient.send(createChannelCommand);
-    const channelArn = channelResponse.ChannelArn!;
-
-    // Add prospect as channel member
-    const addMemberCommand = new CreateChannelMembershipCommand({
-      ChannelArn: channelArn,
-      MemberArn: prospectUserArn,
-      Type: 'DEFAULT',
-      ChimeBearer: therapistUserArn,
-    });
-
-    await chimeMessagingClient.send(addMemberCommand);
-
-    // Save channel to database
+    // Create channel with simple identifier
+    const channelIdentifier = `channel-${therapistId}-${prospectUserId}-${Date.now()}`;
     const [newChannel] = await db
       .insert(chatChannels)
       .values({
-        chimeChannelArn: channelArn,
+        chimeChannelArn: channelIdentifier, // Repurpose this field as simple channel identifier
         therapistId,
         prospectUserId,
         status: 'active',
@@ -219,7 +143,7 @@ async function createChannel(body: CreateChannelBody, userId: string) {
     return NextResponse.json({
       success: true,
       channelId: newChannel.id,
-      channelArn: channelArn,
+      channelIdentifier: channelIdentifier,
       message: 'Channel created successfully',
     });
   } catch (error) {
@@ -229,19 +153,19 @@ async function createChannel(body: CreateChannelBody, userId: string) {
 }
 
 async function sendMessage(body: SendMessageBody, userId: string) {
-  if (!chimeMessagingClient) {
-    return NextResponse.json({
-      success: true,
-      messageId: `mock-message-${Date.now()}`,
-    });
-  }
-
   const { channelId, content, messageType = 'STANDARD' } = body;
 
   try {
-    // Get channel info
+    // Get channel info and verify access
     const channel = await db
-      .select()
+      .select({
+        id: chatChannels.id,
+        therapistId: chatChannels.therapistId,
+        prospectUserId: chatChannels.prospectUserId,
+        status: chatChannels.status,
+        unreadCountTherapist: chatChannels.unreadCountTherapist,
+        unreadCountProspect: chatChannels.unreadCountProspect,
+      })
       .from(chatChannels)
       .where(eq(chatChannels.id, channelId))
       .limit(1);
@@ -250,53 +174,75 @@ async function sendMessage(body: SendMessageBody, userId: string) {
       return NextResponse.json({ error: 'Channel not found' }, { status: 404 });
     }
 
-    // Get user info
+    if (channel[0].status !== 'active') {
+      return NextResponse.json({ error: 'Channel is not active' }, { status: 400 });
+    }
+
+    // Get user info and verify they are part of this channel
     const user = await db.select().from(users).where(eq(users.clerkId, userId)).limit(1);
 
     if (!user.length) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Create AppInstance user ARN
-    const userArn = `${process.env.CHIME_APP_INSTANCE_USER_ARN_PREFIX}${user[0].id}`;
+    // Check if user is therapist
+    const therapist = await db
+      .select()
+      .from(therapists)
+      .where(eq(therapists.userId, user[0].id))
+      .limit(1);
 
-    // Send message via Chime
-    const sendMessageCommand = new SendChannelMessageCommand({
-      ChannelArn: channel[0].chimeChannelArn,
-      Content: content,
-      Type: messageType as 'STANDARD' | 'CONTROL',
-      Persistence: 'PERSISTENT',
-      ClientRequestToken: `msg-${Date.now()}-${user[0].id}`,
-      ChimeBearer: userArn,
-    });
+    const isTherapist = therapist.length > 0 && therapist[0].id === channel[0].therapistId;
+    const isProspect = user[0].id === channel[0].prospectUserId;
 
-    const messageResponse = await chimeMessagingClient.send(sendMessageCommand);
+    if (!isTherapist && !isProspect) {
+      return NextResponse.json(
+        { error: 'Not authorized to send messages in this channel' },
+        { status: 403 },
+      );
+    }
 
     // Save message to database
-    await db.insert(chatMessages).values({
-      channelId: channel[0].id,
-      chimeMessageId: messageResponse.MessageId!,
-      senderId: user[0].id,
-      content,
-      messageType,
-      status: 'sent',
-      sentAt: new Date(),
-      createdAt: new Date(),
-    });
-
-    // Update channel with last message info
-    await db
-      .update(chatChannels)
-      .set({
-        lastMessageAt: new Date(),
-        lastMessagePreview: content.substring(0, 100),
-        updatedAt: new Date(),
+    const [newMessage] = await db
+      .insert(chatMessages)
+      .values({
+        channelId: channel[0].id,
+        chimeMessageId: `msg-${Date.now()}-${user[0].id}`, // Simple message identifier
+        senderId: user[0].id,
+        content,
+        messageType,
+        status: 'sent',
+        sentAt: new Date(),
+        createdAt: new Date(),
       })
-      .where(eq(chatChannels.id, channelId));
+      .returning();
+
+    // Update channel with last message info and unread counts
+    const updateData: {
+      lastMessageAt: Date;
+      lastMessagePreview: string;
+      updatedAt: Date;
+      unreadCountProspect?: number;
+      unreadCountTherapist?: number;
+    } = {
+      lastMessageAt: new Date(),
+      lastMessagePreview: content.substring(0, 100),
+      updatedAt: new Date(),
+    };
+
+    // Increment unread count for the other person
+    if (isTherapist) {
+      updateData.unreadCountProspect = channel[0].unreadCountProspect + 1;
+    } else {
+      updateData.unreadCountTherapist = channel[0].unreadCountTherapist + 1;
+    }
+
+    await db.update(chatChannels).set(updateData).where(eq(chatChannels.id, channelId));
 
     return NextResponse.json({
       success: true,
-      messageId: messageResponse.MessageId,
+      messageId: newMessage.id,
+      message: newMessage,
     });
   } catch (error) {
     console.error('Error sending message:', error);
@@ -313,30 +259,59 @@ async function listChannels(userId: string) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Get channels where user is either therapist or prospect
-    const userChannels = await db
-      .select({
-        id: chatChannels.id,
-        chimeChannelArn: chatChannels.chimeChannelArn,
-        therapistId: chatChannels.therapistId,
-        prospectUserId: chatChannels.prospectUserId,
-        status: chatChannels.status,
-        lastMessageAt: chatChannels.lastMessageAt,
-        lastMessagePreview: chatChannels.lastMessagePreview,
-        therapistName: therapists.name,
-        prospectFirstName: users.firstName,
-        prospectLastName: users.lastName,
-      })
-      .from(chatChannels)
-      .leftJoin(therapists, eq(chatChannels.therapistId, therapists.id))
-      .leftJoin(users, eq(chatChannels.prospectUserId, users.id))
-      .where(
-        // User is either the therapist or the prospect
-        eq(users.clerkId, userId),
-      );
+    // Check if user is a therapist
+    const therapist = await db
+      .select()
+      .from(therapists)
+      .where(eq(therapists.userId, user[0].id))
+      .limit(1);
+
+    let userChannels;
+
+    if (therapist.length > 0) {
+      // User is a therapist - get channels where they are the therapist
+      userChannels = await db
+        .select({
+          id: chatChannels.id,
+          channelIdentifier: chatChannels.chimeChannelArn,
+          therapistId: chatChannels.therapistId,
+          prospectUserId: chatChannels.prospectUserId,
+          status: chatChannels.status,
+          lastMessageAt: chatChannels.lastMessageAt,
+          lastMessagePreview: chatChannels.lastMessagePreview,
+          unreadCount: chatChannels.unreadCountTherapist,
+          prospectFirstName: users.firstName,
+          prospectLastName: users.lastName,
+          prospectEmail: users.email,
+        })
+        .from(chatChannels)
+        .leftJoin(users, eq(chatChannels.prospectUserId, users.id))
+        .where(eq(chatChannels.therapistId, therapist[0].id))
+        .orderBy(desc(chatChannels.lastMessageAt));
+    } else {
+      // User is a prospect - get channels where they are the prospect
+      userChannels = await db
+        .select({
+          id: chatChannels.id,
+          channelIdentifier: chatChannels.chimeChannelArn,
+          therapistId: chatChannels.therapistId,
+          prospectUserId: chatChannels.prospectUserId,
+          status: chatChannels.status,
+          lastMessageAt: chatChannels.lastMessageAt,
+          lastMessagePreview: chatChannels.lastMessagePreview,
+          unreadCount: chatChannels.unreadCountProspect,
+          therapistName: therapists.name,
+          therapistTitle: therapists.title,
+        })
+        .from(chatChannels)
+        .leftJoin(therapists, eq(chatChannels.therapistId, therapists.id))
+        .where(eq(chatChannels.prospectUserId, user[0].id))
+        .orderBy(desc(chatChannels.lastMessageAt));
+    }
 
     return NextResponse.json({
       channels: userChannels,
+      userRole: therapist.length > 0 ? 'therapist' : 'prospect',
     });
   } catch (error) {
     console.error('Error listing channels:', error);
@@ -344,13 +319,17 @@ async function listChannels(userId: string) {
   }
 }
 
-async function getChannelMessages(body: GetMessagesBody, _userId: string) {
+async function getChannelMessages(body: GetMessagesBody, userId: string) {
   const { channelId, maxResults = 50 } = body;
 
   try {
     // Get channel and verify user access
     const channel = await db
-      .select()
+      .select({
+        id: chatChannels.id,
+        therapistId: chatChannels.therapistId,
+        prospectUserId: chatChannels.prospectUserId,
+      })
       .from(chatChannels)
       .where(eq(chatChannels.id, channelId))
       .limit(1);
@@ -359,11 +338,32 @@ async function getChannelMessages(body: GetMessagesBody, _userId: string) {
       return NextResponse.json({ error: 'Channel not found' }, { status: 404 });
     }
 
+    // Get user info and verify access
+    const user = await db.select().from(users).where(eq(users.clerkId, userId)).limit(1);
+
+    if (!user.length) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Check if user is therapist
+    const therapist = await db
+      .select()
+      .from(therapists)
+      .where(eq(therapists.userId, user[0].id))
+      .limit(1);
+
+    const isTherapist = therapist.length > 0 && therapist[0].id === channel[0].therapistId;
+    const isProspect = user[0].id === channel[0].prospectUserId;
+
+    if (!isTherapist && !isProspect) {
+      return NextResponse.json({ error: 'Not authorized to view this channel' }, { status: 403 });
+    }
+
     // Get messages from database
     const messages = await db
       .select({
         id: chatMessages.id,
-        chimeMessageId: chatMessages.chimeMessageId,
+        messageId: chatMessages.chimeMessageId,
         senderId: chatMessages.senderId,
         content: chatMessages.content,
         messageType: chatMessages.messageType,
@@ -371,18 +371,98 @@ async function getChannelMessages(body: GetMessagesBody, _userId: string) {
         sentAt: chatMessages.sentAt,
         senderFirstName: users.firstName,
         senderLastName: users.lastName,
+        senderEmail: users.email,
       })
       .from(chatMessages)
       .leftJoin(users, eq(chatMessages.senderId, users.id))
       .where(eq(chatMessages.channelId, channelId))
-      .orderBy(chatMessages.sentAt)
+      .orderBy(desc(chatMessages.sentAt))
       .limit(maxResults);
 
     return NextResponse.json({
-      messages,
+      messages: messages.reverse(), // Return in chronological order
+      hasMore: messages.length === maxResults,
     });
   } catch (error) {
     console.error('Error getting messages:', error);
     return NextResponse.json({ error: 'Failed to get messages' }, { status: 500 });
+  }
+}
+
+async function markMessagesAsRead(body: { channelId: number }, userId: string) {
+  const { channelId } = body;
+
+  try {
+    // Get channel and verify user access
+    const channel = await db
+      .select({
+        id: chatChannels.id,
+        therapistId: chatChannels.therapistId,
+        prospectUserId: chatChannels.prospectUserId,
+      })
+      .from(chatChannels)
+      .where(eq(chatChannels.id, channelId))
+      .limit(1);
+
+    if (!channel.length) {
+      return NextResponse.json({ error: 'Channel not found' }, { status: 404 });
+    }
+
+    // Get user info
+    const user = await db.select().from(users).where(eq(users.clerkId, userId)).limit(1);
+
+    if (!user.length) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Check if user is therapist
+    const therapist = await db
+      .select()
+      .from(therapists)
+      .where(eq(therapists.userId, user[0].id))
+      .limit(1);
+
+    const isTherapist = therapist.length > 0 && therapist[0].id === channel[0].therapistId;
+    const isProspect = user[0].id === channel[0].prospectUserId;
+
+    if (!isTherapist && !isProspect) {
+      return NextResponse.json({ error: 'Not authorized to modify this channel' }, { status: 403 });
+    }
+
+    // Reset unread count for the appropriate user
+    const updateData: {
+      unreadCountTherapist?: number;
+      unreadCountProspect?: number;
+    } = {};
+
+    if (isTherapist) {
+      updateData.unreadCountTherapist = 0;
+    } else {
+      updateData.unreadCountProspect = 0;
+    }
+
+    // Update the channel
+    await db.update(chatChannels).set(updateData).where(eq(chatChannels.id, channelId));
+
+    // Mark messages as read in the messages table
+    if (isTherapist) {
+      await db
+        .update(chatMessages)
+        .set({ readByTherapistAt: new Date() })
+        .where(and(eq(chatMessages.channelId, channelId), isNull(chatMessages.readByTherapistAt)));
+    } else {
+      await db
+        .update(chatMessages)
+        .set({ readByProspectAt: new Date() })
+        .where(and(eq(chatMessages.channelId, channelId), isNull(chatMessages.readByProspectAt)));
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Messages marked as read',
+    });
+  } catch (error) {
+    console.error('Error marking messages as read:', error);
+    return NextResponse.json({ error: 'Failed to mark messages as read' }, { status: 500 });
   }
 }
