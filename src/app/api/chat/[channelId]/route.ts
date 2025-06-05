@@ -12,6 +12,19 @@ import { redis, getChatMessagesKey } from '@/src/lib/redis';
 // Feature flag check
 const CHAT_FEATURE_ENABLED = process.env.NEXT_PUBLIC_ENABLE_CHAT_FEATURE === 'true';
 
+// Redis configuration for pub/sub (requires TCP connection, not REST)
+const getRedisConfig = () => {
+  // For pub/sub, we need the TCP URL, not the REST URL
+  const redisUrl = process.env.UPSTASH_REDIS_TCP_URL || process.env.REDIS_URL;
+
+  if (!redisUrl) {
+    console.error('Redis TCP URL not configured. Chat pub/sub will not work.');
+    return null;
+  }
+
+  return redisUrl;
+};
+
 export async function GET(_req: Request, { params }: { params: { channelId: string } }) {
   if (!CHAT_FEATURE_ENABLED) {
     return new Response('Chat feature disabled', { status: 404 });
@@ -23,7 +36,8 @@ export async function GET(_req: Request, { params }: { params: { channelId: stri
       return new Response('Unauthorized', { status: 401 });
     }
 
-    const channelId = parseInt(params.channelId, 10);
+    const awaitedParams = await params;
+    const channelId = parseInt(awaitedParams.channelId, 10);
     if (isNaN(channelId)) {
       return new Response('Invalid channel ID', { status: 400 });
     }
@@ -64,8 +78,24 @@ export async function GET(_req: Request, { params }: { params: { channelId: stri
     console.log(`Starting SSE stream for user ${userId} on channel ${channelId}`);
 
     const encoder = new TextEncoder();
-    const subscriber = new Redis(process.env.UPSTASH_REDIS_URL!);
-    await subscriber.subscribe(`channel:${channelId}`);
+
+    // Get Redis configuration
+    const redisConfig = getRedisConfig();
+    if (!redisConfig) {
+      // If Redis pub/sub is not available, still provide basic functionality
+      console.warn('Redis pub/sub not configured, providing basic SSE without real-time updates');
+    }
+
+    let subscriber: Redis | null = null;
+    if (redisConfig) {
+      try {
+        subscriber = new Redis(redisConfig);
+        await subscriber.subscribe(`channel:${channelId}`);
+      } catch (error) {
+        console.error('Failed to connect to Redis for pub/sub:', error);
+        subscriber = null;
+      }
+    }
 
     const stream = new ReadableStream({
       async start(controller) {
@@ -125,19 +155,19 @@ export async function GET(_req: Request, { params }: { params: { channelId: stri
         }
 
         // Listen for new messages
-        subscriber.on('message', (channel, payload) => {
+        subscriber?.on('message', (channel, payload) => {
           console.log(`Received message on channel ${channel}:`, payload);
           controller.enqueue(encoder.encode(`data:${payload}\n\n`));
         });
 
-        subscriber.on('error', (error) => {
+        subscriber?.on('error', (error) => {
           console.error('Redis subscriber error:', error);
           controller.error(error);
         });
       },
       cancel() {
         console.log(`Closing SSE stream for user ${userId} on channel ${channelId}`);
-        subscriber.disconnect();
+        subscriber?.disconnect();
       },
     });
 
