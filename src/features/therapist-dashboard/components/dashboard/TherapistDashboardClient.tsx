@@ -481,6 +481,7 @@ const ClientChatTab = ({ client }: { client: Client }) => {
               onKeyPress={handleKeyPress}
               isMyMessage={isMyMessage}
               formatTime={formatTime}
+              showExportButton={true}
             />
           </div>
         </div>

@@ -38,6 +38,7 @@ interface ChatMessageAreaProps {
   onKeyPress: (e: React.KeyboardEvent) => void;
   isMyMessage: (message: Message) => boolean;
   formatTime: (timestamp: string | number) => string;
+  showExportButton?: boolean;
 }
 
 // Connection status utilities
@@ -149,11 +150,13 @@ const ChatHeader = ({
   connectionStatus,
   messages,
   onExport,
+  showExportButton = false,
 }: {
   activeChannel: Channel;
   connectionStatus: string;
   messages: Message[];
   onExport: () => void;
+  showExportButton?: boolean;
 }) => (
   <div className='border-b border-purple-100 bg-gradient-to-r from-purple-50/30 to-white p-4'>
     <div className='flex items-center justify-between'>
@@ -172,7 +175,7 @@ const ChatHeader = ({
         </div>
       </div>
       <div className='flex items-center space-x-3'>
-        {messages.length > 0 && (
+        {showExportButton && messages.length > 0 && (
           <button
             onClick={onExport}
             className='flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-50 border border-gray-200 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md'
@@ -348,6 +351,7 @@ export function ChatMessageArea({
   onKeyPress,
   isMyMessage,
   formatTime,
+  showExportButton = false,
 }: ChatMessageAreaProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -404,6 +408,7 @@ export function ChatMessageArea({
         connectionStatus={connectionStatus}
         messages={messages}
         onExport={() => exportChatMessages(messages, activeChannel)}
+        showExportButton={showExportButton}
       />
 
       {messages.length === 0 && <ConversationStarters onSelectPrompt={handlePromptSelect} />}
