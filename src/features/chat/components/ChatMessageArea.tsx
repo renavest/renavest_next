@@ -275,55 +275,53 @@ const ChatInput = ({
   onKeyPress: (e: React.KeyboardEvent) => void;
 }) => (
   <div className='border-t border-purple-100 bg-gradient-to-r from-white to-purple-50/20 p-4'>
-    <div className='flex justify-center'>
-      <div className='flex items-end space-x-3 w-full max-w-2xl'>
-        <div className='flex-1 relative'>
-          <textarea
-            value={newMessage}
-            onChange={(e) => onMessageChange(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                onKeyPress(e);
-              }
-            }}
-            placeholder='Share your thoughts with compassion...'
-            rows={1}
-            className='w-full px-4 py-3 border border-purple-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#9071FF]/30 focus:border-[#9071FF] resize-none bg-white shadow-sm transition-all duration-300 hover:border-purple-300 text-gray-900 placeholder-gray-500'
-            style={{ minHeight: '44px', maxHeight: '120px' }}
-            disabled={loading || connectionStatus !== 'connected'}
-          />
+    <div className='flex items-end space-x-3 w-full'>
+      <div className='flex-1 relative'>
+        <textarea
+          value={newMessage}
+          onChange={(e) => onMessageChange(e.target.value)}
+          onKeyPress={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              onKeyPress(e);
+            }
+          }}
+          placeholder='Share your thoughts with compassion...'
+          rows={1}
+          className='w-full px-4 py-3 border border-purple-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#9071FF]/30 focus:border-[#9071FF] resize-none bg-white shadow-sm transition-all duration-300 hover:border-purple-300 text-gray-900 placeholder-gray-500'
+          style={{ minHeight: '44px', maxHeight: '120px' }}
+          disabled={loading || connectionStatus !== 'connected'}
+        />
 
-          {loading && (
-            <div className='absolute right-3 bottom-3 flex items-center space-x-1 text-[#9071FF]'>
-              <div
-                className='w-1 h-1 bg-current rounded-full animate-bounce'
-                style={{ animationDelay: '0ms' }}
-              ></div>
-              <div
-                className='w-1 h-1 bg-current rounded-full animate-bounce'
-                style={{ animationDelay: '150ms' }}
-              ></div>
-              <div
-                className='w-1 h-1 bg-current rounded-full animate-bounce'
-                style={{ animationDelay: '300ms' }}
-              ></div>
-            </div>
-          )}
-        </div>
-
-        <button
-          onClick={onSendMessage}
-          disabled={loading || !newMessage.trim() || connectionStatus !== 'connected'}
-          className={`p-3 rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg ${
-            loading || !newMessage.trim() || connectionStatus !== 'connected'
-              ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'
-              : 'bg-gradient-to-br from-[#9071FF] to-purple-600 text-white hover:from-[#7c5ce8] hover:to-purple-700 hover:shadow-xl'
-          }`}
-        >
-          {loading ? <Loader2 className='h-5 w-5 animate-spin' /> : <Send className='h-5 w-5' />}
-        </button>
+        {loading && (
+          <div className='absolute right-3 bottom-3 flex items-center space-x-1 text-[#9071FF]'>
+            <div
+              className='w-1 h-1 bg-current rounded-full animate-bounce'
+              style={{ animationDelay: '0ms' }}
+            ></div>
+            <div
+              className='w-1 h-1 bg-current rounded-full animate-bounce'
+              style={{ animationDelay: '150ms' }}
+            ></div>
+            <div
+              className='w-1 h-1 bg-current rounded-full animate-bounce'
+              style={{ animationDelay: '300ms' }}
+            ></div>
+          </div>
+        )}
       </div>
+
+      <button
+        onClick={onSendMessage}
+        disabled={loading || !newMessage.trim() || connectionStatus !== 'connected'}
+        className={`p-3 rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg flex-shrink-0 ${
+          loading || !newMessage.trim() || connectionStatus !== 'connected'
+            ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'
+            : 'bg-gradient-to-br from-[#9071FF] to-purple-600 text-white hover:from-[#7c5ce8] hover:to-purple-700 hover:shadow-xl'
+        }`}
+      >
+        {loading ? <Loader2 className='h-5 w-5 animate-spin' /> : <Send className='h-5 w-5' />}
+      </button>
     </div>
 
     <div className='flex items-center justify-center mt-3 text-xs'>

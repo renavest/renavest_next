@@ -138,12 +138,14 @@ export default function ChatSection() {
             Messages
             <ConnectionStatusIndicator connectionStatus={connectionStatus} />
           </h3>
-          <div className='text-center py-8'>
-            <MessageCircle className='h-12 w-12 text-gray-300 mx-auto mb-4' />
-            <p className='text-gray-500'>No conversations yet</p>
-            <p className='text-sm text-gray-400 mt-2'>
-              Your therapist conversations will appear here
-            </p>
+          <div className='h-[500px] border border-gray-200 rounded-lg flex items-center justify-center'>
+            <div className='text-center py-8'>
+              <MessageCircle className='h-12 w-12 text-gray-300 mx-auto mb-4' />
+              <p className='text-gray-500'>No conversations yet</p>
+              <p className='text-sm text-gray-400 mt-2'>
+                Your therapist conversations will appear here
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -166,26 +168,30 @@ export default function ChatSection() {
           )}
         </h3>
 
-        <div className='flex h-96'>
-          <ChatChannelList
-            channels={channels}
-            activeChannelId={activeChannelId}
-            onSelectChannel={(channel) => setActiveChannelId(channel.id)}
-            formatTime={formatTime}
-          />
+        <div className='flex h-[500px] border border-gray-200 rounded-lg overflow-hidden'>
+          <div className='w-80 border-r border-gray-200 flex-shrink-0'>
+            <ChatChannelList
+              channels={channels}
+              activeChannelId={activeChannelId}
+              onSelectChannel={(channel) => setActiveChannelId(channel.id)}
+              formatTime={formatTime}
+            />
+          </div>
 
-          <ChatMessageArea
-            activeChannel={activeChannel || null}
-            messages={messages}
-            newMessage={newMessage}
-            loading={loading}
-            connectionStatus={connectionStatus}
-            onMessageChange={setNewMessage}
-            onSendMessage={handleSendMessage}
-            onKeyPress={handleKeyPress}
-            isMyMessage={isMyMessage}
-            formatTime={formatTime}
-          />
+          <div className='flex-1 min-w-0'>
+            <ChatMessageArea
+              activeChannel={activeChannel || null}
+              messages={messages}
+              newMessage={newMessage}
+              loading={loading}
+              connectionStatus={connectionStatus}
+              onMessageChange={setNewMessage}
+              onSendMessage={handleSendMessage}
+              onKeyPress={handleKeyPress}
+              isMyMessage={isMyMessage}
+              formatTime={formatTime}
+            />
+          </div>
         </div>
       </div>
     </div>
