@@ -169,7 +169,7 @@ export default function ChatSection() {
         </h3>
 
         <div className='flex h-[500px] bg-gray-50 rounded-xl border border-gray-200 overflow-hidden shadow-inner'>
-          <div className='w-80 bg-white border-r border-gray-200 flex-shrink-0'>
+          <div className='w-[420px] bg-white border-r border-gray-200 flex-shrink-0'>
             <ChatChannelList
               channels={channels}
               activeChannelId={activeChannelId}
