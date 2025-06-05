@@ -15,6 +15,7 @@ import { useEffect, useCallback, useState } from 'react';
 
 import { ChatChannelList } from '@/src/features/chat/components/ChatChannelList';
 import { ChatMessageArea } from '@/src/features/chat/components/ChatMessageArea';
+import { ConnectionStatusIndicator } from '@/src/features/chat/components/ConnectionStatusIndicator';
 import { useChat } from '@/src/features/chat/hooks/useChat';
 import {
   trackTherapistDashboard,
@@ -287,33 +288,6 @@ interface Channel {
   prospectFirstName?: string;
   prospectLastName?: string;
   prospectEmail?: string;
-}
-
-function ConnectionStatusIndicator({
-  connectionStatus,
-}: {
-  connectionStatus: 'disconnected' | 'connecting' | 'connected' | 'error';
-}) {
-  if (connectionStatus === 'connected') {
-    return (
-      <span
-        className='ml-2 h-2 w-2 bg-green-500 rounded-full animate-pulse'
-        title='Connected'
-      ></span>
-    );
-  }
-  if (connectionStatus === 'connecting') {
-    return (
-      <span
-        className='ml-2 h-2 w-2 bg-yellow-500 rounded-full animate-pulse'
-        title='Connecting'
-      ></span>
-    );
-  }
-  if (connectionStatus === 'error') {
-    return <span className='ml-2 h-2 w-2 bg-red-500 rounded-full' title='Connection Error'></span>;
-  }
-  return null;
 }
 
 const ClientChatTab = ({ client }: { client: Client }) => {

@@ -1,5 +1,5 @@
+import { Send, User, MessageCircle, Loader2, Heart, CheckCircle2 } from 'lucide-react';
 import { useRef, useEffect } from 'react';
-import { Send, User, MessageCircle } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -31,6 +31,211 @@ interface ChatMessageAreaProps {
   formatTime: (timestamp: string | number) => string;
 }
 
+// Connection status utilities
+const getConnectionStatusColor = (status: string) => {
+  switch (status) {
+    case 'connected':
+      return 'text-emerald-600 bg-emerald-50';
+    case 'connecting':
+      return 'text-yellow-600 bg-yellow-50';
+    case 'error':
+      return 'text-red-600 bg-red-50';
+    default:
+      return 'text-gray-600 bg-gray-50';
+  }
+};
+
+const getConnectionStatusIcon = (status: string) => {
+  switch (status) {
+    case 'connected':
+      return <CheckCircle2 className='h-3 w-3' />;
+    case 'connecting':
+      return <Loader2 className='h-3 w-3 animate-spin' />;
+    case 'error':
+      return <div className='h-3 w-3 bg-red-500 rounded-full' />;
+    default:
+      return <div className='h-3 w-3 bg-gray-400 rounded-full' />;
+  }
+};
+
+// Empty state component
+const EmptyChannelState = () => (
+  <div className='flex-1 flex items-center justify-center'>
+    <div className='text-center py-16 px-6'>
+      <div className='w-20 h-20 bg-gradient-to-br from-[#9071FF]/10 to-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6 animate-pulse-purple'>
+        <MessageCircle className='h-10 w-10 text-[#9071FF]/60' />
+      </div>
+      <h3 className='text-xl font-semibold text-gray-900 mb-2'>Select a Conversation</h3>
+      <p className='text-gray-600 max-w-sm'>
+        Choose a conversation from the sidebar to start connecting with your clients
+      </p>
+      <div className='mt-4 flex items-center justify-center text-sm text-[#9071FF]/70'>
+        <Heart className='h-4 w-4 mr-1' />
+        <span>Compassionate communication starts here</span>
+      </div>
+    </div>
+  </div>
+);
+
+// Chat header component
+const ChatHeader = ({
+  activeChannel,
+  connectionStatus,
+}: {
+  activeChannel: Channel;
+  connectionStatus: string;
+}) => (
+  <div className='border-b border-purple-100 bg-gradient-to-r from-purple-50/50 to-white p-4'>
+    <div className='flex items-center justify-between'>
+      <div className='flex items-center space-x-3'>
+        <div className='w-10 h-10 bg-gradient-to-br from-[#9071FF] to-purple-600 rounded-full flex items-center justify-center shadow-lg'>
+          <User className='h-5 w-5 text-white' />
+        </div>
+        <div>
+          <h4 className='text-lg font-semibold text-gray-900'>
+            {activeChannel.therapistName || activeChannel.prospectFirstName
+              ? `${activeChannel.therapistName || ''} ${activeChannel.prospectFirstName || ''} ${activeChannel.prospectLastName || ''}`.trim()
+              : 'Conversation'}
+          </h4>
+          <div
+            className={`flex items-center space-x-1 text-xs px-2 py-1 rounded-full ${getConnectionStatusColor(connectionStatus)}`}
+          >
+            {getConnectionStatusIcon(connectionStatus)}
+            <span className='font-medium capitalize'>{connectionStatus}</span>
+          </div>
+        </div>
+      </div>
+      <div className='text-xs text-gray-500 bg-white/80 px-3 py-1 rounded-full border border-purple-100'>
+        <Heart className='h-3 w-3 inline mr-1 text-[#9071FF]' />
+        Safe space for healing
+      </div>
+    </div>
+  </div>
+);
+
+// Message bubble component
+const MessageBubble = ({
+  message,
+  isMyMessage,
+  formatTime,
+}: {
+  message: Message;
+  isMyMessage: boolean;
+  formatTime: (timestamp: string | number) => string;
+}) => (
+  <div className={`flex animate-fade-in-up ${isMyMessage ? 'justify-end' : 'justify-start'}`}>
+    <div className={`max-w-xs lg:max-w-md relative group ${isMyMessage ? 'ml-12' : 'mr-12'}`}>
+      <div
+        className={`px-4 py-3 rounded-2xl shadow-sm transition-all duration-300 hover:shadow-md ${
+          isMyMessage
+            ? 'bg-gradient-to-br from-[#9071FF] to-purple-600 text-white rounded-br-md'
+            : 'bg-white border border-purple-100 text-gray-900 rounded-bl-md hover:border-purple-200'
+        }`}
+      >
+        <p className='text-sm leading-relaxed'>{message.text}</p>
+        <div className='flex items-center justify-between mt-2'>
+          <p className={`text-xs ${isMyMessage ? 'text-purple-100' : 'text-gray-500'}`}>
+            {formatTime(message.ts)}
+          </p>
+          {isMyMessage && (
+            <div className='text-purple-100'>
+              <CheckCircle2 className='h-3 w-3' />
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className='opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-1'>
+        <div
+          className={`flex items-center space-x-1 ${isMyMessage ? 'justify-end' : 'justify-start'}`}
+        >
+          <Heart className='h-3 w-3 text-[#9071FF]/40 hover:text-[#9071FF] cursor-pointer transition-colors' />
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// Input area component
+const ChatInput = ({
+  newMessage,
+  loading,
+  connectionStatus,
+  onMessageChange,
+  onSendMessage,
+  onKeyPress,
+}: {
+  newMessage: string;
+  loading: boolean;
+  connectionStatus: string;
+  onMessageChange: (value: string) => void;
+  onSendMessage: () => void;
+  onKeyPress: (e: React.KeyboardEvent) => void;
+}) => (
+  <div className='border-t border-purple-100 bg-gradient-to-r from-white to-purple-50/30 p-4'>
+    <div className='flex items-end space-x-3'>
+      <div className='flex-1 relative'>
+        <textarea
+          value={newMessage}
+          onChange={(e) => onMessageChange(e.target.value)}
+          onKeyPress={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              onKeyPress(e);
+            }
+          }}
+          placeholder='Share your thoughts with compassion...'
+          rows={1}
+          className='w-full px-4 py-3 border border-purple-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#9071FF]/30 focus:border-[#9071FF] resize-none bg-white shadow-sm transition-all duration-300 hover:border-purple-300 text-gray-900 placeholder-gray-500'
+          style={{ minHeight: '44px', maxHeight: '120px' }}
+          disabled={loading || connectionStatus !== 'connected'}
+        />
+
+        {loading && (
+          <div className='absolute right-3 bottom-3 flex items-center space-x-1 text-[#9071FF]'>
+            <div
+              className='w-1 h-1 bg-current rounded-full animate-bounce'
+              style={{ animationDelay: '0ms' }}
+            ></div>
+            <div
+              className='w-1 h-1 bg-current rounded-full animate-bounce'
+              style={{ animationDelay: '150ms' }}
+            ></div>
+            <div
+              className='w-1 h-1 bg-current rounded-full animate-bounce'
+              style={{ animationDelay: '300ms' }}
+            ></div>
+          </div>
+        )}
+      </div>
+
+      <button
+        onClick={onSendMessage}
+        disabled={loading || !newMessage.trim() || connectionStatus !== 'connected'}
+        className={`p-3 rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg ${
+          loading || !newMessage.trim() || connectionStatus !== 'connected'
+            ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'
+            : 'bg-gradient-to-br from-[#9071FF] to-purple-600 text-white hover:from-[#7c5ce8] hover:to-purple-700 hover:shadow-xl'
+        }`}
+      >
+        {loading ? <Loader2 className='h-5 w-5 animate-spin' /> : <Send className='h-5 w-5' />}
+      </button>
+    </div>
+
+    <div className='flex items-center justify-between mt-3 text-xs'>
+      <div className='flex items-center space-x-2 text-gray-500'>
+        <Heart className='h-3 w-3 text-[#9071FF]/60' />
+        <span>Creating a space for healing conversations</span>
+      </div>
+      {connectionStatus !== 'connected' && (
+        <div className='text-amber-600 font-medium'>
+          {connectionStatus === 'connecting' ? 'Reconnecting...' : 'Connection issue'}
+        </div>
+      )}
+    </div>
+  </div>
+);
+
 export function ChatMessageArea({
   activeChannel,
   messages,
@@ -45,83 +250,59 @@ export function ChatMessageArea({
 }: ChatMessageAreaProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   if (!activeChannel) {
-    return (
-      <div className='flex-1 flex items-center justify-center text-gray-500'>
-        <div className='text-center'>
-          <MessageCircle className='h-8 w-8 mx-auto mb-2 text-gray-300' />
-          <p>Select a conversation to start messaging</p>
-        </div>
-      </div>
-    );
+    return <EmptyChannelState />;
   }
 
   return (
-    <div className='flex-1 flex flex-col pl-4'>
-      <div className='border-b border-gray-200 pb-3 mb-4'>
-        <div className='flex items-center'>
-          <User className='h-5 w-5 text-gray-400 mr-2' />
-          <h4 className='text-lg font-medium text-gray-900'>
-            {activeChannel.therapistName || activeChannel.prospectFirstName
-              ? `${activeChannel.therapistName || ''} ${activeChannel.prospectFirstName || ''} ${activeChannel.prospectLastName || ''}`.trim()
-              : 'Conversation'}
-          </h4>
-          {connectionStatus !== 'connected' && (
-            <span className='ml-2 text-xs text-gray-500'>({connectionStatus})</span>
-          )}
-        </div>
-      </div>
+    <div className='flex-1 flex flex-col bg-gradient-to-b from-white to-purple-50/20'>
+      <ChatHeader activeChannel={activeChannel} connectionStatus={connectionStatus} />
 
-      <div className='flex-1 overflow-y-auto mb-4 space-y-3'>
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${isMyMessage(message) ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              className={`max-w-xs lg:max-w-md px-3 py-2 rounded-lg ${
-                isMyMessage(message)
-                  ? 'bg-green-500 text-white'
-                  : 'bg-gray-100 text-gray-900'
-              }`}
-            >
-              <p className='text-sm'>{message.text}</p>
-              <p
-                className={`text-xs mt-1 ${
-                  isMyMessage(message) ? 'text-green-100' : 'text-gray-500'
-                }`}
-              >
-                {formatTime(message.ts)}
+      <div className='flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-white via-purple-50/10 to-purple-50/20'>
+        {messages.length === 0 ? (
+          <div className='flex items-center justify-center h-full'>
+            <div className='text-center py-12'>
+              <div className='w-16 h-16 bg-gradient-to-br from-[#9071FF]/10 to-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-float'>
+                <MessageCircle className='h-8 w-8 text-[#9071FF]/60' />
+              </div>
+              <h3 className='text-lg font-medium text-gray-700 mb-2'>Start Your Conversation</h3>
+              <p className='text-sm text-gray-500 max-w-sm'>
+                This is the beginning of your therapeutic journey together. Send your first message
+                to create a safe space for meaningful dialogue.
               </p>
+              <div className='mt-4 flex items-center justify-center text-xs text-[#9071FF]/70'>
+                <Heart className='h-3 w-3 mr-1' />
+                <span>Every conversation is a step toward healing</span>
+              </div>
             </div>
           </div>
-        ))}
-        <div ref={messagesEndRef} />
+        ) : (
+          <>
+            {messages.map((message) => (
+              <MessageBubble
+                key={message.id}
+                message={message}
+                isMyMessage={isMyMessage(message)}
+                formatTime={formatTime}
+              />
+            ))}
+            <div ref={messagesEndRef} />
+          </>
+        )}
       </div>
 
-      <div className='flex gap-2'>
-        <input
-          type='text'
-          value={newMessage}
-          onChange={(e) => onMessageChange(e.target.value)}
-          onKeyPress={onKeyPress}
-          placeholder='Type a message...'
-          className='flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500'
-          disabled={loading || connectionStatus !== 'connected'}
-        />
-        <button
-          onClick={onSendMessage}
-          disabled={loading || !newMessage.trim() || connectionStatus !== 'connected'}
-          className='px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200'
-        >
-          <Send className='h-4 w-4' />
-        </button>
-      </div>
+      <ChatInput
+        newMessage={newMessage}
+        loading={loading}
+        connectionStatus={connectionStatus}
+        onMessageChange={onMessageChange}
+        onSendMessage={onSendMessage}
+        onKeyPress={onKeyPress}
+      />
     </div>
   );
-} 
+}
