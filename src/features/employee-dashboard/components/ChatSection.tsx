@@ -130,15 +130,15 @@ export default function ChatSection() {
   if (channels.length === 0) {
     return (
       <div className='bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden border border-gray-100'>
-        <div className='p-6 pb-4'>
-          <h3 className='text-xl font-semibold text-gray-800 mb-6 flex items-center'>
+        <div className='p-4 md:p-6'>
+          <h3 className='text-xl font-semibold text-gray-800 mb-4 flex items-center'>
             <span className='bg-green-100 p-2 rounded-lg mr-3'>
               <MessageCircle className='h-5 w-5 text-green-600' />
             </span>
             Messages
             <ConnectionStatusIndicator connectionStatus={connectionStatus} />
           </h3>
-          <div className='h-[500px] bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-center shadow-inner'>
+          <div className='h-[600px] md:h-[500px] bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-center'>
             <div className='text-center py-8'>
               <MessageCircle className='h-12 w-12 text-gray-300 mx-auto mb-4' />
               <p className='text-gray-500'>No conversations yet</p>
@@ -154,8 +154,8 @@ export default function ChatSection() {
 
   return (
     <div className='bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden border border-gray-100'>
-      <div className='p-6 pb-4'>
-        <h3 className='text-xl font-semibold text-gray-800 mb-6 flex items-center'>
+      <div className='p-4 md:p-6'>
+        <h3 className='text-xl font-semibold text-gray-800 mb-4 flex items-center'>
           <span className='bg-green-100 p-2 rounded-lg mr-3'>
             <MessageCircle className='h-5 w-5 text-green-600' />
           </span>
@@ -168,8 +168,9 @@ export default function ChatSection() {
           )}
         </h3>
 
-        <div className='flex h-[500px] bg-gray-50 rounded-xl border border-gray-200 overflow-hidden shadow-inner'>
-          <div className='w-[420px] bg-white border-r border-gray-200 flex-shrink-0'>
+        <div className='flex flex-col lg:flex-row h-[600px] md:h-[500px] bg-gray-50 rounded-xl border border-gray-200 overflow-hidden'>
+          {/* Conversations List - Responsive Width */}
+          <div className='lg:w-1/3 xl:w-1/4 bg-white border-b lg:border-b-0 lg:border-r border-gray-200 flex-shrink-0 h-48 lg:h-full overflow-hidden'>
             <ChatChannelList
               channels={channels}
               activeChannelId={activeChannelId}
@@ -178,7 +179,8 @@ export default function ChatSection() {
             />
           </div>
 
-          <div className='flex-1 min-w-0 bg-white'>
+          {/* Chat Area - Takes Remaining Space */}
+          <div className='flex-1 bg-white min-h-0'>
             <ChatMessageArea
               activeChannel={activeChannel || null}
               messages={messages}
