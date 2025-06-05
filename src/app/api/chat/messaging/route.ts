@@ -4,8 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
 import { therapists, users, chatChannels, chatMessages } from '@/src/db/schema';
-
-import { broadcastNewMessage, broadcastChannelCreated } from '../ws/route';
+import { redis, getChatMessagesKey, ChatMessage } from '@/src/lib/redis';
 
 // Feature flag check
 const CHAT_FEATURE_ENABLED = process.env.NEXT_PUBLIC_ENABLE_CHAT_FEATURE === 'true';
@@ -127,12 +126,8 @@ async function createChannel(body: CreateChannelBody, userId: string) {
       })
       .returning();
 
-    // Get channel details for broadcasting
+    // Get channel details
     const channelDetails = await getChannelDetails(newChannel[0].id);
-
-    // Broadcast channel creation to both participants
-    const participantIds = await getChannelParticipantIds(therapistId, prospectUserId);
-    await broadcastChannelCreated(channelDetails, participantIds);
 
     return NextResponse.json({
       success: true,
@@ -188,9 +183,11 @@ async function sendMessage(body: SendMessageBody, userId: string) {
       );
     }
 
-    // Create message
-    const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Create message ID and current time
+    const messageId = crypto.randomUUID();
+    const now = new Date();
 
+    // Save to database
     const newMessage = await db
       .insert(chatMessages)
       .values({
@@ -200,10 +197,25 @@ async function sendMessage(body: SendMessageBody, userId: string) {
         content,
         messageType,
         status: 'sent',
-        sentAt: new Date(),
-        createdAt: new Date(),
+        sentAt: now,
+        createdAt: now,
       })
       .returning();
+
+    // Create Redis message for real-time distribution
+    const redisMessage: ChatMessage = {
+      id: messageId,
+      text: content,
+      author: `${user[0].firstName} ${user[0].lastName}`.trim(),
+      authorEmail: user[0].email,
+      channelId: channelId,
+      ts: now.getTime(),
+      messageType: messageType,
+    };
+
+    // Store in Redis for real-time history and publish for SSE streams
+    await redis.rpush(getChatMessagesKey(channelId), JSON.stringify(redisMessage));
+    await redis.publish(`channel:${channelId}`, JSON.stringify(redisMessage));
 
     // Update channel last message info and unread counts
     const updateData: {
@@ -213,9 +225,9 @@ async function sendMessage(body: SendMessageBody, userId: string) {
       unreadCountProspect?: number;
       unreadCountTherapist?: number;
     } = {
-      lastMessageAt: new Date(),
+      lastMessageAt: now,
       lastMessagePreview: content.substring(0, 100),
-      updatedAt: new Date(),
+      updatedAt: now,
     };
 
     // Get current unread counts and increment for the other person
@@ -238,20 +250,8 @@ async function sendMessage(body: SendMessageBody, userId: string) {
 
     await db.update(chatChannels).set(updateData).where(eq(chatChannels.id, channelId));
 
-    // Get sender details for broadcasting
-    const senderDetails = await db
-      .select({
-        id: users.id,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        email: users.email,
-      })
-      .from(users)
-      .where(eq(users.id, dbUserId))
-      .limit(1);
-
-    // Create message object for broadcasting
-    const messageForBroadcast = {
+    // Create message object for response
+    const messageForResponse = {
       id: newMessage[0].id,
       messageId: newMessage[0].chimeMessageId,
       senderId: newMessage[0].senderId,
@@ -259,18 +259,15 @@ async function sendMessage(body: SendMessageBody, userId: string) {
       messageType: newMessage[0].messageType,
       status: newMessage[0].status,
       sentAt: newMessage[0].sentAt.toISOString(),
-      senderFirstName: senderDetails[0]?.firstName || '',
-      senderLastName: senderDetails[0]?.lastName || '',
-      senderEmail: senderDetails[0]?.email || '',
+      senderFirstName: user[0].firstName || '',
+      senderLastName: user[0].lastName || '',
+      senderEmail: user[0].email || '',
     };
-
-    // Broadcast message to channel participants via WebSocket
-    await broadcastNewMessage(channelId, messageForBroadcast);
 
     return NextResponse.json({
       success: true,
       messageId: newMessage[0].chimeMessageId,
-      message: messageForBroadcast,
+      message: messageForResponse,
     });
   } catch (error) {
     console.error('Failed to send message:', error);
@@ -519,43 +516,4 @@ async function getChannelDetails(channelId: number) {
     prospectLastName: prospectDetails?.lastName || '',
     prospectEmail: prospectDetails?.email || '',
   };
-}
-
-async function getChannelParticipantIds(
-  therapistId: number,
-  prospectUserId: number,
-): Promise<string[]> {
-  const participantIds: string[] = [];
-
-  // Get therapist user ID
-  const therapist = await db
-    .select({ userId: therapists.userId })
-    .from(therapists)
-    .where(eq(therapists.id, therapistId))
-    .limit(1);
-
-  if (therapist.length) {
-    const therapistUser = await db
-      .select({ clerkId: users.clerkId })
-      .from(users)
-      .where(eq(users.id, therapist[0].userId))
-      .limit(1);
-
-    if (therapistUser.length) {
-      participantIds.push(therapistUser[0].clerkId);
-    }
-  }
-
-  // Get prospect user ID
-  const prospectUser = await db
-    .select({ clerkId: users.clerkId })
-    .from(users)
-    .where(eq(users.id, prospectUserId))
-    .limit(1);
-
-  if (prospectUser.length) {
-    participantIds.push(prospectUser[0].clerkId);
-  }
-
-  return participantIds;
 }
