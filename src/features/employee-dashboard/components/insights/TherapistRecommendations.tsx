@@ -7,21 +7,11 @@ import posthog from 'posthog-js';
 import { useEffect, useState } from 'react';
 
 import { createChannel } from '@/src/features/chat/state/chatState';
+import type {
+  Therapist,
+  TherapistRecommendationsProps,
+} from '@/src/features/employee-dashboard/types';
 import { TherapistImage } from '@/src/features/therapist-dashboard/components/shared/TherapistImage';
-
-interface Therapist {
-  id: number;
-  name: string;
-  title: string;
-  profileUrl: string;
-  previewBlurb: string;
-  bookingURL?: string;
-  isPending?: boolean;
-}
-
-interface TherapistRecommendationsProps {
-  showViewAllButton?: boolean;
-}
 
 export default function TherapistRecommendations({
   showViewAllButton = false,

@@ -3,6 +3,8 @@
 import { Send, MessageCircle, X, RefreshCw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+import type { ChatInterfaceProps } from '@/src/features/chat/types';
+
 import {
   chatState,
   activeChannel,
@@ -15,12 +17,7 @@ import {
   initializeChat,
 } from '../state/chatState';
 
-interface ChatInterfaceProps {
-  _therapistId?: number;
-  userRole: 'therapist' | 'prospect';
-}
-
-export default function ChatInterface({ _therapistId, userRole }: ChatInterfaceProps) {
+export default function ChatInterface({ therapistId, userRole }: ChatInterfaceProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);

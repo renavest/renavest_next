@@ -46,13 +46,29 @@ export async function GET(request: Request) {
         and(isNotNull(pendingTherapists.profileUrl), sql`${pendingTherapists.profileUrl} != ''`),
       );
 
-    // Combine and shuffle the results
+    // Combine all therapists
     const allTherapists = [...activeTherapists, ...pendingTherapistsData];
-    const shuffledTherapists = allTherapists.sort(() => Math.random() - 0.5);
-    const limitedTherapists = shuffledTherapists.slice(0, limit);
+
+    // Find Seth Morton and separate him from others
+    const sethMorton = allTherapists.find((therapist) => therapist.name === 'Seth Morton');
+    const otherTherapists = allTherapists.filter((therapist) => therapist.name !== 'Seth Morton');
+
+    // Shuffle other therapists
+    const shuffledOthers = otherTherapists.sort(() => Math.random() - 0.5);
+
+    // Ensure Seth Morton is always included in the results
+    let finalTherapists = [];
+    if (sethMorton) {
+      finalTherapists.push(sethMorton);
+      // Add other therapists up to the limit
+      finalTherapists.push(...shuffledOthers.slice(0, limit - 1));
+    } else {
+      // If Seth Morton is not found, just use other therapists
+      finalTherapists = shuffledOthers.slice(0, limit);
+    }
 
     // Map results to use the correct image URL
-    const therapistsWithImageUrl = limitedTherapists.map((therapist) => ({
+    const therapistsWithImageUrl = finalTherapists.map((therapist) => ({
       ...therapist,
       profileUrl: getTherapistImageUrl(therapist.profileUrl),
     }));
