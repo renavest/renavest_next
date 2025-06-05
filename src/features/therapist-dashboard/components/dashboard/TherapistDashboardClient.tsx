@@ -1,6 +1,15 @@
 'use client';
 
-import { UserCircle2, Users, FileText, Calendar, TrendingUp, Plus, Folder } from 'lucide-react';
+import {
+  UserCircle2,
+  Users,
+  FileText,
+  Calendar,
+  TrendingUp,
+  Plus,
+  Folder,
+  MessageCircle,
+} from 'lucide-react';
 import { useEffect, useCallback, useState } from 'react';
 
 import ChatInterface from '@/src/features/chat/components/ChatInterface';
@@ -32,7 +41,7 @@ import { COLORS } from '@/src/styles/colors';
 
 import { QuickActionsSection } from './QuickActionsSection';
 
-type ClientTab = 'overview' | 'notes' | 'sessions' | 'documents' | 'progress';
+type ClientTab = 'overview' | 'notes' | 'sessions' | 'documents' | 'progress' | 'chat';
 
 // New comprehensive client management component
 const ClientManagementSection = ({
@@ -141,6 +150,7 @@ const ClientManagementSection = ({
                 { key: 'documents', label: 'Documents', icon: Folder },
                 { key: 'sessions', label: 'Sessions', icon: Calendar },
                 { key: 'progress', label: 'Progress', icon: TrendingUp },
+                { key: 'chat', label: 'Chat', icon: MessageCircle },
               ].map(({ key, label, icon: Icon }) => (
                 <button
                   key={key}
@@ -169,6 +179,7 @@ const ClientManagementSection = ({
             {activeTab === 'documents' && <ClientDocumentsTab client={selectedClient} />}
             {activeTab === 'sessions' && <ClientSessionsTab sessions={clientSessions} />}
             {activeTab === 'progress' && <ClientProgressTab />}
+            {activeTab === 'chat' && <ClientChatTab client={selectedClient} />}
           </div>
         </>
       )}
@@ -255,6 +266,66 @@ const ClientProgressTab = () => {
       </div>
       <h3 className='text-xl font-semibold text-gray-900 mb-2'>Progress Tracking</h3>
       <p className='text-gray-600'>Progress tracking features coming soon</p>
+    </div>
+  );
+};
+
+const ClientChatTab = ({ client }: { client: Client }) => {
+  if (process.env.NEXT_PUBLIC_ENABLE_CHAT_FEATURE !== 'true') {
+    return (
+      <div className='text-center py-16'>
+        <div className='w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6'>
+          <MessageCircle className='w-8 h-8 text-gray-400' />
+        </div>
+        <h3 className='text-xl font-semibold text-gray-900 mb-2'>Chat Feature</h3>
+        <p className='text-gray-600'>Chat functionality is currently disabled</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className='space-y-6'>
+      <div className='flex items-center justify-between'>
+        <div>
+          <h3 className='text-xl font-semibold text-gray-900'>Chat with {client.firstName}</h3>
+          <p className='text-gray-600 text-sm mt-1'>Communicate with your client in real-time</p>
+        </div>
+      </div>
+
+      <div className='bg-gray-50 rounded-xl p-6 border border-gray-200'>
+        <p className='text-gray-600 text-center'>
+          Chat conversations with {client.firstName} {client.lastName} will appear here. The client
+          can initiate chats from their dashboard using the chat buttons on therapist recommendation
+          cards.
+        </p>
+        <div className='mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg'>
+          <div className='flex items-start gap-3'>
+            <div className='w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0'>
+              <svg
+                className='w-4 h-4 text-blue-600'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+                />
+              </svg>
+            </div>
+            <div className='flex-1'>
+              <h4 className='text-sm font-medium text-blue-900 mb-1'>How Chat Works</h4>
+              <p className='text-sm text-blue-800'>
+                Clients can start conversations by clicking the "Chat" button next to your profile
+                on their dashboard. Once a conversation is started, you'll see message history and
+                can respond here.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
@@ -507,7 +578,7 @@ export default function TherapistDashboardPage({
       )}
 
       {/* Chat Interface */}
-      <ChatInterface therapistId={therapistIdSignal.value || undefined} userRole='therapist' />
+      <ChatInterface _therapistId={therapistIdSignal.value || undefined} userRole='therapist' />
     </div>
   );
 }
