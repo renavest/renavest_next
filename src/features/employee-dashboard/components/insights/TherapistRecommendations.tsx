@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import posthog from 'posthog-js';
 import { useEffect, useState } from 'react';
 
-import { createChannel } from '@/src/features/chat/state/chatState';
 import type {
   Therapist,
   TherapistRecommendationsProps,
@@ -54,6 +53,27 @@ export default function TherapistRecommendations({
       window.open(therapist.bookingURL, '_blank');
     } else {
       router.push(`/book/${therapist.id}`);
+    }
+  };
+
+  const createChannel = async (therapistId: number, prospectUserId: number): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/chat/messaging', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'create_channel',
+          therapistId,
+          prospectUserId,
+        }),
+      });
+
+      return response.ok;
+    } catch (error) {
+      console.error('Failed to create channel:', error);
+      return false;
     }
   };
 
