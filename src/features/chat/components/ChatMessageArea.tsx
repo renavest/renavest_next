@@ -274,8 +274,8 @@ const ChatInput = ({
   onSendMessage: () => void;
   onKeyPress: (e: React.KeyboardEvent) => void;
 }) => (
-  <div className='border-t border-purple-100 bg-gradient-to-r from-white to-purple-50/20 p-4'>
-    <div className='flex items-end space-x-3 w-full'>
+  <div className='border-t border-purple-100 bg-gradient-to-r from-white to-purple-50/20 p-6'>
+    <div className='flex items-center space-x-4 w-full'>
       <div className='flex-1 relative'>
         <textarea
           value={newMessage}
@@ -288,13 +288,13 @@ const ChatInput = ({
           }}
           placeholder='Share your thoughts with compassion...'
           rows={1}
-          className='w-full px-4 py-3 border border-purple-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#9071FF]/30 focus:border-[#9071FF] resize-none bg-white shadow-sm transition-all duration-300 hover:border-purple-300 text-gray-900 placeholder-gray-500'
-          style={{ minHeight: '44px', maxHeight: '120px' }}
+          className='w-full px-4 py-3 border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#9071FF]/30 focus:border-[#9071FF] resize-none bg-white shadow-sm transition-all duration-300 hover:border-purple-300 text-gray-900 placeholder-gray-500'
+          style={{ minHeight: '48px', maxHeight: '120px' }}
           disabled={loading || connectionStatus !== 'connected'}
         />
 
         {loading && (
-          <div className='absolute right-3 bottom-3 flex items-center space-x-1 text-[#9071FF]'>
+          <div className='absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-1 text-[#9071FF]'>
             <div
               className='w-1 h-1 bg-current rounded-full animate-bounce'
               style={{ animationDelay: '0ms' }}
@@ -314,7 +314,7 @@ const ChatInput = ({
       <button
         onClick={onSendMessage}
         disabled={loading || !newMessage.trim() || connectionStatus !== 'connected'}
-        className={`p-3 rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg flex-shrink-0 ${
+        className={`p-3 rounded-xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg flex-shrink-0 h-12 w-12 flex items-center justify-center ${
           loading || !newMessage.trim() || connectionStatus !== 'connected'
             ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'
             : 'bg-gradient-to-br from-[#9071FF] to-purple-600 text-white hover:from-[#7c5ce8] hover:to-purple-700 hover:shadow-xl'
@@ -324,7 +324,7 @@ const ChatInput = ({
       </button>
     </div>
 
-    <div className='flex items-center justify-center mt-3 text-xs'>
+    <div className='flex items-center justify-center mt-4 text-xs'>
       <div className='flex items-center space-x-2 text-gray-500'>
         <Heart className='h-3 w-3 text-[#9071FF]/60' />
         <span>Creating a space for healing conversations</span>
