@@ -23,22 +23,29 @@ interface ChatChannelListProps {
   formatTime: (timestamp: string | number) => string;
 }
 
+// Helper function to get display name - same logic as ChatMessageArea
+const getChannelDisplayName = (channel: Channel) => {
+  // If it's a therapist (has therapistName), show therapist name
+  if (channel.therapistName) {
+    return channel.therapistName;
+  }
+  // Otherwise show prospect name
+  if (channel.prospectFirstName || channel.prospectLastName) {
+    return `${channel.prospectFirstName || ''} ${channel.prospectLastName || ''}`.trim();
+  }
+  return 'Unnamed Conversation';
+};
+
 export function ChatChannelList({
   channels,
   activeChannelId,
   onSelectChannel,
   formatTime,
 }: ChatChannelListProps) {
-  const getChannelDisplayName = (channel: Channel) => {
-    return channel.therapistName || channel.prospectFirstName
-      ? `${channel.therapistName || ''} ${channel.prospectFirstName || ''} ${channel.prospectLastName || ''}`.trim()
-      : 'Unnamed Conversation';
-  };
-
   return (
-    <div className='w-1/3 border-r border-purple-100 bg-gradient-to-b from-purple-50/30 to-white'>
+    <div className='w-1/3 border-r border-purple-100 bg-gradient-to-b from-purple-50/20 to-white'>
       {/* Header */}
-      <div className='p-4 border-b border-purple-100 bg-gradient-to-r from-purple-50/50 to-white'>
+      <div className='p-4 border-b border-purple-100 bg-gradient-to-r from-purple-50/30 to-white'>
         <div className='flex items-center space-x-2 mb-2'>
           <div className='w-8 h-8 bg-gradient-to-br from-[#9071FF] to-purple-600 rounded-full flex items-center justify-center'>
             <MessageCircle className='h-4 w-4 text-white' />

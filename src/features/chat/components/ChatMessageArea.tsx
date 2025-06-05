@@ -1,4 +1,4 @@
-import { Send, User, MessageCircle, Loader2, Heart, CheckCircle2 } from 'lucide-react';
+import { Send, User, MessageCircle, Loader2, Heart, CheckCircle2, Lightbulb } from 'lucide-react';
 import { useRef, useEffect } from 'react';
 
 interface Message {
@@ -58,6 +58,28 @@ const getConnectionStatusIcon = (status: string) => {
   }
 };
 
+// Helper function to get display name - fixes the name repetition issue
+const getDisplayName = (channel: Channel) => {
+  // If it's a therapist (has therapistName), show therapist name
+  if (channel.therapistName) {
+    return channel.therapistName;
+  }
+  // Otherwise show prospect name
+  if (channel.prospectFirstName || channel.prospectLastName) {
+    return `${channel.prospectFirstName || ''} ${channel.prospectLastName || ''}`.trim();
+  }
+  return 'Conversation';
+};
+
+// Conversation starter prompts for therapists
+const conversationStarters = [
+  'How are you feeling about your financial situation today?',
+  "What's been on your mind regarding money lately?",
+  "I'm here to support you - what would you like to explore?",
+  'Tell me about your current financial goals or concerns',
+  'How has your relationship with money evolved recently?',
+];
+
 // Empty state component
 const EmptyChannelState = () => (
   <div className='flex-1 flex items-center justify-center'>
@@ -77,7 +99,7 @@ const EmptyChannelState = () => (
   </div>
 );
 
-// Chat header component
+// Chat header component - fixed name display
 const ChatHeader = ({
   activeChannel,
   connectionStatus,
@@ -85,18 +107,14 @@ const ChatHeader = ({
   activeChannel: Channel;
   connectionStatus: string;
 }) => (
-  <div className='border-b border-purple-100 bg-gradient-to-r from-purple-50/50 to-white p-4'>
+  <div className='border-b border-purple-100 bg-gradient-to-r from-purple-50/30 to-white p-4'>
     <div className='flex items-center justify-between'>
       <div className='flex items-center space-x-3'>
         <div className='w-10 h-10 bg-gradient-to-br from-[#9071FF] to-purple-600 rounded-full flex items-center justify-center shadow-lg'>
           <User className='h-5 w-5 text-white' />
         </div>
         <div>
-          <h4 className='text-lg font-semibold text-gray-900'>
-            {activeChannel.therapistName || activeChannel.prospectFirstName
-              ? `${activeChannel.therapistName || ''} ${activeChannel.prospectFirstName || ''} ${activeChannel.prospectLastName || ''}`.trim()
-              : 'Conversation'}
-          </h4>
+          <h4 className='text-lg font-semibold text-gray-900'>{getDisplayName(activeChannel)}</h4>
           <div
             className={`flex items-center space-x-1 text-xs px-2 py-1 rounded-full ${getConnectionStatusColor(connectionStatus)}`}
           >
@@ -109,6 +127,27 @@ const ChatHeader = ({
         <Heart className='h-3 w-3 inline mr-1 text-[#9071FF]' />
         Safe space for healing
       </div>
+    </div>
+  </div>
+);
+
+// Conversation starter prompts component
+const ConversationStarters = ({ onSelectPrompt }: { onSelectPrompt: (prompt: string) => void }) => (
+  <div className='border-b border-purple-100 bg-gradient-to-r from-purple-50/20 to-white p-4'>
+    <div className='flex items-center space-x-2 mb-3'>
+      <Lightbulb className='h-4 w-4 text-[#9071FF]' />
+      <h5 className='text-sm font-medium text-gray-700'>Conversation Starters</h5>
+    </div>
+    <div className='flex flex-wrap gap-2'>
+      {conversationStarters.map((prompt, index) => (
+        <button
+          key={index}
+          onClick={() => onSelectPrompt(prompt)}
+          className='text-xs px-3 py-2 bg-white border border-purple-200 rounded-full hover:bg-purple-50 hover:border-[#9071FF] transition-all duration-200 text-gray-700 hover:text-[#9071FF]'
+        >
+          "{prompt}"
+        </button>
+      ))}
     </div>
   </div>
 );
@@ -156,7 +195,7 @@ const MessageBubble = ({
   </div>
 );
 
-// Input area component
+// Input area component - reduced gradient intensity
 const ChatInput = ({
   newMessage,
   loading,
@@ -172,7 +211,7 @@ const ChatInput = ({
   onSendMessage: () => void;
   onKeyPress: (e: React.KeyboardEvent) => void;
 }) => (
-  <div className='border-t border-purple-100 bg-gradient-to-r from-white to-purple-50/30 p-4'>
+  <div className='border-t border-purple-100 bg-gradient-to-r from-white to-purple-50/20 p-4'>
     <div className='flex items-end space-x-3'>
       <div className='flex-1 relative'>
         <textarea
@@ -254,15 +293,21 @@ export function ChatMessageArea({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const handlePromptSelect = (prompt: string) => {
+    onMessageChange(prompt);
+  };
+
   if (!activeChannel) {
     return <EmptyChannelState />;
   }
 
   return (
-    <div className='flex-1 flex flex-col bg-gradient-to-b from-white to-purple-50/20'>
+    <div className='flex-1 flex flex-col bg-white'>
       <ChatHeader activeChannel={activeChannel} connectionStatus={connectionStatus} />
 
-      <div className='flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-white via-purple-50/10 to-purple-50/20'>
+      {messages.length === 0 && <ConversationStarters onSelectPrompt={handlePromptSelect} />}
+
+      <div className='flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-white to-purple-50/10'>
         {messages.length === 0 ? (
           <div className='flex items-center justify-center h-full'>
             <div className='text-center py-12'>
@@ -271,8 +316,8 @@ export function ChatMessageArea({
               </div>
               <h3 className='text-lg font-medium text-gray-700 mb-2'>Start Your Conversation</h3>
               <p className='text-sm text-gray-500 max-w-sm'>
-                This is the beginning of your therapeutic journey together. Send your first message
-                to create a safe space for meaningful dialogue.
+                Choose a conversation starter above or send your first message to create a safe
+                space for meaningful dialogue.
               </p>
               <div className='mt-4 flex items-center justify-center text-xs text-[#9071FF]/70'>
                 <Heart className='h-3 w-3 mr-1' />
