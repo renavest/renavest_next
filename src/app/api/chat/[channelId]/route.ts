@@ -6,10 +6,37 @@ import { eq, and, desc } from 'drizzle-orm';
 
 import { db } from '@/src/db';
 import { therapists, users, chatChannels, chatMessages } from '@/src/db/schema';
-import { redis, getChatMessagesKey } from '@/src/lib/redis';
+import { redis, getChatMessagesKey, ChatMessage } from '@/src/lib/redis';
 
 // Feature flag check
 const CHAT_FEATURE_ENABLED = process.env.NEXT_PUBLIC_ENABLE_CHAT_FEATURE === 'true';
+
+// Helper function to safely parse message data from Redis
+function parseRedisMessage(
+  messageData: unknown,
+): { messageStr: string; message: ChatMessage } | null {
+  try {
+    let messageStr: string;
+    let message: ChatMessage;
+
+    if (typeof messageData === 'string') {
+      messageStr = messageData;
+      message = JSON.parse(messageStr) as ChatMessage;
+    } else if (typeof messageData === 'object' && messageData !== null) {
+      // Already an object, stringify it for SSE
+      message = messageData as ChatMessage;
+      messageStr = JSON.stringify(messageData);
+    } else {
+      console.warn('Invalid message data type:', typeof messageData, messageData);
+      return null;
+    }
+
+    return { messageStr, message };
+  } catch (e) {
+    console.error('Error parsing message:', e, messageData);
+    return null;
+  }
+}
 
 export async function GET(_req: Request, { params }: { params: { channelId: string } }) {
   if (!CHAT_FEATURE_ENABLED) {
@@ -120,15 +147,13 @@ export async function GET(_req: Request, { params }: { params: { channelId: stri
             }
           } else {
             // Send Redis history
-            history.forEach((messageStr) => {
-              controller.enqueue(encoder.encode(`data:${messageStr}\n\n`));
-              try {
-                const msg = JSON.parse(messageStr);
-                if (msg.ts && msg.ts > lastMessageTimestamp) {
-                  lastMessageTimestamp = msg.ts;
+            history.forEach((messageData) => {
+              const parsedMessage = parseRedisMessage(messageData);
+              if (parsedMessage) {
+                controller.enqueue(encoder.encode(`data:${parsedMessage.messageStr}\n\n`));
+                if (parsedMessage.message.ts && parsedMessage.message.ts > lastMessageTimestamp) {
+                  lastMessageTimestamp = parsedMessage.message.ts;
                 }
-              } catch (e) {
-                console.warn('Could not parse message timestamp:', e);
               }
             });
           }
@@ -147,16 +172,14 @@ export async function GET(_req: Request, { params }: { params: { channelId: stri
                 -1,
               );
 
-              for (const messageStr of recentMessages) {
-                try {
-                  const message = JSON.parse(messageStr);
-                  if (message.ts && message.ts > lastMessageTimestamp) {
-                    console.log(`📨 New message detected: ${message.id}`);
-                    controller.enqueue(encoder.encode(`data:${messageStr}\n\n`));
-                    lastMessageTimestamp = message.ts;
+              for (const messageData of recentMessages) {
+                const parsedMessage = parseRedisMessage(messageData);
+                if (parsedMessage) {
+                  if (parsedMessage.message.ts && parsedMessage.message.ts > lastMessageTimestamp) {
+                    console.log(`📨 New message detected: ${parsedMessage.message.id}`);
+                    controller.enqueue(encoder.encode(`data:${parsedMessage.messageStr}\n\n`));
+                    lastMessageTimestamp = parsedMessage.message.ts;
                   }
-                } catch (e) {
-                  console.error('Error parsing message:', e);
                 }
               }
             } catch (error) {

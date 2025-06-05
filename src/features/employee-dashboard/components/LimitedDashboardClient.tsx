@@ -15,7 +15,6 @@ import { COLORS } from '@/src/styles/colors';
 import ChatSection from './ChatSection';
 import ComingSoon from './ComingSoon';
 import ConsultationBanner from './ConsultationBanner';
-import { EmployeeDashboardContent } from './EmployeeDashboardContent';
 import EmployeeNavbar from './EmployeeNavbar';
 import FinancialTherapyModal from './FinancialTherapyModal';
 import { QuizModal } from './QuizModal';
