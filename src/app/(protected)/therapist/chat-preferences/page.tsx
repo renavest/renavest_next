@@ -1,8 +1,8 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { useEffect, useState } from 'react';
 import { MessageCircle, Clock, Users, Bell } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 import TherapistNavbar from '@/src/features/therapist-dashboard/components/navigation/TherapistNavbar';
 
