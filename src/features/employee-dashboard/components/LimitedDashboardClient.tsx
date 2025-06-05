@@ -5,7 +5,6 @@ import posthog from 'posthog-js';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
-import ChatInterface from '@/src/features/chat/components/ChatInterface';
 import { firstNameSignal } from '@/src/features/utm/utmCustomDemo';
 import { trackReferralShare } from '@/src/lib/referralTracking';
 import { COLORS } from '@/src/styles/colors';
@@ -16,6 +15,7 @@ import { COLORS } from '@/src/styles/colors';
 import ChatSection from './ChatSection';
 import ComingSoon from './ComingSoon';
 import ConsultationBanner from './ConsultationBanner';
+import { EmployeeDashboardContent } from './EmployeeDashboardContent';
 import EmployeeNavbar from './EmployeeNavbar';
 import FinancialTherapyModal from './FinancialTherapyModal';
 import { QuizModal } from './QuizModal';
@@ -253,9 +253,6 @@ export default function LimitedDashboardClient() {
         onClose={() => setIsQuizModalOpen(false)}
         onComplete={handleQuizComplete}
       />
-
-      {/* Chat Interface */}
-      <ChatInterface userRole='prospect' />
     </div>
   );
 }
