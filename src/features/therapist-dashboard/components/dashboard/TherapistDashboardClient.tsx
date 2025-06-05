@@ -3,6 +3,7 @@
 import { UserCircle2, Users, FileText, Calendar, TrendingUp, Plus, Folder } from 'lucide-react';
 import { useEffect, useCallback, useState } from 'react';
 
+import ChatInterface from '@/src/features/chat/components/ChatInterface';
 import {
   trackTherapistDashboard,
   trackTherapistClientManagement,
@@ -504,6 +505,9 @@ export default function TherapistDashboardPage({
           </div>
         </div>
       )}
+
+      {/* Chat Interface */}
+      <ChatInterface therapistId={therapistIdSignal.value || undefined} userRole='therapist' />
     </div>
   );
 }
