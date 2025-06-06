@@ -1,5 +1,5 @@
 import { useUser } from '@clerk/nextjs';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 interface SubscriptionStatus {
   status: string;
@@ -30,7 +30,7 @@ export function useSubscription(): SubscriptionHookReturn {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchSubscription = async () => {
+  const fetchSubscription = useCallback(async () => {
     if (!userLoaded || !user) {
       setLoading(false);
       return;
@@ -58,11 +58,11 @@ export function useSubscription(): SubscriptionHookReturn {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userLoaded, user?.id]);
 
   useEffect(() => {
     fetchSubscription();
-  }, [userLoaded, user?.id]);
+  }, [fetchSubscription]);
 
   // Helper computed properties
   const hasActiveSubscription = Boolean(

@@ -52,7 +52,17 @@ export async function GET() {
     // Get subscription status (from cache or Stripe API)
     const subscriptionData = await getSubscriptionStatus(stripeCustomerId);
 
-    return NextResponse.json(subscriptionData);
+    // Transform the response to match what the frontend expects
+    const response = {
+      status: subscriptionData.status || 'none',
+      subscriptionId: subscriptionData.subscriptionId,
+      priceId: subscriptionData.planId, // Transform planId to priceId for frontend
+      currentPeriodEnd: subscriptionData.currentPeriodEnd,
+      cancelAtPeriodEnd: subscriptionData.cancelAtPeriodEnd,
+      customerId: subscriptionData.customerId,
+    };
+
+    return NextResponse.json(response);
   } catch (error) {
     console.error('[SUBSCRIPTION API] Error getting subscription status:', error);
     return NextResponse.json({ error: 'Failed to get subscription status' }, { status: 500 });
