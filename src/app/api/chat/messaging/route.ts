@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/src/db';
 import { therapists, users, chatChannels, chatMessages } from '@/src/db/schema';
 import { redis, getChatMessagesKey, ChatMessage } from '@/src/lib/redis';
+import { requireActiveSubscription } from '@/src/middleware/subscription';
 
 // Feature flag check
 const CHAT_FEATURE_ENABLED = process.env.NEXT_PUBLIC_ENABLE_CHAT_FEATURE === 'true';
@@ -31,6 +32,12 @@ interface GetMessagesBody {
 export async function POST(request: NextRequest) {
   if (!CHAT_FEATURE_ENABLED) {
     return NextResponse.json({ error: 'Chat feature is not enabled' }, { status: 404 });
+  }
+
+  // Check if user has active subscription before allowing chat access
+  const subscriptionCheck = await requireActiveSubscription(request);
+  if (subscriptionCheck) {
+    return subscriptionCheck; // Return the error response if subscription check fails
   }
 
   try {

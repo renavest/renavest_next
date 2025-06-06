@@ -371,8 +371,9 @@ export function ChatMessageArea({
     if (!messagesContainerRef.current) return false;
 
     const container = messagesContainerRef.current;
-    const threshold = 50; // pixels from bottom
-    return container.scrollHeight - container.scrollTop - container.clientHeight <= threshold;
+    const threshold = 10; // Reduced threshold for more precise detection
+    const scrollBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    return scrollBottom <= threshold;
   };
 
   // Handle scroll events
@@ -384,9 +385,30 @@ export function ChatMessageArea({
   useEffect(() => {
     if (messages.length > lastMessageCount) {
       if (isUserAtBottom) {
-        setTimeout(() => {
-          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
+        // Use requestAnimationFrame for smoother scrolling and better timing
+        requestAnimationFrame(() => {
+          if (messagesEndRef.current && messagesContainerRef.current) {
+            const container = messagesContainerRef.current;
+            const endElement = messagesEndRef.current;
+
+            // Calculate the precise scroll position
+            const elementTop = endElement.offsetTop;
+            const elementHeight = endElement.offsetHeight;
+            const containerHeight = container.clientHeight;
+
+            // Scroll to show the end element at the bottom of the container
+            const targetScrollTop = elementTop + elementHeight - containerHeight;
+
+            // Ensure we don't scroll past the maximum scroll position
+            const maxScrollTop = container.scrollHeight - container.clientHeight;
+            const finalScrollTop = Math.min(targetScrollTop, maxScrollTop);
+
+            container.scrollTo({
+              top: finalScrollTop,
+              behavior: 'smooth',
+            });
+          }
+        });
       }
       setLastMessageCount(messages.length);
     }
@@ -396,9 +418,15 @@ export function ChatMessageArea({
   useEffect(() => {
     setIsUserAtBottom(true);
     setLastMessageCount(0);
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
-    }, 100);
+    requestAnimationFrame(() => {
+      if (messagesContainerRef.current) {
+        const container = messagesContainerRef.current;
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: 'auto',
+        });
+      }
+    });
   }, [activeChannel?.id]);
 
   const handlePromptSelect = (prompt: string) => {
@@ -466,8 +494,14 @@ export function ChatMessageArea({
           <div className='fixed bottom-20 lg:bottom-24 right-4 lg:right-8 z-10'>
             <button
               onClick={() => {
-                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-                setIsUserAtBottom(true);
+                if (messagesContainerRef.current) {
+                  const container = messagesContainerRef.current;
+                  container.scrollTo({
+                    top: container.scrollHeight,
+                    behavior: 'smooth',
+                  });
+                  setIsUserAtBottom(true);
+                }
               }}
               className='bg-[#9071FF] text-white p-2 lg:p-3 rounded-full shadow-lg hover:bg-[#7c5ce8] transition-all duration-200 hover:scale-105'
               title='Scroll to latest messages'

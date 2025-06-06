@@ -2,7 +2,7 @@ import { headers } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 
-import { stripe, STRIPE_CONFIG, syncStripeDataToKV } from '@/src/features/stripe';
+import { stripe, STRIPE_CONFIG } from '@/src/features/stripe';
 import {
   handleCheckoutSessionCompleted,
   handlePaymentIntentSucceeded,
@@ -10,6 +10,9 @@ import {
   handleAccountUpdated,
   handleSetupIntentSucceeded,
   handleSetupIntentFailed,
+  handleSubscriptionUpdated,
+  handleInvoicePaymentSucceeded,
+  handleInvoicePaymentFailed,
 } from '@/src/features/stripe/utils/webhook-handlers';
 
 // Events we track for updates - optimized for 2025 standards
@@ -66,19 +69,20 @@ async function processEvent(event: Stripe.Event) {
       case 'customer.subscription.pending_update_expired':
       case 'customer.subscription.trial_will_end': {
         const subscription = event.data.object as Stripe.Subscription;
-        if (typeof subscription.customer === 'string') {
-          await syncStripeDataToKV(subscription.customer);
-        }
+        await handleSubscriptionUpdated(subscription);
         break;
       }
 
-      case 'invoice.paid':
+      case 'invoice.paid': {
+        const invoice = event.data.object as Stripe.Invoice;
+        await handleInvoicePaymentSucceeded(invoice);
+        break;
+      }
+
       case 'invoice.payment_failed':
       case 'invoice.payment_action_required': {
         const invoice = event.data.object as Stripe.Invoice;
-        if (typeof invoice.customer === 'string') {
-          await syncStripeDataToKV(invoice.customer);
-        }
+        await handleInvoicePaymentFailed(invoice);
         break;
       }
 

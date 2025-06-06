@@ -4,6 +4,7 @@ import { useUser } from '@clerk/nextjs';
 import { MessageCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
+import { SubscriptionGate } from '@/src/components/SubscriptionGate';
 import { ChatChannelList } from '@/src/features/chat/components/ChatChannelList';
 import { ChatMessageArea } from '@/src/features/chat/components/ChatMessageArea';
 import { useChat } from '@/src/features/chat/hooks/useChat';
@@ -127,75 +128,86 @@ export default function ChatSection() {
   const activeChannel = channels.find((c) => c.id === activeChannelId);
   const totalUnreadCount = channels.reduce((total, channel) => total + channel.unreadCount, 0);
 
-  if (channels.length === 0) {
-    return (
-      <div className='bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden border border-gray-100'>
-        <div className='p-4 md:p-6'>
-          <h3 className='text-xl font-semibold text-gray-800 mb-4 flex items-center'>
-            <span className='bg-green-100 p-2 rounded-lg mr-3'>
-              <MessageCircle className='h-5 w-5 text-green-600' />
-            </span>
-            Messages
-            <ConnectionStatusIndicator connectionStatus={connectionStatus} />
-          </h3>
-          <div className='h-[600px] md:h-[500px] bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-center'>
-            <div className='text-center py-8'>
-              <MessageCircle className='h-12 w-12 text-gray-300 mx-auto mb-4' />
-              <p className='text-gray-500'>No conversations yet</p>
-              <p className='text-sm text-gray-400 mt-2'>
-                Your therapist conversations will appear here
-              </p>
+  // Wrap entire chat functionality in subscription gate
+  const chatContent = (
+    <>
+      {channels.length === 0 ? (
+        <div className='bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden border border-gray-100'>
+          <div className='p-4 md:p-6'>
+            <h3 className='text-xl font-semibold text-gray-800 mb-4 flex items-center'>
+              <span className='bg-green-100 p-2 rounded-lg mr-3'>
+                <MessageCircle className='h-5 w-5 text-green-600' />
+              </span>
+              Messages
+              <ConnectionStatusIndicator connectionStatus={connectionStatus} />
+            </h3>
+            <div className='h-[600px] md:h-[500px] bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-center'>
+              <div className='text-center py-8'>
+                <MessageCircle className='h-12 w-12 text-gray-300 mx-auto mb-4' />
+                <p className='text-gray-500'>No conversations yet</p>
+                <p className='text-sm text-gray-400 mt-2'>
+                  Your therapist conversations will appear here
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    );
-  }
+      ) : (
+        <div className='bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden border border-gray-100'>
+          <div className='p-4 md:p-6'>
+            <h3 className='text-xl font-semibold text-gray-800 mb-4 flex items-center'>
+              <span className='bg-green-100 p-2 rounded-lg mr-3'>
+                <MessageCircle className='h-5 w-5 text-green-600' />
+              </span>
+              Messages
+              <ConnectionStatusIndicator connectionStatus={connectionStatus} />
+              {totalUnreadCount > 0 && (
+                <span className='ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full'>
+                  {totalUnreadCount}
+                </span>
+              )}
+            </h3>
 
-  return (
-    <div className='bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden border border-gray-100'>
-      <div className='p-4 md:p-6'>
-        <h3 className='text-xl font-semibold text-gray-800 mb-4 flex items-center'>
-          <span className='bg-green-100 p-2 rounded-lg mr-3'>
-            <MessageCircle className='h-5 w-5 text-green-600' />
-          </span>
-          Messages
-          <ConnectionStatusIndicator connectionStatus={connectionStatus} />
-          {totalUnreadCount > 0 && (
-            <span className='ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full'>
-              {totalUnreadCount}
-            </span>
-          )}
-        </h3>
+            <div className='flex flex-col lg:flex-row h-[600px] md:h-[500px] bg-gray-50 rounded-xl border border-gray-200 overflow-hidden'>
+              {/* Conversations List - Responsive Width */}
+              <div className='lg:w-1/3 xl:w-1/4 bg-white border-b lg:border-b-0 lg:border-r border-gray-200 flex-shrink-0 h-48 lg:h-full overflow-hidden'>
+                <ChatChannelList
+                  channels={channels}
+                  activeChannelId={activeChannelId}
+                  onSelectChannel={(channel) => setActiveChannelId(channel.id)}
+                  formatTime={formatTime}
+                />
+              </div>
 
-        <div className='flex flex-col lg:flex-row h-[600px] md:h-[500px] bg-gray-50 rounded-xl border border-gray-200 overflow-hidden'>
-          {/* Conversations List - Responsive Width */}
-          <div className='lg:w-1/3 xl:w-1/4 bg-white border-b lg:border-b-0 lg:border-r border-gray-200 flex-shrink-0 h-48 lg:h-full overflow-hidden'>
-            <ChatChannelList
-              channels={channels}
-              activeChannelId={activeChannelId}
-              onSelectChannel={(channel) => setActiveChannelId(channel.id)}
-              formatTime={formatTime}
-            />
-          </div>
-
-          {/* Chat Area - Takes Remaining Space */}
-          <div className='flex-1 bg-white min-h-0'>
-            <ChatMessageArea
-              activeChannel={activeChannel || null}
-              messages={messages}
-              newMessage={newMessage}
-              loading={loading}
-              connectionStatus={connectionStatus}
-              onMessageChange={setNewMessage}
-              onSendMessage={handleSendMessage}
-              onKeyPress={handleKeyPress}
-              isMyMessage={isMyMessage}
-              formatTime={formatTime}
-            />
+              {/* Chat Area - Takes Remaining Space */}
+              <div className='flex-1 bg-white min-h-0'>
+                <ChatMessageArea
+                  activeChannel={activeChannel || null}
+                  messages={messages}
+                  newMessage={newMessage}
+                  loading={loading}
+                  connectionStatus={connectionStatus}
+                  onMessageChange={setNewMessage}
+                  onSendMessage={handleSendMessage}
+                  onKeyPress={handleKeyPress}
+                  isMyMessage={isMyMessage}
+                  formatTime={formatTime}
+                />
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      )}
+    </>
+  );
+
+  return (
+    <SubscriptionGate
+      feature='Direct Messaging'
+      description='Connect with licensed therapists through secure, real-time messaging. Available with any Renavest subscription.'
+      className='min-h-[600px]'
+    >
+      {chatContent}
+    </SubscriptionGate>
   );
 }
