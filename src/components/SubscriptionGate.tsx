@@ -61,7 +61,7 @@ export function SubscriptionGate({
         },
         body: JSON.stringify({
           priceId: process.env.NEXT_PUBLIC_STRIPE_SUBSCRIPTION_PRICE_ID_STARTER,
-          successUrl: `${window.location.origin}/billing/success?feature=${encodeURIComponent(feature)}`,
+          successUrl: `${window.location.origin}/employee/billing/success?feature=${encodeURIComponent(feature)}`,
           cancelUrl: window.location.href,
         }),
       });
@@ -170,7 +170,7 @@ export function SubscriptionGate({
         {/* Alternative Link */}
         <div className='text-center mt-4 pt-4 border-t border-gray-200'>
           <a
-            href='/billing'
+            href='/employee/billing'
             className='text-sm text-blue-600 hover:text-blue-800 transition-colors'
           >
             View all plans and pricing →

@@ -204,8 +204,8 @@ export default function SubscriptionSuccessPage() {
           </button>
           <p className='text-gray-500 text-sm mt-4'>
             Need help?{' '}
-            <a href='/support' className='text-blue-600 hover:text-blue-800'>
-              Contact our support team
+            <a href='/employee/billing' className='text-blue-600 hover:text-blue-800'>
+              Manage your subscription
             </a>
           </p>
         </div>
