@@ -103,8 +103,16 @@ export default function TherapistNavbar({
             {pageTitle}
           </h1>
         </div>
-        {/* Right: Profile link, Marketplace link, Logout, Avatar */}
+        {/* Right: Sessions link, Profile link, Marketplace link, Logout, Avatar */}
         <div className='flex items-center gap-3'>
+          {/* <Link
+            href='/therapist/sessions/complete'
+            onClick={handleSessionsClick}
+            className='flex items-center gap-1.5 text-gray-700 hover:text-gray-900 transition-colors text-sm px-3 py-2 rounded-lg hover:bg-gray-100 border border-transparent hover:border-gray-200'
+          >
+            <CheckCircle className='h-4 w-4' />
+            <span className='hidden sm:inline'>Sessions</span>
+          </Link> */}
           <Link
             href='/explore'
             onClick={handleMarketplaceClick}

@@ -6,7 +6,6 @@ import { db } from '@/src/db';
 import { users, stripeCustomers } from '@/src/db/schema';
 import {
   stripe,
-  STRIPE_CONFIG,
   getOrCreateStripeCustomer,
   getSubscriptionStatus,
   syncStripeDataToKV,
@@ -53,7 +52,17 @@ export async function GET() {
     // Get subscription status (from cache or Stripe API)
     const subscriptionData = await getSubscriptionStatus(stripeCustomerId);
 
-    return NextResponse.json(subscriptionData);
+    // Transform the response to match what the frontend expects
+    const response = {
+      status: subscriptionData.status || 'none',
+      subscriptionId: subscriptionData.subscriptionId,
+      priceId: subscriptionData.planId, // Transform planId to priceId for frontend
+      currentPeriodEnd: subscriptionData.currentPeriodEnd,
+      cancelAtPeriodEnd: subscriptionData.cancelAtPeriodEnd,
+      customerId: subscriptionData.customerId,
+    };
+
+    return NextResponse.json(response);
   } catch (error) {
     console.error('[SUBSCRIPTION API] Error getting subscription status:', error);
     return NextResponse.json({ error: 'Failed to get subscription status' }, { status: 500 });
@@ -201,7 +210,7 @@ export async function PATCH(req: NextRequest) {
         id: updatedSubscription.id,
         status: updatedSubscription.status,
         cancelAtPeriodEnd: updatedSubscription.cancel_at_period_end,
-        currentPeriodEnd: updatedSubscription.current_period_end,
+        currentPeriodEnd: updatedSubscription.items.data[0]?.current_period_end || null,
       },
     });
   } catch (error) {

@@ -1,8 +1,22 @@
 'use client';
 
-import { UserCircle2, Users, FileText, Calendar, TrendingUp, Plus, Folder } from 'lucide-react';
+import { useUser } from '@clerk/nextjs';
+import {
+  Users,
+  UserCircle2,
+  Plus,
+  FileText,
+  Calendar,
+  TrendingUp,
+  Folder,
+  MessageCircle,
+} from 'lucide-react';
 import { useEffect, useCallback, useState } from 'react';
 
+import { ChatChannelList } from '@/src/features/chat/components/ChatChannelList';
+import { ChatMessageArea } from '@/src/features/chat/components/ChatMessageArea';
+import { ConnectionStatusIndicator } from '@/src/features/chat/components/ConnectionStatusIndicator';
+import { useChat } from '@/src/features/chat/hooks/useChat';
 import {
   trackTherapistDashboard,
   trackTherapistClientManagement,
@@ -31,7 +45,7 @@ import { COLORS } from '@/src/styles/colors';
 
 import { QuickActionsSection } from './QuickActionsSection';
 
-type ClientTab = 'overview' | 'notes' | 'sessions' | 'documents' | 'progress';
+type ClientTab = 'overview' | 'notes' | 'sessions' | 'documents' | 'progress' | 'chat';
 
 // New comprehensive client management component
 const ClientManagementSection = ({
@@ -74,10 +88,10 @@ const ClientManagementSection = ({
   return (
     <div className='bg-white rounded-2xl border border-gray-100 shadow-lg overflow-hidden'>
       {/* Header with Client Selector */}
-      <div className='bg-gradient-to-r from-purple-50/50 to-indigo-50/30 p-6 border-b border-gray-100'>
+      <div className='bg-gray-50 p-6 border-b border-gray-100'>
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-4'>
-            <div className='w-2 h-12 bg-gradient-to-b from-[#9071FF] to-purple-600 rounded-full'></div>
+            <div className='w-2 h-12 bg-[#9071FF] rounded-full'></div>
             <div>
               <h2 className='text-2xl font-bold text-gray-900 mb-1'>Client Management</h2>
               <p className='text-gray-600'>Comprehensive client care and documentation</p>
@@ -140,6 +154,7 @@ const ClientManagementSection = ({
                 { key: 'documents', label: 'Documents', icon: Folder },
                 { key: 'sessions', label: 'Sessions', icon: Calendar },
                 { key: 'progress', label: 'Progress', icon: TrendingUp },
+                { key: 'chat', label: 'Chat', icon: MessageCircle },
               ].map(({ key, label, icon: Icon }) => (
                 <button
                   key={key}
@@ -168,6 +183,7 @@ const ClientManagementSection = ({
             {activeTab === 'documents' && <ClientDocumentsTab client={selectedClient} />}
             {activeTab === 'sessions' && <ClientSessionsTab sessions={clientSessions} />}
             {activeTab === 'progress' && <ClientProgressTab />}
+            {activeTab === 'chat' && <ClientChatTab client={selectedClient} />}
           </div>
         </>
       )}
@@ -175,7 +191,7 @@ const ClientManagementSection = ({
       {/* No Client Selected State */}
       {!selectedClient && (
         <div className='p-16 text-center'>
-          <div className='w-16 h-16 bg-gradient-to-br from-[#9071FF] to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6'>
+          <div className='w-16 h-16 bg-[#9071FF] rounded-2xl flex items-center justify-center mx-auto mb-6'>
             <Users className='w-8 h-8 text-white' />
           </div>
           <h3 className='text-xl font-semibold text-gray-900 mb-2'>No Clients Yet</h3>
@@ -204,7 +220,7 @@ const ClientOverviewTab = ({
   return (
     <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
       <div className='space-y-6'>
-        <div className='bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200'>
+        <div className='bg-purple-50 rounded-xl p-6 border border-purple-200'>
           <h4 className='text-lg font-semibold text-purple-900 mb-3'>Client Information</h4>
           <div className='space-y-3 text-purple-800'>
             <p>
@@ -219,7 +235,7 @@ const ClientOverviewTab = ({
           </div>
         </div>
 
-        <div className='bg-gradient-to-r from-purple-50/70 to-purple-100/70 rounded-xl p-6 border border-purple-200/70'>
+        <div className='bg-purple-50 rounded-xl p-6 border border-purple-200'>
           <h4 className='text-lg font-semibold text-purple-900 mb-3'>Recent Activity</h4>
           <p className='text-purple-800'>Last session: Coming soon</p>
         </div>
@@ -249,11 +265,227 @@ const ClientSessionsTab = ({ sessions }: { sessions: UpcomingSession[] }) => {
 const ClientProgressTab = () => {
   return (
     <div className='text-center py-16'>
-      <div className='w-16 h-16 bg-gradient-to-br from-amber-100 to-amber-200 rounded-2xl flex items-center justify-center mx-auto mb-6'>
+      <div className='w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-6'>
         <TrendingUp className='w-8 h-8 text-amber-600' />
       </div>
       <h3 className='text-xl font-semibold text-gray-900 mb-2'>Progress Tracking</h3>
       <p className='text-gray-600'>Progress tracking features coming soon</p>
+    </div>
+  );
+};
+
+interface Channel {
+  id: number;
+  channelIdentifier: string;
+  therapistId: number;
+  prospectUserId: number;
+  status: string;
+  lastMessageAt: string;
+  lastMessagePreview: string;
+  unreadCount: number;
+  therapistName?: string;
+  therapistTitle?: string;
+  prospectFirstName?: string;
+  prospectLastName?: string;
+  prospectEmail?: string;
+}
+
+const ClientChatTab = ({ client }: { client: Client }) => {
+  const { user } = useUser();
+  const [channels, setChannels] = useState<Channel[]>([]);
+  const [activeChannelId, setActiveChannelId] = useState<number | null>(null);
+  const [newMessage, setNewMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const { messages, connectionStatus, sendMessage } = useChat(activeChannelId);
+
+  const loadChannels = useCallback(async () => {
+    try {
+      const response = await fetch('/api/chat/messaging', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'list_channels' }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Filter channels to only show those for this specific client
+        const clientChannels = data.channels.filter(
+          (channel: Channel) => channel.prospectUserId === parseInt(client.id, 10),
+        );
+        setChannels(clientChannels);
+
+        // Auto-select the channel if there's only one
+        if (clientChannels.length === 1) {
+          setActiveChannelId(clientChannels[0].id);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load channels:', error);
+    }
+  }, [client.id]);
+
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_ENABLE_CHAT_FEATURE === 'true') {
+      loadChannels();
+    }
+  }, [loadChannels]);
+
+  const handleSendMessage = useCallback(async () => {
+    if (!newMessage.trim() || !activeChannelId || loading) return;
+
+    const authorName =
+      user?.firstName && user?.lastName
+        ? `${user.firstName} ${user.lastName}`
+        : user?.emailAddresses?.[0]?.emailAddress || 'Anonymous';
+
+    try {
+      setLoading(true);
+      const success = await sendMessage(newMessage.trim(), authorName);
+      if (success) {
+        setNewMessage('');
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [newMessage, activeChannelId, loading, user, sendMessage]);
+
+  const handleKeyPress = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSendMessage();
+      }
+    },
+    [handleSendMessage],
+  );
+
+  const formatTime = useCallback((timestamp: string | number) => {
+    const date = typeof timestamp === 'number' ? new Date(timestamp) : new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }, []);
+
+  const isMyMessage = useCallback(
+    (message: { authorEmail: string }) => {
+      return message.authorEmail === user?.emailAddresses?.[0]?.emailAddress;
+    },
+    [user],
+  );
+
+  if (process.env.NEXT_PUBLIC_ENABLE_CHAT_FEATURE !== 'true') {
+    return (
+      <div className='text-center py-16'>
+        <div className='w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6'>
+          <MessageCircle className='w-8 h-8 text-gray-400' />
+        </div>
+        <h3 className='text-xl font-semibold text-gray-900 mb-2'>Chat Feature</h3>
+        <p className='text-gray-600'>Chat functionality is currently disabled</p>
+      </div>
+    );
+  }
+
+  const activeChannel = channels.find((c) => c.id === activeChannelId);
+  const totalUnreadCount = channels.reduce((total, channel) => total + channel.unreadCount, 0);
+
+  if (channels.length === 0) {
+    return (
+      <div className='space-y-6'>
+        <div className='flex items-center justify-between'>
+          <div>
+            <h3 className='text-xl font-semibold text-gray-900'>Chat with {client.firstName}</h3>
+            <p className='text-gray-600 text-sm mt-1'>Communicate with your client in real-time</p>
+          </div>
+          <ConnectionStatusIndicator connectionStatus={connectionStatus} />
+        </div>
+
+        <div className='bg-gray-50 rounded-xl p-6 border border-gray-200'>
+          <div className='text-center py-8'>
+            <MessageCircle className='h-12 w-12 text-gray-300 mx-auto mb-4' />
+            <p className='text-gray-500'>No conversation with {client.firstName} yet</p>
+            <p className='text-sm text-gray-400 mt-2'>
+              The client can start a conversation by clicking the "Chat" button next to your profile
+              on their dashboard.
+            </p>
+          </div>
+          <div className='mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg'>
+            <div className='flex items-start gap-3'>
+              <div className='w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0'>
+                <svg
+                  className='w-4 h-4 text-blue-600'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+                  />
+                </svg>
+              </div>
+              <div className='flex-1'>
+                <h4 className='text-sm font-medium text-blue-900 mb-1'>How Chat Works</h4>
+                <p className='text-sm text-blue-800'>
+                  Clients can start conversations by clicking the "Chat" button next to your profile
+                  on their dashboard. Once a conversation is started, you'll see message history and
+                  can respond here.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className='space-y-6'>
+      <div className='flex items-center justify-between'>
+        <div>
+          <h3 className='text-xl font-semibold text-gray-900'>Chat with {client.firstName}</h3>
+          <p className='text-gray-600 text-sm mt-1'>Communicate with your client in real-time</p>
+        </div>
+        <div className='flex items-center'>
+          <ConnectionStatusIndicator connectionStatus={connectionStatus} />
+          {totalUnreadCount > 0 && (
+            <span className='ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full'>
+              {totalUnreadCount}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className='bg-white border border-gray-200 rounded-xl overflow-hidden'>
+        <div className='flex h-96'>
+          {channels.length > 1 && (
+            <ChatChannelList
+              channels={channels}
+              activeChannelId={activeChannelId}
+              onSelectChannel={(channel) => setActiveChannelId(channel.id)}
+              formatTime={formatTime}
+            />
+          )}
+
+          <div className={channels.length === 1 ? 'w-full' : 'flex-1'}>
+            <ChatMessageArea
+              activeChannel={activeChannel || null}
+              messages={messages}
+              newMessage={newMessage}
+              loading={loading}
+              connectionStatus={connectionStatus}
+              onMessageChange={setNewMessage}
+              onSendMessage={handleSendMessage}
+              onKeyPress={handleKeyPress}
+              isMyMessage={isMyMessage}
+              formatTime={formatTime}
+              showExportButton={true}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

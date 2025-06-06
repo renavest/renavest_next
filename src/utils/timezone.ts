@@ -1,21 +1,6 @@
 import { DateTime } from 'luxon';
 
 /**
- * Converts a time between two timezones
- */
-function convertTimeBetweenZones(
-  inputTime: Date,
-  fromTimezone: string,
-  toTimezone: string,
-): DateTime {
-  // Convert input time to a DateTime object in the source timezone
-  const sourceDateTime = DateTime.fromJSDate(inputTime).setZone(fromTimezone);
-
-  // Convert to target timezone
-  return sourceDateTime.setZone(toTimezone);
-}
-
-/**
  * Creates a DateTime object from a date with timezone awareness
  * @param date The date to convert, can be a Date object or ISO string
  * @param timezone The timezone to use, e.g. 'UTC', 'America/New_York'

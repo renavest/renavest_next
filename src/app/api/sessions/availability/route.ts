@@ -45,8 +45,8 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const validatedData = GetAvailabilitySchema.parse({
       therapistId: searchParams.get('therapistId'),
-      startDate: searchParams.get('startDate'),
-      endDate: searchParams.get('endDate'),
+      startDate: decodeURIComponent(searchParams.get('startDate') || ''),
+      endDate: decodeURIComponent(searchParams.get('endDate') || ''),
       timezone: searchParams.get('timezone') || 'UTC',
       view: searchParams.get('view') || 'client',
     });
@@ -146,10 +146,17 @@ export async function GET(req: NextRequest) {
 
       // Get therapist's busy times from Google Calendar
       console.log('Fetching busy times for therapist:', validatedData.therapistId);
+
+      // Parse dates and convert to UTC for Google Calendar API
+      const startDateTime = createDate(validatedData.startDate);
+      const endDateTime = createDate(validatedData.endDate);
+      const timeMin = startDateTime.toUTC().toISO();
+      const timeMax = endDateTime.toUTC().toISO();
+
       const freeBusyResponse = await calendar.freebusy.query({
         requestBody: {
-          timeMin: createDate(validatedData.startDate, 'UTC').toISO(),
-          timeMax: createDate(validatedData.endDate, 'UTC').toISO(),
+          timeMin,
+          timeMax,
           timeZone: therapistTimezone,
           items: [{ id: 'primary' }],
         },

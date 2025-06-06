@@ -4,6 +4,7 @@ export * from './session';
 export * from './availability';
 export * from './dashboard';
 export * from './profile';
+export * from './components';
 
 // Import specific types for use in interfaces below
 import type { ClientNoteContent, NoteCategory } from './client';

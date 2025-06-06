@@ -325,11 +325,10 @@ export function ClientNotesSection({ client, therapistId }: ClientNotesSectionPr
     <div className='space-y-8'>
       {/* Enhanced Header */}
       <div className='relative'>
-        <div className='absolute inset-0 bg-gradient-to-r from-purple-50/50 to-indigo-50/30 rounded-2xl'></div>
-        <div className='relative p-8 rounded-2xl border border-purple-100/50'>
+        <div className='relative p-8 rounded-2xl border border-purple-100 bg-gray-50'>
           <div className='flex items-center justify-between mb-6'>
             <div className='flex items-center gap-4'>
-              <div className='w-1 h-12 bg-gradient-to-b from-[#9071FF] to-purple-600 rounded-full'></div>
+              <div className='w-1 h-12 bg-[#9071FF] rounded-full'></div>
               <div>
                 <h3 className='text-2xl font-bold text-gray-900 mb-1'>Clinical Notes</h3>
                 <p className='text-base text-gray-600'>
