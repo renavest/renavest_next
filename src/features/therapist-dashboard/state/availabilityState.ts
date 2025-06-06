@@ -181,8 +181,16 @@ export const fetchAvailability = async (therapistId: number) => {
     const endDate = currentMonth.endOf('month');
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+    // Ensure proper ISO format with timezone
+    const startDateISO = startDate.toISO({ includeOffset: true });
+    const endDateISO = endDate.toISO({ includeOffset: true });
+
+    if (!startDateISO || !endDateISO) {
+      throw new Error('Failed to format dates for API request');
+    }
+
     const response = await fetch(
-      `/api/sessions/availability?therapistId=${therapistId}&startDate=${startDate.toISO()}&endDate=${endDate.toISO()}&timezone=${timezone}&view=therapist`,
+      `/api/sessions/availability?therapistId=${therapistId}&startDate=${encodeURIComponent(startDateISO)}&endDate=${encodeURIComponent(endDateISO)}&timezone=${timezone}&view=therapist`,
     );
     const data = await response.json();
 

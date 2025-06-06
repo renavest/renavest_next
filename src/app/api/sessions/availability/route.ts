@@ -45,8 +45,8 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const validatedData = GetAvailabilitySchema.parse({
       therapistId: searchParams.get('therapistId'),
-      startDate: searchParams.get('startDate'),
-      endDate: searchParams.get('endDate'),
+      startDate: decodeURIComponent(searchParams.get('startDate') || ''),
+      endDate: decodeURIComponent(searchParams.get('endDate') || ''),
       timezone: searchParams.get('timezone') || 'UTC',
       view: searchParams.get('view') || 'client',
     });
@@ -147,25 +147,11 @@ export async function GET(req: NextRequest) {
       // Get therapist's busy times from Google Calendar
       console.log('Fetching busy times for therapist:', validatedData.therapistId);
 
-      // Debug: Log the parameters being sent
+      // Parse dates and convert to UTC for Google Calendar API
       const startDateTime = createDate(validatedData.startDate);
       const endDateTime = createDate(validatedData.endDate);
       const timeMin = startDateTime.toUTC().toISO();
       const timeMax = endDateTime.toUTC().toISO();
-      console.log('FreeBusy query parameters:', {
-        timeMin,
-        timeMax,
-        timeZone: therapistTimezone,
-        startDate: validatedData.startDate,
-        endDate: validatedData.endDate,
-        startDateTime: startDateTime.toISO(),
-        endDateTime: endDateTime.toISO(),
-      });
-
-      // Validate that we have valid ISO strings
-      if (!timeMin || !timeMax) {
-        throw new Error(`Invalid date format: timeMin=${timeMin}, timeMax=${timeMax}`);
-      }
 
       const freeBusyResponse = await calendar.freebusy.query({
         requestBody: {
