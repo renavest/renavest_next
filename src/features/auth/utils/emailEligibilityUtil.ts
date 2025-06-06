@@ -1,5 +1,6 @@
 import { ALLOWED_EMAILS, EMPLOYER_EMAIL_MAP } from '@/src/constants';
-import { therapistList } from '@/therapistList';
+import { db } from '@/src/db';
+import { pendingTherapists } from '@/src/db/schema';
 
 export const checkEmailEligibility = async (email: string) => {
   const normalizedEmail = email.toLowerCase().trim();
@@ -10,16 +11,25 @@ export const checkEmailEligibility = async (email: string) => {
     return true;
   }
 
-  // Check against therapist emails, filtering out null emails
-  const therapistEmails = therapistList
-    .map((therapist) => therapist.email)
-    .filter((therapistEmail) => therapistEmail !== null);
+  // Check against pending therapist emails from database
+  try {
+    const pendingTherapistResult = await db
+      .select({ clerkEmail: pendingTherapists.clerkEmail })
+      .from(pendingTherapists);
 
-  if (therapistEmails.includes(normalizedEmail)) {
-    return true;
+    const pendingTherapistEmails = pendingTherapistResult
+      .map((therapist) => therapist.clerkEmail?.toLowerCase().trim())
+      .filter((email) => email !== null && email !== undefined);
+
+    if (pendingTherapistEmails.includes(normalizedEmail)) {
+      return true;
+    }
+  } catch (error) {
+    console.error('Error checking pending therapists:', error);
+    // Continue with other checks if database query fails
   }
 
-  // NEW: Check against employer domain mappings (allows employees from partner companies)
+  // Check against employer domain mappings (allows employees from partner companies)
   if (EMPLOYER_EMAIL_MAP[normalizedEmail] || (emailDomain && EMPLOYER_EMAIL_MAP[emailDomain])) {
     return true;
   }

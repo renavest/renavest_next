@@ -4,8 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
 import { users, stripeCustomers } from '@/src/db/schema';
-import { kv, CACHE_KEYS } from '@/src/features/stripe/services/kv-cache';
 import { stripe } from '@/src/features/stripe';
+import { kv, CACHE_KEYS } from '@/src/features/stripe/services/kv-cache';
 
 /**
  * Development-only endpoint to reset Stripe integration for testing
