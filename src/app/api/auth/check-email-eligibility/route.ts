@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+
+import { ALLOWED_EMAILS, EMPLOYER_EMAIL_MAP } from '@/src/constants';
 import { db } from '@/src/db';
 import { pendingTherapists } from '@/src/db/schema';
-import { ALLOWED_EMAILS, EMPLOYER_EMAIL_MAP } from '@/src/constants';
 
 // Simple in-memory rate limiting cache
 const rateLimit = new Map<string, { count: number; resetTime: number }>();
