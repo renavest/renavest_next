@@ -20,13 +20,14 @@ export const STRIPE_CONFIG = {
 
   // Price IDs for different plans
   PLANS: {
-    STARTER: process.env.STRIPE_PRICE_ID_STARTER!,
-    PROFESSIONAL: process.env.STRIPE_PRICE_ID_PROFESSIONAL!,
-    ENTERPRISE: process.env.STRIPE_PRICE_ID_ENTERPRISE!,
+    STARTER: process.env.NEXT_PUBLIC_STRIPE_SUBSCRIPTION_PRICE_ID_STARTER!,
+    // Future plans can be added here when needed
+    PROFESSIONAL: process.env.NEXT_PUBLIC_STRIPE_SUBSCRIPTION_PRICE_ID_PROFESSIONAL || '',
+    ENTERPRISE: process.env.NEXT_PUBLIC_STRIPE_SUBSCRIPTION_PRICE_ID_ENTERPRISE || '',
   },
 
-  // Webhook endpoint secret
-  WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET!,
+  // Webhook endpoint secret (optional in development)
+  WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || '',
 
   // Connect platform settings
   CONNECT: {
@@ -54,5 +55,14 @@ export const STRIPE_CONFIG = {
     WEBHOOK_TOLERANCE: 300,
     // Enable automatic payment methods by default (2023-08-16 change)
     AUTOMATIC_PAYMENT_METHODS_DEFAULT: true,
+  },
+
+  // Development settings
+  DEVELOPMENT: {
+    // Allow bypassing webhook signature verification in development
+    BYPASS_WEBHOOK_SIGNATURE:
+      process.env.NODE_ENV === 'development' && !process.env.STRIPE_WEBHOOK_SECRET,
+    // Enable development mode logging
+    ENABLE_DEBUG_LOGGING: process.env.NODE_ENV === 'development',
   },
 } as const;

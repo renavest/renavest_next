@@ -173,35 +173,48 @@ export async function POST(req: NextRequest) {
     const headersList = await headers();
     signature = headersList.get('Stripe-Signature');
 
-    if (!signature) {
-      console.error('[STRIPE WEBHOOK] No signature header found');
-      return NextResponse.json({ error: 'No signature header' }, { status: 400 });
+    if (STRIPE_CONFIG.DEVELOPMENT.ENABLE_DEBUG_LOGGING) {
+      console.log('[STRIPE WEBHOOK] Attempting to process webhook...');
+      console.log('[STRIPE WEBHOOK] Body length:', body.length);
+      console.log('[STRIPE WEBHOOK] Signature header present:', !!signature);
+      console.log('[STRIPE WEBHOOK] Webhook secret configured:', !!STRIPE_CONFIG.WEBHOOK_SECRET);
+      console.log('[STRIPE WEBHOOK] Development mode:', process.env.NODE_ENV === 'development');
     }
-
-    if (!STRIPE_CONFIG.WEBHOOK_SECRET) {
-      console.error('[STRIPE WEBHOOK] No webhook secret configured');
-      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
-    }
-
-    console.log('[STRIPE WEBHOOK] Attempting signature verification...');
-    console.log('[STRIPE WEBHOOK] Body length:', body.length);
-    console.log('[STRIPE WEBHOOK] Signature header present:', !!signature);
-    console.log('[STRIPE WEBHOOK] Webhook secret configured:', !!STRIPE_CONFIG.WEBHOOK_SECRET);
   } catch (error) {
     console.error('[STRIPE WEBHOOK] Error reading request:', error);
     return NextResponse.json({ error: 'Failed to read request' }, { status: 400 });
   }
 
-  // In development, allow bypassing signature verification for testing
-  // Remove this in production!
+  // Handle development mode without webhook secret
   const isDevelopment = process.env.NODE_ENV === 'development';
   let event: Stripe.Event;
 
   try {
-    if (isDevelopment && process.env.STRIPE_WEBHOOK_BYPASS_SIGNATURE === 'true') {
+    if (isDevelopment && STRIPE_CONFIG.DEVELOPMENT.BYPASS_WEBHOOK_SIGNATURE) {
       console.log('[STRIPE WEBHOOK] Development mode: bypassing signature verification');
+      console.log('[STRIPE WEBHOOK] To use signature verification in development:');
+      console.log('[STRIPE WEBHOOK]   1. Install Stripe CLI: npm install -g stripe');
+      console.log('[STRIPE WEBHOOK]   2. Login: stripe login');
+      console.log(
+        '[STRIPE WEBHOOK]   3. Forward webhooks: stripe listen --forward-to localhost:3000/api/webhooks/stripe',
+      );
+      console.log(
+        '[STRIPE WEBHOOK]   4. Copy the webhook secret from CLI output to STRIPE_WEBHOOK_SECRET',
+      );
+
       event = JSON.parse(body);
     } else {
+      // Production mode or development with webhook secret
+      if (!signature) {
+        console.error('[STRIPE WEBHOOK] No signature header found');
+        return NextResponse.json({ error: 'No signature header' }, { status: 400 });
+      }
+
+      if (!STRIPE_CONFIG.WEBHOOK_SECRET) {
+        console.error('[STRIPE WEBHOOK] No webhook secret configured');
+        return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
+      }
+
       // Verify the webhook signature with 2025 security standards
       event = stripe.webhooks.constructEvent(
         body,
@@ -212,7 +225,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Log event for debugging (but don't log sensitive data)
-    console.log(`[STRIPE WEBHOOK] Successfully verified event: ${event.type} (${event.id})`);
+    if (STRIPE_CONFIG.DEVELOPMENT.ENABLE_DEBUG_LOGGING) {
+      console.log(`[STRIPE WEBHOOK] Successfully verified event: ${event.type} (${event.id})`);
+    }
 
     // Process the event asynchronously for better webhook response times
     await processEvent(event);
@@ -224,12 +239,15 @@ export async function POST(req: NextRequest) {
 
     if (error instanceof stripe.errors.StripeSignatureVerificationError) {
       console.error('[STRIPE WEBHOOK] Signature verification failed:', error.message);
-      console.error(
-        '[STRIPE WEBHOOK] Webhook secret length:',
-        STRIPE_CONFIG.WEBHOOK_SECRET?.length || 0,
-      );
-      console.error('[STRIPE WEBHOOK] Signature header:', signature);
-      console.error('[STRIPE WEBHOOK] Body preview:', body.substring(0, 200) + '...');
+
+      if (STRIPE_CONFIG.DEVELOPMENT.ENABLE_DEBUG_LOGGING) {
+        console.error(
+          '[STRIPE WEBHOOK] Webhook secret length:',
+          STRIPE_CONFIG.WEBHOOK_SECRET?.length || 0,
+        );
+        console.error('[STRIPE WEBHOOK] Signature header:', signature);
+        console.error('[STRIPE WEBHOOK] Body preview:', body.substring(0, 200) + '...');
+      }
 
       // In development, provide helpful debugging information
       if (isDevelopment) {
@@ -238,7 +256,9 @@ export async function POST(req: NextRequest) {
           '  1. Use Stripe CLI: stripe listen --forward-to localhost:3000/api/webhooks/stripe',
         );
         console.error('  2. Update STRIPE_WEBHOOK_SECRET with the CLI secret');
-        console.error('  3. Or set STRIPE_WEBHOOK_BYPASS_SIGNATURE=true for testing');
+        console.error(
+          '  3. Or remove STRIPE_WEBHOOK_SECRET to bypass signature verification in development',
+        );
       }
 
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
