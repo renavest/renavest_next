@@ -155,6 +155,11 @@ const PasswordInput = ({
   );
 };
 
+// Loading Spinner Component
+const LoadingSpinner = () => (
+  <div className='inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white'></div>
+);
+
 export function LoginStep() {
   const [isLoading, setIsLoading] = useState(false);
   const { signIn } = useSignIn();
@@ -249,7 +254,17 @@ export function LoginStep() {
   };
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-6 relative'>
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className='absolute inset-0 bg-white/70 backdrop-blur-sm z-10 flex items-center justify-center'>
+          <div className='bg-white rounded-lg p-6 shadow-lg flex flex-col items-center space-y-3'>
+            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900'></div>
+            <p className='text-sm text-gray-600 font-medium'>Logging you in...</p>
+          </div>
+        </div>
+      )}
+
       <div className='flex flex-col items-center mb-8'>
         <h2 className='text-2xl font-bold text-gray-900 mb-4 text-center'>Welcome to Renavest</h2>
       </div>
@@ -284,8 +299,9 @@ export function LoginStep() {
         <button
           type='submit'
           disabled={isLoading}
-          className='w-full py-3 px-6 rounded-full shadow-md text-sm font-medium text-white bg-black hover:bg-gray-800 transition-all duration-300 ease-in-out transform disabled:opacity-50'
+          className='w-full py-3 px-6 rounded-full shadow-md text-sm font-medium text-white bg-black hover:bg-gray-800 transition-all duration-300 ease-in-out transform disabled:opacity-50 flex items-center justify-center gap-2'
         >
+          {isLoading && <LoadingSpinner />}
           {isLoading ? 'Logging in...' : 'Log In'}
         </button>
       </form>
