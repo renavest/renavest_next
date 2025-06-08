@@ -1,11 +1,12 @@
 'use client';
 
-import { Calendar, Clock, User, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, User, X, CheckCircle, AlertCircle, Globe } from 'lucide-react';
+import { DateTime } from 'luxon';
 import { useState, useEffect } from 'react';
 
-import { CalendarGrid } from '@/src/features/booking/components/CalendarGrid';
-import { TimezoneManager } from '@/src/features/booking/components/TimezoneManager';
+import { CalendarGrid } from '@/src/features/booking/components/calendar/CalendarGrid';
 import { formatDateTime } from '@/src/features/booking/utils/dateTimeUtils';
+import { TimezoneManager, SupportedTimezone } from '@/src/features/booking/utils/timezoneManager';
 import { trackTherapistSessions } from '@/src/features/posthog/therapistTracking';
 import {
   isScheduleSessionModalOpenSignal,
@@ -25,14 +26,48 @@ interface TimeSlot {
   conflictReason?: string;
 }
 
+// Simple timezone selector component
+const TimezoneSelector = ({
+  selectedTimezone,
+  onTimezoneChange,
+}: {
+  selectedTimezone: SupportedTimezone;
+  onTimezoneChange: (timezone: SupportedTimezone) => void;
+}) => {
+  const timezoneManager = TimezoneManager.getInstance();
+  const supportedTimezones = timezoneManager.getSupportedTimezones();
+
+  return (
+    <div>
+      <label className='block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2'>
+        <Globe className='w-4 h-4 text-purple-600' />
+        Timezone
+      </label>
+      <select
+        value={selectedTimezone}
+        onChange={(e) => onTimezoneChange(e.target.value as SupportedTimezone)}
+        className='w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white text-gray-700'
+      >
+        {supportedTimezones.map((tz) => (
+          <option key={tz.value} value={tz.value}>
+            {tz.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+};
+
 export function ScheduleSessionModal() {
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<DateTime | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
-  const [timezone, setTimezone] = useState('America/New_York');
+  const [timezone, setTimezone] = useState<SupportedTimezone>('America/New_York');
   const [sessionNotes, setSessionNotes] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [currentMonth, setCurrentMonth] = useState<DateTime>(DateTime.now());
+  const [availableDates, setAvailableDates] = useState<Set<string>>(new Set());
 
   // Get values from signals
   const isOpen = isScheduleSessionModalOpenSignal.value;
@@ -40,6 +75,12 @@ export function ScheduleSessionModal() {
   const isLoading = sessionSchedulingLoadingSignal.value;
   const error = sessionSchedulingErrorSignal.value;
   const therapistId = therapistIdSignal.value;
+
+  // Initialize timezone manager
+  useEffect(() => {
+    const timezoneManager = TimezoneManager.getInstance();
+    setTimezone(timezoneManager.getUserTimezone());
+  }, []);
 
   // Reset form when modal opens/closes
   useEffect(() => {
@@ -49,23 +90,57 @@ export function ScheduleSessionModal() {
       setAvailableSlots([]);
       setSessionNotes('');
       setSuccessMessage('');
+      setCurrentMonth(DateTime.now());
+      setAvailableDates(new Set());
       sessionSchedulingErrorSignal.value = null;
     }
   }, [isOpen]);
+
+  // Fetch available dates for the current month
+  useEffect(() => {
+    if (isOpen && therapistId) {
+      fetchAvailableDates();
+    }
+  }, [isOpen, therapistId, currentMonth, timezone]);
 
   // Fetch available time slots when date is selected
   useEffect(() => {
     if (selectedDate && client && therapistId) {
       fetchAvailableSlots();
     }
-  }, [selectedDate, client, therapistId]);
+  }, [selectedDate, client, therapistId, timezone]);
+
+  const fetchAvailableDates = async () => {
+    if (!therapistId) return;
+
+    try {
+      const startDate = currentMonth.startOf('month').toISODate();
+      const endDate = currentMonth.endOf('month').toISODate();
+
+      const response = await fetch(
+        `/api/sessions/availability?therapistId=${therapistId}&startDate=${startDate}&endDate=${endDate}&timezone=${timezone}&view=month`,
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const dates = new Set<string>();
+        (data.slots || []).forEach((slot: any) => {
+          const slotDate = createDate(slot.start, timezone);
+          dates.add(slotDate.toISODate()!);
+        });
+        setAvailableDates(dates);
+      }
+    } catch (error) {
+      console.error('Error fetching available dates:', error);
+    }
+  };
 
   const fetchAvailableSlots = async () => {
     if (!selectedDate || !therapistId) return;
 
     setLoadingSlots(true);
     try {
-      const dateStr = selectedDate.toISOString().split('T')[0];
+      const dateStr = selectedDate.toISODate();
       const response = await fetch(
         `/api/sessions/availability?date=${dateStr}&therapistId=${therapistId}&timezone=${timezone}`,
       );
@@ -93,7 +168,7 @@ export function ScheduleSessionModal() {
 
     try {
       const sessionDateTime = createDate(
-        `${selectedDate.toISOString().split('T')[0]}T${selectedTime}`,
+        `${selectedDate.toISODate()}T${selectedTime}`,
         timezone,
       ).toISO();
 
@@ -223,14 +298,16 @@ export function ScheduleSessionModal() {
                   Select Date
                 </h3>
                 <CalendarGrid
-                  selectedDate={selectedDate}
+                  selectedDate={selectedDate || DateTime.now()}
                   onDateSelect={setSelectedDate}
-                  minDate={new Date()}
-                  maxDate={new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)} // 90 days from now
+                  availableDates={availableDates}
+                  timezone={timezone}
+                  currentMonth={currentMonth}
+                  setCurrentMonth={setCurrentMonth}
                 />
               </div>
 
-              <TimezoneManager selectedTimezone={timezone} onTimezoneChange={setTimezone} />
+              <TimezoneSelector selectedTimezone={timezone} onTimezoneChange={setTimezone} />
             </div>
 
             {/* Right Column - Time Selection & Details */}
@@ -307,12 +384,7 @@ export function ScheduleSessionModal() {
                   <div className='space-y-1 text-sm text-green-800'>
                     <p>
                       <span className='font-medium'>Date:</span>{' '}
-                      {selectedDate.toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
+                      {selectedDate.toLocaleString(DateTime.DATE_FULL)}
                     </p>
                     <p>
                       <span className='font-medium'>Time:</span>{' '}
