@@ -1,285 +1,334 @@
 'use client';
 
-import { Calendar, Clock, User, X } from 'lucide-react';
-import { DateTime } from 'luxon';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { Calendar, Clock, User, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
-import { CalendarGrid } from '@/src/features/booking/components/calendar/CalendarGrid';
+import { CalendarGrid } from '@/src/features/booking/components/CalendarGrid';
+import { TimezoneManager } from '@/src/features/booking/components/TimezoneManager';
 import { formatDateTime } from '@/src/features/booking/utils/dateTimeUtils';
-import { TimezoneManager } from '@/src/features/booking/utils/timezoneManager';
-import { Client } from '@/src/features/therapist-dashboard/types';
+import { trackTherapistSessions } from '@/src/features/posthog/therapistTracking';
+import {
+  isScheduleSessionModalOpenSignal,
+  scheduleSessionClientSignal,
+  sessionSchedulingLoadingSignal,
+  sessionSchedulingErrorSignal,
+  closeScheduleSessionModal,
+  refreshUpcomingSessions,
+  therapistIdSignal,
+} from '@/src/features/therapist-dashboard/state/therapistDashboardState';
 import { COLORS } from '@/src/styles/colors';
 import { createDate } from '@/src/utils/timezone';
 
 interface TimeSlot {
-  start: string;
-  end: string;
+  time: string;
+  available: boolean;
+  conflictReason?: string;
 }
 
-interface ScheduleSessionModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  client: Client;
-  therapistId: number;
-  onSessionScheduled: () => void;
-}
-
-export function ScheduleSessionModal({
-  isOpen,
-  onClose,
-  client,
-  therapistId,
-  onSessionScheduled,
-}: ScheduleSessionModalProps) {
-  const [selectedDate, setSelectedDate] = useState<DateTime | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
+export function ScheduleSessionModal() {
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string>('');
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isScheduling, setIsScheduling] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [timezone, setTimezone] = useState('America/New_York');
+  const [sessionNotes, setSessionNotes] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
-  const timezoneManager = TimezoneManager.getInstance();
-  const userTimezone = timezoneManager.getUserTimezone();
+  // Get values from signals
+  const isOpen = isScheduleSessionModalOpenSignal.value;
+  const client = scheduleSessionClientSignal.value;
+  const isLoading = sessionSchedulingLoadingSignal.value;
+  const error = sessionSchedulingErrorSignal.value;
+  const therapistId = therapistIdSignal.value;
 
-  // Fetch availability for the selected month
-  const fetchAvailability = async (date: DateTime) => {
-    setIsLoading(true);
-    setError(null);
+  // Reset form when modal opens/closes
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedDate(null);
+      setSelectedTime('');
+      setAvailableSlots([]);
+      setSessionNotes('');
+      setSuccessMessage('');
+      sessionSchedulingErrorSignal.value = null;
+    }
+  }, [isOpen]);
+
+  // Fetch available time slots when date is selected
+  useEffect(() => {
+    if (selectedDate && client && therapistId) {
+      fetchAvailableSlots();
+    }
+  }, [selectedDate, client, therapistId]);
+
+  const fetchAvailableSlots = async () => {
+    if (!selectedDate || !therapistId) return;
+
+    setLoadingSlots(true);
     try {
-      const startDate = date.startOf('month').toISODate();
-      const endDate = date.endOf('month').toISODate();
-
+      const dateStr = selectedDate.toISOString().split('T')[0];
       const response = await fetch(
-        `/api/sessions/availability?therapistId=${therapistId}&startDate=${startDate}&endDate=${endDate}&timezone=${userTimezone}&view=month`,
+        `/api/sessions/availability?date=${dateStr}&therapistId=${therapistId}&timezone=${timezone}`,
       );
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch availability');
+      if (response.ok) {
+        const data = await response.json();
+        setAvailableSlots(data.slots || []);
+      } else {
+        console.error('Failed to fetch availability');
+        setAvailableSlots([]);
       }
-
-      const data = await response.json();
-      setAvailableSlots(data.slots || []);
     } catch (error) {
       console.error('Error fetching availability:', error);
-      setError('Failed to load availability. Please try again.');
+      setAvailableSlots([]);
     } finally {
-      setIsLoading(false);
+      setLoadingSlots(false);
     }
   };
 
-  // Fetch availability when modal opens or date changes
-  useEffect(() => {
-    if (isOpen) {
-      const currentDate = selectedDate || DateTime.now();
-      fetchAvailability(currentDate);
-    }
-  }, [isOpen, selectedDate, therapistId]);
-
-  // Get available dates for calendar
-  const availableDates = useMemo(() => {
-    const set = new Set<string>();
-    availableSlots.forEach((slot) => {
-      const slotDate = createDate(slot.start, userTimezone);
-      set.add(slotDate.toISODate()!);
-    });
-    return set;
-  }, [availableSlots, userTimezone]);
-
-  // Get slots for selected date
-  const slotsForSelectedDate = useMemo(() => {
-    if (!selectedDate) return [];
-
-    const now = DateTime.now().setZone(userTimezone);
-    return availableSlots.filter((slot) => {
-      const slotDateTime = createDate(slot.start, userTimezone);
-      // Only include slots for the selected date
-      if (slotDateTime.toISODate() !== selectedDate.toISODate()) return false;
-      // If today is selected, only show future slots
-      if (selectedDate.hasSame(now, 'day')) {
-        return slotDateTime > now;
-      }
-      return true;
-    });
-  }, [selectedDate, availableSlots, userTimezone]);
-
   const handleScheduleSession = async () => {
-    if (!selectedSlot || !selectedDate) {
-      toast.error('Please select a date and time');
-      return;
-    }
+    if (!selectedDate || !selectedTime || !client || !therapistId) return;
 
-    setIsScheduling(true);
-    setError(null);
+    sessionSchedulingLoadingSignal.value = true;
+    sessionSchedulingErrorSignal.value = null;
 
     try {
+      const sessionDateTime = createDate(
+        `${selectedDate.toISOString().split('T')[0]}T${selectedTime}`,
+        timezone,
+      ).toISO();
+
       const response = await fetch('/api/therapist/sessions/schedule', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          clientId: parseInt(client.id),
-          sessionStartTime: selectedSlot.start,
-          sessionEndTime: selectedSlot.end,
-          timezone: userTimezone,
+          clientId: parseInt(client.id, 10),
+          sessionDateTime,
+          timezone,
+          notes: sessionNotes,
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to schedule session');
-      }
+      const data = await response.json();
 
-      const result = await response.json();
+      if (response.ok) {
+        // Track successful scheduling
+        if (therapistId) {
+          trackTherapistSessions.sessionScheduled(therapistId, parseInt(client.id, 10), {
+            user_id: `therapist_${therapistId}`,
+            session_date: sessionDateTime,
+            timezone,
+          });
+        }
 
-      if (result.success) {
-        toast.success('Session scheduled successfully!');
-        onSessionScheduled();
-        onClose();
-        // Reset form
-        setSelectedDate(null);
-        setSelectedSlot(null);
+        setSuccessMessage('Session scheduled successfully!');
+
+        // Refresh sessions data
+        await refreshUpcomingSessions();
+
+        // Close modal after a brief delay to show success message
+        setTimeout(() => {
+          closeScheduleSessionModal();
+        }, 1500);
       } else {
-        throw new Error(result.message || 'Failed to schedule session');
+        sessionSchedulingErrorSignal.value = data.error || 'Failed to schedule session';
       }
     } catch (error) {
       console.error('Error scheduling session:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to schedule session';
-      setError(errorMessage);
-      toast.error(errorMessage);
+      sessionSchedulingErrorSignal.value = 'An unexpected error occurred';
     } finally {
-      setIsScheduling(false);
+      sessionSchedulingLoadingSignal.value = false;
     }
   };
 
-  const handleClose = () => {
-    setSelectedDate(null);
-    setSelectedSlot(null);
-    setError(null);
-    onClose();
-  };
+  const isFormValid = selectedDate && selectedTime && client;
 
-  if (!isOpen) return null;
+  if (!isOpen || !client) return null;
 
   return (
-    <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'>
-      <div className='bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden'>
+    <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
+      {/* Backdrop */}
+      <div
+        className='fixed inset-0 bg-black/50 backdrop-blur-sm'
+        onClick={closeScheduleSessionModal}
+      />
+
+      {/* Modal */}
+      <div className='relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-200'>
         {/* Header */}
-        <div className='flex items-center justify-between p-6 border-b border-gray-200'>
-          <div className='flex items-center gap-3'>
-            <div
-              className={`w-10 h-10 rounded-full ${COLORS.WARM_PURPLE.bg} flex items-center justify-center`}
-            >
-              <Calendar className='h-5 w-5 text-white' />
-            </div>
-            <div>
-              <h2 className='text-xl font-semibold text-gray-900'>Schedule Session</h2>
-              <p className='text-sm text-gray-600'>
-                Schedule a new session with {client.firstName} {client.lastName}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={handleClose}
-            className='p-2 hover:bg-gray-100 rounded-full transition-colors'
-          >
-            <X className='h-5 w-5 text-gray-500' />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className='p-6 overflow-y-auto max-h-[calc(90vh-140px)]'>
-          {error && (
-            <div className='mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700'>
-              {error}
-            </div>
-          )}
-
-          <div className='flex flex-col lg:flex-row gap-8'>
-            {/* Calendar */}
-            <div className='flex-1'>
-              <div className='mb-4'>
-                <h3 className='text-lg font-medium text-gray-900 mb-2'>Select Date</h3>
-                <p className='text-sm text-gray-600'>Choose an available date for the session</p>
+        <div className={`${COLORS.WARM_PURPLE.bg} text-white p-6`}>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-4'>
+              <div className='w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center'>
+                <Calendar className='w-6 h-6' />
               </div>
-
-              {isLoading ? (
-                <div className='flex items-center justify-center py-8'>
-                  <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-purple-700'></div>
-                </div>
-              ) : (
-                <CalendarGrid
-                  selectedDate={selectedDate || DateTime.now()}
-                  onDateSelect={setSelectedDate}
-                  availableDates={availableDates}
-                  timezone={userTimezone}
-                  currentMonth={(selectedDate || DateTime.now()).startOf('month')}
-                  setCurrentMonth={(date) => {
-                    setSelectedDate(date);
-                    fetchAvailability(date);
-                  }}
-                />
-              )}
-            </div>
-
-            {/* Time Slots */}
-            <div className='flex-1'>
-              <div className='mb-4'>
-                <h3 className='text-lg font-medium text-gray-900 mb-2'>Select Time</h3>
-                <p className='text-sm text-gray-600'>
-                  {selectedDate
-                    ? `Available times for ${formatDateTime(selectedDate, userTimezone).date}`
-                    : 'Select a date to see available times'}
+              <div>
+                <h2 className='text-2xl font-bold'>Schedule Session</h2>
+                <p className='text-purple-100'>
+                  Book a session with {client.firstName} {client.lastName}
                 </p>
               </div>
+            </div>
+            <button
+              onClick={closeScheduleSessionModal}
+              className='p-2 hover:bg-white/20 rounded-lg transition-colors'
+            >
+              <X className='w-6 h-6' />
+            </button>
+          </div>
+        </div>
 
-              {selectedDate ? (
-                <div className='space-y-2 max-h-80 overflow-y-auto'>
-                  {slotsForSelectedDate.length === 0 ? (
-                    <div className='text-center py-8 text-gray-500'>
-                      <Clock className='h-8 w-8 mx-auto mb-2 text-gray-300' />
-                      <p>No available times for this date</p>
-                    </div>
-                  ) : (
-                    slotsForSelectedDate.map((slot, index) => {
-                      const slotDateTime = createDate(slot.start, userTimezone);
-                      const isSelected = selectedSlot?.start === slot.start;
+        {/* Success Message */}
+        {successMessage && (
+          <div className='bg-green-50 border-l-4 border-green-400 p-4 m-6 rounded-lg'>
+            <div className='flex items-center'>
+              <CheckCircle className='w-5 h-5 text-green-400 mr-3' />
+              <p className='text-green-800 font-medium'>{successMessage}</p>
+            </div>
+          </div>
+        )}
 
-                      return (
-                        <button
-                          key={index}
-                          onClick={() => setSelectedSlot(slot)}
-                          className={`w-full p-3 rounded-lg border-2 text-left transition-all duration-150 ${
-                            isSelected
-                              ? `${COLORS.WARM_PURPLE.bg} text-white border-transparent`
-                              : 'bg-white border-purple-200 text-gray-900 hover:border-purple-400 hover:bg-purple-50'
-                          }`}
-                        >
-                          <div className='flex items-center gap-3'>
-                            <Clock
-                              className={`h-4 w-4 ${isSelected ? 'text-white' : 'text-purple-600'}`}
-                            />
-                            <div>
-                              <div className='font-medium'>
-                                {formatDateTime(slotDateTime, userTimezone).time}
-                              </div>
-                              <div
-                                className={`text-sm ${isSelected ? 'text-purple-100' : 'text-gray-500'}`}
-                              >
-                                {formatDateTime(slotDateTime, userTimezone).timezone}
-                              </div>
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-              ) : (
-                <div className='text-center py-8 text-gray-400'>
-                  <Calendar className='h-8 w-8 mx-auto mb-2' />
-                  <p>Select a date to see available times</p>
+        {/* Error Message */}
+        {error && (
+          <div className='bg-red-50 border-l-4 border-red-400 p-4 m-6 rounded-lg'>
+            <div className='flex items-center'>
+              <AlertCircle className='w-5 h-5 text-red-400 mr-3' />
+              <p className='text-red-800 font-medium'>{error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Content */}
+        <div className='p-6 overflow-y-auto max-h-[calc(90vh-200px)]'>
+          {/* Client Info Card */}
+          <div className='bg-purple-50 rounded-xl p-4 mb-6 border border-purple-200'>
+            <div className='flex items-center gap-3'>
+              <User className='w-8 h-8 text-purple-600' />
+              <div>
+                <h3 className='font-semibold text-purple-900'>
+                  {client.firstName} {client.lastName}
+                </h3>
+                <p className='text-purple-700 text-sm'>{client.email}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
+            {/* Left Column - Calendar */}
+            <div className='space-y-6'>
+              <div>
+                <h3 className='text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2'>
+                  <Calendar className='w-5 h-5 text-purple-600' />
+                  Select Date
+                </h3>
+                <CalendarGrid
+                  selectedDate={selectedDate}
+                  onDateSelect={setSelectedDate}
+                  minDate={new Date()}
+                  maxDate={new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)} // 90 days from now
+                />
+              </div>
+
+              <TimezoneManager selectedTimezone={timezone} onTimezoneChange={setTimezone} />
+            </div>
+
+            {/* Right Column - Time Selection & Details */}
+            <div className='space-y-6'>
+              {/* Time Selection */}
+              <div>
+                <h3 className='text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2'>
+                  <Clock className='w-5 h-5 text-purple-600' />
+                  Select Time
+                </h3>
+
+                {!selectedDate ? (
+                  <div className='text-center py-8 text-gray-500'>
+                    <Calendar className='w-12 h-12 mx-auto mb-3 text-gray-300' />
+                    <p>Please select a date first</p>
+                  </div>
+                ) : loadingSlots ? (
+                  <div className='text-center py-8'>
+                    <div className='animate-spin rounded-full h-8 w-8 border-2 border-purple-600 border-t-transparent mx-auto mb-3'></div>
+                    <p className='text-gray-600'>Loading available times...</p>
+                  </div>
+                ) : availableSlots.length === 0 ? (
+                  <div className='text-center py-8 text-gray-500'>
+                    <Clock className='w-12 h-12 mx-auto mb-3 text-gray-300' />
+                    <p>No available times for this date</p>
+                    <p className='text-sm'>Please select a different date</p>
+                  </div>
+                ) : (
+                  <div className='grid grid-cols-2 gap-3 max-h-64 overflow-y-auto'>
+                    {availableSlots.map((slot) => (
+                      <button
+                        key={slot.time}
+                        onClick={() => slot.available && setSelectedTime(slot.time)}
+                        disabled={!slot.available}
+                        className={`p-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                          selectedTime === slot.time
+                            ? `${COLORS.WARM_PURPLE.bg} text-white shadow-md`
+                            : slot.available
+                              ? 'bg-gray-50 text-gray-700 hover:bg-purple-50 hover:text-purple-700 border border-gray-200'
+                              : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        }`}
+                        title={slot.conflictReason}
+                      >
+                        {
+                          formatDateTime(
+                            createDate(`2024-01-01T${slot.time}`, timezone).toISO() || '',
+                            timezone,
+                          ).time
+                        }
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Session Notes */}
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-2'>
+                  Session Notes (Optional)
+                </label>
+                <textarea
+                  value={sessionNotes}
+                  onChange={(e) => setSessionNotes(e.target.value)}
+                  placeholder='Add any notes about this session...'
+                  className='w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none'
+                  rows={3}
+                />
+              </div>
+
+              {/* Selected Session Summary */}
+              {selectedDate && selectedTime && (
+                <div className='bg-green-50 rounded-xl p-4 border border-green-200'>
+                  <h4 className='font-semibold text-green-900 mb-2'>Session Summary</h4>
+                  <div className='space-y-1 text-sm text-green-800'>
+                    <p>
+                      <span className='font-medium'>Date:</span>{' '}
+                      {selectedDate.toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </p>
+                    <p>
+                      <span className='font-medium'>Time:</span>{' '}
+                      {
+                        formatDateTime(
+                          createDate(`2024-01-01T${selectedTime}`, timezone).toISO() || '',
+                          timezone,
+                        ).time
+                      }{' '}
+                      ({timezone})
+                    </p>
+                    <p>
+                      <span className='font-medium'>Client:</span> {client.firstName}{' '}
+                      {client.lastName}
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
@@ -287,33 +336,26 @@ export function ScheduleSessionModal({
         </div>
 
         {/* Footer */}
-        <div className='flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50'>
-          <div className='flex items-center gap-2 text-sm text-gray-600'>
-            <User className='h-4 w-4' />
-            <span>
-              Client: {client.firstName} {client.lastName}
-            </span>
-          </div>
-
-          <div className='flex items-center gap-3'>
+        <div className='border-t border-gray-200 p-6 bg-gray-50'>
+          <div className='flex items-center justify-between'>
             <button
-              onClick={handleClose}
-              className='px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors'
+              onClick={closeScheduleSessionModal}
+              className='px-6 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors'
             >
               Cancel
             </button>
             <button
               onClick={handleScheduleSession}
-              disabled={!selectedSlot || !selectedDate || isScheduling}
-              className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-                selectedSlot && selectedDate && !isScheduling
-                  ? `${COLORS.WARM_PURPLE.bg} text-white hover:${COLORS.WARM_PURPLE.hover}`
+              disabled={!isFormValid || isLoading}
+              className={`px-8 py-3 rounded-lg font-medium transition-all duration-200 ${
+                isFormValid && !isLoading
+                  ? `${COLORS.WARM_PURPLE.bg} hover:${COLORS.WARM_PURPLE.hover} text-white shadow-md`
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
             >
-              {isScheduling ? (
+              {isLoading ? (
                 <div className='flex items-center gap-2'>
-                  <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-white'></div>
+                  <div className='animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent'></div>
                   Scheduling...
                 </div>
               ) : (

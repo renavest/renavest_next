@@ -11,12 +11,70 @@ export const therapistIdErrorSignal = signal<string | null>(null);
 export const clientsSignal = signal<Client[]>([]);
 export const upcomingSessionsSignal = signal<UpcomingSession[]>([]);
 export const statisticsSignal = signal<TherapistStatistics>({
-  totalSessions: 0,
   totalClients: 0,
-  completedSessions: 0,
+  activeClients: 0,
+  totalSessions: 0,
+  upcomingSessions: 0,
+  totalRevenue: 0,
+  monthlyRevenue: 0,
+  completionRate: 0,
 });
 export const selectedClientSignal = signal<Client | null>(null);
 export const isAddClientOpenSignal = signal<boolean>(false);
+
+// Session scheduling state signals
+export const isScheduleSessionModalOpenSignal = signal<boolean>(false);
+export const scheduleSessionClientSignal = signal<Client | null>(null);
+export const sessionSchedulingLoadingSignal = signal<boolean>(false);
+export const sessionSchedulingErrorSignal = signal<string | null>(null);
+
+// Actions for session scheduling
+export const openScheduleSessionModal = (client: Client) => {
+  scheduleSessionClientSignal.value = client;
+  isScheduleSessionModalOpenSignal.value = true;
+  sessionSchedulingErrorSignal.value = null;
+};
+
+export const closeScheduleSessionModal = () => {
+  isScheduleSessionModalOpenSignal.value = false;
+  scheduleSessionClientSignal.value = null;
+  sessionSchedulingErrorSignal.value = null;
+  sessionSchedulingLoadingSignal.value = false;
+};
+
+export const refreshUpcomingSessions = async () => {
+  try {
+    const response = await fetch('/api/therapist/sessions');
+    if (response.ok) {
+      const data = await response.json();
+      upcomingSessionsSignal.value = data.sessions.map(
+        (session: {
+          id: number;
+          clientId: number;
+          clientName: string;
+          sessionDate: string;
+          sessionStartTime: string;
+          status: string;
+          googleMeetLink: string;
+          therapistTimezone: string;
+          clientTimezone: string;
+        }) => ({
+          id: session.id.toString(),
+          clientId: session.clientId?.toString() ?? '',
+          clientName: session.clientName,
+          sessionDate: session.sessionDate,
+          sessionStartTime: session.sessionStartTime,
+          status: session.status,
+          googleMeetLink: session.googleMeetLink,
+          therapistTimezone: session.therapistTimezone,
+          clientTimezone: session.clientTimezone,
+        }),
+      );
+    }
+  } catch (error) {
+    console.error('Error refreshing sessions:', error);
+  }
+};
 
 // Enhanced therapist ID initialization with retry logic
 export const initializeTherapistId = async (userId: string): Promise<number | null> => {
