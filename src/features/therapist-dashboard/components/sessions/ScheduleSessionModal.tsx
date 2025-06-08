@@ -24,6 +24,7 @@ interface TimeSlot {
   time: string;
   available: boolean;
   conflictReason?: string;
+  id: string;
 }
 
 // Simple timezone selector component
@@ -106,7 +107,14 @@ export function ScheduleSessionModal() {
   // Fetch available time slots when date is selected
   useEffect(() => {
     if (selectedDate && client && therapistId) {
+      // Clear previous time selection and slots when date changes
+      setSelectedTime('');
+      setAvailableSlots([]);
       fetchAvailableSlots();
+    } else {
+      // Clear slots if no date is selected
+      setAvailableSlots([]);
+      setSelectedTime('');
     }
   }, [selectedDate, client, therapistId, timezone]);
 
@@ -156,15 +164,22 @@ export function ScheduleSessionModal() {
 
       if (response.ok) {
         const data = await response.json();
-        // Convert the slots to the format expected by the UI
+        // Convert the slots to the format expected by the UI and deduplicate
         const formattedSlots = (data.slots || []).map((slot: any) => {
           const slotStart = createDate(slot.start, timezone);
           return {
             time: slotStart.toFormat('HH:mm'),
             available: true,
+            id: slot.start, // Use the full ISO string as unique ID
           };
         });
-        setAvailableSlots(formattedSlots);
+
+        // Deduplicate slots by time
+        const uniqueSlots = formattedSlots.filter(
+          (slot, index, self) => index === self.findIndex((s) => s.time === slot.time),
+        );
+
+        setAvailableSlots(uniqueSlots);
       } else {
         const errorData = await response.json();
         console.error('Failed to fetch availability:', errorData);
@@ -357,8 +372,13 @@ export function ScheduleSessionModal() {
                   <div className='grid grid-cols-2 gap-3 max-h-64 overflow-y-auto'>
                     {availableSlots.map((slot) => (
                       <button
-                        key={slot.time}
-                        onClick={() => slot.available && setSelectedTime(slot.time)}
+                        key={slot.id}
+                        onClick={() => {
+                          if (slot.available) {
+                            // Toggle selection - if already selected, deselect; otherwise select
+                            setSelectedTime(selectedTime === slot.time ? '' : slot.time);
+                          }
+                        }}
                         disabled={!slot.available}
                         className={`p-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                           selectedTime === slot.time
