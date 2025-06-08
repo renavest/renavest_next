@@ -46,7 +46,7 @@ export const BookingConfirmationEmailTemplate: React.FC<
   return (
     <Html>
       <Head>
-        <Preview>Your Therapy Session is Confirmed</Preview>
+        <Preview>Your Financial Therapy Session is Confirmed</Preview>
         <link
           href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap'
           rel='stylesheet'
