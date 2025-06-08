@@ -202,10 +202,8 @@ export function ScheduleSessionModal() {
     sessionSchedulingErrorSignal.value = null;
 
     try {
-      const sessionDateTime = createDate(
-        `${selectedDate.toISODate()}T${selectedTime}`,
-        timezone,
-      ).toISO();
+      const sessionStartTime = createDate(`${selectedDate.toISODate()}T${selectedTime}`, timezone);
+      const sessionEndTime = sessionStartTime.plus({ hours: 1 }); // Default 1-hour sessions
 
       const response = await fetch('/api/therapist/sessions/schedule', {
         method: 'POST',
@@ -214,9 +212,9 @@ export function ScheduleSessionModal() {
         },
         body: JSON.stringify({
           clientId: parseInt(client.id, 10),
-          sessionDateTime,
+          sessionStartTime: sessionStartTime.toISO(),
+          sessionEndTime: sessionEndTime.toISO(),
           timezone,
-          notes: sessionNotes,
         }),
       });
 
