@@ -114,11 +114,11 @@ export function ScheduleSessionModal() {
     if (!therapistId) return;
 
     try {
-      const startDate = currentMonth.startOf('month').toISODate();
-      const endDate = currentMonth.endOf('month').toISODate();
+      const startDate = currentMonth.startOf('month').toISO();
+      const endDate = currentMonth.endOf('month').toISO();
 
       const response = await fetch(
-        `/api/sessions/availability?therapistId=${therapistId}&startDate=${startDate}&endDate=${endDate}&timezone=${timezone}&view=month`,
+        `/api/sessions/availability?therapistId=${therapistId}&startDate=${encodeURIComponent(startDate!)}&endDate=${encodeURIComponent(endDate!)}&timezone=${timezone}&view=therapist`,
       );
 
       if (response.ok) {
@@ -129,6 +129,13 @@ export function ScheduleSessionModal() {
           dates.add(slotDate.toISODate()!);
         });
         setAvailableDates(dates);
+      } else {
+        const errorData = await response.json();
+        console.error('Error fetching available dates:', errorData);
+        if (errorData.needsReconnect) {
+          sessionSchedulingErrorSignal.value =
+            'Google Calendar needs to be reconnected. Please contact support.';
+        }
       }
     } catch (error) {
       console.error('Error fetching available dates:', error);
@@ -140,20 +147,33 @@ export function ScheduleSessionModal() {
 
     setLoadingSlots(true);
     try {
-      const dateStr = selectedDate.toISODate();
+      const startDate = selectedDate.startOf('day').toISO();
+      const endDate = selectedDate.endOf('day').toISO();
+
       const response = await fetch(
-        `/api/sessions/availability?date=${dateStr}&therapistId=${therapistId}&timezone=${timezone}`,
+        `/api/sessions/availability?therapistId=${therapistId}&startDate=${encodeURIComponent(startDate!)}&endDate=${encodeURIComponent(endDate!)}&timezone=${timezone}&view=therapist`,
       );
 
       if (response.ok) {
         const data = await response.json();
-        setAvailableSlots(data.slots || []);
+        // Convert the slots to the format expected by the UI
+        const formattedSlots = (data.slots || []).map((slot: any) => {
+          const slotStart = createDate(slot.start, timezone);
+          return {
+            time: slotStart.toFormat('HH:mm'),
+            available: true,
+          };
+        });
+        setAvailableSlots(formattedSlots);
       } else {
-        console.error('Failed to fetch availability');
+        const errorData = await response.json();
+        console.error('Failed to fetch availability:', errorData);
+        sessionSchedulingErrorSignal.value = errorData.error || 'Failed to fetch availability';
         setAvailableSlots([]);
       }
     } catch (error) {
       console.error('Error fetching availability:', error);
+      sessionSchedulingErrorSignal.value = 'Error fetching availability';
       setAvailableSlots([]);
     } finally {
       setLoadingSlots(false);
@@ -190,10 +210,8 @@ export function ScheduleSessionModal() {
       if (response.ok) {
         // Track successful scheduling
         if (therapistId) {
-          trackTherapistSessions.sessionScheduled(therapistId, parseInt(client.id, 10), {
+          trackTherapistSessions.sessionsViewed(therapistId, 1, {
             user_id: `therapist_${therapistId}`,
-            session_date: sessionDateTime,
-            timezone,
           });
         }
 
@@ -351,12 +369,7 @@ export function ScheduleSessionModal() {
                         }`}
                         title={slot.conflictReason}
                       >
-                        {
-                          formatDateTime(
-                            createDate(`2024-01-01T${slot.time}`, timezone).toISO() || '',
-                            timezone,
-                          ).time
-                        }
+                        {createDate(`2024-01-01T${slot.time}`, timezone).toFormat('h:mm a')}
                       </button>
                     ))}
                   </div>
@@ -388,13 +401,8 @@ export function ScheduleSessionModal() {
                     </p>
                     <p>
                       <span className='font-medium'>Time:</span>{' '}
-                      {
-                        formatDateTime(
-                          createDate(`2024-01-01T${selectedTime}`, timezone).toISO() || '',
-                          timezone,
-                        ).time
-                      }{' '}
-                      ({timezone})
+                      {createDate(`2024-01-01T${selectedTime}`, timezone).toFormat('h:mm a')} (
+                      {timezone})
                     </p>
                     <p>
                       <span className='font-medium'>Client:</span> {client.firstName}{' '}
