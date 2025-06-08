@@ -1,10 +1,11 @@
 'use client';
 
-import { Calendar, Video } from 'lucide-react';
+import { Calendar, Plus, Video } from 'lucide-react';
 
 import { trackTherapistSessions } from '@/src/features/posthog/therapistTracking';
 import { therapistIdSignal } from '@/src/features/therapist-dashboard/state/therapistDashboardState';
 import { UpcomingSession } from '@/src/features/therapist-dashboard/types';
+import { COLORS } from '@/src/styles/colors';
 import { createDate } from '@/src/utils/timezone';
 
 export function UpcomingSessionsCard({
@@ -12,11 +13,13 @@ export function UpcomingSessionsCard({
   onSessionClick: _onSessionClick = () => {},
   title = 'Upcoming Sessions',
   showIcon = true,
+  onScheduleSession,
 }: {
   sessions: UpcomingSession[];
   onSessionClick?: (clientId: string) => void;
   title?: string;
   showIcon?: boolean;
+  onScheduleSession?: () => void;
 }) {
   const formatTime = (dateTimeString: string, timezone?: string) => {
     const tz = timezone || 'America/New_York'; // Default fallback timezone
@@ -35,6 +38,15 @@ export function UpcomingSessionsCard({
           {showIcon && <Calendar className='h-5 w-5 text-purple-600' />}
           {title}
         </h3>
+        {onScheduleSession && (
+          <button
+            onClick={onScheduleSession}
+            className={`flex items-center gap-2 px-3 py-2 ${COLORS.WARM_PURPLE.bg} text-white rounded-lg hover:${COLORS.WARM_PURPLE.hover} transition-colors text-sm font-medium`}
+          >
+            <Plus className='h-4 w-4' />
+            Schedule Session
+          </button>
+        )}
       </div>
       <div className='space-y-4'>
         {sessions.length === 0 ? (

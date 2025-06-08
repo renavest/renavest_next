@@ -27,6 +27,7 @@ import { ClientDocumentsTab } from '@/src/features/therapist-dashboard/component
 import { ClientNotesSection } from '@/src/features/therapist-dashboard/components/clients/ClientNotesSection';
 import { TherapistStatisticsCard } from '@/src/features/therapist-dashboard/components/dashboard/TherapistStatisticsCard';
 import TherapistNavbar from '@/src/features/therapist-dashboard/components/navigation/TherapistNavbar';
+import { ScheduleSessionModal } from '@/src/features/therapist-dashboard/components/sessions/ScheduleSessionModal';
 import { UpcomingSessionsCard } from '@/src/features/therapist-dashboard/components/sessions/UpcomingSessionsCard';
 import {
   therapistIdSignal,
@@ -61,6 +62,7 @@ const ClientManagementSection = ({
     clients.length > 0 ? clients[0] : null,
   );
   const [activeTab, setActiveTab] = useState<ClientTab>('overview');
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
 
   // Update selected client when clients list changes
   useEffect(() => {
@@ -84,6 +86,47 @@ const ClientManagementSection = ({
   const clientSessions = selectedClient
     ? upcomingSessions.filter((session) => session.clientId === selectedClient.id)
     : [];
+
+  const handleScheduleSession = () => {
+    if (selectedClient) {
+      setIsScheduleModalOpen(true);
+    }
+  };
+
+  const handleSessionScheduled = async () => {
+    // Refresh the sessions data
+    try {
+      const response = await fetch('/api/therapist/sessions');
+      if (response.ok) {
+        const data = await response.json();
+        upcomingSessionsSignal.value = data.sessions.map(
+          (session: {
+            id: number;
+            clientId: number;
+            clientName: string;
+            sessionDate: string;
+            sessionStartTime: string;
+            status: string;
+            googleMeetLink: string;
+            therapistTimezone: string;
+            clientTimezone: string;
+          }) => ({
+            id: session.id.toString(),
+            clientId: session.clientId?.toString() ?? '',
+            clientName: session.clientName,
+            sessionDate: session.sessionDate,
+            sessionStartTime: session.sessionStartTime,
+            status: session.status,
+            googleMeetLink: session.googleMeetLink,
+            therapistTimezone: session.therapistTimezone,
+            clientTimezone: session.clientTimezone,
+          }),
+        );
+      }
+    } catch (error) {
+      console.error('Error refreshing sessions:', error);
+    }
+  };
 
   return (
     <div className='bg-white rounded-2xl border border-gray-100 shadow-lg overflow-hidden'>
@@ -175,13 +218,22 @@ const ClientManagementSection = ({
           {/* Tab Content */}
           <div className='p-6'>
             {activeTab === 'overview' && (
-              <ClientOverviewTab client={selectedClient} sessions={clientSessions} />
+              <ClientOverviewTab
+                client={selectedClient}
+                sessions={clientSessions}
+                onScheduleSession={handleScheduleSession}
+              />
             )}
             {activeTab === 'notes' && therapistIdSignal.value && (
               <ClientNotesSection client={selectedClient} therapistId={therapistIdSignal.value} />
             )}
             {activeTab === 'documents' && <ClientDocumentsTab client={selectedClient} />}
-            {activeTab === 'sessions' && <ClientSessionsTab sessions={clientSessions} />}
+            {activeTab === 'sessions' && (
+              <ClientSessionsTab
+                sessions={clientSessions}
+                onScheduleSession={handleScheduleSession}
+              />
+            )}
             {activeTab === 'progress' && <ClientProgressTab />}
             {activeTab === 'chat' && <ClientChatTab client={selectedClient} />}
           </div>
@@ -205,6 +257,17 @@ const ClientManagementSection = ({
           </button>
         </div>
       )}
+
+      {/* Schedule Session Modal */}
+      {selectedClient && (
+        <ScheduleSessionModal
+          isOpen={isScheduleModalOpen}
+          onClose={() => setIsScheduleModalOpen(false)}
+          client={selectedClient}
+          therapistId={therapistIdSignal.value || 0}
+          onSessionScheduled={handleSessionScheduled}
+        />
+      )}
     </div>
   );
 };
@@ -213,9 +276,11 @@ const ClientManagementSection = ({
 const ClientOverviewTab = ({
   client,
   sessions,
+  onScheduleSession,
 }: {
   client: Client;
   sessions: UpcomingSession[];
+  onScheduleSession: () => void;
 }) => {
   return (
     <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
@@ -242,22 +307,39 @@ const ClientOverviewTab = ({
       </div>
 
       <div className='space-y-6'>
-        <UpcomingSessionsCard sessions={sessions} onSessionClick={() => {}} />
+        <UpcomingSessionsCard
+          sessions={sessions}
+          onSessionClick={() => {}}
+          onScheduleSession={onScheduleSession}
+        />
       </div>
     </div>
   );
 };
 
-const ClientSessionsTab = ({ sessions }: { sessions: UpcomingSession[] }) => {
+const ClientSessionsTab = ({
+  sessions,
+  onScheduleSession,
+}: {
+  sessions: UpcomingSession[];
+  onScheduleSession: () => void;
+}) => {
   return (
     <div className='space-y-6'>
       <div className='flex items-center justify-between'>
         <h3 className='text-xl font-semibold text-gray-900'>Session Management</h3>
-        <button className='px-4 py-2 bg-[#9071FF] text-white rounded-lg hover:bg-[#7c5ce8] transition-colors text-sm font-medium'>
+        <button
+          onClick={onScheduleSession}
+          className='px-4 py-2 bg-[#9071FF] text-white rounded-lg hover:bg-[#7c5ce8] transition-colors text-sm font-medium'
+        >
           Schedule Session
         </button>
       </div>
-      <UpcomingSessionsCard sessions={sessions} onSessionClick={() => {}} />
+      <UpcomingSessionsCard
+        sessions={sessions}
+        onSessionClick={() => {}}
+        onScheduleSession={onScheduleSession}
+      />
     </div>
   );
 };
