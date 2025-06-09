@@ -18,6 +18,7 @@ import ConsultationBanner from './ConsultationBanner';
 import EmployeeNavbar from './EmployeeNavbar';
 import FinancialTherapyModal from './FinancialTherapyModal';
 import { QuizModal } from './QuizModal';
+import { SharedDocumentsSection } from './SharedDocumentsSection';
 import SharePanel from './SharePanel';
 import TherapistRecommendationsWithOverlay from './TherapistRecommendationsWithOverlay';
 import { UpcomingSessionsSection } from './UpcomingSessionsSection';
@@ -191,6 +192,11 @@ export default function LimitedDashboardClient() {
 
             {/* Chat Section */}
             <ChatSection />
+
+            {/* Shared Documents Section */}
+            <div className='animate-fade-in-up delay-300'>
+              <SharedDocumentsSection />
+            </div>
           </div>
 
           {/* Share link panel and resources */}
