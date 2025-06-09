@@ -163,6 +163,7 @@ const LoadingSpinner = () => (
 export function LoginStep() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Logging you in...');
+  const [loginSuccess, setLoginSuccess] = useState(false);
   const { signIn } = useSignIn();
   const { user } = useUser();
   const { setActive } = useClerk();
@@ -172,6 +173,29 @@ export function LoginStep() {
   useEffect(() => {
     trackAuthPageView('login');
   }, []);
+
+  // Handle redirect after successful login when user becomes available
+  useEffect(() => {
+    if (loginSuccess && user) {
+      // Track successful login
+      trackLoginSuccess('email_password', (user.publicMetadata?.role as string) || 'unknown', {
+        email_domain: email.value.split('@')[1],
+      });
+
+      // Identify user in PostHog
+      identifyAuthenticatedUser(
+        user.id,
+        user.emailAddresses[0]?.emailAddress || email.value,
+        (user.publicMetadata?.role as string) || 'unknown',
+        user.publicMetadata?.companyId as string,
+        user.publicMetadata?.companyName as string,
+      );
+
+      // Update loading message and redirect
+      setLoadingMessage('Redirecting to your dashboard...');
+      redirectToRole(user);
+    }
+  }, [loginSuccess, user, redirectToRole]);
 
   const onLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -206,31 +230,12 @@ export function LoginStep() {
         if (result.status === 'complete') {
           await setActive({ session: result.createdSessionId });
 
-          if (user) {
-            // Track successful login
-            trackLoginSuccess(
-              'email_password',
-              (user.publicMetadata?.role as string) || 'unknown',
-              {
-                email_domain: email.value.split('@')[1],
-              },
-            );
+          // Update loading message and set success flag
+          setLoadingMessage('Preparing your dashboard...');
+          setLoginSuccess(true);
 
-            // Identify user in PostHog
-            identifyAuthenticatedUser(
-              user.id,
-              user.emailAddresses[0]?.emailAddress || email.value,
-              (user.publicMetadata?.role as string) || 'unknown',
-              user.publicMetadata?.companyId as string,
-              user.publicMetadata?.companyName as string,
-            );
-
-            // Keep loading spinner active during redirect
-            setLoadingMessage('Redirecting to your dashboard...');
-            redirectToRole(user);
-            // Don't set loading to false here - let it stay active until redirect
-            return;
-          }
+          // Don't set loading to false - the useEffect will handle redirect
+          return;
         }
       }
     } catch (error) {
