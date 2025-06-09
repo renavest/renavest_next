@@ -401,11 +401,13 @@ function ActionSection({
     <div className='space-y-3'>
       <div className='text-center'>
         <p className='text-sm text-green-600 font-medium mb-2'>
-          ✓ Bank account connected successfully
+          ✓ Stripe payments configured successfully
         </p>
-        <p className='text-xs text-gray-500 mb-4'>
-          You'll receive payments within 2-7 business days after sessions are completed
-        </p>
+        <div className='text-xs text-gray-500 mb-4 space-y-1'>
+          <div>• Session payments enabled</div>
+          <div>• 90% revenue share active</div>
+          <div>• Automatic transfers enabled</div>
+        </div>
       </div>
       <button
         onClick={onDisconnect}

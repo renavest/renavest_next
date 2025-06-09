@@ -134,12 +134,13 @@ function StripeCard({
 
       {isConnected ? (
         <div className='space-y-2'>
-          <p className='text-gray-600 text-sm'>
-            ✅ Bank account connected and ready to receive payments
-          </p>
+          <p className='text-gray-600 text-sm'>✅ Stripe payments configured and active</p>
           <div className='text-xs text-gray-500'>
-            • Earning 90% of session fees • Automatic transfers enabled •{' '}
-            {status?.accountId && `Account ID: ${status.accountId.slice(-4)}`}
+            • Connected to:{' '}
+            {status?.accountId
+              ? `Account ${status.accountId.slice(-4).toUpperCase()}`
+              : 'Stripe account'}{' '}
+            • Session payments enabled • 90% revenue share
           </div>
         </div>
       ) : (
