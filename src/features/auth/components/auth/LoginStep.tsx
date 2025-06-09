@@ -157,11 +157,12 @@ const PasswordInput = ({
 
 // Loading Spinner Component
 const LoadingSpinner = () => (
-  <div className='inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white'></div>
+  <div className='inline-block animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent'></div>
 );
 
 export function LoginStep() {
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('Logging you in...');
   const { signIn } = useSignIn();
   const { user } = useUser();
   const { setActive } = useClerk();
@@ -188,6 +189,7 @@ export function LoginStep() {
     }
 
     setIsLoading(true);
+    setLoadingMessage('Logging you in...');
 
     // Track login attempt
     trackLoginAttempt('email_password', {
@@ -223,7 +225,11 @@ export function LoginStep() {
               user.publicMetadata?.companyName as string,
             );
 
+            // Keep loading spinner active during redirect
+            setLoadingMessage('Redirecting to your dashboard...');
             redirectToRole(user);
+            // Don't set loading to false here - let it stay active until redirect
+            return;
           }
         }
       }
@@ -259,8 +265,8 @@ export function LoginStep() {
       {isLoading && (
         <div className='absolute inset-0 bg-white/70 backdrop-blur-sm z-10 flex items-center justify-center'>
           <div className='bg-white rounded-lg p-6 shadow-lg flex flex-col items-center space-y-3'>
-            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900'></div>
-            <p className='text-sm text-gray-600 font-medium'>Logging you in...</p>
+            <div className='animate-spin rounded-full h-8 w-8 border-4 border-purple-100 border-t-purple-600'></div>
+            <p className='text-sm text-gray-600 font-medium'>{loadingMessage}</p>
           </div>
         </div>
       )}
