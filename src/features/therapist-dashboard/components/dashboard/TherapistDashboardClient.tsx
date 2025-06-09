@@ -26,6 +26,7 @@ import { AddNewClientSection } from '@/src/features/therapist-dashboard/componen
 import { ClientDocumentsTab } from '@/src/features/therapist-dashboard/components/clients/ClientDocumentsTab';
 import { ClientNotesSection } from '@/src/features/therapist-dashboard/components/clients/ClientNotesSection';
 import { TherapistStatisticsCard } from '@/src/features/therapist-dashboard/components/dashboard/TherapistStatisticsCard';
+import { ClientFormsTab } from '@/src/features/therapist-dashboard/components/forms/ClientFormsTab';
 import TherapistNavbar from '@/src/features/therapist-dashboard/components/navigation/TherapistNavbar';
 import { ScheduleSessionModal } from '@/src/features/therapist-dashboard/components/sessions/ScheduleSessionModal';
 import { UpcomingSessionsCard } from '@/src/features/therapist-dashboard/components/sessions/UpcomingSessionsCard';
@@ -44,7 +45,7 @@ import {
 } from '@/src/features/therapist-dashboard/types';
 import { COLORS } from '@/src/styles/colors';
 
-import { ClientTab, Channel } from '../../types/components';
+import { ClientTab } from '../../types/components';
 
 import { QuickActionsSection } from './QuickActionsSection';
 
@@ -182,9 +183,7 @@ const ClientManagementSection = ({
               <ClientNotesSection client={selectedClient} therapistId={therapistIdSignal.value} />
             )}
             {activeTab === 'documents' && <ClientDocumentsTab client={selectedClient} />}
-            {activeTab === 'forms' && therapistIdSignal.value && (
-              <ClientFormsTab client={selectedClient} therapistId={therapistIdSignal.value} />
-            )}
+            {activeTab === 'forms' && <ClientFormsTab client={selectedClient} />}
             {activeTab === 'sessions' && <ClientSessionsTab sessions={clientSessions} />}
             {activeTab === 'progress' && <ClientProgressTab />}
             {activeTab === 'chat' && <ClientChatTab client={selectedClient} />}
