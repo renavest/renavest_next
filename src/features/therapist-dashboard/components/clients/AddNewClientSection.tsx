@@ -4,24 +4,7 @@ import { toast } from 'sonner';
 
 import { COLORS } from '@/src/styles/colors';
 
-type FormData = {
-  firstName: string;
-  lastName: string;
-  email: string;
-};
-
-type FormErrors = {
-  firstName?: string;
-  email?: string;
-};
-
-type AddClientFormProps = {
-  formData: FormData;
-  errors: FormErrors;
-  isSubmitting: boolean;
-  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleSubmit: (e: React.FormEvent) => Promise<void>;
-};
+import { AddClientFormData, AddClientFormErrors, AddClientFormProps } from '../../types/components';
 
 const AddClientForm: React.FC<AddClientFormProps> = ({
   formData,
@@ -107,7 +90,7 @@ const AddClientForm: React.FC<AddClientFormProps> = ({
   </form>
 );
 
-const initialFormData: FormData = {
+const initialFormData: AddClientFormData = {
   firstName: '',
   lastName: '',
   email: '',
@@ -118,9 +101,9 @@ interface AddNewClientSectionProps {
 }
 
 export const AddNewClientSection = ({ onClientAdded }: AddNewClientSectionProps) => {
-  const [formData, setFormData] = useState<FormData>(initialFormData);
+  const [formData, setFormData] = useState<AddClientFormData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [errors, setErrors] = useState<AddClientFormErrors>({});
 
   const trackClientAttempt = () => {
     posthog.capture('therapist_add_client_attempt', {
@@ -131,7 +114,7 @@ export const AddNewClientSection = ({ onClientAdded }: AddNewClientSectionProps)
   };
 
   const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
+    const newErrors: AddClientFormErrors = {};
 
     if (!formData.firstName.trim()) {
       newErrors.firstName = 'First name is required';

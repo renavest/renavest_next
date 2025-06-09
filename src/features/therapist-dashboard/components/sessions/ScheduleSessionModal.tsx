@@ -20,12 +20,7 @@ import {
 import { COLORS } from '@/src/styles/colors';
 import { createDate } from '@/src/utils/timezone';
 
-interface TimeSlot {
-  time: string;
-  available: boolean;
-  conflictReason?: string;
-  id: string;
-}
+import { TimeSlot } from '../../types/components';
 
 // Simple timezone selector component
 const TimezoneSelector = ({

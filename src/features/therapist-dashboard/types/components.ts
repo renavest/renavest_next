@@ -140,3 +140,96 @@ export interface ClientDocumentsTabProps {
 export interface AddNewClientSectionProps {
   onClientAdded: (client: any) => void;
 }
+
+// ===== NEWLY ADDED TYPE DEFINITIONS =====
+
+// Session Modal Types
+export interface TimeSlot {
+  time: string;
+  available: boolean;
+  conflictReason?: string;
+  id: string;
+}
+
+export interface TimezoneSelector {
+  selectedTimezone: string;
+  onTimezoneChange: (timezone: string) => void;
+}
+
+// Client Notes Types
+export type NoteViewMode = 'recent' | 'category' | 'timeline' | 'all';
+
+export interface ClientNotesSectionPropsUpdated {
+  client: any; // Use proper Client type from types/client.ts
+  therapistId: number;
+}
+
+// Dashboard Types
+export type ClientTab = 'overview' | 'notes' | 'sessions' | 'documents' | 'progress' | 'chat';
+
+export interface Channel {
+  id: string;
+  name: string;
+  lastMessage?: string;
+  lastMessageTime?: number;
+  unreadCount?: number;
+}
+
+// Add Client Form Types
+export interface AddClientFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+export interface AddClientFormErrors {
+  firstName?: string;
+  email?: string;
+}
+
+export interface AddClientFormProps {
+  formData: AddClientFormData;
+  errors: AddClientFormErrors;
+  isSubmitting: boolean;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleSubmit: (e: React.FormEvent) => Promise<void>;
+}
+
+// Profile Form Types
+export interface ProfileFormFieldsPropsUpdated {
+  profileData: any; // Use proper Profile type
+  onFormChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onPhotoUploaded: (newPhotoUrl: string) => void;
+}
+
+export interface PhotoUploadPropsUpdated {
+  currentImageUrl?: string;
+  profileData: any;
+  onPhotoUploaded: (newPhotoUrl: string) => void;
+}
+
+// Session Types
+export interface UpcomingSessionsCardProps {
+  sessions: any[]; // Use proper UpcomingSession type
+  onSessionClick?: (clientId: string) => void;
+  title?: string;
+  showIcon?: boolean;
+  showScheduleButton?: boolean;
+}
+
+// Notes Form Types
+export interface NotesFormTagInputProps {
+  label: string;
+  tags: string[];
+  onAdd: (item: string) => void;
+  onRemove: (index: number) => void;
+  placeholder?: string;
+}
+
+export interface NotesFormTextAreaProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  rows?: number;
+}

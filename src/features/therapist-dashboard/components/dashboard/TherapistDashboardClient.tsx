@@ -44,9 +44,9 @@ import {
 } from '@/src/features/therapist-dashboard/types';
 import { COLORS } from '@/src/styles/colors';
 
-import { QuickActionsSection } from './QuickActionsSection';
+import { ClientTab, Channel } from '../../types/components';
 
-type ClientTab = 'overview' | 'notes' | 'sessions' | 'documents' | 'progress' | 'chat';
+import { QuickActionsSection } from './QuickActionsSection';
 
 // New comprehensive client management component
 const ClientManagementSection = ({
