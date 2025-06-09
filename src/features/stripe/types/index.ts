@@ -44,3 +44,18 @@ export interface StripeStatus {
   canReceivePayments: boolean;
   requirements?: string[];
 }
+
+export interface ConnectStatus {
+  connected: boolean;
+  accountId?: string;
+  onboardingStatus: 'not_started' | 'pending' | 'completed';
+  chargesEnabled: boolean;
+  payoutsEnabled: boolean;
+  detailsSubmitted: boolean;
+  requiresAction?: boolean;
+  requirements?: Record<string, unknown>;
+}
+
+export interface StripeConnectIntegrationProps {
+  therapistId: number;
+}

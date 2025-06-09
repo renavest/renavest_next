@@ -6,22 +6,9 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { trackTherapistIntegrations } from '@/src/features/posthog/therapistTracking';
+import { ConnectStatus, StripeConnectIntegrationProps } from '../types';
 
-interface ConnectStatus {
-  connected: boolean;
-  accountId?: string;
-  onboardingStatus: 'not_started' | 'pending' | 'completed';
-  chargesEnabled: boolean;
-  payoutsEnabled: boolean;
-  detailsSubmitted: boolean;
-  requiresAction?: boolean;
-  requirements?: string[];
-}
-
-interface StripeConnectIntegrationProps {
-  therapistId: number;
-}
-
+import 
 export function StripeConnectIntegration({ therapistId }: StripeConnectIntegrationProps) {
   const [status, setStatus] = useState<ConnectStatus>({
     connected: false,
