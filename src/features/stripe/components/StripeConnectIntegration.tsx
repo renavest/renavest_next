@@ -6,9 +6,9 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { trackTherapistIntegrations } from '@/src/features/posthog/therapistTracking';
+
 import { ConnectStatus, StripeConnectIntegrationProps } from '../types';
 
-import 
 export function StripeConnectIntegration({ therapistId }: StripeConnectIntegrationProps) {
   const [status, setStatus] = useState<ConnectStatus>({
     connected: false,

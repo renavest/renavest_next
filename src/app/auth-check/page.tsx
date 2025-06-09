@@ -62,18 +62,19 @@ export default function AuthCheckPage() {
     return () => clearInterval(quoteTimer);
   }, []);
 
-  // Better progress tracking
+  // Better progress tracking - slower and more realistic
   useEffect(() => {
     const progressTimer = setInterval(() => {
       setActualProgress((prev) => {
-        // Simulate realistic loading progress
-        if (prev < 20) return prev + 3;
-        if (prev < 60) return prev + 2;
-        if (prev < 85) return prev + 1;
-        if (prev < 95 && retryCount < maxRetries) return prev + 0.5;
+        // Ensure minimum 2-second fill time
+        if (prev < 10) return prev + 1; // 1% every 500ms for first 10%
+        if (prev < 30) return prev + 0.8; // Slow down for next 20%
+        if (prev < 60) return prev + 0.6; // Even slower for middle section
+        if (prev < 85) return prev + 0.4; // Slower towards end
+        if (prev < 95 && retryCount < maxRetries) return prev + 0.2; // Very slow final approach
         return prev;
       });
-    }, 300);
+    }, 500); // Increased interval to 500ms for slower progress
 
     return () => clearInterval(progressTimer);
   }, [retryCount]);
