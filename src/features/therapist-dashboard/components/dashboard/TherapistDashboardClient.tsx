@@ -152,6 +152,7 @@ const ClientManagementSection = ({
                 { key: 'overview', label: 'Overview', icon: Users },
                 { key: 'notes', label: 'Clinical Notes', icon: FileText },
                 { key: 'documents', label: 'Documents', icon: Folder },
+                { key: 'forms', label: 'Intake Forms', icon: FileText },
                 { key: 'sessions', label: 'Sessions', icon: Calendar },
                 { key: 'progress', label: 'Progress', icon: TrendingUp },
                 { key: 'chat', label: 'Chat', icon: MessageCircle },
@@ -181,6 +182,9 @@ const ClientManagementSection = ({
               <ClientNotesSection client={selectedClient} therapistId={therapistIdSignal.value} />
             )}
             {activeTab === 'documents' && <ClientDocumentsTab client={selectedClient} />}
+            {activeTab === 'forms' && therapistIdSignal.value && (
+              <ClientFormsTab client={selectedClient} therapistId={therapistIdSignal.value} />
+            )}
             {activeTab === 'sessions' && <ClientSessionsTab sessions={clientSessions} />}
             {activeTab === 'progress' && <ClientProgressTab />}
             {activeTab === 'chat' && <ClientChatTab client={selectedClient} />}

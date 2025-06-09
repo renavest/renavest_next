@@ -165,7 +165,14 @@ export interface ClientNotesSectionPropsUpdated {
 }
 
 // Dashboard Types
-export type ClientTab = 'overview' | 'notes' | 'sessions' | 'documents' | 'progress' | 'chat';
+export type ClientTab =
+  | 'overview'
+  | 'notes'
+  | 'sessions'
+  | 'documents'
+  | 'forms'
+  | 'progress'
+  | 'chat';
 
 export interface Channel {
   id: string;

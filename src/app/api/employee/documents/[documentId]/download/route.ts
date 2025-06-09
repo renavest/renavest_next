@@ -1,8 +1,8 @@
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { eq, and } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
-import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 import { db } from '@/src/db';
 import { users, therapistDocuments, therapistDocumentAssignments } from '@/src/db/schema';
@@ -18,7 +18,7 @@ const s3Client = new S3Client({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ documentId: string }> }
+  { params }: { params: Promise<{ documentId: string }> },
 ) {
   try {
     const { userId, sessionClaims } = await auth();
@@ -112,4 +112,4 @@ export async function GET(
       { status: 500 },
     );
   }
-} 
+}
