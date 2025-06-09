@@ -137,9 +137,7 @@ export default function SessionCompletePage() {
             <div className='w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center font-medium text-xs'>
               3
             </div>
-            <div>
-              Your earnings (90% of session fee) will be transferred within 2-3 business days
-            </div>
+            <div>Your earnings will be transferred within 2-3 business days</div>
           </div>
           <div className='flex items-start gap-3'>
             <div className='w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center font-medium text-xs'>

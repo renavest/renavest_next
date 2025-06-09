@@ -405,8 +405,8 @@ function ActionSection({
         </p>
         <div className='text-xs text-gray-500 mb-4 space-y-1'>
           <div>• Session payments enabled</div>
-          <div>• 90% revenue share active</div>
           <div>• Automatic transfers enabled</div>
+          <div>• Secure payment processing</div>
         </div>
       </div>
       <button
@@ -430,7 +430,7 @@ function InfoSection() {
         <div className='text-xs text-blue-700'>
           <h4 className='font-medium mb-1'>Payment Information</h4>
           <ul className='space-y-1'>
-            <li>• You receive 90% of session fees</li>
+            <li>• Competitive session fees</li>
             <li>• Payments are transferred automatically after session completion</li>
             <li>• Standard transfer time: 2-7 business days</li>
             <li>• All transactions are handled securely through Stripe</li>

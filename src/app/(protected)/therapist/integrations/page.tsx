@@ -140,7 +140,7 @@ function StripeCard({
             {status?.accountId
               ? `Account ${status.accountId.slice(-4).toUpperCase()}`
               : 'Stripe account'}{' '}
-            • Session payments enabled • 90% revenue share
+            • Session payments enabled • Automatic transfers enabled
           </div>
         </div>
       ) : (
@@ -153,7 +153,7 @@ function StripeCard({
           <div className='space-y-1'>
             <div className='flex items-center text-xs text-gray-500'>
               <div className='w-1.5 h-1.5 bg-gray-400 rounded-full mr-2'></div>
-              <span>Keep 90% of session fees</span>
+              <span>Competitive session fees</span>
             </div>
             <div className='flex items-center text-xs text-gray-500'>
               <div className='w-1.5 h-1.5 bg-gray-400 rounded-full mr-2'></div>
