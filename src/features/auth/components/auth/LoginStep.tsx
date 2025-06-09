@@ -29,6 +29,26 @@ const validateEmail = (emailValue: string): boolean => {
   return emailRegex.test(emailValue);
 };
 
+// Development diagnostic component
+const ClerkDiagnostics = () => {
+  if (process.env.NODE_ENV !== 'development') return null;
+
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+  return (
+    <div className='mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs'>
+      <h4 className='font-semibold text-yellow-800 mb-2'>🔧 Development Diagnostics</h4>
+      <div className='space-y-1 text-yellow-700'>
+        <div>
+          Publishable Key: {publishableKey ? `${publishableKey.slice(0, 20)}...` : '❌ Missing'}
+        </div>
+        <div>Environment: {process.env.NODE_ENV}</div>
+        <div>Domain: {typeof window !== 'undefined' ? window.location.origin : 'Server'}</div>
+      </div>
+    </div>
+  );
+};
+
 // Input component for better reusability and control
 const FormInput = ({
   type,
@@ -194,8 +214,26 @@ export function LoginStep() {
       // Update loading message and redirect
       setLoadingMessage('Redirecting to your dashboard...');
       redirectToRole(user);
+    } else if (loginSuccess && !user) {
+      // User not yet available, show different message
+      setLoadingMessage('Loading your profile...');
     }
   }, [loginSuccess, user, redirectToRole]);
+
+  // Fallback timeout for when user object takes too long to load
+  useEffect(() => {
+    if (loginSuccess) {
+      const timeout = setTimeout(() => {
+        if (!user) {
+          console.log('User object not available after timeout, redirecting to auth-check');
+          setLoadingMessage('Setting up your session...');
+          window.location.href = '/auth-check';
+        }
+      }, 3000); // 3 second timeout
+
+      return () => clearTimeout(timeout);
+    }
+  }, [loginSuccess, user]);
 
   const onLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -244,12 +282,34 @@ export function LoginStep() {
         email_domain: email.value.split('@')[1],
       });
 
-      // More detailed error handling
-      if (error instanceof Error) {
-        authErrorSignal.value = error.message || 'Login failed. Please try again.';
-      }
       console.error('Login failed', error);
-    } finally {
+
+      // More detailed error handling
+      let errorMessage = 'Login failed. Please try again.';
+
+      if (error && typeof error === 'object' && 'errors' in error) {
+        const clerkErrors = (error as { errors: Array<{ code?: string; message?: string }> })
+          .errors;
+        const clerkError = clerkErrors[0];
+        if (clerkError?.code === 'form_identifier_not_found') {
+          errorMessage =
+            'No account found with this email address. Please check your email or sign up for a new account.';
+        } else if (clerkError?.code === 'form_password_incorrect') {
+          errorMessage =
+            'Incorrect password. Please try again or use "Forgot password?" to reset it.';
+        } else if (clerkError?.code === 'form_identifier_exists_') {
+          errorMessage =
+            'This email is associated with a social login. Please sign in using your social account.';
+        } else if (clerkError?.message) {
+          errorMessage = clerkError.message;
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      authErrorSignal.value = errorMessage;
+
+      // Only set loading false on error, not on success
       setIsLoading(false);
     }
   };
@@ -329,6 +389,8 @@ export function LoginStep() {
           </button>
         </p>
       </div>
+
+      <ClerkDiagnostics />
     </div>
   );
 }
