@@ -239,6 +239,70 @@ export const trackPasswordResetRequest = (
 };
 
 /**
+ * Track password reset attempts
+ */
+export const trackPasswordResetAttempt = (
+  additionalProps: TrackingProps = {},
+  userContext: UserContext = {},
+) => {
+  if (typeof window === 'undefined') return;
+
+  posthog.capture('auth:password_reset_attempted_v1', {
+    attempted_timestamp: new Date().toISOString(),
+    url: window.location.href,
+    ...userContext,
+    ...additionalProps,
+  });
+};
+
+/**
+ * Track successful password reset
+ */
+export const trackPasswordResetSuccess = (
+  additionalProps: TrackingProps = {},
+  userContext: UserContext = {},
+) => {
+  if (typeof window === 'undefined') return;
+
+  posthog.capture('auth:password_reset_succeeded_v1', {
+    success_timestamp: new Date().toISOString(),
+    url: window.location.href,
+    ...userContext,
+    ...additionalProps,
+  });
+};
+
+/**
+ * Track password reset errors
+ */
+export const trackPasswordResetError = (
+  error: Error | string | unknown,
+  additionalProps: TrackingProps = {},
+  userContext: UserContext = {},
+) => {
+  if (typeof window === 'undefined') return;
+
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  let errorCode = 'unknown';
+
+  // Extract error code from Clerk errors
+  if (error && typeof error === 'object' && 'errors' in error) {
+    const clerkErrors = (error as { errors: Array<{ code?: string }> }).errors;
+    errorCode = clerkErrors[0]?.code || 'unknown';
+  }
+
+  posthog.capture('auth:password_reset_failed_v1', {
+    error_message: errorMessage,
+    error_code: errorCode,
+    error_type: error instanceof Error ? error.name : 'unknown',
+    failed_timestamp: new Date().toISOString(),
+    url: window.location.href,
+    ...userContext,
+    ...additionalProps,
+  });
+};
+
+/**
  * Track logout events
  */
 export const trackLogout = (

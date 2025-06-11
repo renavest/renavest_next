@@ -8,6 +8,7 @@ import React from 'react';
 // Removed direct signal import, use global signal instead
 import { authErrorSignal, forgotPasswordEmailAddress, currentStep } from '../../state/authState';
 import { OnboardingStep } from '../../types';
+import { trackPasswordResetRequest, trackPasswordResetError } from '../../utils/authTracking';
 
 export function ForgotPasswordStep() {
   const { signIn } = useSignIn();
@@ -31,6 +32,11 @@ export function ForgotPasswordStep() {
         return;
       }
 
+      // Track the password reset request
+      trackPasswordResetRequest({
+        email_domain: forgotPasswordEmailAddress.value.split('@')[1],
+      });
+
       await signIn.create({
         strategy: 'reset_password_email_code',
         identifier: forgotPasswordEmailAddress.value,
@@ -38,6 +44,11 @@ export function ForgotPasswordStep() {
       currentStep.value = OnboardingStep.RESET_PASSWORD;
     } catch (error: unknown) {
       console.error('Forgot password error:', error);
+
+      // Track the error
+      trackPasswordResetError(error, {
+        email_domain: forgotPasswordEmailAddress.value.split('@')[1],
+      });
 
       // More specific error handling
       let errorMessage = 'Failed to send reset email. Please try again.';

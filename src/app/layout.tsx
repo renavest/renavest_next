@@ -5,15 +5,9 @@ import { Toaster } from 'sonner';
 
 import './globals.css';
 
-import { logClerkEnvironmentStatus } from '@/src/features/auth/utils/envValidation';
 import { PostHogProvider } from '@/src/features/posthog/PostHogProvider';
 
 import PageUtmHandler from '../features/utm/PageText';
-
-// Log Clerk environment status on server startup
-if (typeof window === 'undefined') {
-  logClerkEnvironmentStatus();
-}
 
 const figtreeFont = Figtree({
   variable: '--font-figtree',
