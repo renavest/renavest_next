@@ -12,7 +12,30 @@ import {
   clientsSignal,
   upcomingSessionsSignal,
   statisticsSignal,
+  dashboardLoadingSignal,
+  dashboardErrorSignal,
+  lastRefreshTimeSignal,
 } from '../state/therapistDashboardState';
+
+// Type definitions for API responses
+interface ApiClient {
+  id: number;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+}
+
+interface ApiSession {
+  id: number;
+  clientId?: number;
+  clientName: string;
+  sessionDate: string;
+  sessionStartTime: string;
+  status: string;
+  googleMeetLink?: string;
+  therapistTimezone?: string;
+  clientTimezone?: string;
+}
 
 export function useTherapistDashboard(initialTherapistId?: number) {
   // Initialize therapist ID from props
@@ -50,43 +73,160 @@ export function useTherapistDashboard(initialTherapistId?: number) {
     }
   }, [upcomingSessionsSignal.value]);
 
-  // Function to refresh data from the server
+  // Refresh data function using API calls
   const refreshData = useCallback(async () => {
-    if (!therapistIdSignal.value) return;
+    const therapistId = therapistIdSignal.value;
+    if (!therapistId) return;
 
     try {
-      // Fetch updated data
-      const fetchWithErrorHandling = async (url: string) => {
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch data from ${url}`);
-        }
-        return response.json();
-      };
+      dashboardLoadingSignal.value = true;
+      dashboardErrorSignal.value = null;
 
-      // Fetch all data in parallel
-      const [clientsResponse, sessionsResponse, statisticsResponse] = await Promise.all([
-        fetchWithErrorHandling('/api/therapist/clients'),
-        fetchWithErrorHandling('/api/therapist/sessions'),
-        fetchWithErrorHandling('/api/therapist/statistics'),
+      // Use API endpoints instead of direct database access
+      const [clientsResponse, sessionsResponse, statsResponse] = await Promise.all([
+        fetch('/api/therapist/clients'),
+        fetch('/api/therapist/sessions'),
+        fetch('/api/therapist/statistics'),
       ]);
 
-      // Update signals with fetched data
-      clientsSignal.value = clientsResponse.clients || [];
-      upcomingSessionsSignal.value = sessionsResponse.sessions || [];
-      statisticsSignal.value = statisticsResponse.statistics || {
+      if (!clientsResponse.ok || !sessionsResponse.ok || !statsResponse.ok) {
+        throw new Error('Failed to fetch dashboard data');
+      }
+
+      const [clientsData, sessionsData, statsData] = await Promise.all([
+        clientsResponse.json(),
+        sessionsResponse.json(),
+        statsResponse.json(),
+      ]);
+
+      // Update signals with API data
+      clientsSignal.value = (clientsData.clients || []).map((client: ApiClient) => ({
+        id: client.id.toString(),
+        firstName: client.firstName || '',
+        lastName: client.lastName || '',
+        email: client.email || '',
+        phone: undefined,
+        createdAt: new Date().toISOString(),
+        lastSessionDate: undefined,
         totalSessions: 0,
+        status: 'active' as const,
+      }));
+      upcomingSessionsSignal.value = (sessionsData.sessions || []).map((session: ApiSession) => ({
+        id: session.id.toString(),
+        clientId: session.clientId?.toString() ?? '',
+        clientName: session.clientName,
+        sessionDate: session.sessionDate,
+        sessionStartTime: session.sessionStartTime,
+        therapistTimezone: session.therapistTimezone,
+        clientTimezone: session.clientTimezone,
+        duration: 60,
+        sessionType: 'follow-up' as const,
+        status: session.status as 'scheduled' | 'confirmed' | 'pending',
+        googleMeetLink: session.googleMeetLink,
+      }));
+      statisticsSignal.value = statsData.statistics || {
         totalClients: 0,
-        completedSessions: 0,
+        activeClients: 0,
+        totalSessions: 0,
+        upcomingSessions: 0,
+        totalRevenue: 0,
+        monthlyRevenue: 0,
+        completionRate: 0,
       };
+      lastRefreshTimeSignal.value = new Date();
+
+      console.log('Dashboard data refreshed from API');
     } catch (error) {
-      console.error('Error refreshing data:', error);
+      console.error('Error refreshing dashboard data:', error);
+      dashboardErrorSignal.value = error instanceof Error ? error.message : 'Unknown error';
+    } finally {
+      dashboardLoadingSignal.value = false;
     }
   }, []);
 
+  // Individual data refresh functions using API calls
+  const refreshClients = useCallback(async () => {
+    const therapistId = therapistIdSignal.value;
+    if (!therapistId) return;
+
+    try {
+      const response = await fetch('/api/therapist/clients');
+      if (!response.ok) {
+        throw new Error('Failed to fetch clients');
+      }
+
+      const clientsData = await response.json();
+      clientsSignal.value = (clientsData.clients || []).map((client: ApiClient) => ({
+        id: client.id.toString(),
+        firstName: client.firstName || '',
+        lastName: client.lastName || '',
+        email: client.email || '',
+        phone: undefined,
+        createdAt: new Date().toISOString(),
+        lastSessionDate: undefined,
+        totalSessions: 0,
+        status: 'active' as const,
+      }));
+      console.log('Clients refreshed from API');
+    } catch (error) {
+      console.error('Error refreshing clients:', error);
+    }
+  }, []);
+
+  const refreshSessions = useCallback(async () => {
+    const therapistId = therapistIdSignal.value;
+    if (!therapistId) return;
+
+    try {
+      const response = await fetch('/api/therapist/sessions');
+      if (!response.ok) {
+        throw new Error('Failed to fetch sessions');
+      }
+
+      const sessionsData = await response.json();
+      upcomingSessionsSignal.value = (sessionsData.sessions || []).map((session: ApiSession) => ({
+        id: session.id.toString(),
+        clientId: session.clientId?.toString() ?? '',
+        clientName: session.clientName,
+        sessionDate: session.sessionDate,
+        sessionStartTime: session.sessionStartTime,
+        therapistTimezone: session.therapistTimezone,
+        clientTimezone: session.clientTimezone,
+        duration: 60,
+        sessionType: 'follow-up' as const,
+        status: session.status as 'scheduled' | 'confirmed' | 'pending',
+        googleMeetLink: session.googleMeetLink,
+      }));
+      console.log('Sessions refreshed from API');
+    } catch (error) {
+      console.error('Error refreshing sessions:', error);
+    }
+  }, []);
+
+  // Data refresh functions
+  const invalidateAndRefresh = useCallback(
+    async (type: 'client' | 'session' | 'all' = 'all') => {
+      // Simply refresh the requested data - no cache invalidation needed for API calls
+      if (type === 'all') {
+        await refreshData();
+      } else if (type === 'client') {
+        await refreshClients();
+      } else if (type === 'session') {
+        await refreshSessions();
+      }
+    },
+    [refreshData, refreshClients, refreshSessions],
+  );
+
   return {
     refreshData,
+    refreshClients,
+    refreshSessions,
+    invalidateAndRefresh,
     isLoaded: therapistPageLoadedSignal.value,
     therapistId: therapistIdSignal.value,
+    isLoading: dashboardLoadingSignal.value,
+    error: dashboardErrorSignal.value,
+    lastRefresh: lastRefreshTimeSignal.value,
   };
 }

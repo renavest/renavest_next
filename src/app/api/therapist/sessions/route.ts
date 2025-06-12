@@ -1,9 +1,23 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { eq, gt, and, or } from 'drizzle-orm';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { db } from '@/src/db';
-import { bookingSessions, therapists, users } from '@/src/db/schema';
+import { bookingSessions } from '@/src/db/schema';
+import {
+  getTherapistByEmail,
+  getSessionsData,
+  invalidateOnDataChange,
+} from '@/src/services/therapistDataService';
+
+// Validation schema for creating a new session
+const CreateSessionSchema = z.object({
+  clientId: z.string(),
+  sessionDate: z.string(),
+  sessionTime: z.string(),
+  duration: z.number().optional().default(60),
+  notes: z.string().optional(),
+});
 
 export async function GET() {
   try {
@@ -13,88 +27,97 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Only fetch full user if needed (for email)
     const user = await currentUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Find the user ID associated with the current user's email
     const userEmail = user.emailAddresses[0]?.emailAddress;
-    const userResult = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.email, userEmail))
-      .limit(1);
-    if (!userResult.length) {
-      console.error('User not found for email:', { userEmail });
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    if (!userEmail) {
+      return NextResponse.json({ error: 'No email found' }, { status: 400 });
     }
-    const therapistResult = await db
-      .select({ id: therapists.id })
-      .from(therapists)
-      .where(eq(therapists.userId, userResult[0].id))
-      .limit(1);
-    if (!therapistResult.length) {
-      console.error('Therapist not found for userId:', { userId: userResult[0].id });
+
+    // Use optimized therapist lookup with caching
+    const therapistLookup = await getTherapistByEmail(userEmail);
+    if (!therapistLookup) {
       return NextResponse.json({ error: 'Therapist not found' }, { status: 404 });
     }
 
-    // Fetch upcoming sessions for this therapist
-    const now = new Date();
-    const sessions = await db
-      .select({
-        id: bookingSessions.id,
-        clientId: bookingSessions.userId,
-        clientName: users.firstName,
-        clientLastName: users.lastName,
-        sessionDate: bookingSessions.sessionDate,
-        sessionStartTime: bookingSessions.sessionStartTime,
-        status: bookingSessions.status,
-        metadata: bookingSessions.metadata,
-      })
-      .from(bookingSessions)
-      .leftJoin(users, eq(bookingSessions.userId, users.id))
-      .where(
-        and(
-          eq(bookingSessions.therapistId, therapistResult[0].id),
-          or(
-            eq(bookingSessions.status, 'pending'),
-            eq(bookingSessions.status, 'confirmed'),
-            eq(bookingSessions.status, 'scheduled'),
-          ),
-          gt(bookingSessions.sessionDate, now),
-        ),
-      )
-      .orderBy(bookingSessions.sessionDate)
-      .limit(10);
+    // Use cached sessions data
+    const sessionsData = await getSessionsData(therapistLookup.therapistId);
 
-    console.log('Fetched Sessions:', sessions);
-
-    return NextResponse.json({
-      sessions: sessions.map((session) => {
-        // Extract timezone and Google Meet link from metadata
-        const sessionMetadata = session.metadata as {
-          therapistTimezone?: string;
-          clientTimezone?: string;
-          googleMeetLink?: string;
-        } | null;
-
-        return {
-          id: session.id.toString(),
-          clientId: session.clientId,
-          clientName: `${session.clientName || ''} ${session.clientLastName || ''}`.trim(),
-          sessionDate: session.sessionDate,
-          sessionStartTime: session.sessionStartTime,
-          status: session.status,
-          therapistTimezone: sessionMetadata?.therapistTimezone || 'UTC',
-          clientTimezone: sessionMetadata?.clientTimezone || 'UTC',
-          googleMeetLink: sessionMetadata?.googleMeetLink || '',
-        };
-      }),
+    return NextResponse.json(sessionsData, {
+      headers: {
+        'Cache-Control': 'public, max-age=300, stale-while-revalidate=600', // 5 min cache, 10 min stale
+      },
     });
   } catch (error) {
     console.error('Error fetching therapist sessions:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    // Authenticate the therapist
+    const { userId, sessionClaims } = await auth();
+    const metadata = sessionClaims?.metadata as { role?: string } | undefined;
+    if (!userId || metadata?.role !== 'therapist') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const user = await currentUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userEmail = user.emailAddresses[0]?.emailAddress;
+    if (!userEmail) {
+      return NextResponse.json({ error: 'No email found' }, { status: 400 });
+    }
+
+    // Use optimized therapist lookup with caching
+    const therapistLookup = await getTherapistByEmail(userEmail);
+    if (!therapistLookup) {
+      return NextResponse.json({ error: 'Therapist not found' }, { status: 404 });
+    }
+
+    // Parse and validate input
+    const body = await request.json();
+    const validatedInput = CreateSessionSchema.parse(body);
+
+    // Parse the session date and time
+    const sessionDateTime = new Date(`${validatedInput.sessionDate}T${validatedInput.sessionTime}`);
+    const sessionEndTime = new Date(sessionDateTime.getTime() + validatedInput.duration * 60000);
+
+    // Create new session in the database
+    const newSession = await db
+      .insert(bookingSessions)
+      .values({
+        userId: parseInt(validatedInput.clientId),
+        therapistId: therapistLookup.therapistId,
+        sessionDate: sessionDateTime,
+        sessionStartTime: sessionDateTime,
+        sessionEndTime: sessionEndTime,
+        status: 'scheduled',
+        metadata: {
+          notes: validatedInput.notes,
+          duration: validatedInput.duration,
+        },
+      })
+      .returning();
+
+    // Invalidate sessions cache
+    await invalidateOnDataChange(therapistLookup.therapistId, 'session');
+
+    return NextResponse.json({ session: newSession[0] }, { status: 201 });
+  } catch (error) {
+    console.error('Error creating new session:', error);
+
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: error.errors }, { status: 400 });
+    }
+
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

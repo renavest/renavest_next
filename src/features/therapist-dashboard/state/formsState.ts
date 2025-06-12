@@ -127,6 +127,39 @@ export const formsActions = {
       },
     };
   },
+
+  // Load forms from API
+  loadForms: async () => {
+    formsStateSignal.value = {
+      ...formsStateSignal.value,
+      loading: true,
+      error: null,
+    };
+
+    try {
+      const response = await fetch('/api/therapist/forms');
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to load forms');
+      }
+
+      const { forms } = await response.json();
+
+      formsStateSignal.value = {
+        ...formsStateSignal.value,
+        forms,
+        loading: false,
+      };
+    } catch (error) {
+      console.error('Error loading forms:', error);
+      formsStateSignal.value = {
+        ...formsStateSignal.value,
+        loading: false,
+        error: error instanceof Error ? error.message : 'Failed to load forms',
+      };
+    }
+  },
 };
 
 // Helper functions to get filtered data

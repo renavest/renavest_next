@@ -62,22 +62,29 @@ export default function AuthCheckPage() {
     return () => clearInterval(quoteTimer);
   }, []);
 
-  // Better progress tracking - slower and more realistic
+  // Better progress tracking - synchronized with retry timing
   useEffect(() => {
     const progressTimer = setInterval(() => {
       setActualProgress((prev) => {
-        // Ensure minimum 2-second fill time
-        if (prev < 10) return prev + 1; // 1% every 500ms for first 10%
-        if (prev < 30) return prev + 0.8; // Slow down for next 20%
-        if (prev < 60) return prev + 0.6; // Even slower for middle section
-        if (prev < 85) return prev + 0.4; // Slower towards end
-        if (prev < 95 && retryCount < maxRetries) return prev + 0.2; // Very slow final approach
-        return prev;
+        // Progress should be based on retryCount and maxRetries for consistency
+        const baseProgress = (retryCount / maxRetries) * 90; // Max 90% from retry progress
+
+        // Add small incremental progress within each retry cycle (0-10%)
+        const cycleProgress = Math.min(10, prev - baseProgress);
+        const newCycleProgress = cycleProgress < 10 ? cycleProgress + 0.5 : 10;
+
+        return Math.min(95, baseProgress + newCycleProgress);
       });
-    }, 500); // Increased interval to 500ms for slower progress
+    }, 100); // Faster updates for smoother animation
 
     return () => clearInterval(progressTimer);
-  }, [retryCount]);
+  }, [retryCount, maxRetries]);
+
+  // Reset cycle progress when retryCount changes
+  useEffect(() => {
+    const baseProgress = (retryCount / maxRetries) * 90;
+    setActualProgress(baseProgress);
+  }, [retryCount, maxRetries]);
 
   useEffect(() => {
     if (!isLoaded) {

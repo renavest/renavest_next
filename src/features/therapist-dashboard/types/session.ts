@@ -3,11 +3,13 @@ export interface UpcomingSession {
   clientId: string;
   clientName: string;
   sessionDate: string;
-  sessionTime: string;
+  sessionStartTime: string;
+  therapistTimezone?: string;
+  clientTimezone?: string;
   duration: number;
   sessionType: 'initial' | 'follow-up' | 'emergency';
   status: 'scheduled' | 'confirmed' | 'pending';
-  meetingLink?: string;
+  googleMeetLink?: string;
   notes?: string;
 }
 

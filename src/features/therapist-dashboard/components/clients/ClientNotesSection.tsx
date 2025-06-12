@@ -16,6 +16,7 @@ import { useEffect, useState, useMemo } from 'react';
 
 import { trackTherapistClientManagement } from '@/src/features/posthog/therapistTracking';
 
+import { useTherapistActions } from '../../hooks/useTherapistActions';
 import { ClientNote, NoteCategory, Client, CreateNoteRequest } from '../../types';
 import { NoteViewMode } from '../../types/components';
 import { exportClientNotes } from '../../utils/notesExport';
@@ -40,6 +41,9 @@ export function ClientNotesSection({ client, therapistId }: ClientNotesSectionPr
   const [viewMode, setViewMode] = useState<NoteViewMode>('recent');
   const [exporting, setExporting] = useState(false);
 
+  // Use optimized actions for immediate UI updates
+  const { addNote, deleteNote } = useTherapistActions();
+
   useEffect(() => {
     fetchNotes();
   }, [client.id, therapistId]);
@@ -61,16 +65,14 @@ export function ClientNotesSection({ client, therapistId }: ClientNotesSectionPr
 
   const handleSaveNote = async (noteRequest: CreateNoteRequest) => {
     try {
-      const response = await fetch('/api/therapist/notes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(noteRequest),
-      });
-
-      if (response.ok) {
+      // Use optimized action with immediate UI update and cache invalidation
+      const result = await addNote(noteRequest);
+      if (result.success) {
+        // Note is already added to UI optimistically by the action
+        // Refresh local state to ensure consistency
         await fetchNotes();
       } else {
-        throw new Error('Failed to save note');
+        throw new Error(result.error || 'Failed to save note');
       }
     } catch (error) {
       console.error('Error saving note:', error);
@@ -85,14 +87,14 @@ export function ClientNotesSection({ client, therapistId }: ClientNotesSectionPr
 
   const handleDeleteNote = async (note: ClientNote) => {
     try {
-      const response = await fetch(`/api/therapist/notes/${note.id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
+      // Use optimized action with immediate UI update and cache invalidation
+      const result = await deleteNote(note.id);
+      if (result.success) {
+        // Note is already removed from UI optimistically by the action
+        // Refresh local state to ensure consistency
         await fetchNotes();
       } else {
-        throw new Error('Failed to delete note');
+        throw new Error(result.error || 'Failed to delete note');
       }
     } catch (error) {
       console.error('Error deleting note:', error);

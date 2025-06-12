@@ -1,10 +1,11 @@
 'use client';
 
 import { UserButton, useUser } from '@clerk/nextjs';
-import { ChevronLeft, User } from 'lucide-react';
+import { ChevronLeft, User, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 import { LogoutButton } from '@/src/features/auth/components/auth/LogoutButton';
 import { fetchTherapistId } from '@/src/features/google-calendar/utils/googleCalendarIntegration';
@@ -28,6 +29,8 @@ export default function TherapistNavbar({
   backButtonHref?: string;
 }) {
   const { user } = useUser();
+  const router = useRouter();
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -47,6 +50,11 @@ export default function TherapistNavbar({
     }
     getTherapistId();
   }, [user?.id]);
+
+  // Reset navigation state when route changes
+  useEffect(() => {
+    setIsNavigating(false);
+  }, [backButtonHref]);
 
   const handleMarketplaceClick = () => {
     if (therapistIdSignal.value) {
@@ -80,14 +88,24 @@ export default function TherapistNavbar({
         {/* Left: Back button, Logo, Title */}
         <div className='flex items-center'>
           {showBackButton && (
-            <Link
-              href={backButtonHref}
-              className='mr-4 flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors bg-gray-50 hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-200'
+            <button
+              onClick={() => {
+                setIsNavigating(true);
+                router.push(backButtonHref);
+              }}
+              disabled={isNavigating}
+              className='mr-4 flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors bg-gray-50 hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-200 disabled:opacity-50'
               aria-label='Back to Dashboard'
             >
-              <ChevronLeft className='h-5 w-5' />
-              <span className='text-sm font-medium hidden sm:inline'>Back</span>
-            </Link>
+              {isNavigating ? (
+                <Loader2 className='h-5 w-5 animate-spin' />
+              ) : (
+                <ChevronLeft className='h-5 w-5' />
+              )}
+              <span className='text-sm font-medium hidden sm:inline'>
+                {isNavigating ? 'Loading...' : 'Back'}
+              </span>
+            </button>
           )}
           <div className='relative flex-shrink-0 w-8 h-8 md:w-10 md:h-10 mx-3'>
             <Image

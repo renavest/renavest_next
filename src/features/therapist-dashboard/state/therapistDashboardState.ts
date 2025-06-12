@@ -1,11 +1,18 @@
 import { signal } from '@preact-signals/safe-react';
 
+// Note: Using API calls instead of direct database imports for client-side compatibility
+
 import { Client, UpcomingSession, TherapistStatistics, ClientNote } from '../types';
 
 export const therapistPageLoadedSignal = signal(false);
 export const therapistIdSignal = signal<number | null>(null);
 export const therapistIdLoadingSignal = signal<boolean>(false);
 export const therapistIdErrorSignal = signal<string | null>(null);
+
+// Cache control signals
+export const dashboardLoadingSignal = signal<boolean>(false);
+export const dashboardErrorSignal = signal<string | null>(null);
+export const lastRefreshTimeSignal = signal<Date | null>(null);
 
 // Dashboard state signals
 export const clientsSignal = signal<Client[]>([]);
@@ -31,9 +38,6 @@ export const sessionSchedulingErrorSignal = signal<string | null>(null);
 // Client notes state signals
 export const clientNotesSignal = signal<ClientNote[]>([]);
 export const clientNotesLoadingSignal = signal<boolean>(false);
-export const selectedNoteSignal = signal<ClientNote | null>(null);
-export const isNoteFormOpenSignal = signal<boolean>(false);
-export const editingNoteSignal = signal<ClientNote | null>(null);
 
 // Add client form state signals
 export const addClientFormDataSignal = signal({
@@ -41,67 +45,69 @@ export const addClientFormDataSignal = signal({
   lastName: '',
   email: '',
 });
-export const addClientFormErrorsSignal = signal<Record<string, string>>({});
 export const addClientSubmittingSignal = signal<boolean>(false);
+
+export const refreshUpcomingSessions = async () => {
+  const therapistId = therapistIdSignal.value;
+  if (!therapistId) return;
+
+  try {
+    // Use API endpoint instead of direct database access
+    const response = await fetch('/api/therapist/sessions');
+    if (!response.ok) {
+      throw new Error('Failed to fetch sessions');
+    }
+
+    const sessionsData = await response.json();
+    upcomingSessionsSignal.value = (sessionsData.sessions || []).map(
+      (session: {
+        id: number;
+        clientId?: number;
+        clientName: string;
+        sessionDate: string;
+        sessionStartTime: string;
+        status: string;
+        googleMeetLink?: string;
+        therapistTimezone?: string;
+        clientTimezone?: string;
+      }) => ({
+        id: session.id.toString(),
+        clientId: session.clientId?.toString() ?? '',
+        clientName: session.clientName,
+        sessionDate: session.sessionDate,
+        sessionStartTime: session.sessionStartTime,
+        therapistTimezone: session.therapistTimezone,
+        clientTimezone: session.clientTimezone,
+        duration: 60,
+        sessionType: 'follow-up' as const,
+        status: session.status as 'scheduled' | 'confirmed' | 'pending',
+        googleMeetLink: session.googleMeetLink,
+      }),
+    );
+
+    console.log('Upcoming sessions refreshed from API');
+  } catch (error) {
+    console.error('Error refreshing sessions:', error);
+  }
+};
 
 // Actions for session scheduling
 export const openScheduleSessionModal = (client: Client) => {
   scheduleSessionClientSignal.value = client;
   isScheduleSessionModalOpenSignal.value = true;
-  sessionSchedulingErrorSignal.value = null;
 };
 
 export const closeScheduleSessionModal = () => {
   isScheduleSessionModalOpenSignal.value = false;
   scheduleSessionClientSignal.value = null;
   sessionSchedulingErrorSignal.value = null;
-  sessionSchedulingLoadingSignal.value = false;
 };
 
-// Actions for client notes
-export const openNoteForm = (note?: ClientNote) => {
-  if (note) {
-    editingNoteSignal.value = note;
-  } else {
-    editingNoteSignal.value = null;
-  }
-  isNoteFormOpenSignal.value = true;
-};
-
-export const closeNoteForm = () => {
-  isNoteFormOpenSignal.value = false;
-  editingNoteSignal.value = null;
-};
-
-export const selectNote = (note: ClientNote | null) => {
-  selectedNoteSignal.value = note;
-};
-
-export const refreshClientNotes = async (clientId: string) => {
-  try {
-    clientNotesLoadingSignal.value = true;
-    const response = await fetch(`/api/therapist/notes?clientId=${clientId}`);
-    if (response.ok) {
-      const data = await response.json();
-      clientNotesSignal.value = data.notes || [];
-    }
-  } catch (error) {
-    console.error('Error refreshing notes:', error);
-  } finally {
-    clientNotesLoadingSignal.value = false;
-  }
-};
-
-// Actions for add client form
 export const updateAddClientFormData = (field: string, value: string) => {
   addClientFormDataSignal.value = {
     ...addClientFormDataSignal.value,
     [field]: value,
   };
-};
-
-export const setAddClientFormErrors = (errors: Record<string, string>) => {
-  addClientFormErrorsSignal.value = errors;
 };
 
 export const resetAddClientForm = () => {
@@ -110,148 +116,58 @@ export const resetAddClientForm = () => {
     lastName: '',
     email: '',
   };
-  addClientFormErrorsSignal.value = {};
-  addClientSubmittingSignal.value = false;
-};
-
-export const refreshUpcomingSessions = async () => {
-  try {
-    const response = await fetch('/api/therapist/sessions');
-    if (response.ok) {
-      const data = await response.json();
-      upcomingSessionsSignal.value = data.sessions.map(
-        (session: {
-          id: number;
-          clientId: number;
-          clientName: string;
-          sessionDate: string;
-          sessionStartTime: string;
-          status: string;
-          googleMeetLink: string;
-          therapistTimezone: string;
-          clientTimezone: string;
-        }) => ({
-          id: session.id.toString(),
-          clientId: session.clientId?.toString() ?? '',
-          clientName: session.clientName,
-          sessionDate: session.sessionDate,
-          sessionStartTime: session.sessionStartTime,
-          status: session.status,
-          googleMeetLink: session.googleMeetLink,
-          therapistTimezone: session.therapistTimezone,
-          clientTimezone: session.clientTimezone,
-        }),
-      );
-    }
-  } catch (error) {
-    console.error('Error refreshing sessions:', error);
-  }
-};
-
-// Actions for clients
-export const refreshClients = async () => {
-  try {
-    const response = await fetch('/api/therapist/clients');
-    if (response.ok) {
-      const data = await response.json();
-      clientsSignal.value = data.clients || [];
-    }
-  } catch (error) {
-    console.error('Error refreshing clients:', error);
-  }
 };
 
 export const selectClient = (client: Client | null) => {
   selectedClientSignal.value = client;
-  // Clear notes when switching clients
   if (client) {
-    refreshClientNotes(client.id);
+    // Automatically refresh notes when a client is selected using API
+    fetch(`/api/therapist/notes?clientId=${client.id}`)
+      .then((response) => response.json())
+      .then((data) => {
+        clientNotesSignal.value = data.notes || [];
+      })
+      .catch((error) => console.error('Error loading client notes:', error));
   } else {
     clientNotesSignal.value = [];
   }
 };
 
-// Enhanced therapist ID initialization with retry logic
-export const initializeTherapistId = async (userId: string): Promise<number | null> => {
-  if (therapistIdSignal.value && therapistIdSignal.value > 0) {
-    console.log('Therapist ID already initialized:', therapistIdSignal.value);
-    return therapistIdSignal.value;
-  }
+export const initializeTherapistId = async (_userId: string): Promise<number | null> => {
+  try {
+    therapistIdLoadingSignal.value = true;
+    therapistIdErrorSignal.value = null;
 
-  if (therapistIdLoadingSignal.value) {
-    console.log('Therapist ID initialization already in progress');
-    return null;
-  }
-
-  therapistIdLoadingSignal.value = true;
-  therapistIdErrorSignal.value = null;
-
-  console.log('Initializing therapist ID for user:', userId);
-
-  let attempts = 0;
-  const maxAttempts = 3;
-
-  while (attempts < maxAttempts) {
-    try {
-      attempts++;
-      console.log(`Fetching therapist ID - attempt ${attempts}/${maxAttempts}`);
-
-      const response = await fetch('/api/therapist/id', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      if (!data.therapistId || data.therapistId <= 0) {
-        throw new Error('Invalid therapist ID received from server');
-      }
-
-      console.log('Therapist ID successfully fetched:', data.therapistId);
-      therapistIdSignal.value = data.therapistId;
-      therapistIdLoadingSignal.value = false;
-      therapistIdErrorSignal.value = null;
-
-      return data.therapistId;
-    } catch (error) {
-      console.error(`Therapist ID fetch attempt ${attempts} failed:`, error);
-
-      if (attempts >= maxAttempts) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Failed to fetch therapist ID';
-        therapistIdErrorSignal.value = errorMessage;
-        therapistIdLoadingSignal.value = false;
-
-        // Don't set therapistId to 0 - leave it null to indicate failure
-        console.error('All therapist ID fetch attempts failed:', errorMessage);
-        return null;
-      }
-
-      // Wait before retrying (exponential backoff)
-      const delay = Math.pow(2, attempts - 1) * 1000; // 1s, 2s, 4s
-      console.log(`Waiting ${delay}ms before retry...`);
-      await new Promise((resolve) => setTimeout(resolve, delay));
+    // Use API endpoint to get therapist ID
+    const response = await fetch('/api/therapist/id');
+    if (!response.ok) {
+      throw new Error('Failed to fetch therapist ID');
     }
-  }
 
-  therapistIdLoadingSignal.value = false;
-  return null;
+    const data = await response.json();
+    const therapistId = data.therapistId;
+
+    if (therapistId) {
+      therapistIdSignal.value = therapistId;
+      console.log('Therapist ID initialized from API:', therapistId);
+      return therapistId;
+    } else {
+      throw new Error('No therapist profile found');
+    }
+  } catch (error) {
+    console.error('Error initializing therapist ID:', error);
+    therapistIdErrorSignal.value = error instanceof Error ? error.message : 'Unknown error';
+    return null;
+  } finally {
+    therapistIdLoadingSignal.value = false;
+  }
 };
 
-// Safe getter that ensures valid therapist ID
 export const getValidTherapistId = (): number | null => {
-  const id = therapistIdSignal.value;
-  return id && id > 0 ? id : null;
+  const therapistId = therapistIdSignal.value;
+  if (!therapistId) {
+    console.error('No valid therapist ID available');
+    return null;
+  }
+  return therapistId;
 };

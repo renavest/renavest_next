@@ -1,9 +1,7 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { eq, count } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
-import { db } from '@/src/db';
-import { bookingSessions, therapists } from '@/src/db/schema';
+import { getTherapistByEmail, getStatisticsData } from '@/src/services/therapistDataService';
 
 export async function GET() {
   try {
@@ -12,51 +10,29 @@ export async function GET() {
     if (!userId || metadata?.role !== 'therapist') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
     const user = await currentUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Find the therapist ID associated with the current user's email
     const userEmail = user.emailAddresses[0]?.emailAddress;
-    const therapistResult = await db
-      .select({ id: therapists.id })
-      .from(therapists)
-      .where(eq(therapists.email, userEmail))
-      .limit(1);
+    if (!userEmail) {
+      return NextResponse.json({ error: 'No email found' }, { status: 400 });
+    }
 
-    if (!therapistResult.length) {
-      console.error('Therapist not found for email:', {
-        userEmail: userEmail,
-      });
+    // Use optimized therapist lookup with caching
+    const therapistLookup = await getTherapistByEmail(userEmail);
+    if (!therapistLookup) {
       return NextResponse.json({ error: 'Therapist not found' }, { status: 404 });
     }
 
-    const therapistId = therapistResult[0].id;
+    // Use cached statistics data
+    const statisticsData = await getStatisticsData(therapistLookup.therapistId);
 
-    // Fetch total sessions
-    const totalSessionsResult = await db
-      .select({ count: count() })
-      .from(bookingSessions)
-      .where(eq(bookingSessions.therapistId, therapistId));
-
-    // Fetch total clients (unique users)
-    const totalClientsResult = await db
-      .selectDistinct({ count: count() })
-      .from(bookingSessions)
-      .where(eq(bookingSessions.therapistId, therapistId));
-
-    // Fetch completed sessions
-    const completedSessionsResult = await db
-      .select({ count: count() })
-      .from(bookingSessions)
-      .where(eq(bookingSessions.therapistId, therapistId));
-
-    return NextResponse.json({
-      statistics: {
-        totalSessions: totalSessionsResult[0]?.count ?? 0,
-        totalClients: totalClientsResult[0]?.count ?? 0,
-        completedSessions: completedSessionsResult[0]?.count ?? 0,
+    return NextResponse.json(statisticsData, {
+      headers: {
+        'Cache-Control': 'public, max-age=300, stale-while-revalidate=600', // 5 min cache, 10 min stale
       },
     });
   } catch (error) {
