@@ -30,6 +30,7 @@ import { ClientFormsTab } from '@/src/features/therapist-dashboard/components/fo
 import TherapistNavbar from '@/src/features/therapist-dashboard/components/navigation/TherapistNavbar';
 import { ScheduleSessionModal } from '@/src/features/therapist-dashboard/components/sessions/ScheduleSessionModal';
 import { UpcomingSessionsCard } from '@/src/features/therapist-dashboard/components/sessions/UpcomingSessionsCard';
+import { useTherapistDashboard } from '@/src/features/therapist-dashboard/hooks/useTherapistDashboard';
 import {
   therapistIdSignal,
   therapistPageLoadedSignal,
@@ -632,39 +633,8 @@ export default function TherapistDashboardPage({
     }
   }, [upcomingSessionsSignal.value]);
 
-  // Function to refresh data from the server
-  const refreshData = useCallback(async () => {
-    if (!therapistIdSignal.value) return;
-
-    try {
-      // Fetch updated data
-      const fetchWithErrorHandling = async (url: string) => {
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch data from ${url}`);
-        }
-        return response.json();
-      };
-
-      // Fetch all data in parallel
-      const [clientsResponse, sessionsResponse, statisticsResponse] = await Promise.all([
-        fetchWithErrorHandling('/api/therapist/clients'),
-        fetchWithErrorHandling('/api/therapist/sessions'),
-        fetchWithErrorHandling('/api/therapist/statistics'),
-      ]);
-
-      // Update signals with fetched data
-      clientsSignal.value = clientsResponse.clients || [];
-      upcomingSessionsSignal.value = sessionsResponse.sessions || [];
-      statisticsSignal.value = statisticsResponse.statistics || {
-        totalSessions: 0,
-        totalClients: 0,
-        completedSessions: 0,
-      };
-    } catch (error) {
-      console.error('Error refreshing data:', error);
-    }
-  }, []);
+  // Use optimized refresh function from hook
+  const { refreshData } = useTherapistDashboard(initialTherapistId);
 
   // If still loading initial data, show a loading state
   if (!therapistPageLoadedSignal.value) {

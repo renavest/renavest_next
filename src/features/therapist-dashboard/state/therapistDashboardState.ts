@@ -1,11 +1,23 @@
 import { signal } from '@preact-signals/safe-react';
 
+import {
+  getDashboardData,
+  getClientsData,
+  getSessionsData,
+  invalidateOnDataChange,
+} from '@/src/services/therapistDataService';
+
 import { Client, UpcomingSession, TherapistStatistics, ClientNote } from '../types';
 
 export const therapistPageLoadedSignal = signal(false);
 export const therapistIdSignal = signal<number | null>(null);
 export const therapistIdLoadingSignal = signal<boolean>(false);
 export const therapistIdErrorSignal = signal<string | null>(null);
+
+// Cache control signals
+export const dashboardLoadingSignal = signal<boolean>(false);
+export const dashboardErrorSignal = signal<string | null>(null);
+export const lastRefreshTimeSignal = signal<Date | null>(null);
 
 // Dashboard state signals
 export const clientsSignal = signal<Client[]>([]);
@@ -44,6 +56,126 @@ export const addClientFormDataSignal = signal({
 export const addClientFormErrorsSignal = signal<Record<string, string>>({});
 export const addClientSubmittingSignal = signal<boolean>(false);
 
+// Optimized refresh actions using cached data service
+export const refreshDashboardData = async (_force = false) => {
+  const therapistId = therapistIdSignal.value;
+  if (!therapistId) return;
+
+  try {
+    dashboardLoadingSignal.value = true;
+    dashboardErrorSignal.value = null;
+
+    // Use cached dashboard data service
+    const dashboardData = await getDashboardData(therapistId);
+
+    // Update all signals with cached data
+    clientsSignal.value = dashboardData.clients;
+    upcomingSessionsSignal.value = dashboardData.upcomingSessions;
+    statisticsSignal.value = dashboardData.statistics;
+    lastRefreshTimeSignal.value = new Date();
+
+    console.log('Dashboard data refreshed from cache');
+  } catch (error) {
+    console.error('Error refreshing dashboard data:', error);
+    dashboardErrorSignal.value = error instanceof Error ? error.message : 'Unknown error';
+  } finally {
+    dashboardLoadingSignal.value = false;
+  }
+};
+
+export const refreshClientNotes = async (clientId: string) => {
+  try {
+    clientNotesLoadingSignal.value = true;
+    const response = await fetch(`/api/therapist/notes?clientId=${clientId}`);
+    if (response.ok) {
+      const data = await response.json();
+      clientNotesSignal.value = data.notes || [];
+    }
+  } catch (error) {
+    console.error('Error refreshing notes:', error);
+  } finally {
+    clientNotesLoadingSignal.value = false;
+  }
+};
+
+export const refreshUpcomingSessions = async () => {
+  const therapistId = therapistIdSignal.value;
+  if (!therapistId) return;
+
+  try {
+    // Use cached sessions data service
+    const sessionsData = await getSessionsData(therapistId);
+    upcomingSessionsSignal.value = sessionsData.sessions.map((session) => ({
+      id: session.id.toString(),
+      clientId: session.clientId?.toString() ?? '',
+      clientName: session.clientName,
+      sessionDate: session.sessionDate.toISOString(),
+      sessionTime: session.sessionStartTime.toISOString(),
+      duration: 60,
+      sessionType: 'follow-up' as const,
+      status: session.status as 'scheduled' | 'confirmed' | 'pending',
+      meetingLink: session.googleMeetLink,
+    }));
+
+    console.log('Upcoming sessions refreshed from cache');
+  } catch (error) {
+    console.error('Error refreshing sessions:', error);
+  }
+};
+
+export const refreshClients = async () => {
+  const therapistId = therapistIdSignal.value;
+  if (!therapistId) return;
+
+  try {
+    // Use cached clients data service
+    const clientsData = await getClientsData(therapistId);
+    clientsSignal.value = clientsData.clients.map((client) => ({
+      id: client.id.toString(),
+      firstName: client.firstName || '',
+      lastName: client.lastName || '',
+      email: client.email || '',
+      phone: undefined,
+      createdAt: new Date().toISOString(),
+      lastSessionDate: undefined,
+      totalSessions: 0,
+      status: 'active' as const,
+    }));
+
+    console.log('Clients refreshed from cache');
+  } catch (error) {
+    console.error('Error refreshing clients:', error);
+  }
+};
+
+// Optimized data invalidation actions
+export const invalidateClientData = async () => {
+  const therapistId = therapistIdSignal.value;
+  if (!therapistId) return;
+
+  await invalidateOnDataChange(therapistId, 'client');
+  await refreshDashboardData(true);
+};
+
+export const invalidateSessionData = async () => {
+  const therapistId = therapistIdSignal.value;
+  if (!therapistId) return;
+
+  await invalidateOnDataChange(therapistId, 'session');
+  await refreshDashboardData(true);
+};
+
+export const invalidateNoteData = async () => {
+  const therapistId = therapistIdSignal.value;
+  if (!therapistId) return;
+
+  await invalidateOnDataChange(therapistId, 'note');
+  // Notes don't affect dashboard data, only refresh notes for selected client
+  if (selectedClientSignal.value) {
+    await refreshClientNotes(selectedClientSignal.value.id);
+  }
+};
+
 // Actions for session scheduling
 export const openScheduleSessionModal = (client: Client) => {
   scheduleSessionClientSignal.value = client;
@@ -77,21 +209,6 @@ export const selectNote = (note: ClientNote | null) => {
   selectedNoteSignal.value = note;
 };
 
-export const refreshClientNotes = async (clientId: string) => {
-  try {
-    clientNotesLoadingSignal.value = true;
-    const response = await fetch(`/api/therapist/notes?clientId=${clientId}`);
-    if (response.ok) {
-      const data = await response.json();
-      clientNotesSignal.value = data.notes || [];
-    }
-  } catch (error) {
-    console.error('Error refreshing notes:', error);
-  } finally {
-    clientNotesLoadingSignal.value = false;
-  }
-};
-
 // Actions for add client form
 export const updateAddClientFormData = (field: string, value: string) => {
   addClientFormDataSignal.value = {
@@ -112,53 +229,6 @@ export const resetAddClientForm = () => {
   };
   addClientFormErrorsSignal.value = {};
   addClientSubmittingSignal.value = false;
-};
-
-export const refreshUpcomingSessions = async () => {
-  try {
-    const response = await fetch('/api/therapist/sessions');
-    if (response.ok) {
-      const data = await response.json();
-      upcomingSessionsSignal.value = data.sessions.map(
-        (session: {
-          id: number;
-          clientId: number;
-          clientName: string;
-          sessionDate: string;
-          sessionStartTime: string;
-          status: string;
-          googleMeetLink: string;
-          therapistTimezone: string;
-          clientTimezone: string;
-        }) => ({
-          id: session.id.toString(),
-          clientId: session.clientId?.toString() ?? '',
-          clientName: session.clientName,
-          sessionDate: session.sessionDate,
-          sessionStartTime: session.sessionStartTime,
-          status: session.status,
-          googleMeetLink: session.googleMeetLink,
-          therapistTimezone: session.therapistTimezone,
-          clientTimezone: session.clientTimezone,
-        }),
-      );
-    }
-  } catch (error) {
-    console.error('Error refreshing sessions:', error);
-  }
-};
-
-// Actions for clients
-export const refreshClients = async () => {
-  try {
-    const response = await fetch('/api/therapist/clients');
-    if (response.ok) {
-      const data = await response.json();
-      clientsSignal.value = data.clients || [];
-    }
-  } catch (error) {
-    console.error('Error refreshing clients:', error);
-  }
 };
 
 export const selectClient = (client: Client | null) => {
