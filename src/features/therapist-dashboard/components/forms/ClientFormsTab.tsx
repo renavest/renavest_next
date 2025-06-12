@@ -226,19 +226,53 @@ export function ClientFormsTab({ client }: ClientFormsTabProps) {
     formsActions.setLoading(false);
   }, [client.id]);
 
-  const handleSendForm = (formId: string) => {
-    // TODO: Implement form sending logic
-    const assignment = {
-      id: `assignment_${Date.now()}`,
-      formId,
-      formTitle: availableForms.find((f) => f.id === formId)?.title || 'Unknown Form',
-      clientId: client.id,
-      status: 'sent' as const,
-      sentAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
-    };
+  const handleSendForm = async (formId: string) => {
+    try {
+      formsActions.setLoading(true);
 
-    formsActions.addAssignment(assignment);
+      const response = await fetch('/api/therapist/forms/assign', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          formId,
+          clientId: client.id,
+          expiresInDays: 7, // Default to 7 days expiration
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to send form');
+      }
+
+      // Create the assignment object for local state
+      const assignment = {
+        id: result.assignment.id,
+        formId: result.assignment.formId,
+        formTitle: availableForms.find((f) => f.id === formId)?.title || 'Unknown Form',
+        clientId: result.assignment.clientId,
+        status: result.assignment.status as 'sent' | 'completed' | 'expired',
+        sentAt: result.assignment.sentAt,
+        expiresAt: result.assignment.expiresAt,
+      };
+
+      formsActions.addAssignment(assignment);
+
+      // Show success message using toast
+      const { toast } = await import('sonner');
+      toast.success('Form sent successfully!');
+    } catch (error) {
+      console.error('Error sending form:', error);
+
+      // Show error message using toast
+      const { toast } = await import('sonner');
+      toast.error(error instanceof Error ? error.message : 'Failed to send form');
+    } finally {
+      formsActions.setLoading(false);
+    }
   };
 
   const getStatusColor = (status: string) => {

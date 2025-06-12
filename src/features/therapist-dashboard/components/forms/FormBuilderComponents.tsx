@@ -20,6 +20,7 @@ import {
 import { toast } from 'sonner';
 
 import { COLORS } from '@/src/styles/colors';
+
 import type { FormField, IntakeForm } from '../../types/forms';
 
 const FIELD_TYPES = [
