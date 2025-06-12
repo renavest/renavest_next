@@ -10,6 +10,7 @@ import {
   XCircle,
   Loader2,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { GoogleCalendarIntegration } from '@/src/features/google-calendar/components/GoogleCalendarIntegration';
@@ -31,6 +32,35 @@ interface StripeStatus {
   detailsSubmitted: boolean;
   requiresAction?: boolean;
   requirements?: string[];
+}
+
+// Back Button Component with Loading State
+function BackButton({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  const handleClick = async () => {
+    setIsNavigating(true);
+    try {
+      onClick();
+    } catch {
+      setIsNavigating(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={isNavigating}
+      className='flex items-center text-purple-600 hover:text-purple-700 mb-4 disabled:opacity-50 transition-all duration-200'
+    >
+      {isNavigating ? (
+        <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+      ) : (
+        <ChevronRight className='w-4 h-4 mr-2 rotate-180' />
+      )}
+      {children}
+    </button>
+  );
 }
 
 // Status Badge Component
@@ -312,6 +342,8 @@ function IntegrationsStatusHeader({
 
 // Stripe Integration View Component
 function StripeIntegrationView({ therapistId }: { therapistId: number }) {
+  const router = useRouter();
+
   return (
     <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen'>
       <TherapistNavbar
@@ -322,13 +354,9 @@ function StripeIntegrationView({ therapistId }: { therapistId: number }) {
 
       <div className='max-w-4xl mx-auto mt-10'>
         <div className='mb-8'>
-          <button
-            onClick={() => window.history.back()}
-            className='flex items-center text-purple-600 hover:text-purple-700 mb-4'
-          >
-            <ChevronRight className='w-4 h-4 mr-2 rotate-180' />
+          <BackButton onClick={() => router.push('/therapist/integrations')}>
             Back to Integrations
-          </button>
+          </BackButton>
 
           {/* Development Warning */}
           <div className='bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6'>
@@ -356,6 +384,8 @@ function StripeIntegrationView({ therapistId }: { therapistId: number }) {
 
 // Calendar Integration View Component
 function CalendarIntegrationView() {
+  const router = useRouter();
+
   return (
     <div className='container mx-auto px-4 md:px-6 py-8 pt-20 sm:pt-24 bg-[#faf9f6] min-h-screen'>
       <TherapistNavbar
@@ -366,13 +396,9 @@ function CalendarIntegrationView() {
 
       <div className='max-w-4xl mx-auto mt-10'>
         <div className='mb-8'>
-          <button
-            onClick={() => window.history.back()}
-            className='flex items-center text-purple-600 hover:text-purple-700 mb-4'
-          >
-            <ChevronRight className='w-4 h-4 mr-2 rotate-180' />
+          <BackButton onClick={() => router.push('/therapist/integrations')}>
             Back to Integrations
-          </button>
+          </BackButton>
           <h1 className='text-3xl font-bold text-gray-900 mb-3'>Google Calendar Integration</h1>
           <p className='text-gray-600 text-lg'>
             Sync your Renavest sessions with your Google Calendar and manage availability.
