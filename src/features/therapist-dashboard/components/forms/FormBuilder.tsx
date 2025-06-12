@@ -105,25 +105,53 @@ export function FormBuilder() {
     setSaving(true);
     try {
       const formData = {
-        ...form,
+        title: form.title.trim(),
+        description: form.description?.trim() || '',
+        fields: form.fields,
         status,
-        therapistId: 1,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      } as IntakeForm;
+      };
 
       if (formBuilderState.editingForm) {
-        formsActions.updateForm(formBuilderState.editingForm.id, formData);
+        // Update existing form - we need to create a PUT endpoint
+        const response = await fetch(`/api/therapist/forms/${formBuilderState.editingForm.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to update form');
+        }
+
+        const { form: updatedForm } = await response.json();
+        formsActions.updateForm(formBuilderState.editingForm.id, updatedForm);
         toast.success('Form updated successfully');
       } else {
-        formData.id = `form_${Date.now()}`;
-        formsActions.addForm(formData);
+        // Create new form
+        const response = await fetch('/api/therapist/forms', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to create form');
+        }
+
+        const { form: newForm } = await response.json();
+        formsActions.addForm(newForm);
         toast.success('Form created successfully');
       }
 
       formsActions.closeFormBuilder();
     } catch (error) {
-      toast.error('Failed to save form');
+      toast.error(error instanceof Error ? error.message : 'Failed to save form');
       console.error('Error saving form:', error);
     } finally {
       setSaving(false);

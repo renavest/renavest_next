@@ -223,7 +223,17 @@ export function ClientFormsTab({ client }: ClientFormsTabProps) {
 
   useEffect(() => {
     // Load forms and assignments for this client
-    formsActions.setLoading(false);
+    const loadData = async () => {
+      try {
+        await formsActions.loadForms();
+      } catch (error) {
+        console.error('Error loading forms data:', error);
+        const { toast } = await import('sonner');
+        toast.error('Failed to load forms');
+      }
+    };
+
+    loadData();
   }, [client.id]);
 
   const handleSendForm = async (formId: string) => {

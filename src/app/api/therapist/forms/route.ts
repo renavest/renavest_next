@@ -1,12 +1,12 @@
 import { auth } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
 import { intakeForms, therapists, users } from '@/src/db/schema';
-import { eq, and } from 'drizzle-orm';
 
 // GET /api/therapist/forms - Get all forms for therapist
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
