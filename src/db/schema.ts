@@ -718,3 +718,56 @@ export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+// === 12. Intake Forms ===
+export const intakeForms = pgTable('intake_forms', {
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  therapistId: integer('therapist_id')
+    .references(() => therapists.id, { onDelete: 'cascade' })
+    .notNull(),
+  fields: jsonb('fields').notNull(), // FormField[] as JSON
+  status: varchar('status', { length: 20 }).notNull().default('draft'), // 'draft' | 'active'
+  isTemplate: boolean('is_template').default(false).notNull(),
+  templateCategory: varchar('template_category', { length: 100 }), // e.g., 'general', 'anxiety', 'couples'
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const formAssignments = pgTable('form_assignments', {
+  id: serial('id').primaryKey(),
+  formId: integer('form_id')
+    .references(() => intakeForms.id, { onDelete: 'cascade' })
+    .notNull(),
+  clientId: integer('client_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  therapistId: integer('therapist_id')
+    .references(() => therapists.id, { onDelete: 'cascade' })
+    .notNull(),
+  status: varchar('status', { length: 20 }).notNull().default('sent'), // 'sent' | 'completed' | 'expired'
+  responses: jsonb('responses'), // Record<string, unknown> as JSON
+  sentAt: timestamp('sent_at').defaultNow().notNull(),
+  completedAt: timestamp('completed_at'),
+  expiresAt: timestamp('expires_at'), // Optional expiration
+  remindersSent: integer('reminders_sent').default(0).notNull(),
+  lastReminderAt: timestamp('last_reminder_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// === 12. Intake Forms Relations ===
+export const intakeFormsRelations = relations(intakeForms, ({ one, many }) => ({
+  therapist: one(therapists, { fields: [intakeForms.therapistId], references: [therapists.id] }),
+  assignments: many(formAssignments),
+}));
+
+export const formAssignmentsRelations = relations(formAssignments, ({ one }) => ({
+  form: one(intakeForms, { fields: [formAssignments.formId], references: [intakeForms.id] }),
+  client: one(users, { fields: [formAssignments.clientId], references: [users.id] }),
+  therapist: one(therapists, {
+    fields: [formAssignments.therapistId],
+    references: [therapists.id],
+  }),
+}));
