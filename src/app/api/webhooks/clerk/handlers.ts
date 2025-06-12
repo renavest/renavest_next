@@ -1,6 +1,5 @@
 import { clerkClient } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
-import { type PgTransaction } from 'drizzle-orm/pg-core';
 import { Result, ok, err } from 'neverthrow';
 
 import { EMPLOYER_EMAIL_MAP, ALLOWED_EMPLOYER_ADMIN_EMAILS } from '@/src/constants';
@@ -16,7 +15,6 @@ import type { users as usersTable } from '@/src/db/schema';
 import {
   trackUserCreatedServerSide,
   trackUserUpdatedServerSide,
-  trackUserActivityServerSide,
 } from '@/src/features/posthog/authTrackingServer';
 import { getOrCreateStripeCustomer } from '@/src/features/stripe';
 import { createDate } from '@/src/utils/timezone';
@@ -82,11 +80,7 @@ function safelyParseDate(timestamp: string | number | null, fallbackDate: Date):
  * Handles the creation of a new user in the database.
  */
 async function createUser(
-  tx: PgTransaction<
-    NodePgQueryResultHKT,
-    Record<string, never>,
-    ExtractTablesWithRelations<Record<string, never>>
-  >,
+  tx: DatabaseTransaction,
   data: WebhookUserData,
   primaryEmail: string,
   now: Date,
@@ -162,7 +156,7 @@ async function updateUser(
  * Handles updating a user by email with a new Clerk ID.
  */
 async function updateUserWithClerkId(
-  tx: PgTransaction<any, any, any>,
+  tx: DatabaseTransaction,
   userWithEmail: typeof usersTable.$inferSelect,
   data: WebhookUserData,
   primaryEmail: string,
@@ -206,8 +200,8 @@ async function updateUserWithClerkId(
  */
 async function promotePendingTherapist(
   user: typeof usersTable.$inferSelect,
-  pendingTherapistMatch: any, // You may want to type this more strictly
-  dbOrTx: any,
+  pendingTherapistMatch: typeof pendingTherapists.$inferSelect,
+  dbOrTx: DatabaseTransaction,
 ) {
   // Check if therapist already exists for this user
   const existingTherapist = (
@@ -268,6 +262,8 @@ async function synchronizeRoleToClerk(clerkUserId: string, role: string): Promis
 
 /**
  * Main function to handle user creation or update events from Clerk webhooks.
+ * For user.created events, this implements atomic signup - if database operations fail,
+ * the Clerk user is deleted to maintain consistency.
  */
 export async function handleUserCreateOrUpdate(
   eventType: 'user.created' | 'user.updated',
@@ -296,6 +292,12 @@ export async function handleUserCreateOrUpdate(
   const emailResult = getPrimaryEmail(emailAddresses, id);
   if (emailResult.isErr()) {
     console.error('Webhook: No valid email found for user', { userId: id, eventType });
+
+    // For user.created events, delete the Clerk user since we can't process them
+    if (eventType === 'user.created') {
+      await deleteClerkUserOnFailure(id, 'No valid email found');
+    }
+
     return err(emailResult.error);
   }
 
@@ -343,7 +345,7 @@ export async function handleUserCreateOrUpdate(
           data,
           primaryEmail,
           now,
-          finalValidatedRole as any,
+          finalValidatedRole as (typeof userRoleEnum.enumValues)[number],
         );
       } else if (userWithEmail) {
         finalUser = await updateUserWithClerkId(
@@ -352,10 +354,16 @@ export async function handleUserCreateOrUpdate(
           data,
           primaryEmail,
           now,
-          finalValidatedRole as any,
+          finalValidatedRole as (typeof userRoleEnum.enumValues)[number],
         );
       } else {
-        finalUser = await createUser(tx, data, primaryEmail, now, finalValidatedRole as any);
+        finalUser = await createUser(
+          tx,
+          data,
+          primaryEmail,
+          now,
+          finalValidatedRole as (typeof userRoleEnum.enumValues)[number],
+        );
       }
 
       if (!finalUser) {
@@ -469,17 +477,55 @@ export async function handleUserCreateOrUpdate(
 
     return ok(true);
   } catch (error) {
+    console.error('Webhook: Database operation failed', {
+      userId: id,
+      eventType,
+      error,
+    });
+
+    // ATOMIC SIGNUP: For user.created events, delete the Clerk user if database operations fail
+    if (eventType === 'user.created') {
+      await deleteClerkUserOnFailure(id, `Database operation failed: ${error}`);
+    }
+
     const errorDetails: UserHandlingError = {
       type: 'DatabaseError',
       message: `Error ${eventType === 'user.created' ? 'creating' : 'updating'} user during sync`,
       originalError: error,
     };
-    console.error('Webhook: User handling error', {
-      userId: id,
-      eventType,
-      error,
-    });
+
     return err(errorDetails);
+  }
+}
+
+/**
+ * Deletes a Clerk user when database operations fail during user.created events
+ * This ensures atomic signup - if we can't create the user in our database,
+ * we remove them from Clerk to maintain consistency
+ */
+async function deleteClerkUserOnFailure(clerkUserId: string, reason: string): Promise<void> {
+  try {
+    console.warn('Webhook: Attempting to delete Clerk user due to database failure', {
+      clerkUserId,
+      reason,
+    });
+
+    const client = await clerkClient();
+    await client.users.deleteUser(clerkUserId);
+
+    console.info('Webhook: Successfully deleted Clerk user to maintain atomicity', {
+      clerkUserId,
+      reason,
+    });
+  } catch (deleteError) {
+    console.error('Webhook: CRITICAL - Failed to delete Clerk user after database failure', {
+      clerkUserId,
+      reason,
+      deleteError,
+    });
+
+    // This is a critical error - we have an orphaned Clerk user
+    // You might want to add alerting here or store this for manual cleanup
   }
 }
 
@@ -487,7 +533,7 @@ export async function handleUserCreateOrUpdate(
  * Process onboarding data from Clerk unsafeMetadata
  */
 async function processOnboardingData(
-  tx: PgTransaction<any, any, any>,
+  tx: DatabaseTransaction,
   user: typeof usersTable.$inferSelect,
   unsafeMetadata: Record<string, unknown>,
 ) {

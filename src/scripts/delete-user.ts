@@ -125,16 +125,16 @@ async function deleteUser(email: string): Promise<void> {
     .then((records) => records[0]);
 
   const internalUserId = userRecord?.id;
-  if (!internalUserId) {
-    console.warn(`⚠️ User ${email} not found in local database. Cleaning up pending data only.`);
-    await safeDelete(
-      pendingTherapists,
-      eq(pendingTherapists.clerkEmail, email),
-      'pending therapist records by email',
-    );
-    console.log(`🎉 Deletion process for ${email} completed (no local user found).`);
-    return;
-  }
+  // if (!internalUserId) {
+  //   console.warn(`⚠️ User ${email} not found in local database. Cleaning up pending data only.`);
+  //   await safeDelete(
+  //     pendingTherapists,
+  //     eq(pendingTherapists.clerkEmail, email),
+  //     'pending therapist records by email',
+  //   );
+  //   console.log(`🎉 Deletion process for ${email} completed (no local user found).`);
+  //   return;
+  // }
 
   const therapistRecord = await db
     .select({ id: therapists.id })

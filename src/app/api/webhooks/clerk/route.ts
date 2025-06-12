@@ -182,6 +182,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       console.info('Webhook processed successfully', {
         duration: `${duration}ms`,
         environment,
+        eventType: event.type,
+        userId: event.data.id,
       });
       return NextResponse.json({ success: true });
     },
@@ -191,11 +193,19 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         duration: `${duration}ms`,
         error,
         environment,
+        eventType: event.type,
+        userId: event.data.id,
       });
 
-      // Always return 200 to prevent Clerk from retrying
+      // For user.created events that fail, we've already attempted to delete the Clerk user
+      // Return 200 to prevent Clerk from retrying (since we've handled the cleanup)
+      // For other events, also return 200 to prevent infinite retries
       return NextResponse.json(
-        { success: false, error: 'Webhook processed with errors' },
+        {
+          success: false,
+          error: 'Webhook processed with errors',
+          atomicCleanupAttempted: event.type === 'user.created',
+        },
         { status: 200 },
       );
     },
