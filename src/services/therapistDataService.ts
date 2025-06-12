@@ -34,11 +34,13 @@ export interface DashboardData {
     clientId: string;
     clientName: string;
     sessionDate: string;
-    sessionTime: string;
+    sessionStartTime: string;
+    therapistTimezone?: string;
+    clientTimezone?: string;
     duration: number;
     sessionType: 'initial' | 'follow-up' | 'emergency';
     status: 'scheduled' | 'confirmed' | 'pending';
-    meetingLink?: string;
+    googleMeetLink?: string;
     notes?: string;
   }>;
   statistics: {
@@ -214,11 +216,13 @@ export async function getDashboardData(therapistId: number): Promise<DashboardDa
           clientId: session.clientId?.toString() ?? '',
           clientName: `${session.clientName || ''} ${session.clientLastName || ''}`.trim(),
           sessionDate: session.sessionDate.toISOString(),
-          sessionTime: session.sessionStartTime.toISOString(),
+          sessionStartTime: session.sessionStartTime.toISOString(),
+          therapistTimezone: metadata?.therapistTimezone || 'America/New_York',
+          clientTimezone: metadata?.clientTimezone || 'America/New_York',
           duration: 60, // Default 60 minutes
           sessionType: 'follow-up' as const, // Default type
           status: session.status as 'scheduled' | 'confirmed' | 'pending',
-          meetingLink: metadata?.googleMeetLink || undefined,
+          googleMeetLink: metadata?.googleMeetLink || undefined,
           notes: undefined,
         };
       });
@@ -335,8 +339,8 @@ export async function getSessionsData(therapistId: number) {
             sessionDate: session.sessionDate,
             sessionStartTime: session.sessionStartTime,
             status: session.status,
-            therapistTimezone: sessionMetadata?.therapistTimezone || 'UTC',
-            clientTimezone: sessionMetadata?.clientTimezone || 'UTC',
+            therapistTimezone: sessionMetadata?.therapistTimezone || 'America/New_York',
+            clientTimezone: sessionMetadata?.clientTimezone || 'America/New_York',
             googleMeetLink: sessionMetadata?.googleMeetLink || '',
           };
         }),

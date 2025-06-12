@@ -17,6 +17,26 @@ import {
   lastRefreshTimeSignal,
 } from '../state/therapistDashboardState';
 
+// Type definitions for API responses
+interface ApiClient {
+  id: number;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+}
+
+interface ApiSession {
+  id: number;
+  clientId?: number;
+  clientName: string;
+  sessionDate: string;
+  sessionStartTime: string;
+  status: string;
+  googleMeetLink?: string;
+  therapistTimezone?: string;
+  clientTimezone?: string;
+}
+
 export function useTherapistDashboard(initialTherapistId?: number) {
   // Initialize therapist ID from props
   useEffect(() => {
@@ -80,8 +100,30 @@ export function useTherapistDashboard(initialTherapistId?: number) {
       ]);
 
       // Update signals with API data
-      clientsSignal.value = clientsData.clients || [];
-      upcomingSessionsSignal.value = sessionsData.sessions || [];
+      clientsSignal.value = (clientsData.clients || []).map((client: ApiClient) => ({
+        id: client.id.toString(),
+        firstName: client.firstName || '',
+        lastName: client.lastName || '',
+        email: client.email || '',
+        phone: undefined,
+        createdAt: new Date().toISOString(),
+        lastSessionDate: undefined,
+        totalSessions: 0,
+        status: 'active' as const,
+      }));
+      upcomingSessionsSignal.value = (sessionsData.sessions || []).map((session: ApiSession) => ({
+        id: session.id.toString(),
+        clientId: session.clientId?.toString() ?? '',
+        clientName: session.clientName,
+        sessionDate: session.sessionDate,
+        sessionStartTime: session.sessionStartTime,
+        therapistTimezone: session.therapistTimezone,
+        clientTimezone: session.clientTimezone,
+        duration: 60,
+        sessionType: 'follow-up' as const,
+        status: session.status as 'scheduled' | 'confirmed' | 'pending',
+        googleMeetLink: session.googleMeetLink,
+      }));
       statisticsSignal.value = statsData.statistics || {
         totalClients: 0,
         activeClients: 0,
@@ -114,7 +156,7 @@ export function useTherapistDashboard(initialTherapistId?: number) {
       }
 
       const clientsData = await response.json();
-      clientsSignal.value = (clientsData.clients || []).map((client: any) => ({
+      clientsSignal.value = (clientsData.clients || []).map((client: ApiClient) => ({
         id: client.id.toString(),
         firstName: client.firstName || '',
         lastName: client.lastName || '',
@@ -142,16 +184,18 @@ export function useTherapistDashboard(initialTherapistId?: number) {
       }
 
       const sessionsData = await response.json();
-      upcomingSessionsSignal.value = (sessionsData.sessions || []).map((session: any) => ({
+      upcomingSessionsSignal.value = (sessionsData.sessions || []).map((session: ApiSession) => ({
         id: session.id.toString(),
         clientId: session.clientId?.toString() ?? '',
         clientName: session.clientName,
         sessionDate: session.sessionDate,
-        sessionTime: session.sessionStartTime,
+        sessionStartTime: session.sessionStartTime,
+        therapistTimezone: session.therapistTimezone,
+        clientTimezone: session.clientTimezone,
         duration: 60,
         sessionType: 'follow-up' as const,
         status: session.status as 'scheduled' | 'confirmed' | 'pending',
-        meetingLink: session.googleMeetLink,
+        googleMeetLink: session.googleMeetLink,
       }));
       console.log('Sessions refreshed from API');
     } catch (error) {

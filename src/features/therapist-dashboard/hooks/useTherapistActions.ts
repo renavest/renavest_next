@@ -15,6 +15,19 @@ import {
 } from '../state/therapistDashboardState';
 import { CreateNoteRequest } from '../types';
 
+// Type definition for API session response
+interface ApiSession {
+  id: number;
+  clientId?: number;
+  clientName: string;
+  sessionDate: string;
+  sessionStartTime: string;
+  status: string;
+  googleMeetLink?: string;
+  therapistTimezone?: string;
+  clientTimezone?: string;
+}
+
 // Dashboard data refresh using API calls
 const refreshDashboardData = async (therapistId: number | null) => {
   if (!therapistId) return;
@@ -34,7 +47,19 @@ const refreshDashboardData = async (therapistId: number | null) => {
       ]);
 
       clientsSignal.value = clientsData.clients || [];
-      upcomingSessionsSignal.value = sessionsData.sessions || [];
+      upcomingSessionsSignal.value = (sessionsData.sessions || []).map((session: ApiSession) => ({
+        id: session.id.toString(),
+        clientId: session.clientId?.toString() ?? '',
+        clientName: session.clientName,
+        sessionDate: session.sessionDate,
+        sessionStartTime: session.sessionStartTime,
+        therapistTimezone: session.therapistTimezone,
+        clientTimezone: session.clientTimezone,
+        duration: 60,
+        sessionType: 'follow-up' as const,
+        status: session.status as 'scheduled' | 'confirmed' | 'pending',
+        googleMeetLink: session.googleMeetLink,
+      }));
       statisticsSignal.value = statsData.statistics || {
         totalClients: 0,
         activeClients: 0,
@@ -215,11 +240,13 @@ const scheduleSessionAction = async (
       clientId: sessionData.clientId,
       clientName: client ? `${client.firstName} ${client.lastName}` : 'Unknown Client',
       sessionDate: sessionData.sessionDate,
-      sessionTime: sessionData.sessionTime,
+      sessionStartTime: `${sessionData.sessionDate}T${sessionData.sessionTime}`,
+      therapistTimezone: 'America/New_York',
+      clientTimezone: 'America/New_York',
       duration: sessionData.duration || 60,
       sessionType: 'follow-up' as const,
       status: 'scheduled' as const,
-      meetingLink: undefined,
+      googleMeetLink: undefined,
       notes: sessionData.notes,
     };
 
