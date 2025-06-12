@@ -147,9 +147,9 @@ function GoogleCalendarSuccessPageInner() {
         )}
 
         <div className='flex justify-center'>
-          <Link href='/therapist'>
+          <Link href='/therapist/integrations'>
             <span className='inline-flex items-center px-6 py-2 bg-purple-600 text-white rounded-md font-medium shadow hover:bg-purple-700 transition'>
-              Return to Therapist
+              Return to Integrations
             </span>
           </Link>
         </div>

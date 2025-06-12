@@ -26,7 +26,9 @@ import { AddNewClientSection } from '@/src/features/therapist-dashboard/componen
 import { ClientDocumentsTab } from '@/src/features/therapist-dashboard/components/clients/ClientDocumentsTab';
 import { ClientNotesSection } from '@/src/features/therapist-dashboard/components/clients/ClientNotesSection';
 import { TherapistStatisticsCard } from '@/src/features/therapist-dashboard/components/dashboard/TherapistStatisticsCard';
+import { ClientFormsTab } from '@/src/features/therapist-dashboard/components/forms/ClientFormsTab';
 import TherapistNavbar from '@/src/features/therapist-dashboard/components/navigation/TherapistNavbar';
+import { ScheduleSessionModal } from '@/src/features/therapist-dashboard/components/sessions/ScheduleSessionModal';
 import { UpcomingSessionsCard } from '@/src/features/therapist-dashboard/components/sessions/UpcomingSessionsCard';
 import {
   therapistIdSignal,
@@ -43,9 +45,9 @@ import {
 } from '@/src/features/therapist-dashboard/types';
 import { COLORS } from '@/src/styles/colors';
 
-import { QuickActionsSection } from './QuickActionsSection';
+import { ClientTab } from '../../types/components';
 
-type ClientTab = 'overview' | 'notes' | 'sessions' | 'documents' | 'progress' | 'chat';
+import { QuickActionsSection } from './QuickActionsSection';
 
 // New comprehensive client management component
 const ClientManagementSection = ({
@@ -61,7 +63,6 @@ const ClientManagementSection = ({
     clients.length > 0 ? clients[0] : null,
   );
   const [activeTab, setActiveTab] = useState<ClientTab>('overview');
-
   // Update selected client when clients list changes
   useEffect(() => {
     if (!selectedClient && clients.length > 0) {
@@ -152,6 +153,7 @@ const ClientManagementSection = ({
                 { key: 'overview', label: 'Overview', icon: Users },
                 { key: 'notes', label: 'Clinical Notes', icon: FileText },
                 { key: 'documents', label: 'Documents', icon: Folder },
+                { key: 'forms', label: 'Intake Forms', icon: FileText },
                 { key: 'sessions', label: 'Sessions', icon: Calendar },
                 { key: 'progress', label: 'Progress', icon: TrendingUp },
                 { key: 'chat', label: 'Chat', icon: MessageCircle },
@@ -181,6 +183,7 @@ const ClientManagementSection = ({
               <ClientNotesSection client={selectedClient} therapistId={therapistIdSignal.value} />
             )}
             {activeTab === 'documents' && <ClientDocumentsTab client={selectedClient} />}
+            {activeTab === 'forms' && <ClientFormsTab client={selectedClient} />}
             {activeTab === 'sessions' && <ClientSessionsTab sessions={clientSessions} />}
             {activeTab === 'progress' && <ClientProgressTab />}
             {activeTab === 'chat' && <ClientChatTab client={selectedClient} />}
@@ -253,9 +256,6 @@ const ClientSessionsTab = ({ sessions }: { sessions: UpcomingSession[] }) => {
     <div className='space-y-6'>
       <div className='flex items-center justify-between'>
         <h3 className='text-xl font-semibold text-gray-900'>Session Management</h3>
-        <button className='px-4 py-2 bg-[#9071FF] text-white rounded-lg hover:bg-[#7c5ce8] transition-colors text-sm font-medium'>
-          Schedule Session
-        </button>
       </div>
       <UpcomingSessionsCard sessions={sessions} onSessionClick={() => {}} />
     </div>
@@ -736,6 +736,9 @@ export default function TherapistDashboardPage({
           </div>
         </div>
       )}
+
+      {/* Global Schedule Session Modal */}
+      <ScheduleSessionModal />
     </div>
   );
 }

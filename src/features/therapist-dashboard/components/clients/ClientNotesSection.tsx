@@ -17,6 +17,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { trackTherapistClientManagement } from '@/src/features/posthog/therapistTracking';
 
 import { ClientNote, NoteCategory, Client, CreateNoteRequest } from '../../types';
+import { NoteViewMode } from '../../types/components';
 import { exportClientNotes } from '../../utils/notesExport';
 
 import { ClientNotesForm } from './ClientNotesForm';
@@ -28,8 +29,6 @@ interface ClientNotesSectionProps {
   therapistId: number;
 }
 
-type ViewMode = 'recent' | 'category' | 'timeline' | 'all';
-
 export function ClientNotesSection({ client, therapistId }: ClientNotesSectionProps) {
   const [notes, setNotes] = useState<ClientNote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +37,7 @@ export function ClientNotesSection({ client, therapistId }: ClientNotesSectionPr
   const [editingNote, setEditingNote] = useState<ClientNote | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<NoteCategory | 'all'>('all');
-  const [viewMode, setViewMode] = useState<ViewMode>('recent');
+  const [viewMode, setViewMode] = useState<NoteViewMode>('recent');
   const [exporting, setExporting] = useState(false);
 
   useEffect(() => {

@@ -140,7 +140,7 @@ export async function GET(req: NextRequest) {
         // Don't fail the connection just because we couldn't fetch events
       }
 
-      return NextResponse.redirect(`${origin}/therapist/`);
+      return NextResponse.redirect(`${origin}/therapist/integrations`);
     } catch (error) {
       console.error('Failed to exchange code or update therapist:', error);
 

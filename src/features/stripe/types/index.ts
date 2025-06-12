@@ -23,24 +23,27 @@ export type PayoutType = 'booking' | 'bonus' | 'adjustment';
 
 // Additional Stripe component types
 export interface ConnectStatus {
-  isConnected: boolean;
+  connected: boolean;
   accountId?: string;
-  hasRequiredInfo: boolean;
-  detailsSubmitted: boolean;
+  onboardingStatus: 'not_started' | 'pending' | 'completed';
   chargesEnabled: boolean;
   payoutsEnabled: boolean;
-  requirements?: Record<string, unknown>;
+  detailsSubmitted: boolean;
+  requiresAction?: boolean;
+  requirements?: string[];
 }
 
 export interface StripeConnectIntegrationProps {
   therapistId: number;
-  onStatusUpdate: (status: ConnectStatus) => void;
 }
 
 export interface StripeStatus {
-  isConnected: boolean;
+  connected: boolean;
   accountId?: string;
-  hasRequiredInfo: boolean;
-  canReceivePayments: boolean;
+  onboardingStatus: 'not_started' | 'pending' | 'completed';
+  chargesEnabled: boolean;
+  payoutsEnabled: boolean;
+  detailsSubmitted: boolean;
+  requiresAction?: boolean;
   requirements?: string[];
 }

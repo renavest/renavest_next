@@ -10,6 +10,7 @@ import { LogoutButton } from '@/src/features/auth/components/auth/LogoutButton';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
+import { SubscriptionPlanIndicator } from '../../employee-dashboard/components/SubscriptionPlanIndicator';
 import {
   isHeaderScrolledSignal,
   isMobileMenuOpenSignal,
@@ -24,6 +25,9 @@ const MobileNavigation = () => (
     `}
   >
     <div className='p-4 space-y-2'>
+      <div className='px-4 py-3 flex items-center justify-center'>
+        <SubscriptionPlanIndicator />
+      </div>
       <div className='px-4 py-3 border-t border-gray-100 mt-3'>
         <LogoutButton
           className='w-full flex items-center justify-center space-x-2 text-red-600 hover:bg-red-50 p-2 rounded-md'
@@ -41,10 +45,8 @@ const MobileNavigation = () => (
 
 const DesktopNavigation = () => (
   <div className='hidden md:flex items-center gap-3 lg:gap-4'>
+    <SubscriptionPlanIndicator />
     <div className='h-6 w-px bg-gray-200 mx-1'></div>
-    {/* <span className='px-4 py-1 rounded-full bg-[#F3F0FF] text-[#9071FF] font-semibold text-sm shadow-sm mr-2'>
-      400 credits left
-    </span> */}
     <LogoutButton />
     <div className='ml-1 lg:ml-2'>
       <UserButton afterSignOutUrl='/login' />

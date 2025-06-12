@@ -7,20 +7,7 @@ import { toast } from 'sonner';
 
 import { trackTherapistIntegrations } from '@/src/features/posthog/therapistTracking';
 
-interface ConnectStatus {
-  connected: boolean;
-  accountId?: string;
-  onboardingStatus: 'not_started' | 'pending' | 'completed';
-  chargesEnabled: boolean;
-  payoutsEnabled: boolean;
-  detailsSubmitted: boolean;
-  requiresAction?: boolean;
-  requirements?: string[];
-}
-
-interface StripeConnectIntegrationProps {
-  therapistId: number;
-}
+import { ConnectStatus, StripeConnectIntegrationProps } from '../types';
 
 export function StripeConnectIntegration({ therapistId }: StripeConnectIntegrationProps) {
   const [status, setStatus] = useState<ConnectStatus>({
@@ -401,11 +388,13 @@ function ActionSection({
     <div className='space-y-3'>
       <div className='text-center'>
         <p className='text-sm text-green-600 font-medium mb-2'>
-          ✓ Bank account connected successfully
+          ✓ Stripe payments configured successfully
         </p>
-        <p className='text-xs text-gray-500 mb-4'>
-          You'll receive payments within 2-7 business days after sessions are completed
-        </p>
+        <div className='text-xs text-gray-500 mb-4 space-y-1'>
+          <div>• Session payments enabled</div>
+          <div>• Automatic transfers enabled</div>
+          <div>• Secure payment processing</div>
+        </div>
       </div>
       <button
         onClick={onDisconnect}
@@ -428,7 +417,7 @@ function InfoSection() {
         <div className='text-xs text-blue-700'>
           <h4 className='font-medium mb-1'>Payment Information</h4>
           <ul className='space-y-1'>
-            <li>• You receive 90% of session fees</li>
+            <li>• Competitive session fees</li>
             <li>• Payments are transferred automatically after session completion</li>
             <li>• Standard transfer time: 2-7 business days</li>
             <li>• All transactions are handled securely through Stripe</li>

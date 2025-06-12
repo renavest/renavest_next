@@ -1,6 +1,6 @@
 import { signal } from '@preact-signals/safe-react';
 
-import { Client, UpcomingSession, TherapistStatistics } from '../types';
+import { Client, UpcomingSession, TherapistStatistics, ClientNote } from '../types';
 
 export const therapistPageLoadedSignal = signal(false);
 export const therapistIdSignal = signal<number | null>(null);
@@ -11,12 +11,165 @@ export const therapistIdErrorSignal = signal<string | null>(null);
 export const clientsSignal = signal<Client[]>([]);
 export const upcomingSessionsSignal = signal<UpcomingSession[]>([]);
 export const statisticsSignal = signal<TherapistStatistics>({
-  totalSessions: 0,
   totalClients: 0,
-  completedSessions: 0,
+  activeClients: 0,
+  totalSessions: 0,
+  upcomingSessions: 0,
+  totalRevenue: 0,
+  monthlyRevenue: 0,
+  completionRate: 0,
 });
 export const selectedClientSignal = signal<Client | null>(null);
 export const isAddClientOpenSignal = signal<boolean>(false);
+
+// Session scheduling state signals
+export const isScheduleSessionModalOpenSignal = signal<boolean>(false);
+export const scheduleSessionClientSignal = signal<Client | null>(null);
+export const sessionSchedulingLoadingSignal = signal<boolean>(false);
+export const sessionSchedulingErrorSignal = signal<string | null>(null);
+
+// Client notes state signals
+export const clientNotesSignal = signal<ClientNote[]>([]);
+export const clientNotesLoadingSignal = signal<boolean>(false);
+export const selectedNoteSignal = signal<ClientNote | null>(null);
+export const isNoteFormOpenSignal = signal<boolean>(false);
+export const editingNoteSignal = signal<ClientNote | null>(null);
+
+// Add client form state signals
+export const addClientFormDataSignal = signal({
+  firstName: '',
+  lastName: '',
+  email: '',
+});
+export const addClientFormErrorsSignal = signal<Record<string, string>>({});
+export const addClientSubmittingSignal = signal<boolean>(false);
+
+// Actions for session scheduling
+export const openScheduleSessionModal = (client: Client) => {
+  scheduleSessionClientSignal.value = client;
+  isScheduleSessionModalOpenSignal.value = true;
+  sessionSchedulingErrorSignal.value = null;
+};
+
+export const closeScheduleSessionModal = () => {
+  isScheduleSessionModalOpenSignal.value = false;
+  scheduleSessionClientSignal.value = null;
+  sessionSchedulingErrorSignal.value = null;
+  sessionSchedulingLoadingSignal.value = false;
+};
+
+// Actions for client notes
+export const openNoteForm = (note?: ClientNote) => {
+  if (note) {
+    editingNoteSignal.value = note;
+  } else {
+    editingNoteSignal.value = null;
+  }
+  isNoteFormOpenSignal.value = true;
+};
+
+export const closeNoteForm = () => {
+  isNoteFormOpenSignal.value = false;
+  editingNoteSignal.value = null;
+};
+
+export const selectNote = (note: ClientNote | null) => {
+  selectedNoteSignal.value = note;
+};
+
+export const refreshClientNotes = async (clientId: string) => {
+  try {
+    clientNotesLoadingSignal.value = true;
+    const response = await fetch(`/api/therapist/notes?clientId=${clientId}`);
+    if (response.ok) {
+      const data = await response.json();
+      clientNotesSignal.value = data.notes || [];
+    }
+  } catch (error) {
+    console.error('Error refreshing notes:', error);
+  } finally {
+    clientNotesLoadingSignal.value = false;
+  }
+};
+
+// Actions for add client form
+export const updateAddClientFormData = (field: string, value: string) => {
+  addClientFormDataSignal.value = {
+    ...addClientFormDataSignal.value,
+    [field]: value,
+  };
+};
+
+export const setAddClientFormErrors = (errors: Record<string, string>) => {
+  addClientFormErrorsSignal.value = errors;
+};
+
+export const resetAddClientForm = () => {
+  addClientFormDataSignal.value = {
+    firstName: '',
+    lastName: '',
+    email: '',
+  };
+  addClientFormErrorsSignal.value = {};
+  addClientSubmittingSignal.value = false;
+};
+
+export const refreshUpcomingSessions = async () => {
+  try {
+    const response = await fetch('/api/therapist/sessions');
+    if (response.ok) {
+      const data = await response.json();
+      upcomingSessionsSignal.value = data.sessions.map(
+        (session: {
+          id: number;
+          clientId: number;
+          clientName: string;
+          sessionDate: string;
+          sessionStartTime: string;
+          status: string;
+          googleMeetLink: string;
+          therapistTimezone: string;
+          clientTimezone: string;
+        }) => ({
+          id: session.id.toString(),
+          clientId: session.clientId?.toString() ?? '',
+          clientName: session.clientName,
+          sessionDate: session.sessionDate,
+          sessionStartTime: session.sessionStartTime,
+          status: session.status,
+          googleMeetLink: session.googleMeetLink,
+          therapistTimezone: session.therapistTimezone,
+          clientTimezone: session.clientTimezone,
+        }),
+      );
+    }
+  } catch (error) {
+    console.error('Error refreshing sessions:', error);
+  }
+};
+
+// Actions for clients
+export const refreshClients = async () => {
+  try {
+    const response = await fetch('/api/therapist/clients');
+    if (response.ok) {
+      const data = await response.json();
+      clientsSignal.value = data.clients || [];
+    }
+  } catch (error) {
+    console.error('Error refreshing clients:', error);
+  }
+};
+
+export const selectClient = (client: Client | null) => {
+  selectedClientSignal.value = client;
+  // Clear notes when switching clients
+  if (client) {
+    refreshClientNotes(client.id);
+  } else {
+    clientNotesSignal.value = [];
+  }
+};
 
 // Enhanced therapist ID initialization with retry logic
 export const initializeTherapistId = async (userId: string): Promise<number | null> => {

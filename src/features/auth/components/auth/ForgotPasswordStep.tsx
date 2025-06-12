@@ -8,6 +8,7 @@ import React from 'react';
 // Removed direct signal import, use global signal instead
 import { authErrorSignal, forgotPasswordEmailAddress, currentStep } from '../../state/authState';
 import { OnboardingStep } from '../../types';
+import { trackPasswordResetRequest, trackPasswordResetError } from '../../utils/authTracking';
 
 export function ForgotPasswordStep() {
   const { signIn } = useSignIn();
@@ -17,18 +18,59 @@ export function ForgotPasswordStep() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     authErrorSignal.value = null;
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(forgotPasswordEmailAddress.value)) {
+      authErrorSignal.value = 'Please enter a valid email address.';
+      return;
+    }
+
     try {
       if (!signIn) {
-        authErrorSignal.value = 'Password reset service unavailable.';
+        authErrorSignal.value = 'Password reset service unavailable. Please try again later.';
         return;
       }
+
+      // Track the password reset request
+      trackPasswordResetRequest({
+        email_domain: forgotPasswordEmailAddress.value.split('@')[1],
+      });
+
       await signIn.create({
         strategy: 'reset_password_email_code',
         identifier: forgotPasswordEmailAddress.value,
       });
       currentStep.value = OnboardingStep.RESET_PASSWORD;
-    } catch {
-      authErrorSignal.value = 'Failed to send reset email. Please try again.';
+    } catch (error: unknown) {
+      console.error('Forgot password error:', error);
+
+      // Track the error
+      trackPasswordResetError(error, {
+        email_domain: forgotPasswordEmailAddress.value.split('@')[1],
+      });
+
+      // More specific error handling
+      let errorMessage = 'Failed to send reset email. Please try again.';
+
+      if (error && typeof error === 'object' && 'errors' in error) {
+        const clerkErrors = (error as { errors: Array<{ code?: string; message?: string }> })
+          .errors;
+        const clerkError = clerkErrors[0];
+        if (clerkError?.code === 'form_identifier_not_found') {
+          errorMessage =
+            'No account found with this email address. Please check your email or sign up for a new account.';
+        } else if (clerkError?.code === 'form_identifier_exists_') {
+          errorMessage =
+            'This email is associated with a social login. Please sign in using your social account.';
+        } else if (clerkError?.message) {
+          errorMessage = clerkError.message;
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      authErrorSignal.value = errorMessage;
     }
   };
   const handleBackToLogin = () => {

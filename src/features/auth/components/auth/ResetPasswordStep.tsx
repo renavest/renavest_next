@@ -5,6 +5,7 @@
 import { useSignIn, useUser } from '@clerk/nextjs';
 import { useClerk } from '@clerk/nextjs';
 import { signal } from '@preact-signals/safe-react';
+import { useSearchParams } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 
 import {
@@ -14,7 +15,61 @@ import {
   currentStep,
 } from '../../state/authState'; // Use global error signal
 import { OnboardingStep } from '../../types'; // Import props type
+import {
+  trackPasswordResetAttempt,
+  trackPasswordResetSuccess,
+  trackPasswordResetError,
+} from '../../utils/authTracking';
 import { useRoleBasedRedirect } from '../../utils/routerUtil';
+
+// Helper function for password validation
+const validatePasswordRequirements = (
+  password: string,
+): { isValid: boolean; errorMessage?: string } => {
+  // Check minimum length
+  if (password.length < 8) {
+    return { isValid: false, errorMessage: 'Password must be at least 8 characters long.' };
+  }
+
+  // Check for at least one letter and one number (basic requirements)
+  const hasLetter = /[a-zA-Z]/.test(password);
+  const hasNumber = /\d/.test(password);
+
+  if (!hasLetter || !hasNumber) {
+    return {
+      isValid: false,
+      errorMessage: 'Password must contain at least one letter and one number.',
+    };
+  }
+
+  return { isValid: true };
+};
+
+// Helper function to get error message from Clerk error
+const getClerkErrorMessage = (error: unknown): string => {
+  if (error && typeof error === 'object' && 'errors' in error) {
+    const clerkErrors = (error as { errors: Array<{ code?: string; message?: string }> }).errors;
+    const clerkError = clerkErrors[0];
+
+    if (clerkError?.code === 'form_code_incorrect') {
+      return 'The verification code is incorrect. Please check your email and try again.';
+    } else if (clerkError?.code === 'form_code_expired') {
+      return 'The verification code has expired. Please request a new password reset.';
+    } else if (clerkError?.code === 'form_password_pwned') {
+      return 'This password has been found in a data breach. Please choose a different password.';
+    } else if (clerkError?.code === 'form_password_too_common') {
+      return 'This password is too common. Please choose a more secure password.';
+    } else if (clerkError?.code === 'form_password_validation') {
+      return 'Password does not meet security requirements. Please choose a stronger password.';
+    } else if (clerkError?.message) {
+      return clerkError.message;
+    }
+  } else if (error instanceof Error) {
+    return error.message;
+  }
+
+  return 'Failed to reset password. Please try again.';
+};
 
 export function ResetPasswordStep() {
   const { signIn } = useSignIn();
@@ -23,6 +78,15 @@ export function ResetPasswordStep() {
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const { user } = useUser();
   const { redirectToRole } = useRoleBasedRedirect();
+  const searchParams = useSearchParams();
+
+  // Check for reset code in URL parameters on component mount
+  useEffect(() => {
+    const codeFromUrl = searchParams?.get('code');
+    if (codeFromUrl && codeFromUrl.length === 6) {
+      resetPasswordCode.value = codeFromUrl;
+    }
+  }, [searchParams]);
 
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     resetPasswordCode.value = e.target.value;
@@ -30,31 +94,69 @@ export function ResetPasswordStep() {
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     resetPasswordNewPassword.value = e.target.value;
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     authErrorSignal.value = null;
+
+    // Validate inputs before submission
+    if (!resetPasswordCode.value || resetPasswordCode.value.length !== 6) {
+      authErrorSignal.value = 'Please enter the 6-digit verification code.';
+      return;
+    }
+
+    if (!resetPasswordNewPassword.value) {
+      authErrorSignal.value = 'Please enter a new password.';
+      return;
+    }
+
+    // Validate password requirements
+    const { isValid, errorMessage } = validatePasswordRequirements(resetPasswordNewPassword.value);
+    if (!isValid) {
+      authErrorSignal.value = errorMessage || 'Password validation failed.';
+      return;
+    }
+
     setIsResettingPassword(true);
+
+    // Track the password reset attempt
+    trackPasswordResetAttempt();
+
     try {
       if (!signIn) {
-        authErrorSignal.value = 'Reset service unavailable.';
+        authErrorSignal.value = 'Reset service unavailable. Please try again later.';
         setIsResettingPassword(false);
         return;
       }
+
       const result = await signIn.attemptFirstFactor({
         strategy: 'reset_password_email_code',
         code: resetPasswordCode.value,
         password: resetPasswordNewPassword.value,
       });
+
       if (result.status === 'complete') {
         setActive({ session: result.createdSessionId });
         showResetPasswordStep.value = true;
         authErrorSignal.value = null;
+        trackPasswordResetSuccess();
+      } else {
+        // Handle incomplete status
+        authErrorSignal.value = 'Password reset could not be completed. Please try again.';
+        setIsResettingPassword(false);
       }
-    } catch {
-      authErrorSignal.value = 'Failed to reset password. Please try again.';
+    } catch (error: unknown) {
+      console.error('Password reset error:', error);
+
+      // More specific error handling
+      const errorMessage = getClerkErrorMessage(error);
+
+      authErrorSignal.value = errorMessage;
       setIsResettingPassword(false);
+      trackPasswordResetError(error);
     }
   };
+
   const handleBackToLogin = () => {
     currentStep.value = OnboardingStep.LOGIN;
   };
