@@ -62,7 +62,16 @@ export function SubscriptionPlanIndicator({ className }: SubscriptionPlanIndicat
 
       {/* Hover tooltip */}
       {isHovered && (
-        <div className='absolute top-full mt-2 right-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-3 min-w-48'>
+        <div
+          className={cn(
+            'absolute top-full mt-2 right-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-3 min-w-48',
+            !isPremium &&
+              'cursor-pointer hover:border-purple-300 hover:shadow-xl transition-all duration-200',
+          )}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          onClick={!isPremium ? handleUpgradeClick : undefined}
+        >
           <div className='text-sm text-gray-800 font-medium mb-1'>
             {planName} Plan {isPremium ? '✨' : isStarter ? '⚡' : '🆓'}
           </div>
@@ -89,7 +98,7 @@ export function SubscriptionPlanIndicator({ className }: SubscriptionPlanIndicat
           </div>
           {!isPremium && (
             <div className='mt-2 pt-2 border-t border-gray-200'>
-              <div className='text-xs text-purple-600 font-medium mb-1'>
+              <div className='text-xs text-purple-600 font-medium mb-1 cursor-pointer hover:text-purple-800 transition-colors'>
                 {isStarter ? '✨ Upgrade to Premium' : '🚀 Start Free Trial'}
               </div>
               <div className='text-xs text-gray-500'>
@@ -97,6 +106,7 @@ export function SubscriptionPlanIndicator({ className }: SubscriptionPlanIndicat
                   ? 'Unlock all features + priority support'
                   : '7 days free, then $9.99/month'}
               </div>
+              <div className='text-xs text-gray-400 mt-1 italic'>Click anywhere to upgrade</div>
             </div>
           )}
         </div>
