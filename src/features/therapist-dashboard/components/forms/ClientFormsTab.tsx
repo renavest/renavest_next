@@ -11,6 +11,7 @@ import {
   getAssignmentsByClient,
   getFormsByTherapist,
 } from '../../state/formsState';
+import { therapistIdSignal } from '../../state/therapistDashboardState';
 import type { Client } from '../../types';
 import type { FormAssignment, IntakeForm } from '../../types/forms';
 
@@ -214,7 +215,8 @@ function AvailableFormsSection({ availableForms, handleSendForm }: AvailableForm
 export function ClientFormsTab({ client }: ClientFormsTabProps) {
   const formsState = formsStateSignal.value;
   const clientAssignments = getAssignmentsByClient(client.id);
-  const availableForms = getFormsByTherapist(1); // TODO: Get from therapist context
+  const therapistId = therapistIdSignal.value;
+  const availableForms = getFormsByTherapist(therapistId || 1); // Use actual therapist ID or fallback to 1
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
 
   const filteredAssignments = clientAssignments.filter(
@@ -225,6 +227,7 @@ export function ClientFormsTab({ client }: ClientFormsTabProps) {
     // Load forms and assignments for this client
     const loadData = async () => {
       try {
+        formsActions.setLoading(true);
         await formsActions.loadForms();
       } catch (error) {
         console.error('Error loading forms data:', error);
