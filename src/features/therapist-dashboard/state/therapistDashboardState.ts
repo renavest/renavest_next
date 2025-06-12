@@ -1,11 +1,6 @@
 import { signal } from '@preact-signals/safe-react';
 
-import {
-  getDashboardData,
-  getClientsData,
-  getSessionsData,
-  invalidateOnDataChange,
-} from '@/src/services/therapistDataService';
+// Note: Using API calls instead of direct database imports for client-side compatibility
 
 import { Client, UpcomingSession, TherapistStatistics, ClientNote } from '../types';
 
@@ -56,7 +51,7 @@ export const addClientFormDataSignal = signal({
 export const addClientFormErrorsSignal = signal<Record<string, string>>({});
 export const addClientSubmittingSignal = signal<boolean>(false);
 
-// Optimized refresh actions using cached data service
+// Refresh actions using API calls
 export const refreshDashboardData = async (_force = false) => {
   const therapistId = therapistIdSignal.value;
   if (!therapistId) return;
@@ -65,16 +60,38 @@ export const refreshDashboardData = async (_force = false) => {
     dashboardLoadingSignal.value = true;
     dashboardErrorSignal.value = null;
 
-    // Use cached dashboard data service
-    const dashboardData = await getDashboardData(therapistId);
+    // Use API endpoints instead of direct database access
+    const [clientsResponse, sessionsResponse, statsResponse] = await Promise.all([
+      fetch('/api/therapist/clients'),
+      fetch('/api/therapist/sessions'),
+      fetch('/api/therapist/statistics'),
+    ]);
 
-    // Update all signals with cached data
-    clientsSignal.value = dashboardData.clients;
-    upcomingSessionsSignal.value = dashboardData.upcomingSessions;
-    statisticsSignal.value = dashboardData.statistics;
+    if (!clientsResponse.ok || !sessionsResponse.ok || !statsResponse.ok) {
+      throw new Error('Failed to fetch dashboard data');
+    }
+
+    const [clientsData, sessionsData, statsData] = await Promise.all([
+      clientsResponse.json(),
+      sessionsResponse.json(),
+      statsResponse.json(),
+    ]);
+
+    // Update all signals with API data
+    clientsSignal.value = clientsData.clients || [];
+    upcomingSessionsSignal.value = sessionsData.sessions || [];
+    statisticsSignal.value = statsData.statistics || {
+      totalClients: 0,
+      activeClients: 0,
+      totalSessions: 0,
+      upcomingSessions: 0,
+      totalRevenue: 0,
+      monthlyRevenue: 0,
+      completionRate: 0,
+    };
     lastRefreshTimeSignal.value = new Date();
 
-    console.log('Dashboard data refreshed from cache');
+    console.log('Dashboard data refreshed from API');
   } catch (error) {
     console.error('Error refreshing dashboard data:', error);
     dashboardErrorSignal.value = error instanceof Error ? error.message : 'Unknown error';
@@ -103,21 +120,26 @@ export const refreshUpcomingSessions = async () => {
   if (!therapistId) return;
 
   try {
-    // Use cached sessions data service
-    const sessionsData = await getSessionsData(therapistId);
-    upcomingSessionsSignal.value = sessionsData.sessions.map((session) => ({
+    // Use API endpoint instead of direct database access
+    const response = await fetch('/api/therapist/sessions');
+    if (!response.ok) {
+      throw new Error('Failed to fetch sessions');
+    }
+
+    const sessionsData = await response.json();
+    upcomingSessionsSignal.value = (sessionsData.sessions || []).map((session: any) => ({
       id: session.id.toString(),
       clientId: session.clientId?.toString() ?? '',
       clientName: session.clientName,
-      sessionDate: session.sessionDate.toISOString(),
-      sessionTime: session.sessionStartTime.toISOString(),
+      sessionDate: session.sessionDate,
+      sessionTime: session.sessionStartTime,
       duration: 60,
       sessionType: 'follow-up' as const,
       status: session.status as 'scheduled' | 'confirmed' | 'pending',
       meetingLink: session.googleMeetLink,
     }));
 
-    console.log('Upcoming sessions refreshed from cache');
+    console.log('Upcoming sessions refreshed from API');
   } catch (error) {
     console.error('Error refreshing sessions:', error);
   }
@@ -128,9 +150,14 @@ export const refreshClients = async () => {
   if (!therapistId) return;
 
   try {
-    // Use cached clients data service
-    const clientsData = await getClientsData(therapistId);
-    clientsSignal.value = clientsData.clients.map((client) => ({
+    // Use API endpoint instead of direct database access
+    const response = await fetch('/api/therapist/clients');
+    if (!response.ok) {
+      throw new Error('Failed to fetch clients');
+    }
+
+    const clientsData = await response.json();
+    clientsSignal.value = (clientsData.clients || []).map((client: any) => ({
       id: client.id.toString(),
       firstName: client.firstName || '',
       lastName: client.lastName || '',
@@ -142,34 +169,22 @@ export const refreshClients = async () => {
       status: 'active' as const,
     }));
 
-    console.log('Clients refreshed from cache');
+    console.log('Clients refreshed from API');
   } catch (error) {
     console.error('Error refreshing clients:', error);
   }
 };
 
-// Optimized data invalidation actions
+// Data invalidation actions using API refresh
 export const invalidateClientData = async () => {
-  const therapistId = therapistIdSignal.value;
-  if (!therapistId) return;
-
-  await invalidateOnDataChange(therapistId, 'client');
   await refreshDashboardData(true);
 };
 
 export const invalidateSessionData = async () => {
-  const therapistId = therapistIdSignal.value;
-  if (!therapistId) return;
-
-  await invalidateOnDataChange(therapistId, 'session');
   await refreshDashboardData(true);
 };
 
 export const invalidateNoteData = async () => {
-  const therapistId = therapistIdSignal.value;
-  if (!therapistId) return;
-
-  await invalidateOnDataChange(therapistId, 'note');
   // Notes don't affect dashboard data, only refresh notes for selected client
   if (selectedClientSignal.value) {
     await refreshClientNotes(selectedClientSignal.value.id);

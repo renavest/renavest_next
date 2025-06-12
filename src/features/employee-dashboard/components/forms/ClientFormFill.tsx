@@ -7,7 +7,7 @@ import {
   ArrowLeft,
   Send,
   AlertTriangle,
-  ProgressIcon as Progress,
+  TrendingUp,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -20,6 +20,7 @@ import {
   canSubmitForm,
   getFormProgress,
   type ClientFormAssignment,
+  type ClientFormField,
 } from '../../state/clientFormsState';
 
 import { ClientFormFieldComponent } from './ClientFormField';
@@ -40,7 +41,7 @@ export function ClientFormFill({ assignment, onBack }: ClientFormFillProps) {
     };
   }, [assignment]);
 
-  const validateField = (field: any, value: unknown): string => {
+  const validateField = (field: ClientFormField, value: unknown): string => {
     if (field.required && (!value || (typeof value === 'string' && !value.trim()))) {
       return `${field.label} is required`;
     }
@@ -281,7 +282,7 @@ export function ClientFormFill({ assignment, onBack }: ClientFormFillProps) {
                 </span>
               ) : (
                 <span className='flex items-center gap-2'>
-                  <Progress className='w-4 h-4' />
+                  <TrendingUp className='w-4 h-4' />
                   Please complete all required fields
                 </span>
               )}
