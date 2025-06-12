@@ -1,6 +1,7 @@
 'use client';
 
 import ChatSection from './ChatSection';
+import { CurrentPlanCard } from './CurrentPlanCard';
 import { SharedDocumentsSection } from './SharedDocumentsSection';
 import SharePanel from './SharePanel';
 import TherapistRecommendationsWithOverlay from './TherapistRecommendationsWithOverlay';
@@ -90,6 +91,9 @@ export function DashboardContent({
 
       {/* Share link panel and resources */}
       <div className='md:col-span-1 space-y-6'>
+        {/* Current Plan Card */}
+        <CurrentPlanCard className='animate-fade-in-up' />
+
         {/* Share Panel */}
         <SharePanel onShareClick={onShareClick} referralLink={referralLink} />
 

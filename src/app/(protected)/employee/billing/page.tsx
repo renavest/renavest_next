@@ -1,6 +1,8 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
+import { ArrowLeft, Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { SubscriptionPlansCard } from '@/src/features/billing/components/SubscriptionPlansCard';
@@ -30,9 +32,11 @@ interface SubscriptionStatus {
 
 export default function BillingPage() {
   const { user } = useUser();
+  const router = useRouter();
   const [sponsorshipInfo, setSponsorshipInfo] = useState<SponsorshipInfo | null>(null);
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -116,6 +120,22 @@ export default function BillingPage() {
   return (
     <div className='container mx-auto py-8 px-4 max-w-6xl'>
       <div className='mb-8'>
+        <button
+          onClick={() => {
+            setIsNavigating(true);
+            router.push('/employee');
+          }}
+          disabled={isNavigating}
+          className='inline-flex items-center text-purple-600 hover:text-purple-700 mb-6 transition-colors font-medium disabled:opacity-50'
+        >
+          {isNavigating ? (
+            <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+          ) : (
+            <ArrowLeft className='w-4 h-4 mr-2' />
+          )}
+          Back to Dashboard
+        </button>
+
         <h1 className='text-3xl font-bold text-gray-900 mb-2'>Billing & Subscriptions</h1>
         <p className='text-gray-600'>
           Manage your subscription and unlock premium features like direct messaging with
@@ -168,14 +188,15 @@ export default function BillingPage() {
               </p>
             </div>
 
-            {sponsorshipInfo.defaultSubsidyPercentage > 0 && (
-              <div className='p-3 bg-green-100 rounded-lg'>
-                <p className='text-sm text-green-800'>
-                  <span className='font-medium'>Company-wide benefit:</span>{' '}
-                  {sponsorshipInfo.defaultSubsidyPercentage}% subsidy on all sessions
-                </p>
-              </div>
-            )}
+            {sponsorshipInfo.defaultSubsidyPercentage &&
+              sponsorshipInfo.defaultSubsidyPercentage > 0 && (
+                <div className='p-3 bg-green-100 rounded-lg'>
+                  <p className='text-sm text-green-800'>
+                    <span className='font-medium'>Company-wide benefit:</span>{' '}
+                    {sponsorshipInfo.defaultSubsidyPercentage}% subsidy on all sessions
+                  </p>
+                </div>
+              )}
 
             {sponsorshipInfo.sponsoredGroups && sponsorshipInfo.sponsoredGroups.length > 0 && (
               <div>

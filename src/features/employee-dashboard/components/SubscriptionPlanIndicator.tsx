@@ -1,6 +1,7 @@
 'use client';
 
 import { Crown, Zap } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { useSubscription } from '@/src/hooks/useSubscription';
@@ -13,6 +14,7 @@ interface SubscriptionPlanIndicatorProps {
 export function SubscriptionPlanIndicator({ className }: SubscriptionPlanIndicatorProps) {
   const { hasActiveSubscription, hasStarterSubscription, loading } = useSubscription();
   const [isHovered, setIsHovered] = useState(false);
+  const router = useRouter();
 
   // Determine plan status
   const planName = hasActiveSubscription
@@ -29,19 +31,20 @@ export function SubscriptionPlanIndicator({ className }: SubscriptionPlanIndicat
 
   const handleUpgradeClick = () => {
     // Navigate to billing page for upgrade
-    window.location.href = '/employee/billing';
+    router.push('/employee/billing');
   };
 
   return (
     <div
       className={cn(
-        'relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 cursor-pointer',
+        'relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-200',
         isPremium
           ? 'bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800 border border-purple-300'
           : isStarter
-            ? 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300'
-            : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 border border-gray-300',
-        'hover:shadow-md hover:scale-105',
+            ? 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300 cursor-pointer hover:shadow-md hover:scale-105'
+            : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 border border-gray-300 cursor-pointer hover:shadow-md hover:scale-105',
+        !isPremium &&
+          'hover:bg-gradient-to-r hover:from-purple-100 hover:to-purple-200 hover:text-purple-800 hover:border-purple-300',
         className,
       )}
       onMouseEnter={() => setIsHovered(true)}
@@ -86,12 +89,14 @@ export function SubscriptionPlanIndicator({ className }: SubscriptionPlanIndicat
           </div>
           {!isPremium && (
             <div className='mt-2 pt-2 border-t border-gray-200'>
-              <button
-                onClick={handleUpgradeClick}
-                className='text-xs text-purple-600 hover:text-purple-800 font-medium transition-colors'
-              >
-                {isStarter ? 'Upgrade to Premium →' : 'Start Free Trial →'}
-              </button>
+              <div className='text-xs text-purple-600 font-medium mb-1'>
+                {isStarter ? '✨ Upgrade to Premium' : '🚀 Start Free Trial'}
+              </div>
+              <div className='text-xs text-gray-500'>
+                {isStarter
+                  ? 'Unlock all features + priority support'
+                  : '7 days free, then $9.99/month'}
+              </div>
             </div>
           )}
         </div>

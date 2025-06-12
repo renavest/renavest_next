@@ -40,11 +40,6 @@ export default function TherapistNavbar({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Reset navigation state when route changes
-  useEffect(() => {
-    setIsNavigating(false);
-  }, [backButtonHref]);
-
   // Get therapist ID if not in metadata
   useEffect(() => {
     async function getTherapistId() {
@@ -55,6 +50,11 @@ export default function TherapistNavbar({
     }
     getTherapistId();
   }, [user?.id]);
+
+  // Reset navigation state when route changes
+  useEffect(() => {
+    setIsNavigating(false);
+  }, [backButtonHref]);
 
   const handleMarketplaceClick = () => {
     if (therapistIdSignal.value) {
