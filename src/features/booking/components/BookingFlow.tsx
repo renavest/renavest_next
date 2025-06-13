@@ -117,6 +117,8 @@ export default function UnifiedBookingFlow({ advisor, userId, userEmail }: Booki
       advisorName={advisor.name}
       advisorImage={advisor.profileUrl}
       advisorInitials={getInitials(advisor.name)}
+      bookingURL={advisor.bookingURL}
+      advisorEmail={advisor.email}
     />
   );
 

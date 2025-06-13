@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useState } from 'react';
 
+import AlternativeBooking from '../AlternativeBooking';
 import { BookingConfirmationModal } from '../BookingConfirmation/BookingConfirmationModal';
 import { TherapistAvailability } from '../TherapistAvailability';
 import { selectedSlotSignal } from '../TherapistAvailability/useTherapistAvailability';
@@ -20,6 +21,8 @@ interface BookingConfirmationProps {
   advisorName?: string;
   advisorImage?: string;
   advisorInitials?: string;
+  bookingURL: string;
+  advisorEmail?: string;
 }
 
 interface TimeSlot {
@@ -33,10 +36,13 @@ export function BookingForm({
   advisorName,
   advisorImage,
   advisorInitials: _advisorInitials,
+  bookingURL,
+  advisorEmail,
 }: BookingConfirmationProps) {
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [hasImageError, setHasImageError] = useState(false);
+  const [useExternalBooking, setUseExternalBooking] = useState(false);
 
   const { isBooking, error, handleConfirmBooking, setError } = useBookingConfirmation(
     onConfirm,
@@ -53,6 +59,24 @@ export function BookingForm({
   const handleCancel = () => {
     setShowModal(false);
   };
+
+  const handleGoogleCalendarUnavailable = () => {
+    setUseExternalBooking(true);
+  };
+
+  if (useExternalBooking) {
+    return (
+      <AlternativeBooking
+        advisor={{
+          id: advisorId,
+          name: advisorName || 'Therapist',
+          profileUrl: advisorImage,
+          email: advisorEmail,
+        }}
+        bookingURL={bookingURL}
+      />
+    );
+  }
 
   return (
     <div className='min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-purple-50 to-white py-8 px-2'>
@@ -92,6 +116,7 @@ export function BookingForm({
             <TherapistAvailability
               therapistId={parseInt(advisorId)}
               onSlotSelect={handleSlotSelect}
+              onGoogleCalendarNotAvailable={handleGoogleCalendarUnavailable}
             />
           </div>
         </div>
