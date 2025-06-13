@@ -50,9 +50,12 @@ export default function TherapistRecommendations({
 
     // Navigate to booking page or external URL
     if (therapist.bookingURL) {
+      // For therapists with external booking URLs, open in new tab
       window.open(therapist.bookingURL, '_blank');
     } else {
-      router.push(`/book/${therapist.id}`);
+      // For internal booking, use correct ID format based on pending status
+      const bookingId = therapist.isPending ? `pending-${therapist.id}` : therapist.id.toString();
+      router.push(`/book/${bookingId}`);
     }
   };
 
