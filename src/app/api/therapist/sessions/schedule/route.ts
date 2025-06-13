@@ -1,5 +1,4 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -151,8 +150,14 @@ export async function POST(req: NextRequest) {
             ...booking,
             userId: booking.userId.toString(),
           },
-          therapist,
-          user: client,
+          therapist: {
+            ...therapist,
+            email: therapistUser.email,
+          },
+          user: {
+            ...client,
+            therapistId: null,
+          },
           db,
         });
       } catch (error) {
