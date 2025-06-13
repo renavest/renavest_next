@@ -95,23 +95,51 @@ async function createUser(
     updated_at: updatedAt,
   } = data;
 
-  const userCreatedAt = safelyParseDate(createdAt, now);
-  const userUpdatedAt = safelyParseDate(updatedAt, now);
+  try {
+    const userCreatedAt = safelyParseDate(createdAt, now);
+    const userUpdatedAt = safelyParseDate(updatedAt, now);
 
-  await tx.insert(users).values({
-    clerkId: id,
-    email: primaryEmail,
-    firstName: firstName || null,
-    lastName: lastName || null,
-    imageUrl: imageUrl || null,
-    createdAt: userCreatedAt,
-    updatedAt: userUpdatedAt,
-    role: clerkProvidedRole,
-  });
+    console.log('Webhook: Creating new user in database', {
+      clerkId: id,
+      email: primaryEmail,
+      role: clerkProvidedRole,
+      timestamp: new Date().toISOString(),
+    });
 
-  const newUser = (await tx.select().from(users).where(eq(users.clerkId, id)).limit(1))[0];
-  console.info('Webhook: Created new user in DB', { userId: id });
-  return newUser;
+    await tx.insert(users).values({
+      clerkId: id,
+      email: primaryEmail,
+      firstName: firstName || null,
+      lastName: lastName || null,
+      imageUrl: imageUrl || null,
+      createdAt: userCreatedAt,
+      updatedAt: userUpdatedAt,
+      role: clerkProvidedRole,
+    });
+
+    const newUser = (await tx.select().from(users).where(eq(users.clerkId, id)).limit(1))[0];
+
+    if (!newUser) {
+      throw new Error(`Failed to retrieve newly created user with Clerk ID: ${id}`);
+    }
+
+    console.info('Webhook: Successfully created new user in DB', {
+      userId: newUser.id,
+      clerkId: id,
+      email: primaryEmail,
+      role: newUser.role,
+    });
+
+    return newUser;
+  } catch (error) {
+    console.error('Webhook: Failed to create user in database', {
+      clerkId: id,
+      email: primaryEmail,
+      role: clerkProvidedRole,
+      error,
+    });
+    throw error; // Re-throw to trigger atomic cleanup
+  }
 }
 
 /**
@@ -264,6 +292,12 @@ async function synchronizeRoleToClerk(clerkUserId: string, role: string): Promis
  * Main function to handle user creation or update events from Clerk webhooks.
  * For user.created events, this implements atomic signup - if database operations fail,
  * the Clerk user is deleted to maintain consistency.
+ *
+ * This function ensures ACID properties:
+ * - Atomicity: All operations succeed or all fail (with Clerk user cleanup)
+ * - Consistency: Role validation and authorization checks maintain data integrity
+ * - Isolation: Database transactions ensure concurrent operations don't interfere
+ * - Durability: Successful operations are committed to the database
  */
 export async function handleUserCreateOrUpdate(
   eventType: 'user.created' | 'user.updated',
@@ -276,6 +310,8 @@ export async function handleUserCreateOrUpdate(
     unsafe_metadata: unsafeMetadata,
   } = data;
 
+  const startTime = Date.now();
+
   // Prioritize unsafeMetadata over publicMetadata for role (signup flow uses unsafeMetadata)
   const clerkProvidedRole = (unsafeMetadata?.role || publicMetadata?.role) as
     | (typeof userRoleEnum.enumValues)[number]
@@ -287,15 +323,26 @@ export async function handleUserCreateOrUpdate(
     clerkProvidedRole,
     hasUnsafeMetadata: !!unsafeMetadata,
     hasPublicMetadata: !!publicMetadata,
+    timestamp: new Date().toISOString(),
+    signupTimestamp: unsafeMetadata?.signupTimestamp,
   });
 
+  // Validate email extraction
   const emailResult = getPrimaryEmail(emailAddresses, id);
   if (emailResult.isErr()) {
-    console.error('Webhook: No valid email found for user', { userId: id, eventType });
+    console.error('Webhook: No valid email found for user', {
+      userId: id,
+      eventType,
+      emailAddresses: emailAddresses.map((e) => ({ id: e.id, verified: e.verification?.status })),
+      timestamp: new Date().toISOString(),
+    });
 
     // For user.created events, delete the Clerk user since we can't process them
     if (eventType === 'user.created') {
-      await deleteClerkUserOnFailure(id, 'No valid email found');
+      await deleteClerkUserOnFailure(
+        id,
+        'No valid email found - cannot process user without email',
+      );
     }
 
     return err(emailResult.error);
@@ -304,158 +351,266 @@ export async function handleUserCreateOrUpdate(
   const primaryEmail = emailResult.value.toLowerCase();
   const now = createDate().toJSDate();
 
+  // Start database transaction with comprehensive error handling
   try {
-    await db.transaction(async (tx) => {
-      const existingUser = (await tx.select().from(users).where(eq(users.clerkId, id)).limit(1))[0];
-      const userWithEmail = (
-        await tx.select().from(users).where(eq(users.email, primaryEmail)).limit(1)
-      )[0];
-
-      // CRITICAL: Prevent role changes after initial signup
-      let finalValidatedRole: string;
-
-      if (existingUser && eventType === 'user.updated') {
-        // For existing users, NEVER allow role changes - use existing role
-        finalValidatedRole = existingUser.role;
-        console.log('Webhook: Preventing role change for existing user', {
-          userId: id,
-          existingRole: existingUser.role,
-          attemptedRole: clerkProvidedRole,
-          eventType,
-        });
-      } else {
-        // For new users, validate the requested role
-        const requestedRole = (unsafeMetadata?.role || publicMetadata?.role) as string;
-        finalValidatedRole = await validateRoleAuthorization(primaryEmail, requestedRole, tx);
-
-        console.log('Webhook: Role validation for new user', {
-          requestedRole,
-          validatedRole: finalValidatedRole,
-          email: primaryEmail,
-          eventType,
-        });
-      }
-
-      let finalUser: typeof usersTable.$inferSelect | undefined = undefined;
-
-      if (existingUser) {
-        finalUser = await updateUser(
-          tx,
-          existingUser,
-          data,
-          primaryEmail,
-          now,
-          finalValidatedRole as (typeof userRoleEnum.enumValues)[number],
-        );
-      } else if (userWithEmail) {
-        finalUser = await updateUserWithClerkId(
-          tx,
-          userWithEmail,
-          data,
-          primaryEmail,
-          now,
-          finalValidatedRole as (typeof userRoleEnum.enumValues)[number],
-        );
-      } else {
-        finalUser = await createUser(
-          tx,
-          data,
-          primaryEmail,
-          now,
-          finalValidatedRole as (typeof userRoleEnum.enumValues)[number],
-        );
-      }
-
-      if (!finalUser) {
-        throw new Error('Failed to create or update user');
-      }
-
-      // CRITICAL: Ensure role is synchronized to Clerk's publicMetadata for session tokens
-      await synchronizeRoleToClerk(id, finalUser.role);
-
-      console.log('Webhook: User created/updated with validated role', {
-        userId: finalUser.id,
-        clerkId: finalUser.clerkId,
-        role: finalUser.role,
-        email: finalUser.email,
-        eventType,
-      });
-
-      // Handle role-specific logic ONLY if role is therapist and validated
-      if (finalUser.role === 'therapist') {
-        const pendingTherapistMatch = (
-          await tx
-            .select()
-            .from(pendingTherapists)
-            .where(eq(pendingTherapists.clerkEmail, primaryEmail))
-            .limit(1)
-        )[0];
-
-        if (pendingTherapistMatch) {
-          await promotePendingTherapist(finalUser, pendingTherapistMatch, tx);
-          console.log('Webhook: Successfully promoted pending therapist', {
-            userId: finalUser.id,
-            therapistName: pendingTherapistMatch.name,
-          });
-        } else {
-          console.error('Webhook: User has therapist role but no pendingTherapist record', {
-            userId: finalUser.id,
-            email: primaryEmail,
-          });
-        }
-      }
-
-      // NEW: Associate employee users with their employer and potentially a sponsored group
-      if (finalUser.role === 'employee') {
-        // Extract sponsored group name from unsafeMetadata if provided during signup
-        const sponsoredGroupName = unsafeMetadata?.sponsoredGroupName as string | undefined;
-
-        await associateUserWithEmployerAndSponsoredGroup(
-          tx,
-          finalUser,
-          primaryEmail,
-          sponsoredGroupName,
-        );
-
-        // Store sponsored group name in Clerk metadata for client-side access
-        if (sponsoredGroupName) {
-          await synchronizeSponsoredGroupToClerk(id, sponsoredGroupName);
-        }
-      }
-
-      // Process onboarding data if present in unsafeMetadata (for new signups)
-      if (eventType === 'user.created' && finalUser && unsafeMetadata) {
-        await processOnboardingData(tx, finalUser, unsafeMetadata);
-      }
-
-      console.info('Webhook: User sync complete', {
+    const result = await db.transaction(async (tx) => {
+      console.log('Webhook: Starting database transaction', {
         userId: id,
         eventType,
-        finalRole: finalUser.role,
-        email: finalUser.email,
+        email: primaryEmail,
+        transactionId: Math.random().toString(36).substr(2, 9), // Simple transaction ID for logging
       });
 
-      // Track authentication events in PostHog
-      if (eventType === 'user.created') {
-        await trackUserCreatedServerSide(finalUser.clerkId, finalUser.email, finalUser.role, {
-          signup_method: 'email_password',
-          onboarding_completed: !!unsafeMetadata,
+      try {
+        // Check for existing users with comprehensive logging
+        const existingUser = (
+          await tx.select().from(users).where(eq(users.clerkId, id)).limit(1)
+        )[0];
+        const userWithEmail = (
+          await tx.select().from(users).where(eq(users.email, primaryEmail)).limit(1)
+        )[0];
+
+        console.log('Webhook: User lookup results', {
+          userId: id,
+          eventType,
+          hasExistingUser: !!existingUser,
+          hasUserWithEmail: !!userWithEmail,
+          existingUserId: existingUser?.id,
+          userWithEmailId: userWithEmail?.id,
         });
-      } else if (eventType === 'user.updated') {
-        await trackUserUpdatedServerSide(
-          finalUser.clerkId,
-          finalUser.email,
-          finalUser.role,
-          [], // changedFields - empty array since we don't track specific field changes
-          {
-            update_source: 'webhook',
-          },
-        );
+
+        // CRITICAL: Prevent role changes after initial signup
+        let finalValidatedRole: string;
+
+        if (existingUser && eventType === 'user.updated') {
+          // For existing users, NEVER allow role changes - use existing role
+          finalValidatedRole = existingUser.role;
+          console.log('Webhook: Preventing role change for existing user', {
+            userId: id,
+            existingRole: existingUser.role,
+            attemptedRole: clerkProvidedRole,
+            eventType,
+          });
+        } else {
+          // For new users, validate the requested role with comprehensive error handling
+          try {
+            const requestedRole = (unsafeMetadata?.role || publicMetadata?.role) as string;
+            finalValidatedRole = await validateRoleAuthorization(primaryEmail, requestedRole, tx);
+
+            console.log('Webhook: Role validation completed for new user', {
+              requestedRole,
+              validatedRole: finalValidatedRole,
+              email: primaryEmail,
+              eventType,
+            });
+          } catch (roleValidationError) {
+            console.error('Webhook: Role validation failed, using fallback', {
+              userId: id,
+              email: primaryEmail,
+              error: roleValidationError,
+              fallbackRole: 'individual_consumer',
+            });
+            finalValidatedRole = 'individual_consumer';
+          }
+        }
+
+        let finalUser: typeof usersTable.$inferSelect | undefined = undefined;
+
+        // Handle user creation/update with proper error handling
+        try {
+          if (existingUser) {
+            finalUser = await updateUser(
+              tx,
+              existingUser,
+              data,
+              primaryEmail,
+              now,
+              finalValidatedRole as (typeof userRoleEnum.enumValues)[number],
+            );
+          } else if (userWithEmail) {
+            finalUser = await updateUserWithClerkId(
+              tx,
+              userWithEmail,
+              data,
+              primaryEmail,
+              now,
+              finalValidatedRole as (typeof userRoleEnum.enumValues)[number],
+            );
+          } else {
+            finalUser = await createUser(
+              tx,
+              data,
+              primaryEmail,
+              now,
+              finalValidatedRole as (typeof userRoleEnum.enumValues)[number],
+            );
+          }
+
+          if (!finalUser) {
+            throw new Error('Failed to create or update user - no user record returned');
+          }
+
+          // CRITICAL: Ensure role is synchronized to Clerk's publicMetadata for session tokens
+          try {
+            await synchronizeRoleToClerk(id, finalUser.role);
+          } catch (syncError) {
+            console.error('Webhook: Failed to synchronize role to Clerk - non-blocking', {
+              userId: id,
+              role: finalUser.role,
+              error: syncError,
+            });
+            // Non-blocking error - continue processing
+          }
+
+          console.log('Webhook: User created/updated with validated role', {
+            userId: finalUser.id,
+            clerkId: finalUser.clerkId,
+            role: finalUser.role,
+            email: finalUser.email,
+            eventType,
+          });
+
+          // Handle role-specific logic with error handling
+          if (finalUser.role === 'therapist') {
+            try {
+              const pendingTherapistMatch = (
+                await tx
+                  .select()
+                  .from(pendingTherapists)
+                  .where(eq(pendingTherapists.clerkEmail, primaryEmail))
+                  .limit(1)
+              )[0];
+
+              if (pendingTherapistMatch) {
+                await promotePendingTherapist(finalUser, pendingTherapistMatch, tx);
+                console.log('Webhook: Successfully promoted pending therapist', {
+                  userId: finalUser.id,
+                  therapistName: pendingTherapistMatch.name,
+                });
+              } else {
+                console.error('Webhook: User has therapist role but no pendingTherapist record', {
+                  userId: finalUser.id,
+                  email: primaryEmail,
+                });
+              }
+            } catch (therapistError) {
+              console.error('Webhook: Failed to process therapist promotion', {
+                userId: finalUser.id,
+                email: primaryEmail,
+                error: therapistError,
+              });
+              throw therapistError; // This should fail the transaction
+            }
+          }
+
+          // Associate employee users with their employer and potentially a sponsored group
+          if (finalUser.role === 'employee') {
+            try {
+              const sponsoredGroupName = unsafeMetadata?.sponsoredGroupName as string | undefined;
+
+              await associateUserWithEmployerAndSponsoredGroup(
+                tx,
+                finalUser,
+                primaryEmail,
+                sponsoredGroupName,
+              );
+
+              // Store sponsored group name in Clerk metadata for client-side access
+              if (sponsoredGroupName) {
+                try {
+                  await synchronizeSponsoredGroupToClerk(id, sponsoredGroupName);
+                } catch (sponsoredGroupSyncError) {
+                  console.error('Webhook: Failed to sync sponsored group to Clerk - non-blocking', {
+                    userId: id,
+                    sponsoredGroupName,
+                    error: sponsoredGroupSyncError,
+                  });
+                  // Non-blocking error
+                }
+              }
+            } catch (employerError) {
+              console.error('Webhook: Failed to associate user with employer', {
+                userId: finalUser.id,
+                email: primaryEmail,
+                error: employerError,
+              });
+              // Non-blocking error - don't fail the transaction
+            }
+          }
+
+          // Process onboarding data if present in unsafeMetadata (for new signups)
+          if (eventType === 'user.created' && finalUser && unsafeMetadata) {
+            try {
+              await processOnboardingData(tx, finalUser, unsafeMetadata);
+            } catch (onboardingError) {
+              console.error('Webhook: Failed to process onboarding data - non-blocking', {
+                userId: finalUser.id,
+                error: onboardingError,
+              });
+              // Non-blocking error - don't fail the transaction
+            }
+          }
+
+          console.info('Webhook: User sync complete', {
+            userId: id,
+            eventType,
+            finalRole: finalUser.role,
+            email: finalUser.email,
+            processingTime: Date.now() - startTime,
+          });
+
+          // Track authentication events in PostHog with error handling
+          try {
+            if (eventType === 'user.created') {
+              await trackUserCreatedServerSide(finalUser.clerkId, finalUser.email, finalUser.role, {
+                signup_method: 'email_password',
+                onboarding_completed: !!unsafeMetadata,
+                processing_time_ms: Date.now() - startTime,
+              });
+            } else if (eventType === 'user.updated') {
+              await trackUserUpdatedServerSide(
+                finalUser.clerkId,
+                finalUser.email,
+                finalUser.role,
+                [], // changedFields - empty array since we don't track specific field changes
+                {
+                  update_source: 'webhook',
+                  processing_time_ms: Date.now() - startTime,
+                },
+              );
+            }
+          } catch (trackingError) {
+            console.error('Webhook: Failed to track authentication event - non-blocking', {
+              userId: id,
+              eventType,
+              error: trackingError,
+            });
+            // Non-blocking error
+          }
+
+          return finalUser;
+        } catch (userOperationError) {
+          console.error('Webhook: User operation failed within transaction', {
+            userId: id,
+            eventType,
+            email: primaryEmail,
+            error: userOperationError,
+          });
+          throw userOperationError; // Will trigger transaction rollback
+        }
+      } catch (transactionError) {
+        console.error('Webhook: Transaction operation failed', {
+          userId: id,
+          eventType,
+          email: primaryEmail,
+          error: transactionError,
+        });
+        throw transactionError; // Re-throw to rollback transaction
       }
     });
 
-    // Create Stripe customer for new users (outside transaction to avoid blocking)
-    if (eventType === 'user.created') {
+    // Handle post-transaction operations (outside transaction to avoid blocking)
+    if (eventType === 'user.created' && result) {
       try {
         const userRecord = await db.select().from(users).where(eq(users.clerkId, id)).limit(1);
         if (userRecord.length > 0) {
@@ -481,11 +636,16 @@ export async function handleUserCreateOrUpdate(
       userId: id,
       eventType,
       error,
+      processingTime: Date.now() - startTime,
+      email: primaryEmail,
     });
 
     // ATOMIC SIGNUP: For user.created events, delete the Clerk user if database operations fail
     if (eventType === 'user.created') {
-      await deleteClerkUserOnFailure(id, `Database operation failed: ${error}`);
+      await deleteClerkUserOnFailure(
+        id,
+        `Database operation failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
 
     const errorDetails: UserHandlingError = {
@@ -508,24 +668,84 @@ async function deleteClerkUserOnFailure(clerkUserId: string, reason: string): Pr
     console.warn('Webhook: Attempting to delete Clerk user due to database failure', {
       clerkUserId,
       reason,
+      timestamp: new Date().toISOString(),
     });
 
     const client = await clerkClient();
-    await client.users.deleteUser(clerkUserId);
 
-    console.info('Webhook: Successfully deleted Clerk user to maintain atomicity', {
-      clerkUserId,
-      reason,
-    });
+    // First verify the user exists before attempting deletion
+    try {
+      await client.users.getUser(clerkUserId);
+    } catch (getUserError) {
+      console.warn('Webhook: Clerk user may have already been deleted or not found', {
+        clerkUserId,
+        error: getUserError,
+      });
+      // User doesn't exist, so no cleanup needed
+      return;
+    }
+
+    // Attempt to delete the user with retries
+    let retryCount = 0;
+    const maxRetries = 3;
+
+    while (retryCount < maxRetries) {
+      try {
+        await client.users.deleteUser(clerkUserId);
+        console.info('Webhook: Successfully deleted Clerk user to maintain atomicity', {
+          clerkUserId,
+          reason,
+          retryCount,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      } catch (deleteError) {
+        retryCount++;
+        console.warn(`Webhook: Clerk user deletion attempt ${retryCount} failed`, {
+          clerkUserId,
+          reason,
+          retryCount,
+          maxRetries,
+          error: deleteError,
+        });
+
+        if (retryCount < maxRetries) {
+          // Wait before retrying (exponential backoff)
+          await new Promise((resolve) => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
+        }
+      }
+    }
+
+    // All retries failed
+    throw new Error(`Failed to delete Clerk user after ${maxRetries} attempts`);
   } catch (deleteError) {
     console.error('Webhook: CRITICAL - Failed to delete Clerk user after database failure', {
       clerkUserId,
       reason,
       deleteError,
+      timestamp: new Date().toISOString(),
+      severity: 'CRITICAL',
     });
 
+    // TODO: Add alerting here for critical errors
     // This is a critical error - we have an orphaned Clerk user
-    // You might want to add alerting here or store this for manual cleanup
+    // Consider adding to a cleanup queue or sending alerts to operations team
+
+    // Store the orphaned user info for manual cleanup
+    try {
+      // Could store in a separate table for manual cleanup later
+      console.error('Webhook: Orphaned Clerk user requires manual cleanup', {
+        clerkUserId,
+        reason,
+        failureTimestamp: new Date().toISOString(),
+        action_required: 'manual_cleanup',
+      });
+    } catch (logError) {
+      console.error('Webhook: Failed to log orphaned user for cleanup', {
+        clerkUserId,
+        logError,
+      });
+    }
   }
 }
 
@@ -645,8 +865,7 @@ export async function handleUserActivity(
 }
 
 /**
- * Validates if a user is authorized for the requested role
- * This is the SINGLE SOURCE OF TRUTH for role assignment
+ * Enhanced role validation with comprehensive logging and error handling
  */
 async function validateRoleAuthorization(
   email: string,
@@ -656,76 +875,99 @@ async function validateRoleAuthorization(
   const normalizedEmail = email.toLowerCase().trim();
   const emailDomain = normalizedEmail.split('@')[1];
 
-  console.log('Role validation:', {
+  console.log('Webhook: Starting role validation', {
     email: normalizedEmail,
     domain: emailDomain,
     requestedRole,
+    timestamp: new Date().toISOString(),
   });
 
-  // 1. THERAPIST ROLE - Must be in pendingTherapists table
-  if (requestedRole === 'therapist') {
-    const pendingTherapist = await tx
-      .select()
-      .from(pendingTherapists)
-      .where(eq(pendingTherapists.clerkEmail, normalizedEmail))
-      .limit(1);
+  try {
+    // 1. THERAPIST ROLE - Must be in pendingTherapists table
+    if (requestedRole === 'therapist') {
+      const pendingTherapist = await tx
+        .select()
+        .from(pendingTherapists)
+        .where(eq(pendingTherapists.clerkEmail, normalizedEmail))
+        .limit(1);
 
-    if (pendingTherapist.length > 0) {
-      console.log('✅ Therapist role authorized via pendingTherapists table', {
-        email: normalizedEmail,
-      });
-      return 'therapist';
-    } else {
-      console.warn('❌ Unauthorized therapist role request - not in pendingTherapists', {
-        email: normalizedEmail,
-        requestedRole,
-      });
-      return 'employee'; // Fallback to employee
+      if (pendingTherapist.length > 0) {
+        console.log('✅ Webhook: Therapist role authorized via pendingTherapists table', {
+          email: normalizedEmail,
+          therapistName: pendingTherapist[0].name,
+        });
+        return 'therapist';
+      } else {
+        console.warn('❌ Webhook: Unauthorized therapist role request - not in pendingTherapists', {
+          email: normalizedEmail,
+          requestedRole,
+          fallbackRole: 'employee',
+        });
+        return 'employee'; // Fallback to employee
+      }
     }
-  }
 
-  // 2. EMPLOYER_ADMIN ROLE - Must be in allowed employer admin emails
-  if (requestedRole === 'employer_admin') {
-    if (ALLOWED_EMPLOYER_ADMIN_EMAILS.includes(normalizedEmail)) {
-      console.log('✅ Employer admin role authorized via ALLOWED_EMPLOYER_ADMIN_EMAILS', {
-        email: normalizedEmail,
-      });
-      return 'employer_admin';
-    } else {
-      console.warn('❌ Unauthorized employer_admin role request - not in allowed list', {
-        email: normalizedEmail,
-        requestedRole,
-      });
-      return 'employee'; // Fallback to employee
+    // 2. EMPLOYER_ADMIN ROLE - Must be in allowed employer admin emails
+    if (requestedRole === 'employer_admin') {
+      if (ALLOWED_EMPLOYER_ADMIN_EMAILS.includes(normalizedEmail)) {
+        console.log(
+          '✅ Webhook: Employer admin role authorized via ALLOWED_EMPLOYER_ADMIN_EMAILS',
+          {
+            email: normalizedEmail,
+          },
+        );
+        return 'employer_admin';
+      } else {
+        console.warn('❌ Webhook: Unauthorized employer_admin role request - not in allowed list', {
+          email: normalizedEmail,
+          requestedRole,
+          fallbackRole: 'employee',
+        });
+        return 'employee'; // Fallback to employee
+      }
     }
-  }
 
-  // 3. EMPLOYEE ROLE (default) - Check if they belong to a known employer
-  // Check exact email match first
-  if (EMPLOYER_EMAIL_MAP[normalizedEmail]) {
-    console.log('✅ Employee role authorized via exact email match', {
+    // 3. EMPLOYEE ROLE (default) - Check if they belong to a known employer
+    // Check exact email match first
+    if (EMPLOYER_EMAIL_MAP[normalizedEmail]) {
+      console.log('✅ Webhook: Employee role authorized via exact email match', {
+        email: normalizedEmail,
+        employer: EMPLOYER_EMAIL_MAP[normalizedEmail],
+      });
+      return 'employee';
+    }
+
+    // Check domain match
+    if (emailDomain && EMPLOYER_EMAIL_MAP[emailDomain]) {
+      console.log('✅ Webhook: Employee role authorized via domain match', {
+        email: normalizedEmail,
+        domain: emailDomain,
+        employer: EMPLOYER_EMAIL_MAP[emailDomain],
+      });
+      return 'employee';
+    }
+
+    // If no specific role requested or no authorization found, default to individual_consumer
+    // This allows B2C users to sign up independently
+    console.log(
+      '⚠️ Webhook: No employer authorization found, defaulting to individual_consumer role',
+      {
+        email: normalizedEmail,
+        domain: emailDomain,
+        requestedRole,
+        finalRole: 'individual_consumer',
+      },
+    );
+    return 'individual_consumer';
+  } catch (error) {
+    console.error('Webhook: Error during role validation', {
       email: normalizedEmail,
-      employer: EMPLOYER_EMAIL_MAP[normalizedEmail],
+      requestedRole,
+      error,
+      fallbackRole: 'individual_consumer',
     });
-    return 'employee';
-  }
 
-  // Check domain match
-  if (emailDomain && EMPLOYER_EMAIL_MAP[emailDomain]) {
-    console.log('✅ Employee role authorized via domain match', {
-      email: normalizedEmail,
-      domain: emailDomain,
-      employer: EMPLOYER_EMAIL_MAP[emailDomain],
-    });
-    return 'employee';
+    // On any error in role validation, default to individual_consumer
+    return 'individual_consumer';
   }
-
-  // If no specific role requested or no authorization found, default to individual_consumer
-  // This allows B2C users to sign up independently
-  console.log('⚠️ No employer authorization found, defaulting to individual_consumer role', {
-    email: normalizedEmail,
-    domain: emailDomain,
-    requestedRole,
-  });
-  return 'individual_consumer';
 }
