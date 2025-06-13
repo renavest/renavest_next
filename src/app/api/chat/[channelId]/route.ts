@@ -38,7 +38,7 @@ function parseRedisMessage(
   }
 }
 
-export async function GET(_req: Request, { params }: { params: { channelId: string } }) {
+export async function GET(_req: Request, { params }: { params: Promise<{ channelId: string }> }) {
   if (!CHAT_FEATURE_ENABLED) {
     return new Response('Chat feature disabled', { status: 404 });
   }
@@ -49,7 +49,8 @@ export async function GET(_req: Request, { params }: { params: { channelId: stri
       return new Response('Unauthorized', { status: 401 });
     }
 
-    const channelIdNum = parseInt(await params.channelId);
+    const { channelId } = await params;
+    const channelIdNum = parseInt(channelId);
     if (isNaN(channelIdNum)) {
       return new Response('Invalid channel ID', { status: 400 });
     }
