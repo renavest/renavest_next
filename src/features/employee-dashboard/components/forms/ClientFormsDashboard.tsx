@@ -1,5 +1,6 @@
 'use client';
 
+/* eslint-disable max-lines-per-function */
 import {
   FileText,
   CheckCircle,
@@ -19,16 +20,17 @@ import {
   clientFormsStateSignal,
   clientFormsActions,
   getAssignmentsByStatus,
-  type ClientFormAssignment,
 } from '../../state/clientFormsState';
+import type { ClientFormAssignment } from '../../state/clientFormsState';
 
 import { ClientFormFill } from './ClientFormFill';
 
 export function ClientFormsDashboard() {
-  const formsState = clientFormsStateSignal.value;
-  const [selectedAssignment, setSelectedAssignment] = useState<ClientFormAssignment | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | 'sent' | 'completed' | 'expired'>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedAssignment, setSelectedAssignment] = useState<ClientFormAssignment | null>(null);
+
+  const formsState = clientFormsStateSignal.value;
 
   useEffect(() => {
     loadAssignments();
@@ -36,22 +38,84 @@ export function ClientFormsDashboard() {
 
   const loadAssignments = async () => {
     clientFormsActions.setLoading(true);
-    try {
-      const response = await fetch('/api/client/forms');
-      const result = await response.json();
+    clientFormsActions.setError(null);
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to load forms');
+    const maxRetries = 3;
+    let retryCount = 0;
+
+    while (retryCount <= maxRetries) {
+      try {
+        const response = await fetch('/api/client/forms', {
+          method: 'GET',
+          headers: {
+            'Cache-Control': 'no-cache',
+          },
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          // If it's a 401/403, don't retry - it's an auth issue
+          if (response.status === 401 || response.status === 403) {
+            throw new Error('Authentication required. Please refresh the page.');
+          }
+
+          // For 5xx errors, we can retry
+          if (response.status >= 500 && retryCount < maxRetries) {
+            retryCount++;
+            const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
+            console.warn(
+              `Forms fetch failed (attempt ${retryCount}/${maxRetries}), retrying in ${delay}ms...`,
+              {
+                status: response.status,
+                error: result.error,
+              },
+            );
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            continue;
+          }
+
+          throw new Error(result.error || 'Failed to load forms');
+        }
+
+        // Success - check for warnings from the API
+        if (result.warning) {
+          console.warn('Forms API returned warning:', result.warning);
+          toast.warning('Some form data may be incomplete');
+        }
+
+        clientFormsActions.setAssignments(result.assignments);
+        console.log('Forms loaded successfully', {
+          count: result.assignments.length,
+          retryCount,
+        });
+        return; // Success, exit retry loop
+      } catch (error) {
+        console.error('Error loading form assignments (attempt ' + (retryCount + 1) + '):', error);
+
+        // If we've exhausted retries, set the error
+        if (retryCount >= maxRetries) {
+          const errorMessage = error instanceof Error ? error.message : 'Failed to load forms';
+          clientFormsActions.setError(errorMessage);
+          toast.error(
+            retryCount > 0
+              ? `Failed to load forms after ${retryCount + 1} attempts: ${errorMessage}`
+              : errorMessage,
+          );
+          break;
+        }
+
+        // Prepare for next retry
+        retryCount++;
+        const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
+        console.warn(
+          `Forms fetch failed (attempt ${retryCount}/${maxRetries + 1}), retrying in ${delay}ms...`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
-
-      clientFormsActions.setAssignments(result.assignments);
-    } catch (error) {
-      console.error('Error loading form assignments:', error);
-      clientFormsActions.setError(error instanceof Error ? error.message : 'Failed to load forms');
-      toast.error('Failed to load your forms');
-    } finally {
-      clientFormsActions.setLoading(false);
     }
+
+    clientFormsActions.setLoading(false);
   };
 
   const getStatusIcon = (status: string) => {
@@ -173,7 +237,9 @@ export function ClientFormsDashboard() {
             </div>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
+              onChange={(e) =>
+                setStatusFilter(e.target.value as 'all' | 'sent' | 'completed' | 'expired')
+              }
               className='px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500'
             >
               <option value='all'>All Forms</option>
