@@ -143,7 +143,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const svixSignature = headersList.get('svix-signature');
 
   if (!svixId || !svixTimestamp || !svixSignature) {
-    console.error('Missing required Svix headers', {
+    console.error('Missing required Svix headers – will ask Clerk to retry', {
       svixId: !!svixId,
       svixTimestamp: !!svixTimestamp,
       svixSignature: !!svixSignature,
@@ -158,12 +158,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     signature: svixSignature,
   });
 
+  // If verification fails, instruct Clerk to retry by returning 400. This is a transient
+  // error (signature mismatch / missing headers) so we *want* Clerk to deliver again.
   if (verificationResult.isErr()) {
-    console.error('Webhook verification failed', {
+    console.error('Webhook verification failed – will ask Clerk to retry', {
       error: verificationResult.error,
       environment,
     });
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
   // Process event
