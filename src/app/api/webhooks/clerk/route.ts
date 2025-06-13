@@ -129,14 +129,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const startTime = Date.now();
   const environment = process.env.NODE_ENV || 'development';
 
-  // Validate webhook secret
+  // Enhanced security: Validate webhook secret
   const webhookSecret = process.env.CLERK_WEBHOOK_SECRET;
   if (!webhookSecret) {
-    console.error('Missing Clerk webhook secret');
+    console.error('Missing Clerk webhook secret - this is a security issue');
     return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
   }
 
-  // Validate headers
+  // Enhanced security: Validate required headers with detailed logging
   const headersList = await headers();
   const svixId = headersList.get('svix-id');
   const svixTimestamp = headersList.get('svix-timestamp');
@@ -147,11 +147,28 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       svixId: !!svixId,
       svixTimestamp: !!svixTimestamp,
       svixSignature: !!svixSignature,
+      requestId: headersList.get('x-request-id') || 'unknown',
     });
     return NextResponse.json({ error: 'Missing required headers' }, { status: 400 });
   }
 
-  // Verify webhook signature
+  // Enhanced security: Validate timestamp to prevent replay attacks
+  const currentTime = Math.floor(Date.now() / 1000);
+  const webhookTime = parseInt(svixTimestamp);
+  const timeDiff = Math.abs(currentTime - webhookTime);
+
+  // Reject webhooks older than 5 minutes (300 seconds)
+  if (timeDiff > 300) {
+    console.error('Webhook timestamp too old - potential replay attack', {
+      currentTime,
+      webhookTime,
+      timeDiff,
+      requestId: headersList.get('x-request-id') || 'unknown',
+    });
+    return NextResponse.json({ error: 'Request too old' }, { status: 400 });
+  }
+
+  // Verify webhook signature with enhanced error handling
   const verificationResult = await verifyWebhook(req, webhookSecret, {
     id: svixId,
     timestamp: svixTimestamp,
@@ -164,16 +181,18 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     console.error('Webhook verification failed – will ask Clerk to retry', {
       error: verificationResult.error,
       environment,
+      requestId: headersList.get('x-request-id') || 'unknown',
     });
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
-  // Process event
+  // Process event with enhanced logging
   const event = verificationResult.value;
   console.info('Processing webhook event', {
     type: event.type,
     environment,
     userId: event.data.id,
+    requestId: headersList.get('x-request-id') || 'unknown',
   });
 
   const result = await processEvent(event, environment);
@@ -186,6 +205,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         environment,
         eventType: event.type,
         userId: event.data.id,
+        requestId: headersList.get('x-request-id') || 'unknown',
       });
       return NextResponse.json({ success: true });
     },
@@ -197,19 +217,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         environment,
         eventType: event.type,
         userId: event.data.id,
+        requestId: headersList.get('x-request-id') || 'unknown',
       });
 
-      // For user.created events that fail, we've already attempted to delete the Clerk user
-      // Return 200 to prevent Clerk from retrying (since we've handled the cleanup)
-      // For other events, also return 200 to prevent infinite retries
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Webhook processed with errors',
-          atomicCleanupAttempted: event.type === 'user.created',
-        },
-        { status: 200 },
-      );
+      // Return 500 for processing errors to signal Clerk should retry
+      return NextResponse.json({ error: 'Processing failed' }, { status: 500 });
     },
   );
 }

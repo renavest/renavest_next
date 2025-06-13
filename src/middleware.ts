@@ -6,6 +6,7 @@ import { getRouteForRole, UNAUTHORIZED_PATH } from '@/src/features/auth/utils/ro
 import type { UserRole } from '@/src/shared/types';
 
 // All API routes are public in middleware (must protect themselves internally)
+// IMPORTANT: Webhooks must be excluded from auth middleware per Clerk security best practices
 const isPublicRoute = createRouteMatcher([
   '/',
   '/login(.*)',
@@ -14,7 +15,7 @@ const isPublicRoute = createRouteMatcher([
   '/privacy(.*)',
   '/terms(.*)',
   '/waitlist(.*)',
-  '/api(.*)',
+  '/api(.*)', // API routes self-protect
   '/pricing(.*)',
 ]);
 
