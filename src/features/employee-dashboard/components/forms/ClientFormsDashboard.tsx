@@ -1,5 +1,6 @@
 'use client';
 
+/* eslint-disable max-lines-per-function */
 import {
   FileText,
   CheckCircle,
@@ -19,16 +20,17 @@ import {
   clientFormsStateSignal,
   clientFormsActions,
   getAssignmentsByStatus,
-  type ClientFormAssignment,
 } from '../../state/clientFormsState';
+import type { ClientFormAssignment } from '../../state/clientFormsState';
 
 import { ClientFormFill } from './ClientFormFill';
 
 export function ClientFormsDashboard() {
-  const formsState = clientFormsStateSignal.value;
-  const [selectedAssignment, setSelectedAssignment] = useState<ClientFormAssignment | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | 'sent' | 'completed' | 'expired'>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedAssignment, setSelectedAssignment] = useState<ClientFormAssignment | null>(null);
+
+  const formsState = clientFormsStateSignal.value;
 
   useEffect(() => {
     loadAssignments();
@@ -36,22 +38,47 @@ export function ClientFormsDashboard() {
 
   const loadAssignments = async () => {
     clientFormsActions.setLoading(true);
+    clientFormsActions.setError(null);
+
     try {
-      const response = await fetch('/api/client/forms');
+      const response = await fetch('/api/client/forms', {
+        method: 'GET',
+        headers: {
+          'Cache-Control': 'no-cache', // Force fresh data when explicitly refreshing
+        },
+      });
+
       const result = await response.json();
 
       if (!response.ok) {
         throw new Error(result.error || 'Failed to load forms');
       }
 
+      // Check for warnings from the API
+      if (result.warning) {
+        console.warn('Forms API returned warning:', result.warning);
+        toast.warning('Some form data may be incomplete');
+      }
+
       clientFormsActions.setAssignments(result.assignments);
+      console.log('Forms loaded successfully', {
+        count: result.assignments.length,
+        total: result.total,
+      });
     } catch (error) {
       console.error('Error loading form assignments:', error);
-      clientFormsActions.setError(error instanceof Error ? error.message : 'Failed to load forms');
-      toast.error('Failed to load your forms');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load forms';
+      clientFormsActions.setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       clientFormsActions.setLoading(false);
     }
+  };
+
+  // Cache-aware refresh function
+  const refreshForms = async () => {
+    console.log('Refreshing forms (cache-aware)...');
+    await loadAssignments();
   };
 
   const getStatusIcon = (status: string) => {
@@ -173,7 +200,9 @@ export function ClientFormsDashboard() {
             </div>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
+              onChange={(e) =>
+                setStatusFilter(e.target.value as 'all' | 'sent' | 'completed' | 'expired')
+              }
               className='px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500'
             >
               <option value='all'>All Forms</option>
@@ -335,7 +364,7 @@ export function ClientFormsDashboard() {
           </div>
           <p className='text-red-600 mt-1'>{formsState.error}</p>
           <button
-            onClick={loadAssignments}
+            onClick={refreshForms}
             className='mt-3 text-red-700 hover:text-red-800 font-medium underline'
           >
             Try again

@@ -1,5 +1,6 @@
 'use client';
 
+/* eslint-disable max-lines-per-function */
 import { Clock } from 'lucide-react';
 import { DateTime } from 'luxon';
 import { useEffect, useMemo, useState } from 'react';
@@ -18,6 +19,7 @@ import {
   errorSignal,
   isGoogleCalendarIntegratedSignal,
   isCheckingIntegrationSignal,
+  loadingSignal,
   checkGoogleCalendarIntegration,
   fetchAvailability,
   selectedSlotSignal,
@@ -98,11 +100,12 @@ export function TherapistAvailability({
     return filteredSlots;
   }, [calendarSelectedDate, allAvailableSlots, now, timezoneSignal.value]);
 
-  // Loading state
+  // Loading state for checking integration
   if (isCheckingIntegrationSignal.value) {
     return (
       <div className='flex items-center justify-center py-8'>
         <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-purple-700'></div>
+        <span className='ml-3 text-gray-600'>Checking calendar integration...</span>
       </div>
     );
   }
@@ -116,6 +119,17 @@ export function TherapistAvailability({
           This therapist is not available through Google Calendar. You will be redirected to their
           booking system.
         </p>
+      </div>
+    );
+  }
+
+  // Loading state for fetching available times
+  if (loadingSignal.value) {
+    return (
+      <div className='flex flex-col items-center justify-center py-12 space-y-3'>
+        <div className='animate-spin rounded-full h-10 w-10 border-b-2 border-purple-700'></div>
+        <span className='text-gray-600 text-lg'>Loading available times...</span>
+        <span className='text-gray-500 text-sm'>This may take a moment</span>
       </div>
     );
   }
@@ -152,7 +166,12 @@ export function TherapistAvailability({
                   <div className='text-sm text-gray-500'>Timezone: {timezoneSignal.value}</div>
                 </div>
                 <div className='flex flex-col gap-2 flex-1'>
-                  {slotsForSelectedDate.length === 0 ? (
+                  {loadingSignal.value ? (
+                    <div className='flex flex-col items-center justify-center py-12 space-y-3'>
+                      <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-purple-700'></div>
+                      <span className='text-gray-600'>Loading times...</span>
+                    </div>
+                  ) : slotsForSelectedDate.length === 0 ? (
                     <div className='text-gray-400 text-center py-8'>
                       No available slots for this date
                     </div>
@@ -243,6 +262,7 @@ export function TherapistAvailability({
         timezone={timezoneSignal.value}
         onSlotSelect={onSlotSelect}
         selectedSlot={selectedSlotSignal.value}
+        loading={loadingSignal.value}
       />
     </div>
   );

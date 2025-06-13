@@ -1,4 +1,3 @@
-import { auth, currentUser } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -10,6 +9,8 @@ import {
   invalidateOnDataChange,
 } from '@/src/services/therapistDataService';
 
+import { requireTherapist } from '../../auth/route-guard';
+
 // Validation schema for creating a new session
 const CreateSessionSchema = z.object({
   clientId: z.string(),
@@ -20,19 +21,19 @@ const CreateSessionSchema = z.object({
 });
 
 export async function GET() {
+  // Use secure auth guard following Clerk best practices
+  const authResult = await requireTherapist();
+  if (!authResult.success) {
+    return authResult.response;
+  }
+
+  const { clerkUser } = authResult;
+  if (!clerkUser) {
+    return NextResponse.json({ error: 'User session invalid' }, { status: 401 });
+  }
+
   try {
-    const { userId, sessionClaims } = await auth();
-    const metadata = sessionClaims?.metadata as { role?: string } | undefined;
-    if (!userId || metadata?.role !== 'therapist') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const user = await currentUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const userEmail = user.emailAddresses[0]?.emailAddress;
+    const userEmail = clerkUser.emailAddresses[0]?.emailAddress;
     if (!userEmail) {
       return NextResponse.json({ error: 'No email found' }, { status: 400 });
     }
@@ -58,20 +59,19 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  // Use secure auth guard following Clerk best practices
+  const authResult = await requireTherapist();
+  if (!authResult.success) {
+    return authResult.response;
+  }
+
+  const { clerkUser } = authResult;
+  if (!clerkUser) {
+    return NextResponse.json({ error: 'User session invalid' }, { status: 401 });
+  }
+
   try {
-    // Authenticate the therapist
-    const { userId, sessionClaims } = await auth();
-    const metadata = sessionClaims?.metadata as { role?: string } | undefined;
-    if (!userId || metadata?.role !== 'therapist') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const user = await currentUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const userEmail = user.emailAddresses[0]?.emailAddress;
+    const userEmail = clerkUser.emailAddresses[0]?.emailAddress;
     if (!userEmail) {
       return NextResponse.json({ error: 'No email found' }, { status: 400 });
     }
@@ -112,12 +112,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ session: newSession[0] }, { status: 201 });
   } catch (error) {
-    console.error('Error creating new session:', error);
-
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors }, { status: 400 });
-    }
-
+    console.error('Error creating therapist session:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

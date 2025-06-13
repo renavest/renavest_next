@@ -2,6 +2,7 @@
 'use client';
 
 import { useSignUp, useUser } from '@clerk/nextjs';
+import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
 import { signal } from '@preact-signals/safe-react';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
@@ -188,17 +189,7 @@ function SignupFormFields() {
   );
 }
 
-// Type guard for Clerk API errors
-function isClerkAPIError(err: unknown): err is { errors: { message: string }[] } {
-  return (
-    typeof err === 'object' &&
-    err !== null &&
-    'errors' in err &&
-    Array.isArray((err as { errors?: unknown }).errors) &&
-    (err as { errors: unknown[] }).errors.length > 0 &&
-    typeof (err as { errors: { message?: unknown }[] }).errors[0].message === 'string'
-  );
-}
+// Using official Clerk error handling - no custom type guard needed
 
 // Validation helper functions
 const validateSignupForm = () => {
@@ -215,8 +206,35 @@ const validateSignupForm = () => {
 };
 
 const handleSignupError = (err: unknown) => {
-  if (isClerkAPIError(err)) {
-    return err.errors[0].message;
+  // Use official Clerk error handling pattern with comprehensive error codes
+  if (isClerkAPIResponseError(err)) {
+    // Get the first error message from Clerk API response
+    const clerkError = err.errors[0];
+
+    // Handle specific Clerk error codes for better UX
+    if (clerkError?.code === 'form_identifier_exists') {
+      return 'An account with this email already exists. Please sign in instead.';
+    } else if (clerkError?.code === 'form_password_pwned') {
+      return 'This password has been found in a data breach. Please choose a different password.';
+    } else if (clerkError?.code === 'form_password_too_common') {
+      return 'This password is too common. Please choose a more secure password.';
+    } else if (clerkError?.code === 'form_password_validation') {
+      return 'Password does not meet security requirements. Please choose a stronger password.';
+    } else if (clerkError?.code === 'captcha_invalid') {
+      return 'Security validation failed. Please try using a different browser or disable extensions.';
+    } else if (clerkError?.code === 'sign_up_mode_restricted') {
+      return 'New sign-ups are currently restricted. Please contact support.';
+    } else if (clerkError?.code === 'sign_up_restricted_waitlist') {
+      return 'Sign-ups are currently unavailable. Join the waitlist, and you will be notified when access becomes available.';
+    } else if (clerkError?.code === 'resource_forbidden') {
+      return 'Access to sign-up is forbidden. Please contact support if you believe this is an error.';
+    } else if (clerkError?.code === 'request_body_invalid') {
+      return 'Invalid signup data. Please check all fields and try again.';
+    } else if (clerkError?.longMessage) {
+      return clerkError.longMessage;
+    } else if (clerkError?.message) {
+      return clerkError.message;
+    }
   } else if (
     typeof err === 'object' &&
     err !== null &&
@@ -224,9 +242,11 @@ const handleSignupError = (err: unknown) => {
     typeof (err as { message: unknown }).message === 'string'
   ) {
     return (err as { message: string }).message;
-  } else {
-    return 'Signup failed. Please try again.';
+  } else if (err instanceof Error) {
+    return err.message;
   }
+
+  return 'Signup failed due to an unexpected error. Please try again.';
 };
 
 // Utility to gather onboarding data from signals
@@ -245,18 +265,11 @@ function getOnboardingDataFromSignals() {
   };
 }
 
-export function SignupStep() {
-  const { signUp } = useSignUp();
+// User authentication check hook
+function useAuthenticatedUserRedirect() {
   const { user, isLoaded: userLoaded } = useUser();
   const router = useRouter();
 
-  // Track page view on component mount
-  React.useEffect(() => {
-    trackAuthPageView('signup');
-  }, []);
-
-  // CRITICAL: Prevent authenticated users from accessing signup
-  // This prevents role changes after initial signup
   React.useEffect(() => {
     if (userLoaded && user) {
       console.warn('Authenticated user attempting to access signup - redirecting to dashboard');
@@ -281,6 +294,84 @@ export function SignupStep() {
     }
   }, [userLoaded, user, router]);
 
+  return { user, userLoaded };
+}
+
+// Signup form submission logic
+async function handleSignupSubmission(
+  signUp: ReturnType<typeof useSignUp>['signUp'],
+  email: string,
+  password: string,
+  firstName: string,
+  lastName: string,
+  onboardingData: Record<string, string | boolean | null>,
+  selectedRole: string,
+  selectedSponsoredGroup: string | null,
+) {
+  // Comprehensive pre-validation
+  const validationError = validateSignupForm();
+  if (validationError) {
+    throw new Error(validationError);
+  }
+
+  if (!signUp) {
+    throw new Error('Signup service is currently unavailable. Please try again later.');
+  }
+
+  // Check email eligibility with proper error handling
+  try {
+    const isEmailAllowed = await checkEmailEligibility(email);
+    if (!isEmailAllowed) {
+      throw new Error('This email domain is not authorized for signup. Please contact support.');
+    }
+  } catch (error) {
+    console.error('Email eligibility check failed:', error);
+    throw new Error('Unable to verify email eligibility. Please try again.');
+  }
+
+  // Store onboarding data before Clerk signup attempt
+  try {
+    setOnboardingData(onboardingData);
+  } catch (error) {
+    console.error('Failed to store onboarding data:', error);
+    // Non-blocking - continue with signup
+  }
+
+  // Attempt Clerk user creation with comprehensive metadata
+  const result = await signUp.create({
+    emailAddress: email,
+    password: password,
+    firstName: firstName,
+    lastName: lastName,
+    unsafeMetadata: {
+      role: selectedRole,
+      onboardingComplete: false,
+      firstName: firstName,
+      lastName: lastName,
+      email: email,
+      purpose: onboardingData.purpose,
+      ageRange: onboardingData.ageRange,
+      maritalStatus: onboardingData.maritalStatus,
+      ethnicity: onboardingData.ethnicity,
+      agreeToTerms: onboardingData.agreeToTerms,
+      sponsoredGroupName: selectedSponsoredGroup || '',
+      // Add timestamp for debugging webhook issues
+      signupTimestamp: new Date().toISOString(),
+    },
+  });
+
+  return result;
+}
+
+export function SignupStep() {
+  const { signUp } = useSignUp();
+  const { user, userLoaded } = useAuthenticatedUserRedirect();
+
+  // Track page view on component mount
+  React.useEffect(() => {
+    trackAuthPageView('signup');
+  }, []);
+
   // Don't render signup form if user is already authenticated
   if (userLoaded && user) {
     return (
@@ -293,12 +384,12 @@ export function SignupStep() {
   const onSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     authErrorSignal.value = null;
-    isSignupLoading.value = true; // Set loading state
+    isSignupLoading.value = true;
 
     // Set agreeToTerms to true since user already confirmed in PrivacyPledgeStep
     agreeToTerms.value = true;
 
-    // Store onboarding data in localStorage
+    // Gather onboarding data
     const onboardingData = getOnboardingDataFromSignals();
 
     // Track signup attempt
@@ -309,45 +400,18 @@ export function SignupStep() {
     });
 
     try {
-      const error = validateSignupForm();
-      if (error) {
-        authErrorSignal.value = error;
-        isSignupLoading.value = false;
-        return;
-      }
-      if (!signUp) {
-        authErrorSignal.value = 'Signup service unavailable.';
-        isSignupLoading.value = false;
-        return;
-      }
+      const result = await handleSignupSubmission(
+        signUp,
+        email.value,
+        password.value,
+        firstName.value,
+        lastName.value,
+        onboardingData,
+        selectedRole.value || 'employee',
+        selectedSponsoredGroup.value,
+      );
 
-      const isEmailAllowed = await checkEmailEligibility(email.value);
-      if (!isEmailAllowed) {
-        authErrorSignal.value = 'Email is not allowed.';
-        isSignupLoading.value = false;
-        return;
-      }
-      setOnboardingData(onboardingData);
-      const result = await signUp.create({
-        emailAddress: email.value,
-        password: password.value,
-        firstName: firstName.value,
-        lastName: lastName.value,
-        unsafeMetadata: {
-          role: selectedRole.value,
-          onboardingComplete: false,
-          firstName: firstName.value,
-          lastName: lastName.value,
-          email: email.value,
-          purpose: selectedPurpose.value,
-          ageRange: selectedAgeRange.value,
-          maritalStatus: selectedMaritalStatus.value,
-          ethnicity: selectedEthnicity.value,
-          agreeToTerms: agreeToTerms.value,
-          sponsoredGroupName: selectedSponsoredGroup.value,
-        },
-      });
-
+      // Handle successful signup result
       if (result.status === 'complete' || result.status === 'missing_requirements') {
         // Track successful signup
         trackSignupSuccess(selectedRole.value || 'unknown', 'email_password', {
@@ -357,24 +421,46 @@ export function SignupStep() {
         });
 
         verificationEmailAddress.value = email.value;
-        signUp.prepareVerification({ strategy: 'email_code' });
+
+        // Prepare email verification if required
+        if (result.status === 'missing_requirements') {
+          try {
+            await signUp.prepareVerification({ strategy: 'email_code' });
+          } catch (verificationError) {
+            console.error('Failed to prepare email verification:', verificationError);
+            // Continue anyway - user can retry verification
+          }
+        }
+
         currentStep.value = OnboardingStep.EMAIL_VERIFICATION;
       } else {
-        authErrorSignal.value = 'Signup requires further verification.';
+        // Handle incomplete signup status
+        console.error('Unexpected signup status:', result.status);
+        authErrorSignal.value =
+          'Signup completed but requires additional verification. Please check your email.';
       }
     } catch (err: unknown) {
       const errorMessage = handleSignupError(err);
       authErrorSignal.value = errorMessage;
 
-      // Track signup error
+      // Track signup error with detailed context
       trackSignupError(selectedRole.value || 'unknown', err, 'email_password', {
         email_domain: email.value.split('@')[1],
         sponsored_group: selectedSponsoredGroup.value,
+        error_context: 'signup_submission',
+      });
+
+      console.error('Signup failed:', {
+        error: err,
+        email: email.value,
+        role: selectedRole.value,
+        sponsoredGroup: selectedSponsoredGroup.value,
       });
     } finally {
-      isSignupLoading.value = false; // Always reset loading state
+      isSignupLoading.value = false;
     }
   };
+
   const onBack = () => {
     if (selectedRole.value === 'employee') {
       currentStep.value = OnboardingStep.ETHNICITY;
@@ -382,11 +468,14 @@ export function SignupStep() {
       currentStep.value = OnboardingStep.ROLE_SELECTION;
     }
   };
+
   const onBackToLogin = () => {
     currentStep.value = OnboardingStep.LOGIN;
   };
+
   const isFormValid =
     firstName.value.trim() && lastName.value.trim() && email.value.trim() && password.value.trim();
+
   return (
     <div className='space-y-6'>
       <div className='flex flex-col items-center mb-8'>

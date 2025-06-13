@@ -9,7 +9,7 @@ import { timezoneManager, SupportedTimezone } from '../../utils/timezoneManager'
 export const selectedSlotSignal = signal<TimeSlot | null>(null);
 export const timezoneSignal = signal<SupportedTimezone>(timezoneManager.getUserTimezone());
 export const availableSlotsSignal = signal<Array<{ start: string; end: string }>>([]);
-const loadingSignal = signal(true);
+export const loadingSignal = signal(false);
 export const errorSignal = signal<string | null>(null);
 export const isGoogleCalendarIntegratedSignal = signal(false);
 export const isCheckingIntegrationSignal = signal(true);

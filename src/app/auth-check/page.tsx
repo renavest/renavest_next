@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable max-lines-per-function */
 
 import { useUser } from '@clerk/nextjs';
 import { Heart, CheckCircle, Clock, Sparkles } from 'lucide-react';
@@ -43,6 +44,19 @@ export default function AuthCheckPage() {
   const [actualProgress, setActualProgress] = useState(0);
   const maxRetries = 15; // 30 seconds
   const retryDelay = 2000; // 2 seconds
+
+  // Helper to check readiness from server
+  const checkServerReady = async () => {
+    try {
+      const res = await fetch('/api/auth/status', { credentials: 'include' });
+      if (!res.ok) return false;
+      const data = await res.json();
+      return data.ready === true;
+    } catch (e) {
+      console.error('auth-check: error calling /api/auth/status', e);
+      return false;
+    }
+  };
 
   // Cycle through encouraging messages
   useEffect(() => {
@@ -108,7 +122,7 @@ export default function AuthCheckPage() {
         retryCount,
       });
 
-      // Check if user has both role and onboardingComplete flag
+      // Check if user has both role and onboardingComplete flag (fast-path)
       if (userRole && onboardingComplete) {
         const targetRoute = getRouteForRole(userRole);
         console.log('AuthCheckPage - Redirecting to dashboard:', {
@@ -125,24 +139,34 @@ export default function AuthCheckPage() {
         return;
       }
 
-      // User doesn't have complete metadata yet
-      if (retryCount < maxRetries) {
-        const timer = setTimeout(() => {
-          setRetryCount((prev) => prev + 1);
-          // Force a re-check by reloading user data
-          user.reload?.();
-        }, retryDelay);
+      // Otherwise consult the server for readiness
+      (async () => {
+        const ready = await checkServerReady();
+        if (ready) {
+          const targetRoute = getRouteForRole(userRole ?? null);
+          router.replace(targetRoute);
+          return;
+        }
 
-        return () => clearTimeout(timer);
-      } else {
-        // Max retries reached
-        console.error('AuthCheckPage - Max retries reached, webhook may have failed', {
-          userId: user.id,
-          finalRole: userRole,
-          finalOnboardingComplete: onboardingComplete,
-          publicMetadata: user.publicMetadata,
-        });
-      }
+        // User doesn't have complete metadata yet
+        if (retryCount < maxRetries) {
+          const timer = setTimeout(() => {
+            setRetryCount((prev) => prev + 1);
+            // Force a re-check by reloading user data
+            user.reload?.();
+          }, retryDelay);
+
+          return () => clearTimeout(timer);
+        } else {
+          // Max retries reached
+          console.error('AuthCheckPage - Max retries reached, webhook may have failed', {
+            userId: user.id,
+            finalRole: userRole,
+            finalOnboardingComplete: onboardingComplete,
+            publicMetadata: user.publicMetadata,
+          });
+        }
+      })();
     }
   }, [user, isLoaded, isSignedIn, router, retryCount]);
 

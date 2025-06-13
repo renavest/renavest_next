@@ -129,49 +129,70 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const startTime = Date.now();
   const environment = process.env.NODE_ENV || 'development';
 
-  // Validate webhook secret
+  // Enhanced security: Validate webhook secret
   const webhookSecret = process.env.CLERK_WEBHOOK_SECRET;
   if (!webhookSecret) {
-    console.error('Missing Clerk webhook secret');
+    console.error('Missing Clerk webhook secret - this is a security issue');
     return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
   }
 
-  // Validate headers
+  // Enhanced security: Validate required headers with detailed logging
   const headersList = await headers();
   const svixId = headersList.get('svix-id');
   const svixTimestamp = headersList.get('svix-timestamp');
   const svixSignature = headersList.get('svix-signature');
 
   if (!svixId || !svixTimestamp || !svixSignature) {
-    console.error('Missing required Svix headers', {
+    console.error('Missing required Svix headers – will ask Clerk to retry', {
       svixId: !!svixId,
       svixTimestamp: !!svixTimestamp,
       svixSignature: !!svixSignature,
+      requestId: headersList.get('x-request-id') || 'unknown',
     });
     return NextResponse.json({ error: 'Missing required headers' }, { status: 400 });
   }
 
-  // Verify webhook signature
+  // Enhanced security: Validate timestamp to prevent replay attacks
+  const currentTime = Math.floor(Date.now() / 1000);
+  const webhookTime = parseInt(svixTimestamp);
+  const timeDiff = Math.abs(currentTime - webhookTime);
+
+  // Reject webhooks older than 5 minutes (300 seconds)
+  if (timeDiff > 300) {
+    console.error('Webhook timestamp too old - potential replay attack', {
+      currentTime,
+      webhookTime,
+      timeDiff,
+      requestId: headersList.get('x-request-id') || 'unknown',
+    });
+    return NextResponse.json({ error: 'Request too old' }, { status: 400 });
+  }
+
+  // Verify webhook signature with enhanced error handling
   const verificationResult = await verifyWebhook(req, webhookSecret, {
     id: svixId,
     timestamp: svixTimestamp,
     signature: svixSignature,
   });
 
+  // If verification fails, instruct Clerk to retry by returning 400. This is a transient
+  // error (signature mismatch / missing headers) so we *want* Clerk to deliver again.
   if (verificationResult.isErr()) {
-    console.error('Webhook verification failed', {
+    console.error('Webhook verification failed – will ask Clerk to retry', {
       error: verificationResult.error,
       environment,
+      requestId: headersList.get('x-request-id') || 'unknown',
     });
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
-  // Process event
+  // Process event with enhanced logging
   const event = verificationResult.value;
   console.info('Processing webhook event', {
     type: event.type,
     environment,
     userId: event.data.id,
+    requestId: headersList.get('x-request-id') || 'unknown',
   });
 
   const result = await processEvent(event, environment);
@@ -182,6 +203,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       console.info('Webhook processed successfully', {
         duration: `${duration}ms`,
         environment,
+        eventType: event.type,
+        userId: event.data.id,
+        requestId: headersList.get('x-request-id') || 'unknown',
       });
       return NextResponse.json({ success: true });
     },
@@ -191,13 +215,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         duration: `${duration}ms`,
         error,
         environment,
+        eventType: event.type,
+        userId: event.data.id,
+        requestId: headersList.get('x-request-id') || 'unknown',
       });
 
-      // Always return 200 to prevent Clerk from retrying
-      return NextResponse.json(
-        { success: false, error: 'Webhook processed with errors' },
-        { status: 200 },
-      );
+      // Return 500 for processing errors to signal Clerk should retry
+      return NextResponse.json({ error: 'Processing failed' }, { status: 500 });
     },
   );
 }

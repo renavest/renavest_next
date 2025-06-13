@@ -4,6 +4,7 @@ import { eq, and } from 'drizzle-orm';
 
 import { db } from '@/src/db';
 import { formAssignments, intakeForms, therapists, users } from '@/src/db/schema';
+import { invalidateOnFormAssignmentChange } from '@/src/services/clientFormsDataService';
 
 // POST /api/therapist/forms/assign - Assign a form to a client
 export async function POST(request: NextRequest) {
@@ -95,6 +96,18 @@ export async function POST(request: NextRequest) {
         expiresAt,
       })
       .returning();
+
+    // Invalidate the client's forms cache so they see the new assignment immediately
+    try {
+      await invalidateOnFormAssignmentChange(parseInt(clientId), 'create');
+      console.log('Cache invalidated for client forms after assignment', {
+        clientId: parseInt(clientId),
+        formId: parseInt(formId),
+      });
+    } catch (cacheError) {
+      console.error('Failed to invalidate client forms cache (non-blocking):', cacheError);
+      // Don't fail the API call for cache issues
+    }
 
     return NextResponse.json(
       {

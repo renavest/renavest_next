@@ -18,6 +18,7 @@ export function TimeSelectionModal({
   timezone,
   onSlotSelect,
   selectedSlot,
+  loading = false,
 }: {
   open: boolean;
   onClose: () => void;
@@ -26,6 +27,7 @@ export function TimeSelectionModal({
   timezone: string;
   onSlotSelect: (slot: TimeSlot) => void;
   selectedSlot: TimeSlot | null | undefined;
+  loading?: boolean;
 }) {
   if (!open) return null;
   return (
@@ -43,7 +45,12 @@ export function TimeSelectionModal({
           <div className='text-sm text-gray-700 mb-2'>Timezone: {timezone}</div>
         </div>
         <div className='flex flex-col gap-3'>
-          {slots.length === 0 ? (
+          {loading ? (
+            <div className='flex flex-col items-center justify-center py-8 space-y-3'>
+              <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-purple-700'></div>
+              <span className='text-gray-600'>Loading times...</span>
+            </div>
+          ) : slots.length === 0 ? (
             <div className='text-gray-400 text-center'>No available slots for this date</div>
           ) : (
             slots.map((slot: TimeSlot, idx: number) => {
