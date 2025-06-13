@@ -24,6 +24,9 @@ export const CACHE_KEYS = {
   therapistNotes: (therapistId: number, clientId: string) =>
     `therapist:${therapistId}:client:${clientId}:notes`,
   therapistLookup: (userId: number) => `user:${userId}:therapist_id`,
+  // Client forms cache keys
+  clientForms: (clientId: number) => `client:${clientId}:forms`,
+  clientFormAssignments: (clientId: number) => `client:${clientId}:form_assignments`,
 } as const;
 
 // Cache TTL constants (in seconds)
@@ -32,6 +35,9 @@ export const CACHE_TTL = {
   PROFILE_DATA: 1800, // 30 minutes
   NOTES_DATA: 600, // 10 minutes
   THERAPIST_LOOKUP: 3600, // 1 hour
+  // Client forms cache TTL
+  CLIENT_FORMS: 600, // 10 minutes
+  CLIENT_FORM_ASSIGNMENTS: 300, // 5 minutes
 } as const;
 
 interface CacheOptions {

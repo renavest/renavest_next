@@ -40,82 +40,45 @@ export function ClientFormsDashboard() {
     clientFormsActions.setLoading(true);
     clientFormsActions.setError(null);
 
-    const maxRetries = 3;
-    let retryCount = 0;
+    try {
+      const response = await fetch('/api/client/forms', {
+        method: 'GET',
+        headers: {
+          'Cache-Control': 'no-cache', // Force fresh data when explicitly refreshing
+        },
+      });
 
-    while (retryCount <= maxRetries) {
-      try {
-        const response = await fetch('/api/client/forms', {
-          method: 'GET',
-          headers: {
-            'Cache-Control': 'no-cache',
-          },
-        });
+      const result = await response.json();
 
-        const result = await response.json();
-
-        if (!response.ok) {
-          // If it's a 401/403, don't retry - it's an auth issue
-          if (response.status === 401 || response.status === 403) {
-            throw new Error('Authentication required. Please refresh the page.');
-          }
-
-          // For 5xx errors, we can retry
-          if (response.status >= 500 && retryCount < maxRetries) {
-            retryCount++;
-            const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
-            console.warn(
-              `Forms fetch failed (attempt ${retryCount}/${maxRetries}), retrying in ${delay}ms...`,
-              {
-                status: response.status,
-                error: result.error,
-              },
-            );
-            await new Promise((resolve) => setTimeout(resolve, delay));
-            continue;
-          }
-
-          throw new Error(result.error || 'Failed to load forms');
-        }
-
-        // Success - check for warnings from the API
-        if (result.warning) {
-          console.warn('Forms API returned warning:', result.warning);
-          toast.warning('Some form data may be incomplete');
-        }
-
-        clientFormsActions.setAssignments(result.assignments);
-        console.log('Forms loaded successfully', {
-          count: result.assignments.length,
-          retryCount,
-        });
-        return; // Success, exit retry loop
-      } catch (error) {
-        console.error('Error loading form assignments (attempt ' + (retryCount + 1) + '):', error);
-
-        // If we've exhausted retries, set the error
-        if (retryCount >= maxRetries) {
-          const errorMessage = error instanceof Error ? error.message : 'Failed to load forms';
-          clientFormsActions.setError(errorMessage);
-          toast.error(
-            retryCount > 0
-              ? `Failed to load forms after ${retryCount + 1} attempts: ${errorMessage}`
-              : errorMessage,
-          );
-          break;
-        }
-
-        // Prepare for next retry
-        retryCount++;
-        const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
-        console.warn(
-          `Forms fetch failed (attempt ${retryCount}/${maxRetries + 1}), retrying in ${delay}ms...`,
-        );
-        await new Promise((resolve) => setTimeout(resolve, delay));
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to load forms');
       }
-    }
 
-    clientFormsActions.setLoading(false);
+      // Check for warnings from the API
+      if (result.warning) {
+        console.warn('Forms API returned warning:', result.warning);
+        toast.warning('Some form data may be incomplete');
+      }
+
+      clientFormsActions.setAssignments(result.assignments);
+      console.log('Forms loaded successfully', {
+        count: result.assignments.length,
+        total: result.total,
+      });
+    } catch (error) {
+      console.error('Error loading form assignments:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load forms';
+      clientFormsActions.setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      clientFormsActions.setLoading(false);
+    }
+  };
+
+  // Cache-aware refresh function
+  const refreshForms = async () => {
+    console.log('Refreshing forms (cache-aware)...');
+    await loadAssignments();
   };
 
   const getStatusIcon = (status: string) => {
@@ -401,7 +364,7 @@ export function ClientFormsDashboard() {
           </div>
           <p className='text-red-600 mt-1'>{formsState.error}</p>
           <button
-            onClick={loadAssignments}
+            onClick={refreshForms}
             className='mt-3 text-red-700 hover:text-red-800 font-medium underline'
           >
             Try again
