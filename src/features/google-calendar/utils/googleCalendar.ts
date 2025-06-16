@@ -211,3 +211,48 @@ export async function disconnectTherapistGoogleCalendar(
     })
     .where(eq(therapists.id, therapistId));
 }
+
+/**
+ * Prepares therapist calendar access with proper token management
+ * Queries therapist with all required Google Calendar fields
+ */
+export async function prepareTherapistCalendarAccess(
+  db: NodePgDatabase<Record<string, unknown>>,
+  therapistId: number,
+) {
+  const therapist = await db.query.therapists.findFirst({
+    where: (therapists, { eq }) => eq(therapists.id, therapistId),
+    columns: {
+      id: true,
+      name: true,
+      googleCalendarAccessToken: true,
+      googleCalendarRefreshToken: true,
+      googleCalendarEmail: true,
+      googleCalendarIntegrationStatus: true,
+      userId: true,
+    },
+  });
+
+  if (!therapist) {
+    throw new Error('Therapist not found');
+  }
+
+  if (
+    !therapist.googleCalendarAccessToken ||
+    !therapist.googleCalendarRefreshToken ||
+    therapist.googleCalendarIntegrationStatus !== 'connected'
+  ) {
+    throw new Error('Google Calendar not connected for this therapist');
+  }
+
+  // Create token manager and ensure valid tokens
+  const tokenManager = createTokenManager(db);
+  const oauth2Client = await tokenManager.ensureValidTokens({
+    id: therapist.id,
+    googleCalendarAccessToken: therapist.googleCalendarAccessToken,
+    googleCalendarRefreshToken: therapist.googleCalendarRefreshToken,
+    googleCalendarIntegrationStatus: therapist.googleCalendarIntegrationStatus,
+  });
+
+  return { therapist, oauth2Client };
+}

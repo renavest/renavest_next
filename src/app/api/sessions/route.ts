@@ -38,6 +38,15 @@ async function getUserAndTherapist(clerkUserId: string, therapistId: number) {
     }),
     db.query.therapists.findFirst({
       where: (therapists, { eq }) => eq(therapists.id, therapistId),
+      columns: {
+        id: true,
+        userId: true,
+        name: true,
+        googleCalendarAccessToken: true,
+        googleCalendarRefreshToken: true,
+        googleCalendarEmail: true,
+        googleCalendarIntegrationStatus: true,
+      },
     }),
   ]);
 
@@ -94,12 +103,29 @@ export async function POST(req: NextRequest) {
     }
 
     // Prevent therapists from booking themselves
-    if (therapist.userId === user.id) {
+    if ('userId' in therapist && therapist.userId === user.id) {
       return NextResponse.json(
         {
           error: 'Therapists cannot book sessions with themselves',
           message: 'You cannot book a session with yourself',
         },
+        { status: 400 },
+      );
+    }
+
+    // Type guard to ensure we have therapist data
+    if (!('googleCalendarAccessToken' in therapist)) {
+      return NextResponse.json({ error: 'Invalid therapist data' }, { status: 500 });
+    }
+
+    // Check if therapist has Google Calendar integration
+    if (
+      !therapist.googleCalendarAccessToken ||
+      !therapist.googleCalendarRefreshToken ||
+      therapist.googleCalendarIntegrationStatus !== 'connected'
+    ) {
+      return NextResponse.json(
+        { error: 'Therapist does not have Google Calendar integrated' },
         { status: 400 },
       );
     }
