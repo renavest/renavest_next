@@ -5,20 +5,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { therapists } from '@/src/db/schema';
 import { createDate } from '@/src/utils/timezone';
 
-export interface TokenInfo {
-  access_token: string;
-  refresh_token?: string;
-  expiry_date?: number;
-  scope?: string;
-  token_type?: string;
-}
-
-export interface TherapistTokenInfo {
-  id: number;
-  googleCalendarAccessToken: string | null;
-  googleCalendarRefreshToken: string | null;
-  googleCalendarIntegrationStatus: string;
-}
+import type { GoogleCalendarTokens, TherapistTokenInfo } from '../types';
 
 export class GoogleCalendarTokenManager {
   private oauth2Client: OAuth2Client;
@@ -110,7 +97,7 @@ export class GoogleCalendarTokenManager {
       console.log('Successfully refreshed tokens for therapist:', therapistId);
 
       // Update the database with new tokens
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         googleCalendarAccessToken: credentials.access_token,
         updatedAt: createDate(new Date(), 'UTC').toJSDate(),
       };
@@ -155,7 +142,7 @@ export class GoogleCalendarTokenManager {
   /**
    * Checks if an error is a refresh authentication error that requires disconnection
    */
-  private isRefreshAuthError(error: any): boolean {
+  private isRefreshAuthError(error: unknown): boolean {
     const errorMessage = error?.message || '';
     const errorCode = error?.code;
 
@@ -224,7 +211,7 @@ export class GoogleCalendarTokenManager {
   /**
    * Exchanges authorization code for tokens with comprehensive error handling
    */
-  async exchangeCodeForTokens(code: string): Promise<TokenInfo> {
+  async exchangeCodeForTokens(code: string): Promise<GoogleCalendarTokens> {
     const authClient = this.createAuthClient();
 
     try {
@@ -243,10 +230,10 @@ export class GoogleCalendarTokenManager {
 
       return {
         access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-        expiry_date: tokens.expiry_date,
-        scope: tokens.scope,
-        token_type: tokens.token_type,
+        refresh_token: tokens.refresh_token || undefined,
+        expiry_date: tokens.expiry_date || undefined,
+        scope: tokens.scope || undefined,
+        token_type: tokens.token_type || undefined,
       };
     } catch (error) {
       console.error('Failed to exchange authorization code for tokens:', error);
