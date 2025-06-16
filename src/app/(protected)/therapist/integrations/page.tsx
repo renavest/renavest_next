@@ -13,8 +13,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { GoogleCalendarIntegration } from '@/src/features/google-calendar/components/GoogleCalendarIntegration';
-import { useGoogleCalendarIntegration } from '@/src/features/google-calendar/utils/googleCalendarIntegration';
+import GoogleCalendarIntegration from '@/src/features/google-calendar/components/GoogleCalendarIntegration';
 import { StripeConnectIntegration } from '@/src/features/stripe/components/StripeConnectIntegration';
 import TherapistNavbar from '@/src/features/therapist-dashboard/components/navigation/TherapistNavbar';
 
@@ -533,10 +532,10 @@ export default function IntegrationsPage() {
   const [stripeStatus, setStripeStatus] = useState<StripeStatus | null>(null);
   const [stripeLoading, setStripeLoading] = useState(true);
 
-  // Get Google Calendar integration status
-  const {
-    status: { isConnected: calendarConnected, isLoading: calendarLoading, calendarEmail },
-  } = useGoogleCalendarIntegration(therapistId || 0);
+  // Note: Google Calendar integration status is now handled by the context within components
+  const calendarConnected = false; // Will be managed by GoogleCalendarProvider context
+  const calendarLoading = false;
+  const calendarEmail = null;
 
   // Get therapist ID from user metadata or API
   useEffect(() => {

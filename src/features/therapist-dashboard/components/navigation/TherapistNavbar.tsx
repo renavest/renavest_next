@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { LogoutButton } from '@/src/features/auth/components/auth/LogoutButton';
-import { fetchTherapistId } from '@/src/features/google-calendar/utils/googleCalendarIntegration';
+import { fetchTherapistId } from '@/src/features/google-calendar/context/GoogleCalendarContext';
 import {
   trackTherapistDashboard,
   trackTherapistMarketplace,

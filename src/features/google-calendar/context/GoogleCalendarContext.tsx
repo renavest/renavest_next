@@ -423,3 +423,19 @@ export function clearGoogleCalendarCache(): void {
   currentTherapistIdSignal.value = null;
   fetchedTherapistIdsSignal.value = new Set();
 }
+
+/**
+ * Utility function to fetch therapist ID from user ID
+ * This replaces the old fetchTherapistId from the deleted integration file
+ */
+export async function fetchTherapistId(userId?: string): Promise<number | null> {
+  if (!userId) return null;
+  try {
+    const response = await fetch('/api/therapist/id');
+    const data = await response.json();
+    return data.therapistId || null;
+  } catch (error) {
+    console.error('Failed to fetch therapist ID:', error);
+    return null;
+  }
+}

@@ -11,8 +11,7 @@ import { toast } from 'sonner';
 
 import { db } from '@/src/db';
 import { therapists, users } from '@/src/db/schema';
-import { GoogleCalendarIntegration } from '@/src/features/google-calendar/components/GoogleCalendarIntegration';
-import { fetchTherapistId } from '@/src/features/google-calendar/utils/googleCalendarIntegration';
+import GoogleCalendarIntegration from '@/src/features/google-calendar/components/GoogleCalendarIntegration';
 import { OnboardingModal } from '@/src/features/onboarding/components/OnboardingModal';
 import { OnboardingModalContent } from '@/src/features/onboarding/components/OnboardingModalContent';
 import { OnboardingProvider } from '@/src/features/onboarding/context/OnboardingContext';
