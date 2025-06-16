@@ -1,23 +1,15 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm';
 import { google } from 'googleapis';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { db } from '@/src/db';
-import { bookingSessions, therapists } from '@/src/db/schema';
-import {
-  disconnectTherapistGoogleCalendar,
-  isGoogleAuthError,
-} from '@/src/features/google-calendar/utils/googleCalendar';
+import { bookingSessions } from '@/src/db/schema';
+import { createTokenManager } from '@/src/features/google-calendar/utils/tokenManager';
 import { createDate } from '@/src/utils/timezone';
 
-// OAuth2 client configuration
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI,
-);
+// Create token manager instance
+const tokenManager = createTokenManager(db);
 
 // Validation schemas
 const GetAvailabilitySchema = z.object({
@@ -34,6 +26,31 @@ interface TimeSlot {
   end: string; // ISO string
 }
 
+// Helper function to validate and prepare therapist for calendar access
+async function prepareTherapistCalendarAccess(therapistId: number) {
+  const therapist = await db.query.therapists.findFirst({
+    where: (therapists, { eq }) => eq(therapists.id, therapistId),
+  });
+
+  if (!therapist) {
+    throw new Error('Therapist not found');
+  }
+
+  if (!tokenManager.validateTherapistTokens(therapist)) {
+    throw new Error('Google Calendar not connected for this therapist');
+  }
+
+  // Ensure valid tokens and get OAuth2Client
+  const oauth2Client = await tokenManager.ensureValidTokens({
+    id: therapist.id,
+    googleCalendarAccessToken: therapist.googleCalendarAccessToken,
+    googleCalendarRefreshToken: therapist.googleCalendarRefreshToken,
+    googleCalendarIntegrationStatus: therapist.googleCalendarIntegrationStatus,
+  });
+
+  return { therapist, oauth2Client };
+}
+
 // Get available time slots
 export async function GET(req: NextRequest) {
   try {
@@ -42,6 +59,7 @@ export async function GET(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
     const searchParams = req.nextUrl.searchParams;
     const validatedData = GetAvailabilitySchema.parse({
       therapistId: searchParams.get('therapistId'),
@@ -53,86 +71,9 @@ export async function GET(req: NextRequest) {
 
     const therapistId = parseInt(validatedData.therapistId);
 
-    // Get therapist details
-    const therapist = await db.query.therapists.findFirst({
-      where: (therapists, { eq }) => eq(therapists.id, therapistId),
-    });
-
-    if (!therapist) {
-      return NextResponse.json({ error: 'Therapist not found' }, { status: 404 });
-    }
-
-    if (
-      !therapist.googleCalendarAccessToken ||
-      !therapist.googleCalendarRefreshToken ||
-      therapist.googleCalendarIntegrationStatus !== 'connected'
-    ) {
-      console.log('Google Calendar not connected for therapist:', validatedData.therapistId);
-      return NextResponse.json(
-        { error: 'Google Calendar not connected for this therapist' },
-        { status: 401 },
-      );
-    }
-
-    console.log('Setting up OAuth client for therapist:', validatedData.therapistId);
-    // Set up Google Calendar client
-    oauth2Client.setCredentials({
-      access_token: therapist.googleCalendarAccessToken,
-      refresh_token: therapist.googleCalendarRefreshToken,
-    });
-
-    // Attempt to refresh the token if needed - only if we have a refresh token
-    let tokenRefreshed = false;
-    if (therapist.googleCalendarRefreshToken) {
-      try {
-        console.log('Refreshing access token for therapist:', validatedData.therapistId);
-        const { credentials } = await oauth2Client.refreshAccessToken();
-
-        // Only update tokens if we got a valid access token back
-        if (credentials.access_token) {
-          // Update the tokens in the database
-          await db
-            .update(therapists)
-            .set({
-              googleCalendarAccessToken: credentials.access_token,
-              googleCalendarRefreshToken:
-                credentials.refresh_token || therapist.googleCalendarRefreshToken,
-              updatedAt: createDate(new Date(), 'UTC').toJSDate(),
-            })
-            .where(eq(therapists.id, therapistId));
-
-          // Update the client with new credentials
-          oauth2Client.setCredentials({
-            access_token: credentials.access_token,
-            refresh_token: credentials.refresh_token || therapist.googleCalendarRefreshToken,
-          });
-          tokenRefreshed = true;
-          console.log('Token refreshed successfully for therapist:', validatedData.therapistId);
-        }
-      } catch (refreshError) {
-        // Only disconnect on specific auth errors, not any error
-        const isAuthError = isGoogleAuthError(refreshError);
-
-        if (isAuthError) {
-          // If token refresh fails with an auth error, disconnect therapist
-          console.error('Auth error refreshing token:', refreshError);
-          await disconnectTherapistGoogleCalendar(db, therapistId);
-          return NextResponse.json(
-            {
-              error: 'Google Calendar integration authentication failed. Please reconnect.',
-              authError: true,
-              errorType: 'auth_error',
-              needsReconnect: true,
-            },
-            { status: 401 },
-          );
-        } else {
-          // For non-auth errors, log but don't disconnect - might be temporary
-          console.error('Non-auth error refreshing token:', refreshError);
-          // Continue with the existing token, it might still work
-        }
-      }
-    }
+    // Prepare therapist calendar access with improved token management
+    const { oauth2Client } = await prepareTherapistCalendarAccess(therapistId);
+    console.log('Successfully prepared calendar access for therapist:', therapistId);
 
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
@@ -236,28 +177,9 @@ export async function GET(req: NextRequest) {
         slots: availableSlots,
         therapistTimezone,
         workingHours,
-        tokenRefreshed,
       });
     } catch (calendarError: unknown) {
-      // Only disconnect for clear auth errors
-      const isAuthError = isGoogleAuthError(calendarError);
-
-      if (isAuthError) {
-        console.error('Auth error fetching calendar data:', calendarError);
-        await disconnectTherapistGoogleCalendar(db, therapistId);
-        return NextResponse.json(
-          {
-            error: 'Google Calendar authentication failed. Please reconnect.',
-            authError: true,
-            errorType: 'auth_error',
-            needsReconnect: true,
-          },
-          { status: 401 },
-        );
-      }
-
-      // For other errors, log but don't disconnect
-      console.error('Error fetching calendar data (non-auth):', calendarError);
+      console.error('Error fetching calendar data:', calendarError);
       return NextResponse.json(
         {
           success: false,

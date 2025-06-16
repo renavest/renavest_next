@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
 import { therapists } from '@/src/db/schema';
+import { createTokenManager } from '@/src/features/google-calendar/utils/tokenManager';
 import { createDate } from '@/src/utils/timezone';
 // GET handler for OAuth callback
 export async function GET(req: NextRequest) {
@@ -49,12 +50,8 @@ export async function GET(req: NextRequest) {
       console.error('Missing user ID');
       return NextResponse.redirect(`${origin}/google-calendar/error?reason=missing_user_id`);
     }
-    // Set up OAuth2 client
-    const oauth2Client = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET,
-      process.env.GOOGLE_REDIRECT_URI,
-    );
+    // Create token manager instance
+    const tokenManager = createTokenManager(db);
 
     // Find therapist to ensure they exist
     const existingTherapist = await db.query.therapists.findFirst({
@@ -70,26 +67,18 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-      // Exchange code for tokens
-      const { tokens } = await oauth2Client.getToken(code);
-      oauth2Client.setCredentials(tokens);
+      // Exchange authorization code for tokens using token manager
+      const tokenInfo = await tokenManager.exchangeCodeForTokens(code);
 
-      // If we don't have a refresh token, that's a problem since we need offline access
-      if (!tokens.refresh_token) {
-        console.warn('No refresh token received! Setting integration status to error.');
-        await db
-          .update(therapists)
-          .set({
-            googleCalendarIntegrationStatus: 'error',
-            updatedAt: createDate().toJSDate(),
-          })
-          .where(eq(therapists.id, therapistId));
-
-        return NextResponse.redirect(`${origin}/google-calendar/error?reason=no_refresh_token`);
-      }
+      // Create temporary OAuth2Client to get user info
+      const tempClient = tokenManager.createAuthClient();
+      tempClient.setCredentials({
+        access_token: tokenInfo.access_token,
+        refresh_token: tokenInfo.refresh_token,
+      });
 
       // Fetch user's email from Google
-      const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
+      const oauth2 = google.oauth2({ version: 'v2', auth: tempClient });
       const userInfo = await oauth2.userinfo.get();
       const calendarEmail = userInfo.data.email;
 
@@ -97,8 +86,8 @@ export async function GET(req: NextRequest) {
       await db
         .update(therapists)
         .set({
-          googleCalendarAccessToken: tokens.access_token,
-          googleCalendarRefreshToken: tokens.refresh_token,
+          googleCalendarAccessToken: tokenInfo.access_token,
+          googleCalendarRefreshToken: tokenInfo.refresh_token,
           googleCalendarEmail: calendarEmail,
           googleCalendarIntegrationStatus: 'connected',
           googleCalendarIntegrationDate: createDate().toJSDate(),
@@ -117,7 +106,7 @@ export async function GET(req: NextRequest) {
       // Verify the connection by fetching calendar events
 
       // Verify the connection by fetching calendar events
-      const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+      const calendar = google.calendar({ version: 'v3', auth: tempClient });
       const now = createDate();
       const oneWeekLater = now.plus({ days: 7 });
 

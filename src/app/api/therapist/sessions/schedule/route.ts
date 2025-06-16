@@ -15,7 +15,7 @@ const ScheduleSessionSchema = z.object({
   sessionStartTime: z.string(),
   sessionEndTime: z.string(),
   timezone: z.string(),
-});
+}); 
 
 export async function POST(req: NextRequest) {
   try {

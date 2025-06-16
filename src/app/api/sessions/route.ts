@@ -9,14 +9,11 @@ import { bookingSessions } from '@/src/db/schema';
 import { sendBookingConfirmationEmail } from '@/src/features/booking/actions/sendBookingConfirmationEmail';
 import { SupportedTimezone } from '@/src/features/booking/utils/timezoneManager';
 import { createAndStoreGoogleCalendarEvent } from '@/src/features/google-calendar/utils/googleCalendar';
+import { createTokenManager } from '@/src/features/google-calendar/utils/tokenManager';
 import { createDate } from '@/src/utils/timezone';
 
-// OAuth2 client configuration
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI,
-);
+// Create token manager instance
+const tokenManager = createTokenManager(db);
 
 // Validation schemas
 const CreateBookingSchema = z.object({
@@ -107,10 +104,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Set up Google Calendar client
-    oauth2Client.setCredentials({
-      access_token: therapist.googleCalendarAccessToken,
-      refresh_token: therapist.googleCalendarRefreshToken,
+    // Set up Google Calendar client with token management
+    const oauth2Client = await tokenManager.ensureValidTokens({
+      id: therapist.id,
+      googleCalendarAccessToken: therapist.googleCalendarAccessToken,
+      googleCalendarRefreshToken: therapist.googleCalendarRefreshToken,
+      googleCalendarIntegrationStatus: therapist.googleCalendarIntegrationStatus,
     });
 
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
