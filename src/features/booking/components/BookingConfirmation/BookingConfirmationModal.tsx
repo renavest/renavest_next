@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { formatDateTime } from '@/src/features/booking/utils/dateTimeUtils';
+import { formatCurrency } from '@/src/features/therapist-dashboard/utils/dashboardHelpers';
 import { createDate } from '@/src/utils/timezone';
 
 import {
@@ -14,6 +15,7 @@ interface BookingConfirmationModalProps {
   onConfirm: () => void;
   onCancel: () => void;
   _advisorName?: string;
+  advisorPricing?: number;
 }
 
 export function BookingConfirmationModal({
@@ -22,7 +24,11 @@ export function BookingConfirmationModal({
   onConfirm,
   onCancel,
   _advisorName,
+  advisorPricing,
 }: BookingConfirmationModalProps) {
+  const hasPricing = advisorPricing && advisorPricing > 0;
+  const formattedPrice = hasPricing ? formatCurrency(advisorPricing) : null;
+
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30'>
       <div className='bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 flex flex-col items-center relative'>
@@ -54,14 +60,35 @@ export function BookingConfirmationModal({
               );
             })()}
           </div>
+
+          {/* Pricing Information */}
+          {hasPricing && (
+            <div className='mt-4 p-4 bg-gray-50 rounded-lg border'>
+              <div className='text-sm text-gray-600 mb-1'>Session Cost</div>
+              <div className='text-2xl font-bold text-gray-900'>{formattedPrice}</div>
+              <div className='text-xs text-gray-500 mt-1'>
+                Payment will be processed after session completion
+              </div>
+            </div>
+          )}
         </div>
+
         <button
           onClick={onConfirm}
           disabled={isBooking}
-          className='w-full px-6 py-2 bg-purple-600 text-white rounded-md font-medium shadow hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition mb-2'
+          className='w-full px-6 py-3 bg-purple-600 text-white rounded-md font-medium shadow hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition mb-2'
         >
-          {isBooking ? 'Booking...' : 'Confirm Booking'}
+          {isBooking ? 'Booking...' : hasPricing ? 'Book & Pay Later' : 'Confirm Booking'}
         </button>
+
+        {hasPricing && (
+          <div className='text-xs text-gray-500 text-center mt-2'>
+            You'll be charged {formattedPrice} after your session is completed.
+            <br />
+            Cancel up to 24 hours before for a full refund.
+          </div>
+        )}
+
         {error && <div className='mt-2 text-red-600 text-sm'>{error}</div>}
       </div>
     </div>

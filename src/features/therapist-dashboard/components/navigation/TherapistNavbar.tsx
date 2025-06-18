@@ -17,7 +17,11 @@ import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
 import { isHeaderScrolledSignal } from '../../../employee-dashboard/state/dashboardState';
-import { therapistIdSignal } from '../../state/therapistDashboardState';
+import {
+  therapistIdSignal,
+  sessionCompletionSignal,
+  therapistPaymentSignal,
+} from '../../state/therapistDashboardState';
 
 export default function TherapistNavbar({
   pageTitle = 'Therapist Dashboard',
@@ -31,6 +35,7 @@ export default function TherapistNavbar({
   const { user } = useUser();
   const router = useRouter();
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -55,6 +60,10 @@ export default function TherapistNavbar({
   useEffect(() => {
     setIsNavigating(false);
   }, [backButtonHref]);
+
+  // Get pending session count for notification badge
+  const pendingSessionsCount = sessionCompletionSignal.value.sessions.length;
+  const needsBankSetup = !therapistPaymentSignal.value.paymentSettings.bankAccountConnected;
 
   const handleMarketplaceClick = () => {
     if (therapistIdSignal.value) {

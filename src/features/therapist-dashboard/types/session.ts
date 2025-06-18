@@ -32,3 +32,36 @@ export interface SessionPayment {
   paymentDate: string;
   paymentMethod: string;
 }
+
+// Session completion specific types
+export interface CompletableSession {
+  id: number;
+  clientName?: string;
+  sessionDate: Date;
+  sessionStartTime: Date;
+  sessionEndTime: Date;
+  status: string;
+  hourlyRateCents?: number;
+  paymentRequired: boolean;
+}
+
+export interface SessionCompletionState {
+  sessions: CompletableSession[];
+  loading: boolean;
+  error: string | null;
+  completing: Set<number>;
+}
+
+export interface SessionCompletionActions {
+  fetchSessions: () => Promise<void>;
+  completeSession: (sessionId: number) => Promise<void>;
+  refreshSessions: () => Promise<void>;
+}
+
+// Enhanced session completion card props with proper typing
+export interface SessionCompletionCardProps {
+  session: CompletableSession;
+  onCompleteSession: (sessionId: number) => Promise<void>;
+  className?: string;
+  isLoading?: boolean;
+}

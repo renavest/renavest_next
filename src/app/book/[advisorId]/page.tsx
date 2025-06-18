@@ -70,6 +70,7 @@ export default async function TherapistBookingPage({ params }: { params: { advis
       email: pendingTherapist.clerkEmail || undefined,
       profileUrl: getTherapistImageUrl(pendingTherapist.profileUrl),
       isPending: true,
+      hourlyRateCents: 0, // Pending therapists don't have pricing yet
     };
 
     // Track session search for pending therapist
@@ -86,7 +87,7 @@ export default async function TherapistBookingPage({ params }: { params: { advis
       redirect('/explore');
     }
 
-    // Fetch therapist data with user information
+    // Fetch therapist data with user information and pricing
     const therapist = await db.query.therapists.findFirst({
       where: eq(therapists.id, therapistId),
       with: {
@@ -114,6 +115,7 @@ export default async function TherapistBookingPage({ params }: { params: { advis
       email: therapistUser.email || undefined,
       profileUrl: getTherapistImageUrl(therapist.profileUrl),
       isPending: false,
+      hourlyRateCents: therapist.hourlyRateCents || 0, // Include pricing information
     };
 
     // Track session search with correct IDs
