@@ -5,13 +5,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/src/db';
 import { users, therapists, bookingSessions, sessionPayments } from '@/src/db/schema';
 import { SessionCompletionService } from '@/src/features/stripe/services/session-completion';
+import { paymentLogger } from '@/src/lib/logger';
 
 // POST - Mark session as completed and trigger payment
 export async function POST(req: NextRequest) {
+  const logContext = { requestId: crypto.randomUUID() };
+
   try {
     const user = await currentUser();
 
     if (!user) {
+      paymentLogger.warn('Unauthorized session completion attempt', logContext);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -19,13 +23,22 @@ export async function POST(req: NextRequest) {
     const { sessionId } = body;
 
     if (!sessionId) {
+      paymentLogger.warn('Session completion attempt without session ID', {
+        ...logContext,
+        userId: user.id,
+      });
       return NextResponse.json({ error: 'Session ID is required' }, { status: 400 });
     }
+
+    const enhancedContext = { ...logContext, sessionId, userId: user.id };
+
+    paymentLogger.debug('Starting session completion API request', enhancedContext);
 
     // Get the internal user record
     const userRecord = await db.select().from(users).where(eq(users.clerkId, user.id)).limit(1);
 
     if (userRecord.length === 0) {
+      paymentLogger.warn('User not found during session completion', enhancedContext);
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
@@ -34,6 +47,9 @@ export async function POST(req: NextRequest) {
 
     // Only therapists can complete sessions
     if (userRole !== 'therapist') {
+      paymentLogger.warn('Non-therapist attempted to complete session', enhancedContext, {
+        userRole,
+      });
       return NextResponse.json({ error: 'Only therapists can complete sessions' }, { status: 403 });
     }
 
@@ -145,8 +161,8 @@ export async function GET(req: NextRequest) {
         id: bookingSessions.id,
         status: bookingSessions.status,
         sessionDate: bookingSessions.sessionDate,
-        startTime: bookingSessions.startTime,
-        endTime: bookingSessions.endTime,
+        sessionStartTime: bookingSessions.sessionStartTime,
+        sessionEndTime: bookingSessions.sessionEndTime,
       })
       .from(bookingSessions)
       .where(
