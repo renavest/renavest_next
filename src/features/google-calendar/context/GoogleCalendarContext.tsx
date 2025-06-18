@@ -1,7 +1,7 @@
 'use client';
 
-import { signal } from '@preact-signals/safe-react';
 import { useUser } from '@clerk/nextjs';
+import { signal } from '@preact-signals/safe-react';
 import { createContext, useContext, useEffect, type ReactNode } from 'react';
 import { toast } from 'sonner';
 

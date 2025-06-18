@@ -5,46 +5,70 @@ import { Calendar } from 'lucide-react';
 import posthog from 'posthog-js';
 import { useEffect, useState } from 'react';
 
-function PilotCohortBanner() {
-  // Calculate the end date (7 days from now)
-  const cohortEndDate = new Date();
-  cohortEndDate.setDate(cohortEndDate.getDate() + 7);
+// Fixed pilot cohort end date - update this when extending the pilot program
+const PILOT_COHORT_END_DATE = new Date('2024-02-15T23:59:59-08:00'); // Feb 15, 2024 11:59 PM PST
 
+function PilotCohortBanner() {
   // State for countdown timer
   const [timeLeft, setTimeLeft] = useState({
-    days: 7,
+    days: 0,
     hours: 0,
     minutes: 0,
     seconds: 0,
   });
 
+  // Calculate initial time left
+  const calculateTimeLeft = () => {
+    const now = new Date();
+    const difference = PILOT_COHORT_END_DATE.getTime() - now.getTime();
+
+    if (difference > 0) {
+      return {
+        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
+        seconds: Math.floor((difference % (1000 * 60)) / 1000),
+      };
+    } else {
+      return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+    }
+  };
+
   // Effect to update countdown timer
   useEffect(() => {
+    // Set initial time left
+    setTimeLeft(calculateTimeLeft());
+
     const timer = setInterval(() => {
-      const now = new Date();
-      const difference = cohortEndDate.getTime() - now.getTime();
+      const newTimeLeft = calculateTimeLeft();
+      setTimeLeft(newTimeLeft);
 
-      if (difference > 0) {
-        const d = Math.floor(difference / (1000 * 60 * 60 * 24));
-        const h = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const m = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-        const s = Math.floor((difference % (1000 * 60)) / 1000);
-
-        setTimeLeft({ days: d, hours: h, minutes: m, seconds: s });
-      } else {
+      // Stop timer when countdown reaches zero
+      if (
+        newTimeLeft.days === 0 &&
+        newTimeLeft.hours === 0 &&
+        newTimeLeft.minutes === 0 &&
+        newTimeLeft.seconds === 0
+      ) {
         clearInterval(timer);
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
       }
     }, 1000);
 
     return () => clearInterval(timer);
   }, []);
 
+  // Don't show banner if pilot cohort has ended
+  const now = new Date();
+  if (now > PILOT_COHORT_END_DATE) {
+    return null;
+  }
+
   // Effect to track banner visibility
   effect(() => {
     if (typeof window !== 'undefined') {
       posthog.capture('pilot_cohort_banner_viewed', {
         timestamp: new Date().toISOString(),
+        cohort_end_date: PILOT_COHORT_END_DATE.toISOString(),
       });
     }
   });
@@ -54,6 +78,7 @@ function PilotCohortBanner() {
     if (typeof window !== 'undefined') {
       posthog.capture('pilot_cohort_demo_booked', {
         timestamp: new Date().toISOString(),
+        cohort_end_date: PILOT_COHORT_END_DATE.toISOString(),
       });
       // You might want to add a modal or redirect to a booking page
       window.open('https://calendly.com/rameau-stan/one-on-one', '_blank');
