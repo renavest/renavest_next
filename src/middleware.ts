@@ -11,6 +11,7 @@ const isPublicRoute = createRouteMatcher([
   '/',
   '/login(.*)',
   '/sign-up(.*)',
+  '/sso-callback(.*)', // OAuth/SSO callback routes must be public
   '/auth-check(.*)',
   '/privacy(.*)',
   '/terms(.*)',
