@@ -1,20 +1,13 @@
 'use client';
 
 import { UserButton, useUser, useClerk } from '@clerk/nextjs';
-import { currentUser } from '@clerk/nextjs/server';
 import { signal, effect } from '@preact-signals/safe-react';
-import { eq } from 'drizzle-orm';
 import { CheckCircle } from 'lucide-react';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import { toast } from 'sonner';
 
-import { db } from '@/src/db';
-import { therapists, users } from '@/src/db/schema';
 import GoogleCalendarIntegration from '@/src/features/google-calendar/components/GoogleCalendarIntegration';
-import { OnboardingModal } from '@/src/features/onboarding/components/OnboardingModal';
-import { OnboardingModalContent } from '@/src/features/onboarding/components/OnboardingModalContent';
-import { OnboardingProvider } from '@/src/features/onboarding/context/OnboardingContext';
+import { fetchTherapistId } from '@/src/features/google-calendar/context/GoogleCalendarContext';
 import TherapistDashboardHeader from '@/src/features/therapist-dashboard/components/navigation/TherapistNavbar';
 
 export default function TherapistOnboardingPage() {
@@ -38,6 +31,30 @@ export default function TherapistOnboardingPage() {
     async function checkSteps() {
       if (isLoaded && user) {
         const therapistId = await fetchTherapistId(user.id);
+
+        // If no therapist ID, try manual sync first
+        if (!therapistId) {
+          try {
+            const syncResponse = await fetch('/api/auth/sync-user-database', {
+              method: 'POST',
+            });
+
+            if (syncResponse.ok) {
+              const syncResult = await syncResponse.json();
+              console.log('Onboarding: Manual sync successful:', syncResult);
+
+              // Retry fetching therapist ID after sync
+              const retryTherapistId = await fetchTherapistId(user.id);
+              if (retryTherapistId) {
+                window.location.reload(); // Reload to pick up new state
+                return;
+              }
+            }
+          } catch (syncError) {
+            console.error('Onboarding: Manual sync failed:', syncError);
+          }
+        }
+
         const calendarResponse = await fetch(
           '/api/google-calendar/status?therapistId=' + therapistId,
         );

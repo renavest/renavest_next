@@ -32,12 +32,18 @@ export async function GET() {
     const userRecord = await db.select().from(users).where(eq(users.clerkId, user.id)).limit(1);
 
     if (userRecord.length === 0) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json(
+        {
+          error: 'User profile not synced to database yet',
+          action: 'complete_onboarding',
+        },
+        { status: 404 },
+      );
     }
 
     const userId = userRecord[0].id;
 
-    // Get therapist record
+    // Get therapist record with better error messaging
     const therapistRecord = await db
       .select({
         id: therapists.id,
@@ -49,7 +55,13 @@ export async function GET() {
       .limit(1);
 
     if (therapistRecord.length === 0) {
-      return NextResponse.json({ error: 'Therapist profile not found' }, { status: 404 });
+      return NextResponse.json(
+        {
+          error: 'Therapist profile not found - please complete your onboarding first',
+          action: 'complete_onboarding',
+        },
+        { status: 404 },
+      );
     }
 
     const therapist = therapistRecord[0];
