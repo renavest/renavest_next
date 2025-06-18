@@ -158,13 +158,33 @@ export default function AuthCheckPage() {
 
           return () => clearTimeout(timer);
         } else {
-          // Max retries reached
-          console.error('AuthCheckPage - Max retries reached, webhook may have failed', {
+          // Max retries reached - try manual sync
+          console.error('AuthCheckPage - Max retries reached, attempting manual sync', {
             userId: user.id,
             finalRole: userRole,
             finalOnboardingComplete: onboardingComplete,
             publicMetadata: user.publicMetadata,
           });
+
+          // Attempt manual database sync
+          try {
+            const syncResponse = await fetch('/api/auth/sync-user-database', {
+              method: 'POST',
+            });
+
+            if (syncResponse.ok) {
+              const syncResult = await syncResponse.json();
+              console.log('Manual sync successful:', syncResult);
+
+              // Reload user and try again
+              await user.reload();
+              setRetryCount(0); // Reset retry count for another attempt
+            } else {
+              console.error('Manual sync failed:', await syncResponse.text());
+            }
+          } catch (syncError) {
+            console.error('Manual sync error:', syncError);
+          }
         }
       })();
     }

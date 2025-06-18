@@ -1,18 +1,14 @@
 import { auth, clerkClient, currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
-import { google } from 'googleapis';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
 import { therapists, users } from '@/src/db/schema';
+import { createTokenManager } from '@/src/features/google-calendar/utils/tokenManager';
 import { createDate } from '@/src/utils/timezone';
 
-// OAuth2 client configuration
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI,
-);
+// Create token manager instance
+const tokenManager = createTokenManager(db);
 
 export async function POST(_req: NextRequest) {
   try {
@@ -65,11 +61,12 @@ export async function POST(_req: NextRequest) {
     // If there's an access token, try to revoke it
     if (therapist.googleCalendarAccessToken) {
       try {
-        oauth2Client.setCredentials({
+        const tempClient = tokenManager.createAuthClient();
+        tempClient.setCredentials({
           access_token: therapist.googleCalendarAccessToken,
           refresh_token: therapist.googleCalendarRefreshToken || undefined,
         });
-        await oauth2Client.revokeToken(therapist.googleCalendarAccessToken);
+        await tempClient.revokeToken(therapist.googleCalendarAccessToken);
         console.log('Successfully revoked Google Calendar access token');
       } catch (error) {
         // Don't fail if token revocation fails (token might be expired)

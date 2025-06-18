@@ -12,7 +12,7 @@ import { trackAuthPageView, trackSignupStepComplete } from '../../utils/authTrac
 const ROLE_OPTIONS = [
   {
     value: 'employee',
-    label: 'Employee',
+    label: 'Individual',
     description: 'Access financial resources and connect with financial therapists',
   },
   {
@@ -22,8 +22,8 @@ const ROLE_OPTIONS = [
   },
   {
     value: 'employer_admin',
-    label: 'Employer',
-    description: 'Manage resources for your employees',
+    label: 'Organization',
+    description: 'Manage resources for your people',
   },
 ];
 

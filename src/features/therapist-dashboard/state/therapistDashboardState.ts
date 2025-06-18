@@ -3,6 +3,8 @@ import { signal } from '@preact-signals/safe-react';
 // Note: Using API calls instead of direct database imports for client-side compatibility
 
 import { Client, UpcomingSession, TherapistStatistics, ClientNote } from '../types';
+import { TherapistPaymentState, StripeConnectStatus } from '../types/payments';
+import { SessionCompletionState } from '../types/session';
 
 export const therapistPageLoadedSignal = signal(false);
 export const therapistIdSignal = signal<number | null>(null);
@@ -35,6 +37,42 @@ export const scheduleSessionClientSignal = signal<Client | null>(null);
 export const sessionSchedulingLoadingSignal = signal<boolean>(false);
 export const sessionSchedulingErrorSignal = signal<string | null>(null);
 
+// Session completion state - avoiding prop drilling
+export const sessionCompletionSignal = signal<SessionCompletionState>({
+  sessions: [],
+  loading: false,
+  error: null,
+  completing: new Set(),
+});
+
+// Payment state - avoiding prop drilling
+export const therapistPaymentSignal = signal<TherapistPaymentState>({
+  paymentSettings: {
+    stripeConnectStatus: {
+      connected: false,
+      onboardingStatus: 'not_started',
+      chargesEnabled: false,
+      payoutsEnabled: false,
+      detailsSubmitted: false,
+    },
+    acceptingPayments: false,
+    bankAccountConnected: false,
+  },
+  sessionPayments: [],
+  integrationState: {
+    stripeConnectStatus: {
+      connected: false,
+      onboardingStatus: 'not_started',
+      chargesEnabled: false,
+      payoutsEnabled: false,
+      detailsSubmitted: false,
+    },
+    loading: false,
+    connecting: false,
+    error: null,
+  },
+});
+
 // Client notes state signals
 export const clientNotesSignal = signal<ClientNote[]>([]);
 export const clientNotesLoadingSignal = signal<boolean>(false);
@@ -46,6 +84,159 @@ export const addClientFormDataSignal = signal({
   email: '',
 });
 export const addClientSubmittingSignal = signal<boolean>(false);
+
+// Session completion actions
+export const fetchCompletableSessions = async () => {
+  const current = sessionCompletionSignal.value;
+  sessionCompletionSignal.value = { ...current, loading: true, error: null };
+
+  try {
+    const response = await fetch('/api/therapist/sessions/completable');
+    if (!response.ok) {
+      throw new Error('Failed to fetch completable sessions');
+    }
+
+    const data = await response.json();
+    sessionCompletionSignal.value = {
+      ...current,
+      sessions: data.sessions || [],
+      loading: false,
+    };
+  } catch (error) {
+    console.error('Error fetching completable sessions:', error);
+    sessionCompletionSignal.value = {
+      ...current,
+      loading: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch sessions',
+    };
+  }
+};
+
+export const completeSession = async (sessionId: number) => {
+  const current = sessionCompletionSignal.value;
+  const newCompleting = new Set(current.completing);
+  newCompleting.add(sessionId);
+
+  sessionCompletionSignal.value = { ...current, completing: newCompleting };
+
+  try {
+    const response = await fetch('/api/therapist/sessions/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to complete session');
+    }
+
+    // Refresh sessions after completion
+    await fetchCompletableSessions();
+  } catch (error) {
+    console.error('Error completing session:', error);
+    const currentAfterError = sessionCompletionSignal.value;
+    const completingAfterError = new Set(currentAfterError.completing);
+    completingAfterError.delete(sessionId);
+
+    sessionCompletionSignal.value = {
+      ...currentAfterError,
+      completing: completingAfterError,
+      error: error instanceof Error ? error.message : 'Failed to complete session',
+    };
+    throw error;
+  }
+
+  const finalCurrent = sessionCompletionSignal.value;
+  const finalCompleting = new Set(finalCurrent.completing);
+  finalCompleting.delete(sessionId);
+  sessionCompletionSignal.value = { ...finalCurrent, completing: finalCompleting };
+};
+
+// Payment integration actions
+export const fetchStripeConnectStatus = async () => {
+  const current = therapistPaymentSignal.value;
+  therapistPaymentSignal.value = {
+    ...current,
+    integrationState: { ...current.integrationState, loading: true, error: null },
+  };
+
+  try {
+    const response = await fetch('/api/stripe/connect/status');
+    if (!response.ok) {
+      throw new Error('Failed to fetch Stripe Connect status');
+    }
+
+    const data = await response.json();
+    const stripeConnectStatus: StripeConnectStatus = {
+      connected: data.connected,
+      accountId: data.accountId,
+      onboardingStatus: data.onboardingStatus,
+      chargesEnabled: data.chargesEnabled,
+      payoutsEnabled: data.payoutsEnabled,
+      detailsSubmitted: data.detailsSubmitted,
+      requiresAction: data.requiresAction,
+      requirements: data.requirements,
+    };
+
+    therapistPaymentSignal.value = {
+      ...current,
+      paymentSettings: {
+        ...current.paymentSettings,
+        stripeConnectStatus,
+        bankAccountConnected: data.connected && data.payoutsEnabled,
+        acceptingPayments: data.connected && data.chargesEnabled && data.payoutsEnabled,
+      },
+      integrationState: {
+        ...current.integrationState,
+        stripeConnectStatus,
+        loading: false,
+      },
+    };
+  } catch (error) {
+    console.error('Error fetching Stripe Connect status:', error);
+    therapistPaymentSignal.value = {
+      ...current,
+      integrationState: {
+        ...current.integrationState,
+        loading: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch status',
+      },
+    };
+  }
+};
+
+export const initiateStripeConnection = async () => {
+  const current = therapistPaymentSignal.value;
+  therapistPaymentSignal.value = {
+    ...current,
+    integrationState: { ...current.integrationState, connecting: true, error: null },
+  };
+
+  try {
+    const response = await fetch('/api/stripe/connect/oauth');
+    const data = await response.json();
+
+    if (response.ok) {
+      if (data.connected) {
+        await fetchStripeConnectStatus();
+      } else if (data.url) {
+        window.location.href = data.url;
+      }
+    } else {
+      throw new Error(data.error || 'Failed to initiate bank account connection');
+    }
+  } catch (error) {
+    console.error('Error connecting bank account:', error);
+    therapistPaymentSignal.value = {
+      ...current,
+      integrationState: {
+        ...current.integrationState,
+        connecting: false,
+        error: error instanceof Error ? error.message : 'Failed to connect',
+      },
+    };
+  }
+};
 
 export const refreshUpcomingSessions = async () => {
   const therapistId = therapistIdSignal.value;

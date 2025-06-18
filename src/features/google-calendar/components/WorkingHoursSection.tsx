@@ -3,6 +3,8 @@
 import { Clock, Plus, Save, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
+import { useGoogleCalendarContext } from '../context/GoogleCalendarContext';
+
 interface WorkingHours {
   id?: number;
   dayOfWeek: number;
@@ -21,11 +23,8 @@ const DAYS_OF_WEEK = [
   { value: 0, label: 'Sunday' },
 ];
 
-interface WorkingHoursSectionProps {
-  therapistId: number;
-}
-
-export function WorkingHoursSection({ therapistId }: WorkingHoursSectionProps) {
+export function WorkingHoursSection() {
+  const { therapistId, isValidTherapistId } = useGoogleCalendarContext();
   const [workingHours, setWorkingHours] = useState<WorkingHours[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -33,10 +32,17 @@ export function WorkingHoursSection({ therapistId }: WorkingHoursSectionProps) {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    fetchWorkingHours();
-  }, [therapistId]);
+    if (isValidTherapistId && therapistId) {
+      fetchWorkingHours();
+    }
+  }, [therapistId, isValidTherapistId]);
 
   const fetchWorkingHours = async () => {
+    if (!therapistId || !isValidTherapistId) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await fetch(`/api/therapist/working-hours?therapistId=${therapistId}`);
@@ -81,6 +87,11 @@ export function WorkingHoursSection({ therapistId }: WorkingHoursSectionProps) {
   };
 
   const saveWorkingHours = async () => {
+    if (!therapistId || !isValidTherapistId) {
+      setError('Invalid therapist ID');
+      return;
+    }
+
     try {
       setSaving(true);
       setError(null);

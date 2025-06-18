@@ -17,6 +17,7 @@ interface BookingFlowProps {
     profileUrl?: string;
     email?: string;
     isPending?: boolean;
+    hourlyRateCents?: number;
   };
   userId: string;
   userEmail: string;
@@ -106,8 +107,9 @@ export default function UnifiedBookingFlow({ advisor, userId, userEmail }: Booki
     return <AlternativeBooking advisor={advisor} bookingURL={advisor.bookingURL} />;
   }
 
-  // Check if we should enable billing checks (only in development for now)
-  const shouldCheckBilling = process.env.NODE_ENV === 'development';
+  // Check if we should enable billing checks - always check if therapist has pricing
+  const hasPricing = advisor.hourlyRateCents && advisor.hourlyRateCents > 0;
+  const shouldCheckBilling = hasPricing; // Always check billing if therapist has pricing
 
   // If active therapist with Google Calendar integration, show internal booking
   const bookingForm = (
@@ -119,10 +121,11 @@ export default function UnifiedBookingFlow({ advisor, userId, userEmail }: Booki
       advisorInitials={getInitials(advisor.name)}
       bookingURL={advisor.bookingURL}
       advisorEmail={advisor.email}
+      advisorPricing={advisor.hourlyRateCents}
     />
   );
 
-  // Conditionally wrap with billing check only in development
+  // Conditionally wrap with billing check if therapist has pricing
   if (shouldCheckBilling) {
     return (
       <BillingCheckWrapper advisorId={advisor.id} shouldCheckBilling={true}>

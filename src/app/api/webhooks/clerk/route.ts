@@ -13,36 +13,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Webhook } from 'svix';
 
 import {
-  WebhookUserData,
   handleUserActivity,
   handleUserCreateOrUpdate,
   handleUserDeletion,
+  handleSessionCreated,
+  handleSessionEnded,
 } from './handlers';
-
-// User-related Clerk webhook event types
-type WebhookEventType =
-  | 'user.created'
-  | 'user.updated'
-  | 'user.deleted'
-  | 'user.signed_in'
-  | 'user.signed_out'
-  | 'session.created'
-  | 'session.removed'
-  | 'session.ended';
-
-// Generic webhook event
-interface WebhookEvent {
-  type: WebhookEventType;
-  data: WebhookUserData;
-  object: 'event';
-}
-
-// Webhook processing error types
-type WebhookError =
-  | { type: 'MissingSecret' }
-  | { type: 'MissingHeaders' }
-  | { type: 'InvalidSignature'; error: unknown }
-  | { type: 'ProcessingError'; error: unknown };
+import type { WebhookUserData, WebhookSessionData, WebhookEvent, WebhookError } from './types';
 
 /**
  * Verify webhook signature and parse event
@@ -77,29 +54,81 @@ async function processEvent(
   environment: string,
 ): Promise<Result<boolean, WebhookError>> {
   try {
-    // Handle different event types with a more DRY approach
-    const eventHandlers: Record<
-      WebhookEventType,
-      (data: WebhookUserData) => Promise<Result<boolean, unknown>>
-    > = {
-      'user.created': (data) => handleUserCreateOrUpdate('user.created', data),
-      'user.updated': (data) => handleUserCreateOrUpdate('user.updated', data),
-      'user.deleted': handleUserDeletion,
-      'user.signed_in': handleUserActivity,
-      'user.signed_out': handleUserActivity,
-      'session.created': async () => ok(true),
-      'session.removed': async () => ok(true),
-      'session.ended': async () => ok(true),
-    };
+    console.log('Processing webhook event', {
+      type: event.type,
+      dataKeys: Object.keys(event.data),
+      environment,
+    });
 
-    const handler = eventHandlers[event.type];
-    if (handler) {
-      const result = await handler(event.data);
+    // Handle session events with their specific data structure
+    if (event.type === 'session.created') {
+      const sessionData = event.data as WebhookSessionData;
+      const result = await handleSessionCreated(sessionData);
       if (result.isErr()) {
-        console.error('Event handler error', {
+        console.error('Session created handler error', {
           type: event.type,
           error: result.error,
-          userId: event.data.id,
+          sessionId: sessionData.id,
+          environment,
+        });
+        return err({ type: 'ProcessingError', error: result.error });
+      }
+      return ok(true);
+    }
+
+    if (event.type === 'session.removed' || event.type === 'session.ended') {
+      const sessionData = event.data as WebhookSessionData;
+      const result = await handleSessionEnded(sessionData, event.type);
+      if (result.isErr()) {
+        console.error('Session ended handler error', {
+          type: event.type,
+          error: result.error,
+          sessionId: sessionData.id,
+          environment,
+        });
+        return err({ type: 'ProcessingError', error: result.error });
+      }
+      return ok(true);
+    }
+
+    // Handle user events with their specific data structure
+    const userData = event.data as WebhookUserData;
+
+    if (event.type === 'user.created' || event.type === 'user.updated') {
+      const result = await handleUserCreateOrUpdate(event.type, userData);
+      if (result.isErr()) {
+        console.error('User create/update handler error', {
+          type: event.type,
+          error: result.error,
+          userId: userData.id,
+          environment,
+        });
+        return err({ type: 'ProcessingError', error: result.error });
+      }
+      return ok(true);
+    }
+
+    if (event.type === 'user.deleted') {
+      const result = await handleUserDeletion(userData);
+      if (result.isErr()) {
+        console.error('User deletion handler error', {
+          type: event.type,
+          error: result.error,
+          userId: userData.id,
+          environment,
+        });
+        return err({ type: 'ProcessingError', error: result.error });
+      }
+      return ok(true);
+    }
+
+    if (event.type === 'user.signed_in' || event.type === 'user.signed_out') {
+      const result = await handleUserActivity(userData);
+      if (result.isErr()) {
+        console.error('User activity handler error', {
+          type: event.type,
+          error: result.error,
+          userId: userData.id,
           environment,
         });
         return err({ type: 'ProcessingError', error: result.error });
@@ -109,7 +138,6 @@ async function processEvent(
 
     console.warn('Unhandled event type', {
       type: event.type,
-      userId: event.data.id,
       environment,
     });
     return ok(true);

@@ -562,6 +562,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   sponsoredGroupMemberships: many(sponsoredGroupMembers),
   directEmployerSubsidies: many(employerSubsidies),
   bookedSessions: many(bookingSessions),
+  userSessions: many(userSessions),
   clientNotes: many(clientNotes),
   documentAssignments: many(therapistDocumentAssignments),
   stripeCustomer: one(stripeCustomers, {
@@ -770,4 +771,30 @@ export const formAssignmentsRelations = relations(formAssignments, ({ one }) => 
     fields: [formAssignments.therapistId],
     references: [therapists.id],
   }),
+}));
+
+// === 13. User Sessions (Clerk Session Tracking) ===
+export const userSessions = pgTable(
+  'user_sessions',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    clerkSessionId: varchar('clerk_session_id', { length: 255 }).notNull(),
+    status: varchar('status', { length: 20 }).notNull(), // 'created', 'removed', 'ended'
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    endedAt: timestamp('ended_at'),
+    metadata: jsonb('metadata'), // Store any additional session metadata
+  },
+  (table) => ({
+    clerkSessionIdx: index('idx_clerk_session_id').on(table.clerkSessionId),
+    userSessionsIdx: index('idx_user_sessions').on(table.userId, table.status),
+    sessionStatusIdx: index('idx_session_status').on(table.status, table.createdAt),
+  }),
+);
+
+// === 13. User Sessions Relations ===
+export const userSessionsRelations = relations(userSessions, ({ one }) => ({
+  user: one(users, { fields: [userSessions.userId], references: [users.id] }),
 }));

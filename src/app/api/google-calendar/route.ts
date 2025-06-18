@@ -6,14 +6,8 @@ import { z } from 'zod';
 
 import { db } from '@/src/db';
 import { therapists } from '@/src/db/schema';
+import { createTokenManager } from '@/src/features/google-calendar/utils/tokenManager';
 import { createDate } from '@/src/utils/timezone';
-
-// OAuth2 client configuration
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI,
-);
 
 // Validation schema
 const GoogleCalendarAuthSchema = z.object({
@@ -21,32 +15,32 @@ const GoogleCalendarAuthSchema = z.object({
   code: z.string(),
 });
 
+// Create token manager instance
+const tokenManager = createTokenManager(db);
+
 export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get therapistId from query string
+    const { searchParams } = new URL(req.url);
+    const therapistId = searchParams.get('therapistId');
+
+    if (!therapistId) {
+      return NextResponse.json({ error: 'Therapist ID is required' }, { status: 400 });
+    }
+
+    // Generate authorization URL using token manager
+    const authUrl = tokenManager.generateAuthUrl(therapistId);
+
+    return NextResponse.json({ authUrl });
+  } catch (error) {
+    console.error('Error generating auth URL:', error);
+    return NextResponse.json({ error: 'Failed to generate authorization URL' }, { status: 500 });
   }
-  // Get therapistId from query string
-  const { searchParams } = new URL(req.url);
-  const therapistId = searchParams.get('therapistId');
-
-  // Generate authorization URL
-    const scopes = [
-      'https://www.googleapis.com/auth/calendar.events',
-      'https://www.googleapis.com/auth/userinfo.email',
-      'https://www.googleapis.com/auth/calendar.settings.readonly',
-      'https://www.googleapis.com/auth/calendar.readonly',
-    ];
-
-  // Add state if therapistId is present
-  const url = oauth2Client.generateAuthUrl({
-    access_type: 'offline', // Enables refresh token
-    scope: scopes,
-    prompt: 'consent', // Always ask for consent to get refresh token
-    state: therapistId ? JSON.stringify({ therapistId }) : undefined,
-  });
-
-  return NextResponse.json({ authUrl: url });
 }
 
 export async function POST(req: NextRequest) {
@@ -57,14 +51,18 @@ export async function POST(req: NextRequest) {
     // Validate request body
     const { therapistId, code } = GoogleCalendarAuthSchema.parse(body);
 
-    // Exchange authorization code for tokens
-    const { tokens } = await oauth2Client.getToken(code);
+    // Exchange authorization code for tokens using token manager
+    const tokenInfo = await tokenManager.exchangeCodeForTokens(code);
 
-    // Set credentials
-    oauth2Client.setCredentials(tokens);
+    // Create a temporary OAuth2 client to get user info
+    const tempClient = tokenManager.createAuthClient();
+    tempClient.setCredentials({
+      access_token: tokenInfo.access_token,
+      refresh_token: tokenInfo.refresh_token,
+    });
 
     // Fetch user's email from Google
-    const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
+    const oauth2 = google.oauth2({ version: 'v2', auth: tempClient });
     const userInfo = await oauth2.userinfo.get();
     const calendarEmail = userInfo.data.email;
 
@@ -72,8 +70,8 @@ export async function POST(req: NextRequest) {
     await db
       .update(therapists)
       .set({
-        googleCalendarAccessToken: tokens.access_token,
-        googleCalendarRefreshToken: tokens.refresh_token,
+        googleCalendarAccessToken: tokenInfo.access_token,
+        googleCalendarRefreshToken: tokenInfo.refresh_token,
         googleCalendarEmail: calendarEmail,
         googleCalendarIntegrationStatus: 'connected',
         googleCalendarIntegrationDate: createDate().toJSDate(),

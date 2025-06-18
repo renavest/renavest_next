@@ -1,9 +1,9 @@
 import { eq } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
 
 import { bookingSessions, therapists } from '@/src/db/schema';
+import { createTokenManager } from '@/src/features/google-calendar/utils/tokenManager';
 import { createDate } from '@/src/utils/timezone';
 
 interface BookingType {
@@ -116,15 +116,13 @@ export async function createAndStoreGoogleCalendarEvent({
     throw new Error('Google Calendar not integrated for this therapist');
   }
 
-  // Set up OAuth2 client
-  const oauth2Client = new OAuth2Client(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    process.env.GOOGLE_REDIRECT_URI,
-  );
-  oauth2Client.setCredentials({
-    access_token: therapist.googleCalendarAccessToken,
-    refresh_token: therapist.googleCalendarRefreshToken || undefined,
+  // Create token manager and ensure valid tokens
+  const tokenManager = createTokenManager(db);
+  const oauth2Client = await tokenManager.ensureValidTokens({
+    id: therapist.id,
+    googleCalendarAccessToken: therapist.googleCalendarAccessToken,
+    googleCalendarRefreshToken: therapist.googleCalendarRefreshToken,
+    googleCalendarIntegrationStatus: therapist.googleCalendarIntegrationStatus,
   });
 
   const calendarService = google.calendar({ version: 'v3', auth: oauth2Client });
@@ -143,40 +141,19 @@ export async function createAndStoreGoogleCalendarEvent({
       requestBody: createEventRequestBody(sessionStart, sessionEnd, user, therapist, requestId),
     });
   } catch (error: unknown) {
-    // Handle authentication errors
-    if (isGoogleAuthError(error)) {
-      await disconnectTherapistGoogleCalendar(db, therapist.id);
-      throw new Error('Google Calendar authentication failed. Therapist disconnected.');
+    console.error('Failed to create Google Calendar event:', error);
+
+    // Check if this is an authentication error
+    if (
+      error instanceof Error &&
+      (error.message.includes('Authentication failed') ||
+        error.message.includes('invalid_grant') ||
+        error.message.includes('invalid_token'))
+    ) {
+      throw new Error('Google Calendar authentication failed. Please reconnect your calendar.');
     }
 
-    // Handle token refresh
-    const err = error as { code?: number };
-    if (err?.code === 401 && therapist.googleCalendarRefreshToken) {
-      const { credentials } = await oauth2Client.refreshAccessToken();
-
-      // Update therapist's access token
-      await db
-        .update(therapists)
-        .set({
-          googleCalendarAccessToken: credentials.access_token,
-          updatedAt: createDate(new Date(), 'UTC').toJSDate(),
-        })
-        .where(eq(therapists.googleCalendarRefreshToken, therapist.googleCalendarRefreshToken));
-
-      oauth2Client.setCredentials({
-        access_token: credentials.access_token,
-        refresh_token: therapist.googleCalendarRefreshToken,
-      });
-
-      // Retry creating the event with fresh token
-      event = await calendarService.events.insert({
-        calendarId: 'primary',
-        conferenceDataVersion: 1,
-        requestBody: createEventRequestBody(sessionStart, sessionEnd, user, therapist, requestId),
-      });
-    } else {
-      throw error;
-    }
+    throw error;
   }
 
   // Extract Google Meet link
@@ -233,4 +210,49 @@ export async function disconnectTherapistGoogleCalendar(
       updatedAt: createDate(new Date(), 'UTC').toJSDate(),
     })
     .where(eq(therapists.id, therapistId));
+}
+
+/**
+ * Prepares therapist calendar access with proper token management
+ * Queries therapist with all required Google Calendar fields
+ */
+export async function prepareTherapistCalendarAccess(
+  db: NodePgDatabase<Record<string, unknown>>,
+  therapistId: number,
+) {
+  const therapist = await db.query.therapists.findFirst({
+    where: (therapists, { eq }) => eq(therapists.id, therapistId),
+    columns: {
+      id: true,
+      name: true,
+      googleCalendarAccessToken: true,
+      googleCalendarRefreshToken: true,
+      googleCalendarEmail: true,
+      googleCalendarIntegrationStatus: true,
+      userId: true,
+    },
+  });
+
+  if (!therapist) {
+    throw new Error('Therapist not found');
+  }
+
+  if (
+    !therapist.googleCalendarAccessToken ||
+    !therapist.googleCalendarRefreshToken ||
+    therapist.googleCalendarIntegrationStatus !== 'connected'
+  ) {
+    throw new Error('Google Calendar not connected for this therapist');
+  }
+
+  // Create token manager and ensure valid tokens
+  const tokenManager = createTokenManager(db);
+  const oauth2Client = await tokenManager.ensureValidTokens({
+    id: therapist.id,
+    googleCalendarAccessToken: therapist.googleCalendarAccessToken,
+    googleCalendarRefreshToken: therapist.googleCalendarRefreshToken,
+    googleCalendarIntegrationStatus: therapist.googleCalendarIntegrationStatus,
+  });
+
+  return { therapist, oauth2Client };
 }

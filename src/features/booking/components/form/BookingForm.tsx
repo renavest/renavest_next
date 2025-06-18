@@ -3,6 +3,8 @@
 import Image from 'next/image';
 import { useState } from 'react';
 
+import { formatCurrency } from '@/src/features/therapist-dashboard/utils/dashboardHelpers';
+
 import AlternativeBooking from '../AlternativeBooking';
 import { BookingConfirmationModal } from '../BookingConfirmation/BookingConfirmationModal';
 import { TherapistAvailability } from '../TherapistAvailability';
@@ -23,6 +25,7 @@ interface BookingConfirmationProps {
   advisorInitials?: string;
   bookingURL: string;
   advisorEmail?: string;
+  advisorPricing?: number;
 }
 
 interface TimeSlot {
@@ -38,6 +41,7 @@ export function BookingForm({
   advisorInitials: _advisorInitials,
   bookingURL,
   advisorEmail,
+  advisorPricing,
 }: BookingConfirmationProps) {
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -47,6 +51,7 @@ export function BookingForm({
   const { isBooking, error, handleConfirmBooking, setError } = useBookingConfirmation(
     onConfirm,
     advisorId,
+    advisorPricing,
   );
 
   const handleSlotSelect = (slot: TimeSlot) => {
@@ -78,6 +83,10 @@ export function BookingForm({
     );
   }
 
+  // Format pricing for display
+  const formattedPrice =
+    advisorPricing && advisorPricing > 0 ? formatCurrency(advisorPricing) : null;
+
   return (
     <div className='min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-purple-50 to-white py-8 px-2'>
       <div className='w-full max-w-6xl flex flex-col md:flex-row items-start justify-center gap-12'>
@@ -104,6 +113,12 @@ export function BookingForm({
           <h2 className='text-2xl font-bold text-gray-900 mb-1 text-left'>
             Book a Session{advisorName ? ` with ${advisorName}` : ''}
           </h2>
+          {formattedPrice && (
+            <div className='mb-2'>
+              <span className='text-lg font-semibold text-green-600'>{formattedPrice}</span>
+              <span className='text-gray-600 text-sm ml-1'>per session</span>
+            </div>
+          )}
           <p className='text-gray-600 text-left text-base'>
             Select a date and time for your session below.
           </p>
@@ -128,6 +143,7 @@ export function BookingForm({
           isBooking={isBooking}
           onConfirm={handleConfirmBooking}
           onCancel={handleCancel}
+          advisorPricing={advisorPricing}
         />
       )}
     </div>

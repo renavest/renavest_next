@@ -26,12 +26,35 @@ export default function AuthenticationFlow() {
 
   function AuthErrorMessage() {
     if (!authErrorSignal.value) return null;
+
+    // Check if this is an existing account error
+    const isExistingAccountError =
+      authErrorSignal.value.includes('already exists') ||
+      authErrorSignal.value.includes('already connected') ||
+      authErrorSignal.value.includes('already signed in');
+
+    const handleSignInRedirect = () => {
+      currentStep.value = OnboardingStep.LOGIN;
+      authErrorSignal.value = null;
+    };
+
     return (
       <div
         className='bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative animate-fade-in'
         role='alert'
       >
         <span className='block sm:inline'>{authErrorSignal.value}</span>
+        {isExistingAccountError && (
+          <div className='mt-2'>
+            <button
+              type='button'
+              onClick={handleSignInRedirect}
+              className='text-red-800 hover:text-red-900 underline font-medium text-sm'
+            >
+              Sign in to your existing account →
+            </button>
+          </div>
+        )}
       </div>
     );
   }

@@ -31,9 +31,15 @@ const validateEmail = (emailValue: string): boolean => {
 
 // Development diagnostic component
 const ClerkDiagnostics = () => {
-  if (process.env.NODE_ENV !== 'development') return null;
-
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  const [domain, setDomain] = React.useState('Loading...');
+
+  // Fix hydration mismatch by using useEffect to set domain on client-side only
+  React.useEffect(() => {
+    setDomain(window.location.origin);
+  }, []);
+
+  if (process.env.NODE_ENV !== 'development') return null;
 
   return (
     <div className='mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs'>
@@ -43,7 +49,7 @@ const ClerkDiagnostics = () => {
           Publishable Key: {publishableKey ? `${publishableKey.slice(0, 20)}...` : '❌ Missing'}
         </div>
         <div>Environment: {process.env.NODE_ENV}</div>
-        <div>Domain: {typeof window !== 'undefined' ? window.location.origin : 'Server'}</div>
+        <div>Domain: {domain}</div>
       </div>
     </div>
   );

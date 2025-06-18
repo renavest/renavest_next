@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { LogoutButton } from '@/src/features/auth/components/auth/LogoutButton';
-import { fetchTherapistId } from '@/src/features/google-calendar/utils/googleCalendarIntegration';
+import { fetchTherapistId } from '@/src/features/google-calendar/context/GoogleCalendarContext';
 import {
   trackTherapistDashboard,
   trackTherapistMarketplace,
@@ -17,7 +17,11 @@ import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
 import { isHeaderScrolledSignal } from '../../../employee-dashboard/state/dashboardState';
-import { therapistIdSignal } from '../../state/therapistDashboardState';
+import {
+  therapistIdSignal,
+  sessionCompletionSignal,
+  therapistPaymentSignal,
+} from '../../state/therapistDashboardState';
 
 export default function TherapistNavbar({
   pageTitle = 'Therapist Dashboard',
@@ -31,6 +35,7 @@ export default function TherapistNavbar({
   const { user } = useUser();
   const router = useRouter();
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -55,6 +60,10 @@ export default function TherapistNavbar({
   useEffect(() => {
     setIsNavigating(false);
   }, [backButtonHref]);
+
+  // Get pending session count for notification badge
+  const pendingSessionsCount = sessionCompletionSignal.value.sessions.length;
+  const needsBankSetup = !therapistPaymentSignal.value.paymentSettings.bankAccountConnected;
 
   const handleMarketplaceClick = () => {
     if (therapistIdSignal.value) {

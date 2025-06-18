@@ -3,7 +3,7 @@ import { useUser } from '@clerk/nextjs';
 import { Loader2, X } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 
-import { useGoogleCalendarIntegration } from '@/src/features/google-calendar/utils/googleCalendarIntegration';
+// Note: useGoogleCalendarContext import removed - this component needs to be wrapped with GoogleCalendarProvider
 import { trackTherapistDashboard } from '@/src/features/posthog/therapistTracking';
 import {
   therapistIdSignal,
@@ -85,9 +85,9 @@ export default function TherapistProfileCard() {
     initializeTherapistIdSafely();
   }, [user?.id]); // Removed therapistIdLoading from dependencies to prevent loop
 
-  // Check Google Calendar integration status - only after therapistId is set
-  const validTherapistId = getValidTherapistId();
-  const { status: calendarStatus } = useGoogleCalendarIntegration(validTherapistId || 0);
+  // Note: Calendar status is now managed by GoogleCalendarProvider context
+  // This component should be wrapped with GoogleCalendarProvider to access status
+  const calendarStatus = { isConnected: null }; // Placeholder for now
 
   useEffect(() => {
     // Update calendar connection status
