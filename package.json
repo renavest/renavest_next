@@ -43,7 +43,7 @@
     "react-responsive": "^10.0.1",
     "react-scroll-parallax": "^3.4.5",
     "recharts": "^2.15.1",
-    "resend": "^4.2.0",
+    "resend": "^4.6.0",
     "sonner": "^1.7.2",
     "stripe": "^18.1.1",
     "tailwind-merge": "^2.6.0",

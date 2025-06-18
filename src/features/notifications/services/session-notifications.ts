@@ -1,6 +1,8 @@
 import { paymentLogger } from '@/src/lib/logger';
 import { retryService } from '@/src/lib/retry';
 
+import type { EmailRequest, EmailResponse } from '../types/email';
+
 export interface SessionNotification {
   sessionId: number;
   clientEmail: string;
@@ -87,7 +89,7 @@ class SessionNotificationService {
   private async sendSessionCompletionEmail(
     notification: SessionNotification,
   ): Promise<{ id: string }> {
-    const emailData = {
+    const emailRequest: EmailRequest = {
       to: notification.clientEmail,
       subject: `Session Completed - ${notification.therapistName}`,
       template: 'session-completion',
@@ -103,21 +105,21 @@ class SessionNotificationService {
       },
     };
 
-    // Use your email service (e.g., Resend, SendGrid, etc.)
     const response = await fetch('/api/notifications/email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(emailData),
+      body: JSON.stringify(emailRequest),
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData: EmailResponse = await response.json();
       throw new Error(errorData.error || 'Failed to send email');
     }
 
-    return response.json();
+    const result: EmailResponse = await response.json();
+    return { id: result.id };
   }
 
   /**
