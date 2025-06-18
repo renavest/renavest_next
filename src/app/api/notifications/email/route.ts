@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
+import type { EmailRequest, EmailResponse } from '@/src/features/notifications/types/email';
 import { paymentLogger } from '@/src/lib/logger';
 import { retryService } from '@/src/lib/retry';
-import type { EmailRequest, EmailResponse } from '@/src/features/notifications/types/email';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<EmailResponse
       paymentLogger.warn('Email request missing required fields', logContext, { to, subject });
       return NextResponse.json(
         { success: false, error: 'Missing required fields: to, subject', id: '' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<EmailResponse
 
     // Determine email content
     let emailContent: { html?: string; text?: string } = {};
-    
+
     if (template && data) {
       // Generate email content based on template
       emailContent = generateEmailContent(template, data);
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<EmailResponse
       paymentLogger.warn('No email content provided', logContext);
       return NextResponse.json(
         { success: false, error: 'No email content provided', id: '' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -64,14 +64,14 @@ export async function POST(req: NextRequest): Promise<NextResponse<EmailResponse
         return emailData;
       },
       logContext,
-      'send_email_with_resend'
+      'send_email_with_resend',
     );
 
     if (!emailResult.success) {
       paymentLogger.error('Failed to send email after retries', logContext, emailResult.error!);
       return NextResponse.json(
         { success: false, error: 'Failed to send email', id: '' },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -85,17 +85,19 @@ export async function POST(req: NextRequest): Promise<NextResponse<EmailResponse
       success: true,
       id: emailResult.data?.id || '',
     });
-
   } catch (error) {
     paymentLogger.error('Unexpected error in email API', logContext, error as Error);
     return NextResponse.json(
       { success: false, error: 'Internal server error', id: '' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
-function generateEmailContent(template: string, data: Record<string, unknown>): { html: string; text: string } {
+function generateEmailContent(
+  template: string,
+  data: Record<string, unknown>,
+): { html: string; text: string } {
   switch (template) {
     case 'session-completion':
       return generateSessionCompletionEmail(data);
@@ -108,7 +110,10 @@ function generateEmailContent(template: string, data: Record<string, unknown>): 
   }
 }
 
-function generateSessionCompletionEmail(data: Record<string, unknown>): { html: string; text: string } {
+function generateSessionCompletionEmail(data: Record<string, unknown>): {
+  html: string;
+  text: string;
+} {
   const {
     clientName,
     therapistName,
@@ -126,18 +131,20 @@ function generateSessionCompletionEmail(data: Record<string, unknown>): { html: 
       <p>Hi ${clientName},</p>
       <p>Your therapy session with <strong>${therapistName}</strong> on ${sessionDate} at ${sessionTime} has been completed.</p>
       
-      ${completedByTherapist 
-        ? '<p>Your therapist has confirmed the session completion.</p>'
-        : '<p>The session has been automatically marked as completed.</p>'
+      ${
+        completedByTherapist
+          ? '<p>Your therapist has confirmed the session completion.</p>'
+          : '<p>The session has been automatically marked as completed.</p>'
       }
       
-      ${paymentRequired && sessionAmount 
-        ? `<div style="background-color: #fef3c7; padding: 16px; border-radius: 8px; margin: 16px 0;">
+      ${
+        paymentRequired && sessionAmount
+          ? `<div style="background-color: #fef3c7; padding: 16px; border-radius: 8px; margin: 16px 0;">
              <h3 style="color: #92400e; margin: 0 0 8px 0;">Payment Required</h3>
              <p style="margin: 0;">Session fee: $${(sessionAmount / 100).toFixed(2)}</p>
              <p style="margin: 8px 0 0 0;">Please complete your payment in your dashboard.</p>
            </div>`
-        : '<p style="color: #059669;">✓ No payment required for this session.</p>'
+          : '<p style="color: #059669;">✓ No payment required for this session.</p>'
       }
       
       <p>
@@ -158,14 +165,16 @@ function generateSessionCompletionEmail(data: Record<string, unknown>): { html: 
     
     Your therapy session with ${therapistName} on ${sessionDate} at ${sessionTime} has been completed.
     
-    ${completedByTherapist 
-      ? 'Your therapist has confirmed the session completion.'
-      : 'The session has been automatically marked as completed.'
+    ${
+      completedByTherapist
+        ? 'Your therapist has confirmed the session completion.'
+        : 'The session has been automatically marked as completed.'
     }
     
-    ${paymentRequired && sessionAmount 
-      ? `Payment Required: $${(sessionAmount / 100).toFixed(2)} - Please complete your payment in your dashboard.`
-      : 'No payment required for this session.'
+    ${
+      paymentRequired && sessionAmount
+        ? `Payment Required: $${(sessionAmount / 100).toFixed(2)} - Please complete your payment in your dashboard.`
+        : 'No payment required for this session.'
     }
     
     View in Dashboard: ${dashboardUrl}
@@ -178,7 +187,10 @@ function generateSessionCompletionEmail(data: Record<string, unknown>): { html: 
   return { html, text };
 }
 
-function generatePaymentRequiredEmail(data: Record<string, unknown>): { html: string; text: string } {
+function generatePaymentRequiredEmail(data: Record<string, unknown>): {
+  html: string;
+  text: string;
+} {
   const { clientName, therapistName, sessionAmount, paymentUrl } = data;
 
   const html = `
@@ -189,7 +201,7 @@ function generatePaymentRequiredEmail(data: Record<string, unknown>): { html: st
       
       <div style="background-color: #fee2e2; padding: 16px; border-radius: 8px; margin: 16px 0;">
         <h3 style="color: #dc2626; margin: 0 0 8px 0;">Amount Due</h3>
-        <p style="font-size: 18px; font-weight: bold; margin: 0;">$${(sessionAmount as number / 100).toFixed(2)}</p>
+        <p style="font-size: 18px; font-weight: bold; margin: 0;">$${((sessionAmount as number) / 100).toFixed(2)}</p>
       </div>
       
       <p>
@@ -210,7 +222,7 @@ function generatePaymentRequiredEmail(data: Record<string, unknown>): { html: st
     
     Your session with ${therapistName} requires payment.
     
-    Amount Due: $${(sessionAmount as number / 100).toFixed(2)}
+    Amount Due: $${((sessionAmount as number) / 100).toFixed(2)}
     
     Complete Payment: ${paymentUrl}
     
@@ -223,7 +235,10 @@ function generatePaymentRequiredEmail(data: Record<string, unknown>): { html: st
   return { html, text };
 }
 
-function generateSessionReceiptEmail(data: Record<string, unknown>): { html: string; text: string } {
+function generateSessionReceiptEmail(data: Record<string, unknown>): {
+  html: string;
+  text: string;
+} {
   const { clientName, therapistName, sessionDate, sessionAmount, receiptUrl } = data;
 
   const html = `
@@ -234,7 +249,7 @@ function generateSessionReceiptEmail(data: Record<string, unknown>): { html: str
       
       <div style="background-color: #d1fae5; padding: 16px; border-radius: 8px; margin: 16px 0;">
         <h3 style="color: #059669; margin: 0 0 8px 0;">Payment Successful</h3>
-        <p style="margin: 0;">Amount: $${(sessionAmount as number / 100).toFixed(2)}</p>
+        <p style="margin: 0;">Amount: $${((sessionAmount as number) / 100).toFixed(2)}</p>
         <p style="margin: 8px 0 0 0;">Therapist: ${therapistName}</p>
       </div>
       
@@ -257,7 +272,7 @@ function generateSessionReceiptEmail(data: Record<string, unknown>): { html: str
     Thank you for your payment! Here's your receipt for the session with ${therapistName} on ${sessionDate}.
     
     Payment Successful
-    Amount: $${(sessionAmount as number / 100).toFixed(2)}
+    Amount: $${((sessionAmount as number) / 100).toFixed(2)}
     Therapist: ${therapistName}
     
     Download Receipt: ${receiptUrl}
@@ -268,4 +283,4 @@ function generateSessionReceiptEmail(data: Record<string, unknown>): { html: str
   `;
 
   return { html, text };
-} 
+}

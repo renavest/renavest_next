@@ -31,6 +31,16 @@ export const handleSignupError = (err: unknown) => {
     const clerkError = err.errors[0];
     if (clerkError?.code === 'form_identifier_exists') {
       return 'An account with this email already exists. Please sign in instead.';
+    } else if (clerkError?.code === 'oauth_identification_claimed') {
+      return 'This Google account is already connected to an existing Renavest account. Please sign in instead or use a different email address.';
+    } else if (clerkError?.code === 'session_exists') {
+      return 'You are already signed in. Please refresh the page to continue.';
+    } else if (clerkError?.code === 'oauth_account_already_connected') {
+      return 'This Google account is already connected to another Renavest account. Please sign in or use a different Google account.';
+    } else if (clerkError?.code === 'oauth_access_denied') {
+      return 'Google access was denied. Please try again and grant the necessary permissions.';
+    } else if (clerkError?.code === 'oauth_config_missing') {
+      return 'Google sign-up is temporarily unavailable. Please use email signup or try again later.';
     } else if (clerkError?.code === 'form_password_pwned') {
       return 'This password has been found in a data breach. Please choose a different password.';
     } else if (clerkError?.code === 'form_password_too_common') {

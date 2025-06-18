@@ -174,12 +174,30 @@ export const trackSignupError = (
   if (typeof window === 'undefined') return;
 
   const errorMessage = error instanceof Error ? error.message : String(error);
+  let errorCode = 'unknown';
+  let isExistingAccountError = false;
+
+  // Extract error code from Clerk errors
+  if (error && typeof error === 'object' && 'errors' in error) {
+    const clerkErrors = (error as { errors: Array<{ code?: string }> }).errors;
+    errorCode = clerkErrors[0]?.code || 'unknown';
+
+    // Flag specific existing account errors for better analytics
+    isExistingAccountError = [
+      'form_identifier_exists',
+      'oauth_identification_claimed',
+      'oauth_account_already_connected',
+      'session_exists',
+    ].includes(errorCode);
+  }
 
   posthog.capture('auth:signup_failed_v1', {
     role,
     method,
     error_message: errorMessage,
+    error_code: errorCode,
     error_type: error instanceof Error ? error.name : 'unknown',
+    is_existing_account_error: isExistingAccountError,
     failed_timestamp: new Date().toISOString(),
     url: window.location.href,
     ...userContext,
