@@ -89,27 +89,41 @@ export async function fetchAvailability(
     );
 
     // Handle authentication/authorization errors separately
-    if (response.status === 401) {
-      console.error('Authentication error (401) fetching availability - need to reconnect');
+    if (response.status === 401 || response.status === 403) {
       const errorData = await response.json();
-      console.error('Auth error details:', errorData);
+      console.error(
+        `${response.status} error fetching availability - need to reconnect:`,
+        errorData,
+      );
 
-      errorSignal.value =
-        'Your Google Calendar connection needs to be refreshed. Please reconnect from your profile.';
+      const isAuthError = errorData.errorType === 'auth_error';
+      const isPermissionError = errorData.errorType === 'permission_error';
 
-      // Show clear reconnection instructions to the user
-      if (errorData.needsReconnect) {
-        toast.error(
-          'Google Calendar connection expired. Please reconnect from your integrations page.',
-          {
+      if (isAuthError || isPermissionError) {
+        errorSignal.value =
+          errorData.message ||
+          'Your Google Calendar connection needs to be refreshed. Please reconnect from your profile.';
+
+        // Show clear reconnection instructions to the user
+        if (errorData.needsReconnect) {
+          const toastMessage = isPermissionError
+            ? 'Google Calendar permissions insufficient. Please reconnect with full permissions from your integrations page.'
+            : 'Google Calendar connection expired. Please reconnect from your integrations page.';
+
+          toast.error(toastMessage, {
             duration: 10000,
-          },
-        );
+          });
 
-        // Update integrated status to false so the UI can react accordingly
-        isGoogleCalendarIntegratedSignal.value = false;
+          // Update integrated status to false so the UI can react accordingly
+          isGoogleCalendarIntegratedSignal.value = false;
+        }
+
+        availableSlotsSignal.value = [];
+        return;
       }
 
+      // Handle other 401/403 errors that might not be Google Calendar related
+      errorSignal.value = errorData.message || 'Authentication error. Please try again.';
       availableSlotsSignal.value = [];
       return;
     }

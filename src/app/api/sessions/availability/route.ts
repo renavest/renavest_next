@@ -5,6 +5,10 @@ import { z } from 'zod';
 
 import { db } from '@/src/db';
 import { bookingSessions } from '@/src/db/schema';
+import {
+  isGoogleAuthError,
+  disconnectTherapistGoogleCalendar,
+} from '@/src/features/google-calendar/utils/googleCalendar';
 import { createTokenManager } from '@/src/features/google-calendar/utils/tokenManager';
 import { createDate } from '@/src/utils/timezone';
 
@@ -179,12 +183,73 @@ export async function GET(req: NextRequest) {
         workingHours,
       });
     } catch (calendarError: unknown) {
-      console.error('Error fetching calendar data:', calendarError);
+      console.error('Error fetching calendar data (non-auth):', calendarError);
+
+      // Check if this is a Google Calendar authentication error
+      if (isGoogleAuthError(calendarError)) {
+        console.error('Google Calendar authentication failed for therapist:', therapistId);
+
+        // Disconnect the therapist's Google Calendar integration
+        try {
+          await disconnectTherapistGoogleCalendar(db, therapistId);
+          console.log('Disconnected Google Calendar for therapist:', therapistId);
+        } catch (disconnectError) {
+          console.error('Failed to disconnect therapist calendar:', disconnectError);
+        }
+
+        return NextResponse.json(
+          {
+            success: false,
+            message: 'Google Calendar authentication failed. Please reconnect your calendar.',
+            error: 'Authentication failed',
+            errorType: 'auth_error',
+            needsReconnect: true,
+          },
+          { status: 401 },
+        );
+      }
+
+      // Handle other API errors (403 insufficient permission, etc.)
+      const errorMessage = calendarError instanceof Error ? calendarError.message : 'Unknown error';
+      const errorObj = calendarError as { code?: number; response?: { status?: number } };
+      const isPermissionError =
+        errorMessage.includes('Insufficient Permission') ||
+        errorMessage.includes('403') ||
+        errorObj?.code === 403 ||
+        errorObj?.response?.status === 403;
+
+      if (isPermissionError) {
+        console.error('Google Calendar permission error for therapist:', therapistId);
+
+        // For permission errors, also disconnect since the integration is not working
+        try {
+          await disconnectTherapistGoogleCalendar(db, therapistId);
+          console.log(
+            'Disconnected Google Calendar due to permission error for therapist:',
+            therapistId,
+          );
+        } catch (disconnectError) {
+          console.error('Failed to disconnect therapist calendar:', disconnectError);
+        }
+
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              'Google Calendar permissions insufficient. Please reconnect your calendar with full permissions.',
+            error: errorMessage,
+            errorType: 'permission_error',
+            needsReconnect: true,
+          },
+          { status: 403 },
+        );
+      }
+
       return NextResponse.json(
         {
           success: false,
           message: 'Failed to fetch availability',
-          error: calendarError instanceof Error ? calendarError.message : 'Unknown error',
+          error: errorMessage,
           errorType: 'api_error',
           needsReconnect: false,
         },

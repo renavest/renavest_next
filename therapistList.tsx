@@ -566,7 +566,7 @@ export const therapistList = [
   },
   {
     id: 23,
-    name: 'Jenn',
+    name: 'Jennifer Steliga',
     title: 'Financial Therapist',
     booking_url: '',
     expertise: 'N/A',
@@ -576,7 +576,7 @@ export const therapistList = [
     ideal_clientele: 'N/A',
     long_bio: 'N/A',
     preview_blurb: 'N/A',
-    profile_image_url: 'therapists/jenny-jean-baptiste.jpg',
+    profile_image_url: '',
     hourly_rate: 0,
     google_calendar_access_token: null,
     google_calendar_refresh_token: null,
