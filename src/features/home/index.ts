@@ -6,7 +6,7 @@
  *
  * @example
  * import { HeroSection, CTAButton, JourneyStep } from '@/src/features/home';
- * import type { JourneyStep, CTAButtonProps } from '@/src/features/home';
+ * import type { JourneyStepData, CTAButtonProps } from '@/src/features/home';
  */
 
 // ====================================
@@ -36,7 +36,7 @@ export { default as DataCardExample } from './components/interactive/DataCardExa
 // ====================================
 
 // Core journey types
-export type { JourneyStep, JourneySectionProps } from './types';
+export type { JourneyStepData, JourneySectionProps } from './types';
 
 // Component prop types
 export type {

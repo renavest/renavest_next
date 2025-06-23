@@ -16,7 +16,7 @@ import type { ElementType } from 'react';
  * Represents a step in the customer journey/onboarding flow
  * Used in journey sections to show progression and features
  */
-export type JourneyStep = {
+export type JourneyStepData = {
   /** Icon component to display for this step */
   icon: ElementType;
   /** Step title (format: "Phase: Description") */
@@ -39,7 +39,7 @@ export type JourneyStep = {
  */
 export type JourneySectionProps = {
   /** The journey step data */
-  step: JourneyStep;
+  step: JourneyStepData;
   /** Step index for animation delays and styling */
   idx: number;
 };
