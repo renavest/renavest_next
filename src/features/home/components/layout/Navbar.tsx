@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react';
 
 import { ctaTextSignal } from '@/src/features/utm/utmCustomDemo';
 
-import CTAButton from './CTAButton';
+import CTAButton from '../interactive/CTAButton';
 
 const getHeaderClassName = (isHeaderScrolled: boolean) => `
   fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm

@@ -5,11 +5,11 @@ import { signal } from '@preact-signals/safe-react';
 import { createContext, useContext, useEffect, type ReactNode } from 'react';
 import { toast } from 'sonner';
 
+import { googleCalendarService } from '../services/googleCalendarService';
 import type {
   GoogleCalendarIntegrationState,
   GoogleCalendarActions,
   GoogleCalendarContextValue,
-  GoogleCalendarStatusResponse,
 } from '../types';
 
 // === Signals ===
@@ -36,14 +36,7 @@ const GoogleCalendarContext = createContext<GoogleCalendarContextValue | null>(n
  */
 async function fetchTherapistIdFromUser(userId?: string): Promise<number | null> {
   if (!userId) return null;
-  try {
-    const response = await fetch('/api/therapist/id');
-    const data = await response.json();
-    return data.therapistId || null;
-  } catch (error) {
-    console.error('Failed to fetch therapist ID:', error);
-    return null;
-  }
+  return await googleCalendarService.getCurrentTherapistId();
 }
 
 /**
@@ -70,8 +63,7 @@ async function fetchGoogleCalendarStatus(therapistId: string): Promise<void> {
   };
 
   try {
-    const response = await fetch(`/api/google-calendar/status?therapistId=${therapistId}`);
-    const data: GoogleCalendarStatusResponse = await response.json();
+    const data = await googleCalendarService.getIntegrationStatus(therapistId);
 
     const newStatus: GoogleCalendarIntegrationState = {
       isConnected: !!data.isConnected,
@@ -127,11 +119,7 @@ async function initiateGoogleCalendarConnection(therapistId: string): Promise<bo
       },
     };
 
-    const authResponse = await fetch(`/api/google-calendar?therapistId=${therapistId}`, {
-      method: 'GET',
-    });
-
-    const data = await authResponse.json();
+    const data = await googleCalendarService.generateAuthUrl(therapistId);
 
     if (data.authUrl) {
       // Redirect to Google OAuth consent screen
@@ -176,15 +164,7 @@ async function disconnectGoogleCalendar(therapistId: string): Promise<boolean> {
       },
     };
 
-    const response = await fetch('/api/google-calendar/disconnect', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ therapistId }),
-    });
-
-    const data = await response.json();
+    const data = await googleCalendarService.disconnectIntegration();
 
     if (data.success) {
       // Update the signal
@@ -430,12 +410,5 @@ export function clearGoogleCalendarCache(): void {
  */
 export async function fetchTherapistId(userId?: string): Promise<number | null> {
   if (!userId) return null;
-  try {
-    const response = await fetch('/api/therapist/id');
-    const data = await response.json();
-    return data.therapistId || null;
-  } catch (error) {
-    console.error('Failed to fetch therapist ID:', error);
-    return null;
-  }
+  return await googleCalendarService.getCurrentTherapistId();
 }

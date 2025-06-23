@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import posthog from 'posthog-js';
 
-import { ctaTextSignal, isEmployeeSignal } from '../../utm/utmCustomDemo';
+import { ctaTextSignal, isEmployeeSignal } from '../../../utm/utmCustomDemo';
 
 export default function CTAButton({ className }: { className?: string }) {
   const trackCtaClick = (ctaType: string, isMobile: boolean = false) => {

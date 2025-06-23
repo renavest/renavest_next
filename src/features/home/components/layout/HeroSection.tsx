@@ -1,6 +1,6 @@
 import { heroSubtitleSignal, heroTitleSignal } from '@/src/features/utm/utmCustomDemo';
 
-import CTAButton from './CTAButton';
+import CTAButton from '../interactive/CTAButton';
 
 function HeroSection() {
   return (

@@ -3,15 +3,11 @@
 import { Clock, Plus, Save, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-import { useGoogleCalendarContext } from '../context/GoogleCalendarContext';
+import { useGoogleCalendarIntegration } from '../hooks/useGoogleCalendarIntegration';
+import { googleCalendarService } from '../services/googleCalendarService';
+import type { WorkingHours } from '../types';
 
-interface WorkingHours {
-  id?: number;
-  dayOfWeek: number;
-  startTime: string;
-  endTime: string;
-  isRecurring: boolean;
-}
+// Remove duplicate interface - using the one from types
 
 const DAYS_OF_WEEK = [
   { value: 1, label: 'Monday' },
@@ -24,7 +20,8 @@ const DAYS_OF_WEEK = [
 ];
 
 export function WorkingHoursSection() {
-  const { therapistId, isValidTherapistId } = useGoogleCalendarContext();
+  const { therapistId } = useGoogleCalendarIntegration();
+  const isValidTherapistId = !!(therapistId && therapistId !== '0');
   const [workingHours, setWorkingHours] = useState<WorkingHours[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -45,13 +42,7 @@ export function WorkingHoursSection() {
 
     try {
       setLoading(true);
-      const response = await fetch(`/api/therapist/working-hours?therapistId=${therapistId}`);
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
+      const data = await googleCalendarService.getWorkingHours(therapistId);
       setWorkingHours(data.workingHours || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load working hours');
@@ -96,21 +87,7 @@ export function WorkingHoursSection() {
       setSaving(true);
       setError(null);
 
-      const response = await fetch('/api/therapist/working-hours', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          therapistId,
-          workingHours,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to save working hours');
-      }
-
+      const data = await googleCalendarService.saveWorkingHours(therapistId, workingHours);
       setWorkingHours(data.workingHours);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);

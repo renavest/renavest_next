@@ -14,22 +14,22 @@
 // ====================================
 
 // Core layout components
-export { default as HeroSection } from './components/HeroSection';
-export { default as Navbar } from './components/Navbar';
-export { default as Footer } from './components/Footer';
+export { default as HeroSection } from './components/layout/HeroSection';
+export { default as Navbar } from './components/layout/Navbar';
+export { default as Footer } from './components/layout/Footer';
 
 // Content section components
-export { default as WhatWeDoSection } from './components/WhatWeDoSection';
-export { default as TestimonialSection } from './components/TestimonialSection';
-export { default as BusinessImpactSection } from './components/BusinessImpactSection';
-export { default as WhatIsFinancialTherapySection } from './components/WhatIsFinancialTherapySection';
-export { default as JasmineJourneySection } from './components/JasmineJourneySection';
+export { default as WhatWeDoSection } from './components/sections/WhatWeDoSection';
+export { default as TestimonialSection } from './components/sections/TestimonialSection';
+export { default as BusinessImpactSection } from './components/sections/BusinessImpactSection';
+export { default as WhatIsFinancialTherapySection } from './components/sections/WhatIsFinancialTherapySection';
+export { default as JasmineJourneySection } from './components/sections/JasmineJourneySection';
 
 // Interactive components
-export { default as JourneyStep } from './components/JourneyStep';
-export { default as CTAButton } from './components/CTAButton';
-export { default as PilotCohortBanner } from './components/PilotCohortBanner';
-export { default as DataCardExample } from './components/DataCardExample';
+export { default as JourneyStep } from './components/interactive/JourneyStep';
+export { default as CTAButton } from './components/interactive/CTAButton';
+export { default as PilotCohortBanner } from './components/interactive/PilotCohortBanner';
+export { default as DataCardExample } from './components/interactive/DataCardExample';
 
 // ====================================
 // TYPE EXPORTS

@@ -3,7 +3,7 @@
 import { CheckCircle, XCircle, Loader2, ArrowRightLeft } from 'lucide-react';
 import Image from 'next/image';
 
-import { useGoogleCalendarContext } from '../context/GoogleCalendarContext';
+import { useGoogleCalendarIntegration } from '../hooks/useGoogleCalendarIntegration';
 import type {
   WelcomeStepProps,
   PermissionsStepProps,
@@ -76,9 +76,10 @@ export function PermissionsStep({ onNext }: PermissionsStepProps) {
   );
 }
 
-// Connect step component - uses context to get state and actions
+// Connect step component - uses custom hook to get state and actions
 export function ConnectStep({ onConnect }: Pick<ConnectStepProps, 'onConnect'>) {
-  const { status, therapistId, isValidTherapistId } = useGoogleCalendarContext();
+  const { status, therapistId } = useGoogleCalendarIntegration();
+  const isValidTherapistId = !!(therapistId && therapistId !== '0');
 
   return (
     <div className='flex flex-col items-center text-center p-4'>
@@ -104,9 +105,9 @@ export function ConnectStep({ onConnect }: Pick<ConnectStepProps, 'onConnect'>) 
   );
 }
 
-// Result step component - uses context to get state
+// Result step component - uses custom hook to get state
 export function ResultStep({ onClose, onRetry }: Pick<ResultStepProps, 'onClose' | 'onRetry'>) {
-  const { status } = useGoogleCalendarContext();
+  const { status } = useGoogleCalendarIntegration();
   const isConnected = !!status.isConnected;
 
   return (
@@ -146,9 +147,9 @@ export function ResultStep({ onClose, onRetry }: Pick<ResultStepProps, 'onClose'
   );
 }
 
-// Connected status component - uses context to get state and actions
+// Connected status component - uses custom hook to get state and actions
 export function ConnectedStatus() {
-  const { status, actions } = useGoogleCalendarContext();
+  const { status, actions } = useGoogleCalendarIntegration();
 
   return (
     <div>
@@ -212,9 +213,9 @@ export function ConnectedStatus() {
   );
 }
 
-// Disconnected status component - uses context to get state and actions
+// Disconnected status component - uses custom hook to get state and actions
 export function DisconnectedStatus() {
-  const { status, actions } = useGoogleCalendarContext();
+  const { status, actions } = useGoogleCalendarIntegration();
 
   return (
     <div className='py-4 px-4 sm:px-6 text-center'>

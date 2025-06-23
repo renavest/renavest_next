@@ -7,8 +7,8 @@ import { journeySectionTitleSignal } from '@/src/features/utm/utmCustomDemo';
 
 import { trackSectionView, trackUIInteraction, useViewTracker } from '../../posthog/tracking';
 
-import JourneyStep from './JourneyStep';
-import { JourneyStep as JourneyStepType } from './types';
+import JourneyStep from '../interactive/JourneyStep';
+import { JourneyStep as JourneyStepType } from '../../types';
 
 const journeySteps: JourneyStepType[] = [
   {

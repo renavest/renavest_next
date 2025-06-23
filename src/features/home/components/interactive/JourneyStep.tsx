@@ -3,29 +3,14 @@ import { ArrowDownUp } from 'lucide-react';
 import React, { useEffect, useState, memo } from 'react';
 import type { ElementType } from 'react';
 
-import type { JourneySectionProps } from '../types';
+import type {
+  JourneySectionProps,
+  AnimatedTitleProps,
+  AnimatedHeadingProps,
+  AnimatedDescriptionProps,
+} from '../../types';
 
 import DataCardExample from './DataCardExample';
-
-// Types for the extracted components
-type AnimatedTitleProps = {
-  title: string;
-  isVisible: boolean;
-  animationDelay: string;
-  icon: ElementType;
-};
-
-type AnimatedHeadingProps = {
-  title: string;
-  isVisible: boolean;
-  animationDelay: string;
-};
-
-type AnimatedDescriptionProps = {
-  description: string;
-  isVisible: boolean;
-  animationDelay: string;
-};
 
 // Memoized components to reduce re-renders
 const AnimatedTitle = memo(

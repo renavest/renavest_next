@@ -2,7 +2,7 @@
 import posthog from 'posthog-js';
 import { useEffect, useState, useRef } from 'react';
 
-import CTAButton from './CTAButton';
+import CTAButton from '../interactive/CTAButton';
 
 function TestimonialCard({
   isVisible,
