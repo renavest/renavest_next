@@ -1,16 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 
-interface Message {
-  id: string;
-  text: string;
-  author: string;
-  authorEmail: string;
-  channelId: number;
-  ts: number;
-  messageType?: string;
-}
+import type { Message, UseChatReturn } from '../types';
 
-export function useChat(channelId: number | null) {
+export function useChat(channelId: number | null): UseChatReturn {
   const [messages, setMessages] = useState<Message[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<
     'disconnected' | 'connecting' | 'connected' | 'error'

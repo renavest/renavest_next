@@ -1,12 +1,6 @@
 import { useUser } from '@clerk/nextjs';
 import { useState, useEffect } from 'react';
-
-interface ChatContext {
-  userRole: 'therapist' | 'prospect' | null;
-  therapistId: number | null;
-  userId: number | null;
-  isLoading: boolean;
-}
+import type { ChatContext } from '../types';
 
 export function useChatContext(): ChatContext {
   const { user, isLoaded } = useUser();
