@@ -13,7 +13,7 @@ import companyInfo from '../../utm/companyInfo';
 import { companyNameSignal } from '../../utm/utmCustomDemo';
 import { isHeaderScrolledSignal, isMobileMenuOpenSignal } from '../state/dashboardState';
 
-import { SubscriptionPlanIndicator } from './SubscriptionPlanIndicator';
+import { SubscriptionPlanIndicator } from '../subscription/SubscriptionPlanIndicator';
 
 const MobileNavigation = () => (
   <div

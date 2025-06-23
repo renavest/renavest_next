@@ -9,17 +9,17 @@ import React from 'react';
 import { toast } from 'sonner';
 
 import { cn } from '@/src/lib/utils';
-import { Advisor } from '@/src/shared/types';
 import { COLORS } from '@/src/styles/colors';
 
+import { useMarketplaceIntegration } from '../hooks/useMarketplaceIntegration';
 import {
   advisorSignal,
   isOpenSignal,
   advisorActions,
   advisorImageLoadingSignal,
   advisorImageErrorSignal,
-} from './state/advisorSignals';
-import { useMarketplaceIntegration } from './utils/useMarketplaceIntegration';
+} from '../state/exploreState';
+import { Advisor } from '../types';
 
 const AdvisorImage = ({ advisor }: { advisor: Advisor }) => {
   const { user } = useUser();

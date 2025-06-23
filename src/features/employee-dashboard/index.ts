@@ -1,31 +1,34 @@
 // Employee Dashboard Feature Exports
 
-// Main Components
-export { default as EmployeeDashboard } from './components/EmployeeDashboard';
-export { DashboardContent } from './components/DashboardContent';
-export { default as LimitedDashboardClient } from './components/LimitedDashboardClient';
-export { default as EmployeeNavbar } from './components/EmployeeNavbar';
+// Main Layout Components
+export { default as EmployeeDashboard } from './components/layout/EmployeeDashboard';
+export { DashboardContent } from './components/layout/DashboardContent';
+export { default as LimitedDashboardClient } from './components/layout/LimitedDashboardClient';
+export { default as EmployeeNavbar } from './components/layout/EmployeeNavbar';
 
-// Core Sections
-export { default as ChatSection } from './components/ChatSection';
-export { SharedDocumentsSection } from './components/SharedDocumentsSection';
-export { UpcomingSessionsSection } from './components/UpcomingSessionsSection';
-export { CurrentPlanCard } from './components/CurrentPlanCard';
-export { SubscriptionPlanIndicator } from './components/SubscriptionPlanIndicator';
+// Dashboard Sections
+export { default as ChatSection } from './components/sections/ChatSection';
+export { SharedDocumentsSection } from './components/sections/SharedDocumentsSection';
+export { UpcomingSessionsSection } from './components/sections/UpcomingSessionsSection';
+export { default as SharePanel } from './components/sections/SharePanel';
+export { default as VideoLibrary } from './components/sections/VideoLibrary';
+export { default as ConsultationBanner } from './components/sections/ConsultationBanner';
+export { default as ComingSoon } from './components/sections/ComingSoon';
 
-// Interactive Components
-export { QuizModal } from './components/QuizModal';
-export { default as FinancialTherapyModal } from './components/FinancialTherapyModal';
-export { default as SharePanel } from './components/SharePanel';
-export { default as VideoLibrary } from './components/VideoLibrary';
-export { default as ConsultationBanner } from './components/ConsultationBanner';
-export { default as TherapistRecommendationsWithOverlay } from './components/TherapistRecommendationsWithOverlay';
+// Subscription Components
+export { CurrentPlanCard } from './components/subscription/CurrentPlanCard';
+export { SubscriptionPlanIndicator } from './components/subscription/SubscriptionPlanIndicator';
+
+// Interactive Modals
+export { QuizModal } from './components/modals/QuizModal';
+export { default as FinancialTherapyModal } from './components/modals/FinancialTherapyModal';
 
 // Insights Components
 export { default as TherapistRecommendations } from './components/insights/TherapistRecommendations';
 export { default as PersonalActionableInsights } from './components/insights/PersonalActionableInsights';
 export { default as PersonalGoalsTracker } from './components/insights/PersonalGoalsTracker';
 export { default as ProgressComparisonChart } from './components/insights/ProgressComparisonChart';
+export { default as TherapistRecommendationsWithOverlay } from './components/insights/TherapistRecommendationsWithOverlay';
 
 // Forms Components
 export { ClientFormsDashboard } from './components/forms/ClientFormsDashboard';

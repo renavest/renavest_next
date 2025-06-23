@@ -12,13 +12,13 @@ import { COLORS } from '@/src/styles/colors';
 // import OnboardingModal from '../../onboarding/components/OnboardingModal';
 // import { onboardingSignal } from '../../onboarding/state/onboardingState';
 
-import ComingSoon from './ComingSoon';
-import ConsultationBanner from './ConsultationBanner';
+import ComingSoon from '../sections/ComingSoon';
+import ConsultationBanner from '../sections/ConsultationBanner';
 import { DashboardContent } from './DashboardContent';
 import EmployeeNavbar from './EmployeeNavbar';
-import FinancialTherapyModal from './FinancialTherapyModal';
-import { ClientFormsDashboard } from './forms/ClientFormsDashboard';
-import { QuizModal } from './QuizModal';
+import FinancialTherapyModal from '../modals/FinancialTherapyModal';
+import { ClientFormsDashboard } from '../forms/ClientFormsDashboard';
+import { QuizModal } from '../modals/QuizModal';
 
 // const showOnboardingSignal = computed(() => {
 //   return (

@@ -1,12 +1,12 @@
 'use client';
 
-import ChatSection from './ChatSection';
-import { CurrentPlanCard } from './CurrentPlanCard';
-import { SharedDocumentsSection } from './SharedDocumentsSection';
-import SharePanel from './SharePanel';
-import TherapistRecommendationsWithOverlay from './TherapistRecommendationsWithOverlay';
-import { UpcomingSessionsSection } from './UpcomingSessionsSection';
-import VideoLibrary from './VideoLibrary';
+import TherapistRecommendationsWithOverlay from '../insights/TherapistRecommendationsWithOverlay';
+import ChatSection from '../sections/ChatSection';
+import { SharedDocumentsSection } from '../sections/SharedDocumentsSection';
+import SharePanel from '../sections/SharePanel';
+import { UpcomingSessionsSection } from '../sections/UpcomingSessionsSection';
+import VideoLibrary from '../sections/VideoLibrary';
+import { CurrentPlanCard } from '../subscription/CurrentPlanCard';
 
 interface DashboardContentProps {
   hasCompletedQuiz: boolean;

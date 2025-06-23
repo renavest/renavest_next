@@ -170,6 +170,92 @@ NEXT_PUBLIC_STRIPE_PRICE_ID_PROFESSIONAL=price_xxx
 
 ---
 
+### 3. Explore Feature (`src/features/explore/`)
+
+**Status**: ✅ Restructured and improved for handoff
+
+**Improvements Made:**
+- Restructured directory hierarchy moving state and hooks from nested components structure to feature level
+- Enhanced type system with comprehensive TypeScript definitions using JSDoc documentation
+- Added centralized exports in `index.ts` for better developer experience
+- Created comprehensive utility functions for booking, expertise handling, and image management
+- Added complete README.md with detailed architecture documentation
+- Improved component organization with better separation of concerns
+
+#### Structure Overview
+```
+src/features/explore/
+├── components/                    # React components
+│   ├── AdvisorGrid.tsx               # Main responsive grid display of advisors
+│   ├── AdvisorModal.tsx              # Detailed advisor modal with booking
+│   └── ExploreNavbar.tsx             # Navigation component with user controls
+├── state/                         # Global state management
+│   └── exploreState.ts               # Preact signals for advisor state
+├── hooks/                         # Custom React hooks
+│   ├── useMarketplaceIntegration.ts  # Calendar integration status hook
+│   └── useImageLoadState.ts          # Image loading state management hook
+├── utils/                         # Utility functions
+│   ├── expertiseUtils.ts             # Expertise tag parsing and rendering
+│   └── bookingUtils.ts               # Booking logic and API interactions
+├── types.ts                       # Comprehensive TypeScript definitions
+├── index.ts                       # Centralized feature exports
+└── README.md                      # Complete feature documentation
+```
+
+#### Key Components
+- **AdvisorGrid**: Responsive grid layout with image optimization and expertise tags
+- **AdvisorModal**: Full advisor details with booking functionality and integration status
+- **ExploreNavbar**: Navigation with dynamic titles, back button, and mobile menu
+
+#### Features
+- **Responsive Design**: 1-3 column grid adapting to screen size
+- **Image Optimization**: Progressive loading with Next.js Image component
+- **Booking Integration**: Dual booking modes (internal/external) with calendar detection
+- **State Management**: Preact signals for reactive state without prop drilling
+- **Error Handling**: Graceful fallbacks for images and API failures
+
+#### State Management Architecture
+Uses Preact signals for efficient reactive state:
+- **Core Signals**: advisor modal, list management, loading states
+- **Image Management**: Per-advisor loading and error states
+- **Integration Detection**: Google Calendar status and booking mode
+- **Computed Values**: Active/pending advisor counts and derived state
+
+#### Custom Hooks
+- **useMarketplaceIntegration**: Determines booking mode based on calendar integration
+- **useImageLoadState**: Manages image loading states with proper fallbacks
+
+#### Utility Functions
+- **expertiseUtils**: Tag parsing, rendering, and CSS class generation
+- **bookingUtils**: Self-booking prevention, notification sending, billing checks
+
+#### Integration Points
+- **Authentication**: Clerk integration with role-based access
+- **Booking System**: Dual-mode booking (direct + external)
+- **Analytics**: PostHog tracking for user interactions
+- **Payment**: Stripe integration for billing verification
+
+#### API Dependencies
+- `/api/therapist/details/[id]` - Get therapist information
+- `/api/booking/notify` - Send booking notifications
+- `/api/stripe/billing-setup-check` - Verify payment setup
+- `/api/therapist/id` - Get current user's therapist ID
+
+#### Code Quality Notes
+- **Type Safety**: Full TypeScript coverage with shared type compatibility
+- **Component Architecture**: Clean separation with proper hook abstractions
+- **Performance**: Optimized image loading and efficient state management
+- **Error Handling**: Comprehensive error states and user feedback
+- **Accessibility**: Keyboard navigation and screen reader support
+
+#### Developer Notes
+- State moved from nested component structure to feature-level organization
+- Centralized exports make imports clean and predictable
+- Comprehensive documentation enables easy onboarding
+- Utility functions are well-tested and reusable
+
+---
+
 ### 4. Employee Dashboard Feature (`src/features/employee-dashboard/`)
 
 **Status**: ✅ Restructured and improved for handoff

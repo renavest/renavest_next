@@ -1,98 +1,25 @@
+/**
+ * Employer Dashboard State Management
+ *
+ * This file contains all Preact signals for managing employer dashboard state.
+ * Uses reactive signals for efficient component updates.
+ */
+
 import { signal } from '@preact-signals/safe-react';
 
-interface FinancialWellnessMetrics {
-  enrollmentRate: number;
-  avgSavingsRate: number;
-  stressReduction: number;
-  retentionIncrease: number;
-}
+import type {
+  FinancialWellnessMetrics,
+  SessionMetrics,
+  EmployeeMetrics,
+  SatisfactionMetrics,
+  EngagementMetrics,
+  FinancialGoalsMetrics,
+  ProgramStats,
+  TherapistMetrics,
+  BookingMetrics,
+} from '../types';
 
-interface SessionMetrics {
-  creditsPerEmployee: number;
-  totalSessionsAllocated: number;
-  completedSessions: number;
-  upcomingSessions: number;
-  sessionsThisMonth: number;
-  employeesRequestingTopUp: number;
-  sessionsByMonth: MonthlySessionData[];
-}
-
-interface MonthlySessionData {
-  month: string;
-  completed: number;
-  allocated: number;
-}
-
-interface EmployeeMetrics {
-  totalEmployees: number;
-  activeInProgram: number;
-  youngWorkforce: number;
-  coachUtilization: number;
-}
-
-interface SatisfactionMetrics {
-  overallSatisfaction: number;
-  stressReduction: number;
-  financialConfidence: number;
-  recommendationRate: number;
-}
-
-interface EngagementMetrics {
-  dailyActiveUsers: number;
-  weeklyActiveUsers: number;
-  monthlyActiveUsers: number;
-  loginFrequencyData: LoginFrequencyData[];
-}
-
-interface LoginFrequencyData {
-  day: string;
-  users: number;
-}
-
-interface FinancialGoalsMetrics {
-  totalGoalsSet: number;
-  goalsCompleted: number;
-  goalProgressData: GoalProgressData[];
-}
-
-interface GoalProgressData {
-  month: string;
-  completed: number;
-  total: number;
-}
-
-interface ProgramStats {
-  totalEmployees: number;
-  activeEmployees: number;
-  employeesWithSessions: number;
-  employeesCompletedAllSessions: number;
-}
-
-interface TherapistMetrics {
-  totalTherapists: number;
-  activeTherapists: number;
-  averageSessionsPerTherapist: number;
-  therapistUtilizationRate: number;
-}
-
-interface BookingMetrics {
-  totalBookings: number;
-  scheduledBookings: number;
-  completedBookings: number;
-  canceledBookings: number;
-  averageBookingsPerEmployee: number;
-  bookingsByTherapist: TherapistBookingData[];
-}
-
-interface TherapistBookingData {
-  therapistId: number;
-  therapistName: string;
-  totalBookings: number;
-  completedBookings: number;
-  upcomingBookings: number;
-}
-
-const financialWellnessMetricsSignal = signal<FinancialWellnessMetrics>({
+export const financialWellnessMetricsSignal = signal<FinancialWellnessMetrics>({
   enrollmentRate: 87,
   avgSavingsRate: 18,
   stressReduction: 42,
@@ -123,7 +50,7 @@ export const employeeMetricsSignal = signal<EmployeeMetrics>({
   coachUtilization: 68,
 });
 
-const satisfactionMetricsSignal = signal<SatisfactionMetrics>({
+export const satisfactionMetricsSignal = signal<SatisfactionMetrics>({
   overallSatisfaction: 94,
   stressReduction: 81,
   financialConfidence: 89,
@@ -145,7 +72,7 @@ export const engagementMetricsSignal = signal<EngagementMetrics>({
   ],
 });
 
-const financialGoalsMetricsSignal = signal<FinancialGoalsMetrics>({
+export const financialGoalsMetricsSignal = signal<FinancialGoalsMetrics>({
   totalGoalsSet: 890,
   goalsCompleted: 245,
   goalProgressData: [
@@ -165,14 +92,14 @@ export const programStatsSignal = signal<ProgramStats>({
   employeesCompletedAllSessions: 580,
 });
 
-const therapistMetricsSignal = signal<TherapistMetrics>({
+export const therapistMetricsSignal = signal<TherapistMetrics>({
   totalTherapists: 38,
   activeTherapists: 32,
   averageSessionsPerTherapist: 24,
   therapistUtilizationRate: 85,
 });
 
-const bookingMetricsSignal = signal<BookingMetrics>({
+export const bookingMetricsSignal = signal<BookingMetrics>({
   totalBookings: 2890,
   scheduledBookings: 2640,
   completedBookings: 2420,

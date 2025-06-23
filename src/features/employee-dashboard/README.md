@@ -7,31 +7,36 @@ The Employee Dashboard feature provides a comprehensive interface for individual
 
 ```
 src/features/employee-dashboard/
-├── components/                    # React components
-│   ├── forms/                    # Form-related components
-│   │   ├── ClientFormsDashboard.tsx    # Main forms management interface
-│   │   ├── ClientFormFill.tsx          # Form filling interface
-│   │   └── ClientFormField.tsx         # Individual form field component
+├── components/                    # React components organized by function
+│   ├── layout/                   # Main layout and container components
+│   │   ├── EmployeeDashboard.tsx        # Main server component wrapper
+│   │   ├── LimitedDashboardClient.tsx   # Client component with subscription gates
+│   │   ├── DashboardContent.tsx         # Main dashboard layout
+│   │   └── EmployeeNavbar.tsx           # Dashboard navigation
+│   ├── sections/                 # Dashboard section components
+│   │   ├── ChatSection.tsx              # Therapist chat interface
+│   │   ├── SharedDocumentsSection.tsx   # Document sharing
+│   │   ├── UpcomingSessionsSection.tsx  # Session management
+│   │   ├── SharePanel.tsx               # Referral sharing
+│   │   ├── VideoLibrary.tsx             # Educational video library
+│   │   ├── ConsultationBanner.tsx       # Booking consultation CTA
+│   │   └── ComingSoon.tsx               # Placeholder component
+│   ├── subscription/             # Billing and subscription components
+│   │   ├── CurrentPlanCard.tsx          # Subscription plan display
+│   │   └── SubscriptionPlanIndicator.tsx # Plan status indicator
+│   ├── modals/                   # Interactive modal components
+│   │   ├── QuizModal.tsx                # Financial assessment quiz
+│   │   └── FinancialTherapyModal.tsx    # Educational content modal
 │   ├── insights/                 # Data visualization and insights
-│   │   ├── TherapistRecommendations.tsx     # Therapist matching display
-│   │   ├── PersonalActionableInsights.tsx   # Spending insights
-│   │   ├── PersonalGoalsTracker.tsx         # Financial goal tracking
-│   │   └── ProgressComparisonChart.tsx      # Progress visualization
-│   ├── EmployeeDashboard.tsx          # Main server component wrapper
-│   ├── LimitedDashboardClient.tsx     # Client component with subscription gates
-│   ├── DashboardContent.tsx           # Main dashboard layout
-│   ├── EmployeeNavbar.tsx            # Dashboard navigation
-│   ├── ChatSection.tsx               # Therapist chat interface
-│   ├── SharedDocumentsSection.tsx    # Document sharing
-│   ├── UpcomingSessionsSection.tsx   # Session management
-│   ├── CurrentPlanCard.tsx           # Subscription plan display
-│   ├── SubscriptionPlanIndicator.tsx # Plan status indicator
-│   ├── QuizModal.tsx                 # Financial assessment quiz
-│   ├── FinancialTherapyModal.tsx     # Educational content modal
-│   ├── SharePanel.tsx                # Referral sharing
-│   ├── VideoLibrary.tsx              # Educational video library
-│   ├── ConsultationBanner.tsx        # Booking consultation CTA
-│   └── TherapistRecommendationsWithOverlay.tsx # Quiz-gated recommendations
+│   │   ├── TherapistRecommendations.tsx        # Therapist matching display
+│   │   ├── PersonalActionableInsights.tsx      # Spending insights
+│   │   ├── PersonalGoalsTracker.tsx            # Financial goal tracking
+│   │   ├── ProgressComparisonChart.tsx         # Progress visualization
+│   │   └── TherapistRecommendationsWithOverlay.tsx # Quiz-gated recommendations
+│   └── forms/                    # Form-related components
+│       ├── ClientFormsDashboard.tsx     # Main forms management interface
+│       ├── ClientFormFill.tsx           # Form filling interface
+│       └── ClientFormField.tsx          # Individual form field component
 ├── state/                        # Global state management
 │   ├── dashboardState.ts             # Dashboard UI and sample data
 │   └── clientFormsState.ts           # Form management state
