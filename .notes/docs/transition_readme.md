@@ -102,6 +102,109 @@ Comprehensive tracking with PostHog:
 
 ---
 
+### 4. Stripe Feature (`src/features/stripe/`)
+
+**Status**: ✅ Comprehensively restructured and documented for handoff
+
+**Improvements Made:**
+- Created comprehensive README.md with detailed architecture documentation
+- Organized exports with proper index files for all subdirectories
+- Enhanced type definitions with extensive JSDoc comments and logical grouping
+- Improved code organization with clear separation of concerns
+- Added proper service layer documentation for all Stripe integrations
+
+#### Structure Overview
+```
+src/features/stripe/
+├── services/                    # Core Stripe integration services
+│   ├── stripe-client.ts            # Main Stripe SDK configuration
+│   ├── stripe-client-config.ts     # Frontend Elements configuration
+│   ├── kv-cache.ts                 # Redis caching for subscription data
+│   ├── session-completion.ts       # Payment capture workflow
+│   └── index.ts                    # Service exports
+├── utils/                       # Business logic utilities
+│   ├── stripe-operations.ts        # Customer and subscription operations
+│   ├── webhook-handlers.ts         # Webhook event processing
+│   └── index.ts                    # Utility exports
+├── components/                  # UI components
+│   ├── StripeConnectIntegration.tsx # Therapist Connect onboarding
+│   └── index.ts                    # Component exports
+├── types/
+│   └── index.ts                    # Comprehensive TypeScript definitions
+├── index.ts                     # Main feature exports
+└── README.md                    # Complete documentation
+```
+
+#### Key Features
+- **Subscription Management**: Employee subscription plans with billing cycles
+- **Session Payments**: Individual therapy session payments with manual capture
+- **Therapist Payouts**: Connect integration for therapist payment distribution
+- **Payment Methods**: Secure storage and management of customer payment data
+- **Webhooks**: Real-time synchronization of payment status changes
+
+#### Payment Flows
+1. **Subscription Flow**: Automatic recurring billing for employee access
+2. **Session Payment**: Manual capture after session completion by therapist
+3. **Connect Onboarding**: Therapist bank account setup for receiving payments
+4. **Webhook Processing**: Real-time status updates and cache synchronization
+
+#### Configuration Requirements
+```env
+# Server-side Stripe
+STRIPE_SECRET_KEY=sk_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+
+# Client-side Stripe
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_...
+
+# Subscription pricing
+NEXT_PUBLIC_STRIPE_SUBSCRIPTION_PRICE_ID_STARTER=price_...
+
+# Redis caching
+UPSTASH_REDIS_REST_URL=https://...
+UPSTASH_REDIS_REST_TOKEN=...
+```
+
+#### Key Components
+- **SessionCompletionService**: Handles payment capture workflow after session completion
+- **StripeConnectIntegration**: Complete UI for therapist bank account connection
+- **Webhook Handlers**: Process all Stripe events with proper error handling and retry logic
+- **KV Cache Layer**: Redis-based caching for fast subscription status checks
+
+#### Security & Compliance
+- **PCI Compliance**: All sensitive data handled by Stripe, no card storage
+- **Webhook Verification**: Cryptographic signature validation for all events
+- **Customer Isolation**: Users can only access their own payment data
+- **Connect Verification**: Therapist accounts verified before payout eligibility
+
+#### Integration Points
+- **Database**: Drizzle ORM with dedicated tables for payments, subscriptions, and payouts
+- **Authentication**: Clerk user identification for customer creation
+- **Notifications**: Email notifications for payment events and Connect status
+- **Analytics**: PostHog tracking for payment funnel and therapist onboarding
+
+#### Error Handling
+- **Payment Failures**: Automatic retry with exponential backoff
+- **Webhook Resilience**: Idempotent processing with automatic retries
+- **API Rate Limits**: Built-in retry logic for Stripe API calls
+- **Cache Invalidation**: Automatic refresh on payment status changes
+
+#### Code Quality Notes
+- **Type Safety**: Comprehensive TypeScript coverage with detailed JSDoc
+- **Service Architecture**: Clean separation between services, utilities, and components
+- **Documentation**: Extensive inline documentation and README
+- **Error Tracking**: Structured logging with context for debugging
+- **Testing Support**: Stripe CLI integration for webhook testing
+
+#### Developer Notes
+- All payment flows use Stripe's latest API patterns and best practices
+- Manual capture for session payments ensures payment only after service delivery
+- Connect integration handles therapist onboarding and payout distribution
+- Comprehensive webhook handling ensures data consistency across systems
+- Redis caching minimizes API calls while maintaining real-time accuracy
+
+---
+
 ### 2. Billing Feature (`src/features/billing/`)
 
 **Status**: ✅ Refactored and improved for handoff
@@ -537,7 +640,120 @@ Comprehensive TypeScript definitions with:
 
 ---
 
-### 4. Booking Feature (`src/features/booking/`)
+### 5. Google Calendar Feature (`src/features/google-calendar/`)
+
+**Status**: ✅ Restructured and improved for handoff
+
+**Improvements Made:**
+- Created comprehensive centralized exports in `index.ts` with organized sections for components, hooks, services, and utilities
+- Enhanced type system with complete JSDoc documentation and comprehensive TypeScript coverage
+- Added complete README.md with detailed architecture documentation, usage examples, and troubleshooting guide
+- **Added dedicated hooks folder** with custom hooks for better abstraction (`useGoogleCalendarIntegration`, `useGoogleCalendarConnection`, etc.)
+- **Added services folder** with centralized API service class for all Google Calendar operations
+- Improved component organization with better separation of concerns between context, hooks, services, and utilities
+- Enhanced error handling and token management throughout the feature
+
+#### Structure Overview
+```
+src/features/google-calendar/
+├── components/                    # React components
+│   ├── GoogleCalendarIntegration.tsx    # Main integration component with provider
+│   ├── GoogleCalendarSteps.tsx          # Step-by-step wizard components (Welcome, Permissions, Connect, Result, Status)
+│   └── WorkingHoursSection.tsx          # Working hours management interface
+├── context/                       # React Context & Global State Management
+│   └── GoogleCalendarContext.tsx        # Provider with Preact signals for reactive state
+├── hooks/                         # Custom React hooks
+│   └── useGoogleCalendarIntegration.ts  # Abstracted hooks for integration management
+├── services/                      # API service layer
+│   └── googleCalendarService.ts         # Centralized service for all API interactions
+├── utils/                         # Utility functions
+│   ├── googleCalendar.ts               # Calendar API operations and event management
+│   └── tokenManager.ts                 # OAuth token lifecycle management
+├── types/                         # TypeScript definitions
+│   └── index.ts                        # Comprehensive type definitions with JSDoc
+├── index.ts                      # Centralized feature exports
+└── README.md                     # Complete feature documentation
+```
+
+#### Key Features
+- **OAuth Integration**: Complete Google Calendar OAuth flow with automatic token refresh
+- **Event Management**: Automatic calendar event creation for therapy sessions with Google Meet links
+- **Working Hours Configuration**: Therapist availability management with day/time selection
+- **Real-time Status**: Live integration status with reactive state management
+- **Error Handling**: Comprehensive error detection and automatic integration disconnection on auth failures
+- **Token Management**: Secure token storage with automatic refresh and validation
+
+#### State Management Architecture
+Uses **Preact Signals** for efficient reactive state:
+- **Global Signals**: Per-therapist status tracking, current therapist ID, and fetch caching
+- **Context Provider**: Centralized state management with automatic status fetching
+- **Custom Hooks**: Abstracted integration logic with error handling and loading states
+
+#### API Integration Points
+- **OAuth Flow**: `/api/google-calendar` - Generate auth URLs and exchange tokens
+- **Status Management**: `/api/google-calendar/status` - Real-time integration status
+- **Disconnection**: `/api/google-calendar/disconnect` - Secure integration removal
+- **Working Hours**: `/api/therapist/working-hours` - Availability configuration
+- **Event Creation**: Automatic calendar event creation during booking flow
+
+#### Component Architecture
+- **GoogleCalendarIntegration**: Main component with provider wrapper for easy integration
+- **Step Components**: Modular wizard steps (Welcome, Permissions, Connect, Result)
+- **Status Components**: Connected/Disconnected states with management actions
+- **WorkingHoursSection**: Standalone working hours configuration interface
+
+#### Service Layer
+- **GoogleCalendarService**: Centralized API service class with comprehensive methods
+- **Token Manager**: OAuth token lifecycle management with automatic refresh
+- **Calendar Operations**: Event creation, availability checking, and integration management
+
+#### Custom Hooks
+- **useGoogleCalendarIntegration**: Main hook with status, actions, and therapist info
+- **useGoogleCalendarConnection**: Simple connection status hook
+- **useGoogleCalendarError**: Error state management
+- **useGoogleCalendarLoading**: Loading state tracking
+
+#### Security & Performance
+- **Token Security**: Encrypted storage with automatic revocation on disconnect
+- **Error Boundaries**: Authentication error detection with automatic disconnection
+- **Caching**: Intelligent status caching to prevent redundant API calls
+- **Performance**: Optimized with lazy loading and efficient state management
+
+#### Integration Dependencies
+- **Authentication**: Clerk integration for user management
+- **Database**: Drizzle ORM for secure token storage
+- **Google APIs**: googleapis and google-auth-library for calendar operations
+- **State Management**: Preact signals for reactive state
+- **UI Framework**: React with TypeScript and Tailwind CSS
+
+#### Environment Configuration
+```env
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_REDIRECT_URI=https://yourapp.com/google-calendar/success
+```
+
+#### Code Quality Notes
+- **Type Safety**: Complete TypeScript coverage with comprehensive interfaces
+- **Documentation**: JSDoc comments on all public functions and comprehensive README
+- **Error Handling**: Robust error states with user-friendly messaging and automatic recovery
+- **Testing Ready**: Service layer and hooks designed for easy mocking and testing
+- **Accessibility**: Proper form labels, keyboard navigation, and screen reader support
+- **Performance**: Optimized state management and component rendering
+
+#### Developer Handoff Notes
+- All components are fully documented with usage examples
+- Service layer abstracts all API complexity
+- State management follows consistent reactive patterns
+- OAuth flow is completely implemented with error handling
+- Working hours system is dynamic and extensible
+- Token management is secure and automatic
+- Integration status is real-time and cached efficiently
+- Feature exports are centralized and well-organized
+
+---
+
+### 6. Booking Feature (`src/features/booking/`)
 
 **Status**: ✅ Refactored and improved for handoff
 
