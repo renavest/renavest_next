@@ -5,7 +5,8 @@
  * Currently prepared for future expansion when global state management becomes necessary.
  */
 
-import { signal } from '@preact/signals-core';
+import { signal } from '@preact-signals/safe-react';
+
 import type { Message, Channel } from '../types';
 
 // Global chat state (currently unused, prepared for future expansion)
