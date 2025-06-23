@@ -1,13 +1,15 @@
 import { CreditCard, Trash2, Calendar, Loader2 } from 'lucide-react';
 
-import { type PaymentMethod } from '../services/payment-methods';
+import type { PaymentMethodCardProps } from '../types';
 
-interface PaymentMethodCardProps {
-  paymentMethod: PaymentMethod;
-  onRemove: (paymentMethodId: string) => void;
-  isRemoving: boolean;
-}
-
+/**
+ * PaymentMethodCard Component
+ *
+ * Displays a saved payment method with details like card brand, last 4 digits,
+ * and expiration date. Includes remove functionality with loading states.
+ *
+ * @param props - Component props including payment method data and remove callback
+ */
 export default function PaymentMethodCard({
   paymentMethod,
   onRemove,

@@ -3,9 +3,18 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { PaymentMethodsService, type PaymentMethod } from '../services/payment-methods';
+import { PaymentMethodsService } from '../services/payment-methods';
+import type { PaymentMethod, BillingManagementHook } from '../types';
 
-export function useBillingManagement() {
+/**
+ * useBillingManagement Hook
+ *
+ * Custom hook for managing payment methods in the billing feature.
+ * Handles loading, adding, and removing payment methods with proper error handling.
+ *
+ * @returns Object containing payment methods state and management functions
+ */
+export function useBillingManagement(): BillingManagementHook {
   const { user, isLoaded } = useUser();
   const router = useRouter();
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
