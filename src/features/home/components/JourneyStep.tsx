@@ -3,8 +3,9 @@ import { ArrowDownUp } from 'lucide-react';
 import React, { useEffect, useState, memo } from 'react';
 import type { ElementType } from 'react';
 
+import type { JourneySectionProps } from '../types';
+
 import DataCardExample from './DataCardExample';
-import type { JourneySectionProps } from './types';
 
 // Types for the extracted components
 type AnimatedTitleProps = {
