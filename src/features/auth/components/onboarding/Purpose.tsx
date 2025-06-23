@@ -1,4 +1,4 @@
-// src/features/auth/components/onboarding/PurposeStep.tsx
+// src/features/auth/components/onboarding/Purpose.tsx
 'use client';
 
 import { Scale, HeartPulse, Rocket, TrendingUp, CircleDollarSign, Ellipsis } from 'lucide-react';

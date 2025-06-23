@@ -1,5 +1,4 @@
-// src/features/auth/components/auth/LoginStep.tsx
-// components/auth/LoginStep.tsx
+// src/features/auth/components/auth/Login.tsx
 'use client';
 
 import { useClerk, useUser, useSignIn } from '@clerk/nextjs';

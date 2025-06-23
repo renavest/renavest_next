@@ -6,17 +6,17 @@ import React, { useEffect } from 'react';
 import { currentStep, authErrorSignal } from '../state/authState';
 import { OnboardingStep } from '../types';
 
-import { EmailVerificationStep } from './auth/EmailVerificationStep';
-import { ForgotPasswordStep } from './auth/ForgotPasswordStep';
-import { LoginStep } from './auth/LoginStep';
-import { ResetPasswordStep } from './auth/ResetPasswordStep';
-import { RoleSelectionStep } from './auth/RoleSelectionStep';
-import { SignupStep } from './auth/SignupStep';
-import { AgeRangeStep } from './onboarding/AgeRangeStep';
-import { EthnicityStep } from './onboarding/EthnicityStep';
-import { MaritalStatusStep } from './onboarding/MaritalStatusStep';
-import { PrivacyPledgeStep } from './onboarding/PrivacyPledgeStep';
-import { RenavestPurposeStep } from './onboarding/PurposeStep';
+import { EmailVerificationStep } from './auth/EmailVerification';
+import { ForgotPasswordStep } from './auth/ForgotPassword';
+import { LoginStep } from './auth/Login';
+import { ResetPasswordStep } from './auth/ResetPassword';
+import { RoleSelectionStep } from './auth/RoleSelection';
+import { SignupStep } from './auth/Signup';
+import { AgeRangeStep } from './onboarding/AgeRange';
+import { EthnicityStep } from './onboarding/Ethnicity';
+import { MaritalStatusStep } from './onboarding/MaritalStatus';
+import { PrivacyPledgeStep } from './onboarding/PrivacyPledge';
+import { RenavestPurposeStep } from './onboarding/Purpose';
 
 export default function AuthenticationFlow() {
   // Add useEffect to reset authErrorSignal when currentStep changes

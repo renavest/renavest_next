@@ -1,4 +1,4 @@
-// src/features/auth/components/auth/ForgotPasswordStep.tsx
+// src/features/auth/components/auth/ForgotPassword.tsx
 // components/auth/ForgotPasswordEmailStep.tsx
 'use client';
 

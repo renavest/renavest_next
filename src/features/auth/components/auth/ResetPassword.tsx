@@ -1,5 +1,4 @@
-// src/features/auth/components/auth/ResetPasswordStep.tsx
-// components/auth/ResetPasswordStep.tsx
+// src/features/auth/components/auth/ResetPassword.tsx
 'use client';
 
 import { useSignIn, useUser } from '@clerk/nextjs';

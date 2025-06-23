@@ -1,4 +1,4 @@
-// src/features/auth/components/onboarding/MaritalStatusStep.tsx
+// src/features/auth/components/onboarding/MaritalStatus.tsx
 'use client';
 
 import React from 'react'; // Import React

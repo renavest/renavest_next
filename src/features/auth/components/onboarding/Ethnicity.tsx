@@ -1,4 +1,4 @@
-// src/features/auth/components/onboarding/EthnicityStep.tsx
+// src/features/auth/components/onboarding/Ethnicity.tsx
 'use client';
 
 import React from 'react';

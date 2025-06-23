@@ -1,4 +1,4 @@
-// src/features/auth/components/auth/EmailVerificationStep.tsx
+// src/features/auth/components/auth/EmailVerification.tsx
 
 'use client';
 import { useSignUp, useClerk } from '@clerk/nextjs';
