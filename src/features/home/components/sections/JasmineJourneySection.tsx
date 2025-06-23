@@ -1,11 +1,11 @@
 'use client';
 
 import { Frown, HeartHandshake, PieChart, TrendingUp, Users } from 'lucide-react';
-import { useRef } from 'react';
+import React, { useRef } from 'react';
 
 import { journeySectionTitleSignal } from '@/src/features/utm/utmCustomDemo';
 
-import { trackSectionView, trackUIInteraction, useViewTracker } from '../../posthog/tracking';
+import { trackSectionView } from '../../utils/trackingUtils';
 
 import JourneyStep from '../interactive/JourneyStep';
 import { JourneyStep as JourneyStepType } from '../../types';
@@ -60,18 +60,8 @@ const journeySteps: JourneyStepType[] = [
 ];
 
 function AnimatedInsight({ children, index }: { children: React.ReactNode; index: number }) {
-  const insightRef = useRef<HTMLDivElement>(null);
-
-  // Track insight view when it becomes visible
-  useViewTracker(insightRef, () =>
-    trackUIInteraction('journey_insight_viewed', `insight_${index}`, {
-      insight_text: children?.toString(),
-    }),
-  );
-
   return (
     <div
-      ref={insightRef}
       className={`transition-all duration-[1200ms] ease-out transform
         flex justify-center my-12`}
     >
@@ -85,8 +75,10 @@ function AnimatedInsight({ children, index }: { children: React.ReactNode; index
 function JasmineJourneySection() {
   const sectionRef = useRef<HTMLElement>(null);
 
-  // Track section view when it becomes visible
-  useViewTracker(sectionRef, () => trackSectionView('jasmine_journey'));
+  // Track section view when component mounts
+  React.useEffect(() => {
+    trackSectionView('jasmine_journey');
+  }, []);
 
   return (
     <>
