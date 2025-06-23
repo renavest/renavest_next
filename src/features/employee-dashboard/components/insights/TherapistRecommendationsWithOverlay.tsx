@@ -2,7 +2,7 @@
 
 import { ClipboardList } from 'lucide-react';
 
-import TherapistRecommendations from './insights/TherapistRecommendations';
+import TherapistRecommendations from './TherapistRecommendations';
 
 interface TherapistRecommendationsWithOverlayProps {
   onTakeQuizClick: () => void;
