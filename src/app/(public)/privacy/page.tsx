@@ -6,7 +6,7 @@ import Link from 'next/link';
 import React from 'react';
 
 import { getRouteForRole, getUserRoleFromUser } from '@/src/features/auth/utils/routerUtil';
-import Navbar from '@/src/features/home/components/Navbar';
+import { Navbar } from '@/src/features/home';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 import { createDate } from '@/src/utils/timezone';

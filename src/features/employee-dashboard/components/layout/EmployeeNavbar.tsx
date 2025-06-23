@@ -9,9 +9,9 @@ import { LogoutButton } from '@/src/features/auth/components/auth/LogoutButton';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
-import companyInfo from '../../utm/companyInfo';
-import { companyNameSignal } from '../../utm/utmCustomDemo';
-import { isHeaderScrolledSignal, isMobileMenuOpenSignal } from '../state/dashboardState';
+import companyInfo from '../../../utm/companyInfo';
+import { companyNameSignal } from '../../../utm/utmCustomDemo';
+import { isHeaderScrolledSignal, isMobileMenuOpenSignal } from '../../state/dashboardState';
 
 import { SubscriptionPlanIndicator } from '../subscription/SubscriptionPlanIndicator';
 
