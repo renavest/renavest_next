@@ -170,5 +170,164 @@ NEXT_PUBLIC_STRIPE_PRICE_ID_PROFESSIONAL=price_xxx
 
 ---
 
+---
+
+### 3. Booking Feature (`src/features/booking/`)
+
+**Status**: ✅ Refactored and improved for handoff
+
+#### Structure Overview
+```
+src/features/booking/
+├── components/
+│   ├── BookingFlow.tsx                    # Main flow orchestrator
+│   ├── AlternativeBooking.tsx             # External booking fallback
+│   ├── BillingCheckWrapper.tsx            # Payment verification
+│   ├── TherapistAvailability.tsx          # Simple re-export
+│   ├── TherapistAvailability/
+│   │   ├── index.tsx                      # Main availability component
+│   │   ├── TimeSelectionModal.tsx         # Mobile time selection
+│   │   └── useTherapistAvailability.ts    # Signals and logic
+│   ├── calendar/
+│   │   └── CalendarGrid.tsx               # Calendar date selection
+│   ├── confirmation/
+│   │   └── [confirmation components]
+│   ├── form/
+│   │   └── BookingForm.tsx                # Internal booking form
+│   ├── BookingConfirmation/
+│   │   └── [confirmation modals]
+│   └── EmailTemplates/
+│       └── [email templates]
+├── actions/
+│   └── sendBookingConfirmationEmail.ts    # Email server actions
+├── utils/
+│   ├── timezoneManager.ts                 # Centralized timezone handling
+│   ├── dateTimeUtils.ts                   # Date formatting utilities
+│   └── stringUtils.ts                     # String manipulation helpers
+├── types.ts                               # All TypeScript definitions
+├── index.ts                               # Feature exports
+└── README.md                              # Comprehensive documentation
+```
+
+#### Key Components
+
+**BookingFlow** - Main orchestrator that:
+- Determines booking flow type (internal Google Calendar vs external Calendly)
+- Handles PostHog analytics tracking throughout the funnel
+- Manages conditional billing verification for paid therapists
+- Integrates Calendly event listeners
+
+**TherapistAvailability** - Sophisticated availability system featuring:
+- Real-time Google Calendar integration
+- Timezone-aware slot display and conversion
+- Responsive design (desktop grid + mobile modal)
+- Future-only slot filtering with proper timezone handling
+
+**TimezoneManager** - Centralized timezone handling singleton:
+- Auto-detects user timezone with intelligent fallback mapping
+- Provides consistent formatting across all datetime displays
+- Handles timezone conversions for booking storage
+- Supports 12+ major timezones globally
+
+#### Architectural Highlights
+
+**Dual Booking System**:
+- **Internal Flow**: Google Calendar integration with real-time availability
+- **External Flow**: Calendly widget integration for therapists without calendar setup
+- **Intelligent Routing**: Automatically determines which flow based on therapist status
+
+**Timezone-First Design**:
+- All datetime operations are timezone-aware from the ground up
+- Centralized TimezoneManager prevents timezone-related bugs
+- Proper handling of DST transitions and edge cases
+
+**Conditional Billing**:
+- Payment verification only triggers for therapists with hourly rates
+- Seamless redirect to billing setup if payment methods missing
+- Graceful fallback for free consultations
+
+#### Improvements Made
+
+1. **Added Missing Index File**: Created comprehensive `index.ts` with proper exports
+2. **Cleaned Up Structure**: Removed empty `hooks/` and `BookingFormComponents/` directories
+3. **Comprehensive Documentation**: Added detailed README with architecture overview
+4. **Type Organization**: All types centralized in `types.ts` with clear interfaces
+5. **Export Organization**: Clean module exports with proper namespacing
+
+#### Integration Points
+
+**External Services**:
+- Google Calendar API (availability fetching)
+- Calendly Widget (external booking)
+- Stripe (payment verification)
+- PostHog (comprehensive analytics)
+- Resend (email notifications)
+
+**Key API Endpoints**:
+- `GET /api/sessions/availability` - Real-time availability data
+- `POST /api/sessions/create` - Session booking creation
+- `POST /api/track/calendly` - Analytics event tracking
+- `GET /api/google-calendar/status` - Integration verification
+
+#### State Management Architecture
+
+Uses Preact Signals for reactive state management:
+- `availableSlotsSignal` - Real-time availability data
+- `selectedSlotSignal` - User time slot selection
+- `loadingSignal` - Async operation states
+- `errorSignal` - Error handling and display
+- `isGoogleCalendarIntegratedSignal` - Integration status
+
+#### Email System
+
+Sophisticated email notification system with three distinct flows:
+- **Booking Confirmation**: Dual emails to client and therapist with timezone conversion
+- **Calendly Notifications**: Lightweight notifications for external bookings
+- **Interest Notifications**: Lead capture for pending therapist inquiries
+
+#### Code Quality Notes
+
+- **Type Safety**: Comprehensive TypeScript coverage with strict interfaces
+- **Component Architecture**: Clear separation of concerns with logical grouping
+- **Error Handling**: Robust error states with user-friendly messaging
+- **Performance**: Optimized loading states and efficient re-rendering
+- **Accessibility**: Keyboard navigation and screen reader support
+- **Mobile Responsive**: Tailored experiences for desktop and mobile
+
+#### Critical Business Logic
+
+This feature represents the core revenue-generating flow:
+- **Session Booking**: Direct path to therapist engagement
+- **Payment Integration**: Automatic billing verification for paid sessions  
+- **Analytics**: Comprehensive funnel tracking for conversion optimization
+- **Timezone Handling**: Prevents booking conflicts across time zones
+- **Integration Flexibility**: Supports various therapist onboarding levels
+
+#### Developer Notes
+
+**Testing Considerations**:
+- Mock Google Calendar API responses for availability testing
+- Verify timezone conversion accuracy across DST boundaries
+- Test email template rendering in various email clients
+- Validate mobile responsive behavior on different devices
+
+**Performance Optimizations**:
+- Efficient calendar grid calculations with memoization
+- Rate-limited email sending to prevent API limits
+- Lazy loading of availability data based on user interaction
+
+**Security Considerations**:
+- All payment data handled securely through Stripe
+- Email templates sanitize user-provided content
+- Timezone detection respects user privacy preferences
+
+#### Environment Dependencies
+```env
+RESEND_API_KEY=re_xxx            # Email delivery
+NEXT_PUBLIC_POSTHOG_KEY=phc_xxx  # Analytics tracking
+```
+
+---
+
 ## Next Steps
 Continue reviewing remaining features...
