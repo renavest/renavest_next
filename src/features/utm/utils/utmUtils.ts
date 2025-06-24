@@ -1,5 +1,6 @@
-import type { CompanyInfo, UtmParams } from '../types';
-import { companyInfo } from '../companyInfo';
+import companyInfo from '../companyInfo';
+import type { CompanyInfo, UtmParams, CustomDemoConfig } from '../types';
+import { processUtmParameters } from '../utmCustomDemo';
 
 /**
  * Extract UTM parameters from URL search params
@@ -32,6 +33,29 @@ export function getCompanyExperience(utmParams: UtmParams): CompanyInfo | null {
 }
 
 /**
+ * Get company information by UTM source
+ */
+export function getCompanyByUtm(utmSource: string) {
+  return companyInfo[utmSource.toLowerCase()] || null;
+}
+
+/**
+ * Get custom demo configuration for a company
+ */
+export function getCustomDemoConfig(companyCode: string): CustomDemoConfig | null {
+  // This would typically fetch from a database or configuration file
+  // For now, return a basic configuration
+  if (!isValidCompanyCode(companyCode)) return null;
+
+  return {
+    companyCode,
+    demoFlow: ['intro', 'features', 'pricing', 'signup'],
+    customContent: {},
+    features: ['standard'],
+  };
+}
+
+/**
  * Generate tracking URL with UTM parameters
  */
 export function generateTrackingUrl(
@@ -48,4 +72,11 @@ export function generateTrackingUrl(
   }
 
   return url.toString();
+}
+
+/**
+ * Process UTM parameters and apply customizations
+ */
+export function processAndApplyUtmParameters(searchParams: URLSearchParams) {
+  return processUtmParameters(searchParams);
 }

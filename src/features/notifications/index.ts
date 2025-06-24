@@ -2,11 +2,8 @@
 // Centralized exports for the notifications system
 
 // Services
-export * from './services/emailService';
+export * from './services/session-notifications';
 
 // Types
-export * from './types/emailTypes';
-export * from './types/notificationTypes';
-
-// Main service instances
-export { emailService } from './services/emailService';
+export * from './types/email';
+export * from './types/in-app';

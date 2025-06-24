@@ -2,21 +2,21 @@
 // Centralized exports for multi-role onboarding system
 
 // Components
-export { default as OnboardingWizard } from './components/OnboardingWizard';
-export { default as EmployeeOnboarding } from './components/EmployeeOnboarding';
-export { default as TherapistOnboarding } from './components/TherapistOnboarding';
+export { default as OnboardingModal } from './components/OnboardingModal';
+export { OnboardingModalContent } from './components/OnboardingModalContent';
+export { default as OnboardingModalServerWrapper } from './components/OnboardingModalServerWrapper';
 
 // Hooks
-export { useOnboardingFlow } from './hooks/useOnboardingFlow';
+export { useOnboardingSubmission } from './hooks/useOnboardingSubmission';
 
 // Actions
-export { submitOnboarding } from './actions/submitOnboarding';
+export * from './actions/onboardingActions';
 
 // State
 export * from './state/onboardingState';
 
 // Utils
-export * from './utils/onboardingValidation';
+export * from './utils/onboardingTracking';
 
 // Types
 export * from './types';
