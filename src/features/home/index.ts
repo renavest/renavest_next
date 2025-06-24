@@ -82,23 +82,7 @@ export {
   getCurrentTrackingContext,
 } from './utils/trackingUtils';
 
-// Animation utilities
-export {
-  createVisibilityObserver,
-  createOneTimeVisibilityObserver,
-  observeElement,
-  calculateAnimationDelay,
-  generateStaggeredDelays,
-  getFadeInClasses,
-  getSlideInClasses,
-  getScaleInClasses,
-  calculateTimeRemaining,
-  formatTimeValue,
-  isMobileDevice,
-  getResponsiveAnimationDuration,
-  debounce,
-  throttle,
-} from './utils/animationUtils';
+// Animation utilities - removed (over-engineered, not used)
 
 // ====================================
 // FEATURE METADATA
@@ -125,7 +109,7 @@ export const HOME_FEATURE_META = {
     'PilotCohortBanner',
     'DataCardExample',
   ],
-  utilities: ['trackingUtils', 'animationUtils'],
+  utilities: ['trackingUtils'],
   integrations: [
     'PostHog Analytics',
     'Clerk Authentication',

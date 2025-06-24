@@ -1,4 +1,5 @@
 import PostHogClient from '@/posthog';
+import type { TherapistEvent, UserProperties } from './types';
 
 /**
  * Server-side therapist tracking (for API endpoints)
@@ -12,11 +13,18 @@ export const trackTherapistServerSide = {
     try {
       const posthogClient = PostHogClient();
 
+      const userProperties: Partial<UserProperties> = userContext.email
+        ? {
+            email: userContext.email,
+            lastActiveDate: new Date().toISOString(),
+          }
+        : {};
+
       posthogClient.capture({
         distinctId: userContext.user_id || `therapist_${therapistId}`,
         event: 'therapist_profile:updated_server_v1',
         properties: {
-          $set_once: userContext.email ? { email: userContext.email } : {},
+          $set_once: userProperties,
           therapist_id: therapistId,
           fields_changed: changedFields,
           fields_changed_count: changedFields.length,

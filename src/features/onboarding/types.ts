@@ -6,5 +6,29 @@ export interface OnboardingModalWrapperProps {
 }
 
 export interface OnboardingModalContentProps {
-  onComplete: () => void;
+  _clerkUser: { id?: string };
+  currentStep: number;
+  currentQuestion: OnboardingQuestion;
+  isFirstQuestion: boolean;
+  isLastStep: boolean;
+  selectedAnswers: Record<number, string[]>;
+  handleOptionSelect: (optionId: string) => void;
+  handleNext: () => void;
+  handleClose: () => void;
+  isSubmitting: boolean;
+  progress: number;
+}
+
+export interface OnboardingQuestion {
+  id: number;
+  question: string;
+  type: 'single' | 'multiple' | 'dropdown';
+  description?: string;
+  supportiveText?: string;
+  options: OnboardingOption[];
+}
+
+export interface OnboardingOption {
+  id: string;
+  label: string;
 }

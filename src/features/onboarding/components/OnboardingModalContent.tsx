@@ -3,20 +3,7 @@
 import { COLORS } from '@/src/styles/colors';
 
 import { OnboardingQuestion, onboardingQuestions } from '../state/onboardingState';
-
-interface OnboardingModalContentProps {
-  _clerkUser: { id?: string };
-  currentStep: number;
-  currentQuestion: OnboardingQuestion;
-  isFirstQuestion: boolean;
-  isLastStep: boolean;
-  selectedAnswers: Record<number, string[]>;
-  handleOptionSelect: (optionId: string) => void;
-  handleNext: () => void;
-  handleClose: () => void;
-  isSubmitting: boolean;
-  progress: number;
-}
+import type { OnboardingModalContentProps } from '../types';
 
 function LeftSideContent({
   isFirstQuestion,

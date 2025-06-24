@@ -1,10 +1,4 @@
-// Cleaned up for PNG-only usage
-interface CompanyInfo {
-  logoSrc: string;
-  title: string;
-  headline?: string;
-  about?: string;
-}
+import type { CompanyInfo } from './types';
 
 const companyInfo: Record<string, CompanyInfo> = {
   loanstreet: {
