@@ -1108,3 +1108,604 @@ NEXT_PUBLIC_ENABLE_CHAT_FEATURE=true  # Chat functionality toggle
 
 ## Next Steps
 Continue reviewing remaining features...
+
+---
+
+### 7. Therapist Dashboard Feature (`src/features/therapist-dashboard/`)
+
+**Status**: ✅ Comprehensive therapist management platform
+
+#### Structure Overview
+```
+src/features/therapist-dashboard/
+├── components/           # React components for therapist interface
+│   ├── availability-management/     # Schedule and calendar management
+│   ├── sessions/                   # Session tracking and management
+│   ├── clients/                    # Client relationship management
+│   ├── documents/                  # Document sharing and forms
+│   ├── profile/                    # Profile editing and verification
+│   ├── integrations/               # Third-party service connections
+│   ├── chat-preferences/           # Communication settings
+│   ├── blocked-times/              # Schedule exception management
+│   ├── analytics/                  # Therapist performance metrics
+│   └── onboarding/                 # New therapist setup wizard
+├── actions/              # Server actions for data operations
+├── hooks/                # Custom React hooks for dashboard logic
+├── state/                # Global state management (Preact signals)
+├── types/                # TypeScript definitions for therapist entities
+├── utils/                # Utility functions for calculations and formatting
+├── index.ts              # Feature exports
+└── README.md             # Feature documentation
+```
+
+#### Key Features
+- **Schedule Management**: Google Calendar integration with working hours and blocked times
+- **Client Management**: Client list, session history, and communication tracking
+- **Session Completion**: Mark sessions complete, trigger payments, manage notes
+- **Document Sharing**: Upload and share forms/documents with clients
+- **Profile Management**: Edit professional profile, certifications, and specializations
+- **Analytics**: Session metrics, earnings tracking, and performance insights
+- **Chat System**: Real-time messaging with clients and conversation management
+- **Onboarding**: Multi-step setup for new therapists including Stripe Connect
+
+#### Core Workflows
+1. **New Therapist Onboarding**: Profile setup → Stripe Connect → Calendar integration → First availability
+2. **Session Lifecycle**: Booking received → Session conducted → Completion → Payment processing
+3. **Client Relationship**: Initial booking → Ongoing sessions → Document sharing → Progress tracking
+4. **Schedule Management**: Set working hours → Block specific times → Google Calendar sync
+
+#### Integration Points
+- **Google Calendar**: Real-time availability and automatic event creation
+- **Stripe Connect**: Therapist payouts and commission handling
+- **Clerk Authentication**: User management and role verification
+- **Chat System**: Real-time communication with clients
+- **PostHog Analytics**: Performance tracking and usage analytics
+
+---
+
+### 8. Notifications Feature (`src/features/notifications/`)
+
+**Status**: ✅ Multi-channel notification system
+
+#### Structure Overview
+```
+src/features/notifications/
+├── services/
+│   └── emailService.ts           # Email delivery via Resend
+├── types/
+│   ├── emailTypes.ts            # Email template definitions
+│   └── notificationTypes.ts     # System notification types
+└── README.md                    # Documentation
+```
+
+#### Key Features
+- **Email Notifications**: Booking confirmations, session reminders, payment receipts
+- **In-App Notifications**: Real-time system alerts and updates
+- **Template System**: Reusable email templates with dynamic content
+- **Multi-Role Support**: Different notification flows for employees, therapists, employers
+
+#### Notification Types
+1. **Booking Related**: Confirmation emails, calendar invites, reminder emails
+2. **Payment Related**: Payment success, failed payments, invoice notifications
+3. **System Updates**: Account changes, integration status, feature announcements
+4. **Therapeutic**: Session completion, form assignments, document sharing
+
+#### Email Templates
+- **BookingConfirmationEmailTemplate**: Client and therapist booking confirmations
+- **TherapistBookingNotificationEmailTemplate**: New session notifications for therapists
+- **PaymentReceiptEmailTemplate**: Payment confirmation and receipt delivery
+- **SystemUpdateEmailTemplate**: Account and platform updates
+
+---
+
+### 9. UTM Tracking Feature (`src/features/utm/`)
+
+**Status**: ✅ Marketing attribution and company-specific experiences
+
+#### Structure Overview
+```
+src/features/utm/
+├── companyInfo.ts        # Company-specific branding and content
+├── PageText.tsx          # Dynamic page content based on UTM parameters
+├── types.ts              # UTM parameter and company type definitions
+└── utils.ts              # UTM parsing and company detection utilities
+```
+
+#### Key Features
+- **Company Detection**: Automatic company identification via UTM parameters
+- **Custom Branding**: Company-specific logos, colors, and messaging
+- **Conversion Tracking**: UTM parameter preservation through signup flow
+- **A/B Testing**: Different experiences based on traffic source
+
+#### UTM Implementation
+1. **Parameter Capture**: URL UTM parameters captured on landing page
+2. **Company Mapping**: UTM source mapped to company configuration
+3. **Experience Customization**: Branded signup flow and content
+4. **Analytics Integration**: UTM data passed to PostHog for attribution
+
+#### Supported Companies
+- **Acme Corp**: Employee benefits integration
+- **Globex Corporation**: Custom onboarding flow
+- **Default Experience**: Generic branding for unknown sources
+
+---
+
+### 10. Pricing Feature (`src/features/pricing/`)
+
+**Status**: ✅ Subscription plan management and display
+
+#### Structure Overview
+```
+src/features/pricing/
+├── components/
+│   ├── PricingCard.tsx           # Individual plan display
+│   ├── PricingComparison.tsx     # Feature comparison table
+│   ├── SubscriptionManager.tsx   # Plan selection and changes
+│   ├── BillingCycle.tsx          # Monthly/annual toggle
+│   └── FeatureList.tsx           # Plan feature highlighting
+├── data/                         # Pricing plan configurations
+├── types.ts                      # Pricing and subscription types
+└── README.md                     # Documentation
+```
+
+#### Key Features
+- **Multi-Tier Plans**: Basic, Premium, Professional subscription tiers
+- **Feature Comparison**: Clear feature differentiation between plans
+- **Billing Cycles**: Monthly and annual billing options with discounts
+- **Employer Sponsorship**: Company-sponsored employee access
+- **Usage Limits**: Session limits, feature gates based on plan tier
+
+#### Pricing Tiers
+1. **Basic Plan**: Limited sessions, basic features, individual payments
+2. **Premium Plan**: Unlimited sessions, advanced features, priority support
+3. **Professional Plan**: Enterprise features, custom integrations, dedicated support
+4. **Employer Plans**: Bulk pricing, admin controls, usage analytics
+
+---
+
+### 11. Onboarding Feature (`src/features/onboarding/`)
+
+**Status**: ✅ Multi-role onboarding system
+
+#### Structure Overview
+```
+src/features/onboarding/
+├── actions/
+│   └── submitOnboarding.ts       # Server action for onboarding completion
+├── components/
+│   ├── OnboardingWizard.tsx      # Main wizard orchestrator
+│   ├── EmployeeOnboarding.tsx    # Employee-specific steps
+│   └── TherapistOnboarding.tsx   # Therapist verification and setup
+├── hooks/
+│   └── useOnboardingFlow.ts      # Onboarding state management
+├── state/
+│   └── onboardingState.ts        # Global onboarding state
+├── types.ts                      # Onboarding flow types
+└── utils/
+    └── onboardingValidation.ts   # Form validation and completion checks
+```
+
+#### Key Features
+- **Role-Based Flows**: Different onboarding experiences for each user type
+- **Progress Tracking**: Step completion and validation
+- **Data Collection**: Demographics, preferences, and professional information
+- **Integration Setup**: Connect third-party services during onboarding
+- **Compliance**: HIPAA acknowledgment and privacy agreements
+
+#### Onboarding Flows
+1. **Employee Onboarding**: Demographics → Company verification → Preferences → Platform introduction
+2. **Therapist Onboarding**: Professional verification → Stripe Connect → Calendar setup → Profile completion
+3. **Employer Onboarding**: Company verification → Team setup → Billing configuration → Admin training
+
+---
+
+### 12. PostHog Analytics Feature (`src/features/posthog/`)
+
+**Status**: ✅ Comprehensive analytics and tracking system
+
+#### Structure Overview
+```
+src/features/posthog/
+├── PostHogProvider.tsx           # Client-side PostHog initialization
+├── authTrackingServer.ts         # Server-side authentication events
+├── therapistTracking.ts          # Therapist-specific event tracking
+├── trackingUtils.ts              # Utility functions for event tracking
+└── types.ts                      # Analytics event type definitions
+```
+
+#### Key Features
+- **User Journey Tracking**: Complete funnel analysis from landing to conversion
+- **Feature Usage Analytics**: Track adoption of specific platform features
+- **Performance Monitoring**: Page load times, error rates, user experience metrics
+- **A/B Testing**: Experiment tracking and conversion measurement
+- **Custom Events**: Business-specific events for product optimization
+
+#### Tracked Events
+1. **Authentication Flow**: Signup attempts, completions, authentication method choices
+2. **Booking Funnel**: Therapist views, booking attempts, completion rates
+3. **Session Events**: Session booking, completion, payment processing
+4. **Feature Adoption**: Chat usage, document sharing, calendar integration
+5. **Error Tracking**: API failures, client-side errors, user-reported issues
+
+#### Implementation Patterns
+- **Client-Side**: Real-time user interaction tracking via React components
+- **Server-Side**: Backend event tracking for sensitive operations
+- **Privacy Compliant**: HIPAA-compliant analytics with data minimization
+- **Performance Optimized**: Non-blocking analytics to maintain app performance
+
+---
+
+## Core System Architecture
+
+### Database Design (Drizzle ORM)
+
+**Schema Overview** (`src/db/schema.ts`):
+```typescript
+// Core user management
+users                    # User profiles and metadata
+therapists              # Therapist professional information
+pendingTherapists       # Therapist applications pending approval
+employers               # Company/organization accounts
+sponsoredGroups         # Employee group management
+
+// Session and booking management
+sessions                # Therapy session records
+sessionNotes           # Therapeutic session documentation
+blockedTimes           # Therapist unavailability periods
+workingHours           # Therapist availability schedules
+
+// Payment and billing
+stripeCustomers        # Stripe customer relationship mapping
+stripeConnectedAccounts # Therapist Stripe Connect accounts
+subscriptions          # Employee subscription records
+payments               # Individual session payment tracking
+
+// Communication and content
+chatChannels           # Chat conversation management
+chatMessages           # Message storage and delivery
+documents              # Shared document management
+clientForms            # Dynamic form assignments and responses
+
+// Integration and external services
+googleCalendarTokens   # OAuth tokens for calendar integration
+webhookEvents          # External service webhook processing
+```
+
+#### Key Relationships
+- **Users ↔ Multiple Roles**: One user can have employee, therapist, or employer roles
+- **Therapists ↔ Sessions**: One-to-many relationship with session tracking
+- **Employers ↔ Sponsored Groups**: Companies manage multiple employee groups
+- **Chat Channels ↔ Participants**: Many-to-many relationship for group conversations
+- **Stripe Integration**: Dual customer and connected account relationships
+
+### API Architecture
+
+**Route Organization** (`src/app/api/`):
+```
+/api/
+├── auth/                    # Authentication and user management
+│   ├── check-email-eligibility/    # Company email verification
+│   ├── sync-user-database/         # User creation and synchronization
+│   └── validate-user-db-entry/     # User existence verification
+├── booking/                 # Session booking and management
+│   └── notify/                     # Booking notification system
+├── chat/                    # Real-time communication
+│   ├── [channelId]/               # Channel-specific message streams
+│   ├── export/                    # Chat history export
+│   ├── messaging/                 # Message sending
+│   └── send/                      # Direct message dispatch
+├── sessions/                # Session lifecycle management
+│   ├── availability/              # Real-time availability checking
+│   ├── booking/                   # Session creation and confirmation
+│   ├── complete/                  # Session completion workflow
+│   └── create/                    # Initial session setup
+├── stripe/                  # Payment processing and management
+│   ├── billing-setup-check/       # Payment method verification
+│   ├── connect/                   # Therapist payout setup
+│   ├── payment-methods/           # Customer payment management
+│   ├── session-payment/           # Individual session billing
+│   ├── setup-intent/              # Payment method addition
+│   └── subscriptions/             # Recurring billing management
+├── therapist/               # Therapist-specific operations
+│   ├── blocked-times/             # Schedule exception management
+│   ├── chat-preferences/          # Communication settings
+│   ├── client-notes/              # Session documentation
+│   ├── clients/                   # Client relationship management
+│   └── details/                   # Therapist profile information
+├── google-calendar/         # Calendar integration
+│   ├── auth/                      # OAuth flow management
+│   ├── disconnect/                # Integration removal
+│   ├── events/                    # Calendar event management
+│   └── status/                    # Integration health checking
+└── webhooks/                # External service integrations
+    ├── clerk/                     # Authentication event processing
+    └── stripe/                    # Payment event handling
+```
+
+#### API Design Patterns
+- **RESTful Conventions**: Standard HTTP methods with clear resource naming
+- **Authentication**: Clerk-based user verification on all protected routes
+- **Error Handling**: Consistent error response format with proper HTTP status codes
+- **Rate Limiting**: Request throttling for sensitive operations
+- **Webhook Processing**: Idempotent event handling with retry logic
+
+### State Management Architecture
+
+**Preact Signals Pattern**:
+```typescript
+// Global reactive state without prop drilling
+import { signal } from '@preact/signals-react';
+
+// Example: Chat system state
+export const messagesSignal = signal<Message[]>([]);
+export const connectionStatusSignal = signal<'connected' | 'disconnected'>('disconnected');
+
+// Usage in components
+function ChatComponent() {
+  const messages = messagesSignal.value;
+  const status = connectionStatusSignal.value;
+  
+  // Automatic re-render when signals change
+  return <div>{/* UI using reactive state */}</div>;
+}
+```
+
+#### Benefits of Signals Approach
+- **Performance**: No unnecessary re-renders, updates only affected components
+- **Simplicity**: No complex provider trees or context drilling
+- **Type Safety**: Full TypeScript support with inferred types
+- **Developer Experience**: Easy debugging and state inspection
+
+### Security Architecture
+
+**Authentication Flow**:
+1. **Clerk Integration**: Handles OAuth, MFA, session management
+2. **Role-Based Access**: User metadata determines feature access
+3. **Route Protection**: Middleware validates access to protected routes
+4. **API Security**: All endpoints verify user authentication and authorization
+
+**Data Protection**:
+- **HIPAA Compliance**: Encrypted data storage and transmission
+- **Payment Security**: Stripe handles all sensitive payment data
+- **Access Control**: Role-based feature gates and data isolation
+- **Audit Trails**: Comprehensive logging for compliance requirements
+
+### Performance Optimization
+
+**Frontend Optimizations**:
+- **Code Splitting**: Feature-based route splitting for faster loading
+- **Image Optimization**: Next.js Image component with proper sizing
+- **State Management**: Efficient Preact signals for minimal re-renders
+- **Caching**: Strategic use of React Query for API data caching
+
+**Backend Optimizations**:
+- **Database Indexing**: Optimized queries with proper indexing
+- **Caching Layer**: Redis for session and subscription data
+- **CDN Integration**: Static asset delivery via Vercel Edge Network
+- **API Rate Limiting**: Prevents abuse while maintaining performance
+
+### Deployment Architecture
+
+**Production Environment**:
+- **Platform**: Vercel for frontend and API routes
+- **Database**: PostgreSQL with connection pooling
+- **File Storage**: S3-compatible storage for documents and images
+- **Email Delivery**: Resend for transactional emails
+- **Analytics**: PostHog for user behavior and performance tracking
+- **Error Monitoring**: Integrated error tracking and alerting
+
+**Environment Configuration**:
+```env
+# Authentication
+CLERK_SECRET_KEY=
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+
+# Database
+DATABASE_URL=
+
+# Payment Processing
+STRIPE_SECRET_KEY=
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+
+# External Services
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+RESEND_API_KEY=
+
+# Analytics
+NEXT_PUBLIC_POSTHOG_KEY=
+NEXT_PUBLIC_POSTHOG_HOST=
+
+# Caching
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
+```
+
+---
+
+## Developer Onboarding Checklist
+
+### Initial Setup
+- [ ] Clone repository and install dependencies (`npm install`)
+- [ ] Set up environment variables (copy `.env.example` to `.env.local`)
+- [ ] Configure database connection and run migrations
+- [ ] Set up Clerk authentication with proper domain configuration
+- [ ] Configure Stripe with test API keys for development
+- [ ] Set up PostHog project for analytics tracking
+
+### Development Workflow
+- [ ] Understand feature-based architecture and component organization
+- [ ] Review TypeScript configuration and coding standards
+- [ ] Set up testing environment and run existing test suite
+- [ ] Configure code editor with proper ESLint and Prettier settings
+- [ ] Review database schema and relationships in Drizzle ORM
+
+### Key Concepts to Master
+- [ ] **Preact Signals**: Reactive state management without prop drilling
+- [ ] **Role-Based Access**: Authentication and authorization patterns
+- [ ] **Feature Architecture**: Self-contained feature modules with clear boundaries
+- [ ] **API Design**: RESTful conventions and error handling patterns
+- [ ] **Database Design**: Drizzle ORM query patterns and migrations
+
+### Integration Understanding
+- [ ] **Clerk Authentication**: User management and role assignment
+- [ ] **Stripe Integration**: Payment processing and Connect accounts
+- [ ] **Google Calendar**: OAuth flow and event management
+- [ ] **PostHog Analytics**: Event tracking and user behavior analysis
+- [ ] **Email System**: Transactional emails and template management
+
+### Business Logic Mastery
+- [ ] **Booking Flow**: End-to-end session booking and payment processing
+- [ ] **Therapist Onboarding**: Professional verification and platform setup
+- [ ] **Employee Benefits**: Company sponsorship and group management
+- [ ] **Chat System**: Real-time communication and compliance features
+- [ ] **Analytics Pipeline**: Data collection and performance monitoring
+
+---
+
+## Common Development Patterns
+
+### Component Architecture
+```typescript
+// Feature-based component organization
+src/features/[feature-name]/
+├── components/           # React components
+├── hooks/               # Custom React hooks
+├── state/               # Preact signals for global state
+├── types.ts             # TypeScript definitions
+├── utils/               # Pure utility functions
+├── index.ts             # Clean exports
+└── README.md            # Feature documentation
+```
+
+### API Route Pattern
+```typescript
+// Consistent API route structure
+export async function POST(request: NextRequest) {
+  try {
+    // 1. Authentication check
+    const { userId } = await auth();
+    if (!userId) return unauthorized();
+    
+    // 2. Input validation
+    const body = await request.json();
+    const validatedData = schema.parse(body);
+    
+    // 3. Business logic
+    const result = await performOperation(validatedData);
+    
+    // 4. Success response
+    return NextResponse.json({ success: true, data: result });
+  } catch (error) {
+    // 5. Error handling
+    console.error('Operation failed:', error);
+    return NextResponse.json({ error: 'Operation failed' }, { status: 500 });
+  }
+}
+```
+
+### State Management Pattern
+```typescript
+// Preact signals for reactive state
+import { signal, computed } from '@preact/signals-react';
+
+// Global state
+export const dataSignal = signal<Data[]>([]);
+export const loadingSignal = signal(false);
+
+// Computed state
+export const filteredDataSignal = computed(() => 
+  dataSignal.value.filter(item => item.active)
+);
+
+// State actions
+export const updateData = (newData: Data[]) => {
+  dataSignal.value = newData;
+};
+```
+
+### Error Handling Pattern
+```typescript
+// Consistent error handling with neverthrow
+import { Result, ok, err } from 'neverthrow';
+
+async function processData(input: unknown): Promise<Result<Data, ProcessingError>> {
+  try {
+    const validatedInput = validateInput(input);
+    if (!validatedInput) {
+      return err({ type: 'ValidationError', message: 'Invalid input' });
+    }
+    
+    const result = await performOperation(validatedInput);
+    return ok(result);
+  } catch (error) {
+    return err({ type: 'ProcessingError', error });
+  }
+}
+```
+
+---
+
+## Troubleshooting Guide
+
+### Common Issues
+
+**Authentication Problems**:
+- Verify Clerk environment variables are correctly set
+- Check user role assignment in Clerk dashboard
+- Ensure middleware configuration matches route protection needs
+
+**Database Issues**:
+- Run `npm run db:push` to sync schema changes
+- Check database connection string format
+- Verify migration files are properly generated
+
+**Payment Integration**:
+- Use Stripe test API keys in development
+- Verify webhook endpoints are properly configured
+- Check Stripe Connect account setup for therapists
+
+**Calendar Integration**:
+- Ensure Google OAuth credentials are configured
+- Verify redirect URIs match production domains
+- Check calendar API quotas and rate limits
+
+**Performance Issues**:
+- Monitor Preact signals for unnecessary re-renders
+- Check database query efficiency with proper indexing
+- Verify image optimization and lazy loading
+
+### Development Tools
+- **Database**: Drizzle Studio for schema visualization and data management
+- **Payments**: Stripe CLI for webhook testing and payment simulation
+- **Analytics**: PostHog dashboard for real-time user behavior monitoring
+- **Authentication**: Clerk dashboard for user management and role assignment
+- **API Testing**: Use built-in Next.js API routes with proper error handling
+
+---
+
+## Feature Completion Status
+
+✅ **Complete and Production Ready**:
+- Authentication & Onboarding
+- Stripe Payment Processing
+- Booking & Session Management
+- Chat System
+- Google Calendar Integration
+- Therapist Dashboard
+- Employee Dashboard
+- Employer Dashboard
+- Notification System
+- Analytics & Tracking
+
+🔄 **Areas for Future Enhancement**:
+- Advanced chat features (file attachments, search)
+- Mobile app development
+- Advanced analytics dashboard
+- Automated compliance reporting
+- Third-party integrations (EMR systems)
+- Multi-language support
+
+---
+
+This documentation provides a comprehensive foundation for any developer taking over the Renavest codebase. Each feature is well-documented, properly structured, and ready for continued development and maintenance.
