@@ -12,7 +12,6 @@ import { COLORS } from '@/src/styles/colors';
 import companyInfo from '../../../utm/companyInfo';
 import { companyNameSignal } from '../../../utm/utmCustomDemo';
 import { isHeaderScrolledSignal, isMobileMenuOpenSignal } from '../../state/dashboardState';
-
 import { SubscriptionPlanIndicator } from '../subscription/SubscriptionPlanIndicator';
 
 const MobileNavigation = () => (

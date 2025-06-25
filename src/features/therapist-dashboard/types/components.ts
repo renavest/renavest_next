@@ -174,11 +174,19 @@ export type ClientTab =
   | 'chat';
 
 export interface Channel {
-  id: string;
-  name: string;
-  lastMessage?: string;
-  lastMessageTime?: number;
-  unreadCount?: number;
+  id: number;
+  channelIdentifier: string;
+  therapistId: number;
+  prospectUserId: number;
+  status: string;
+  lastMessageAt: string;
+  lastMessagePreview: string;
+  unreadCount: number;
+  therapistName?: string;
+  therapistTitle?: string;
+  prospectFirstName?: string;
+  prospectLastName?: string;
+  prospectEmail?: string;
 }
 
 // Add Client Form Types

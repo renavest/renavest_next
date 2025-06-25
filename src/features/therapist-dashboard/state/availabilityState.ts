@@ -34,7 +34,6 @@ interface AvailabilityStats {
 type ViewMode = 'overview' | 'working-hours' | 'blocked-time';
 
 // Core state signals
-export const therapistIdSignal = signal<number | null>(null);
 export const selectedDateSignal = signal<DateTime>(DateTime.now());
 export const currentMonthSignal = signal<DateTime>(DateTime.now().startOf('month'));
 export const viewModeSignal = signal<ViewMode>('overview');

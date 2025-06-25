@@ -275,21 +275,7 @@ const ClientProgressTab = () => {
   );
 };
 
-interface Channel {
-  id: number;
-  channelIdentifier: string;
-  therapistId: number;
-  prospectUserId: number;
-  status: string;
-  lastMessageAt: string;
-  lastMessagePreview: string;
-  unreadCount: number;
-  therapistName?: string;
-  therapistTitle?: string;
-  prospectFirstName?: string;
-  prospectLastName?: string;
-  prospectEmail?: string;
-}
+import type { Channel } from '../../types/components';
 
 const ClientChatTab = ({ client }: { client: Client }) => {
   const { user } = useUser();
