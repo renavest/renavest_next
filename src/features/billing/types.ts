@@ -73,20 +73,12 @@ export interface SponsorshipInfo {
   usedAllowance?: number;
 }
 
-export interface SubscriptionStatus {
+import type { SubscriptionInfo } from '@/src/features/stripe/types';
+
+export type SubscriptionStatus = SubscriptionInfo & {
   hasActiveSubscription: boolean;
   currentPlan?: string;
-  status?:
-    | 'active'
-    | 'past_due'
-    | 'unpaid'
-    | 'canceled'
-    | 'incomplete'
-    | 'incomplete_expired'
-    | 'trialing';
-  currentPeriodEnd?: string;
-  cancelAtPeriodEnd?: boolean;
-}
+};
 
 // Hook return types
 export interface BillingManagementHook {

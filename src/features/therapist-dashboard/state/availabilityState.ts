@@ -299,5 +299,4 @@ export const removeBlockedTime = async (therapistId: number, id: number) => {
   }
 };
 
-// Export types for use in components
-export type { TimeSlot, WorkingHours, BlockedTime, AvailabilityStats, ViewMode };
+// Internal types are not exported to avoid duplication; components should rely on shared types.

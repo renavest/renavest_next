@@ -132,3 +132,23 @@ export interface TimeSlot {
   available: boolean;
   conflictReason?: string;
 }
+
+// ===== AVAILABILITY TYPES =====
+
+// Simple time-based slot used in booking & therapist dashboard features
+export interface AvailabilitySlot {
+  time: string; // ISO timestamp or HH:mm representation
+  available: boolean;
+  conflictReason?: string;
+}
+
+// Reusable BlockedTime record (therapist unavailability)
+export interface BlockedTime {
+  id: string;
+  startDateTime: string; // ISO string
+  endDateTime: string; // ISO string
+  reason?: string;
+  isRecurring: boolean;
+  recurrencePattern?: 'daily' | 'weekly' | 'monthly';
+  recurrenceEnd?: string; // ISO string
+}

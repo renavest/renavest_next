@@ -3,7 +3,7 @@
 
 import { ReactNode } from 'react';
 
-import type { TimeSlot } from '@/src/shared/types';
+import type { TimeSlot, AvailabilitySlot } from '@/src/shared/types';
 
 // ===== CORE TYPES =====
 
@@ -15,12 +15,6 @@ export interface BookingData {
   clientName: string;
   clientEmail: string;
   sessionType: string;
-}
-
-export interface AvailabilitySlot {
-  time: string;
-  available: boolean;
-  conflictReason?: string;
 }
 
 // ===== COMPONENT PROP TYPES =====

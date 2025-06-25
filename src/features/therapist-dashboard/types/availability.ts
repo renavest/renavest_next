@@ -1,20 +1,5 @@
-export interface WorkingHours {
-  id?: string;
-  dayOfWeek: number; // 0 = Sunday, 1 = Monday, etc.
-  startTime: string; // HH:MM format
-  endTime: string; // HH:MM format
-  isActive: boolean;
-}
-
-export interface BlockedTime {
-  id: string;
-  startDateTime: string; // ISO string
-  endDateTime: string; // ISO string
-  reason?: string;
-  isRecurring: boolean;
-  recurrencePattern?: 'daily' | 'weekly' | 'monthly';
-  recurrenceEnd?: string; // ISO string
-}
+import type { WorkingHours } from '@/src/shared/types';
+import type { BlockedTime } from '@/src/shared/types';
 
 export interface AvailabilityOverview {
   totalAvailableHours: number;
