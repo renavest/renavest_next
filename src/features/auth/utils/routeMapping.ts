@@ -113,3 +113,5 @@ function getRoleForPath(path: string): Exclude<UserRole, null> | null {
   }
   return null;
 }
+
+export { getUserRoleFromUser, hasRole, hasAnyRole };

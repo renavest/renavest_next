@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
@@ -147,4 +146,12 @@ async function authGuard(
       response: NextResponse.json({ error: 'Internal server error' }, { status: 500 }),
     };
   }
+}
+
+// Export the core guard for potential reuse
+export { authGuard };
+
+// Convenience wrapper for therapist-only endpoints
+export async function requireTherapist(): Promise<AuthGuardResult | AuthGuardError> {
+  return authGuard({ requireRole: 'therapist' });
 }

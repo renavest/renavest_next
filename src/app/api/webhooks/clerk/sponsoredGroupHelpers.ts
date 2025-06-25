@@ -190,7 +190,7 @@ async function associateUserWithSponsoredGroup(
 /**
  * Synchronize sponsored group information to Clerk's publicMetadata
  */
-async function synchronizeSponsoredGroupToClerk(
+export async function synchronizeSponsoredGroupToClerk(
   clerkUserId: string,
   sponsoredGroupName: string,
 ): Promise<void> {
