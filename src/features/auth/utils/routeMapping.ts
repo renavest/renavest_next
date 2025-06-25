@@ -16,12 +16,12 @@ const ROLE_ROUTES: Record<Exclude<UserRole, null>, string> = {
 } as const;
 
 // Default unauthorized path - users must be authorized to access any protected content
-export const UNAUTHORIZED_PATH = '/login';
+const UNAUTHORIZED_PATH = '/login';
 
 /**
  * Get the appropriate route for a user's role (server-side safe)
  */
-export function getRouteForRole(role: UserRole): string {
+function getRouteForRole(role: UserRole): string {
   if (!role) return ROLE_ROUTES.employee;
   return ROLE_ROUTES[role] || ROLE_ROUTES.employee;
 }
@@ -114,4 +114,4 @@ function getRoleForPath(path: string): Exclude<UserRole, null> | null {
   return null;
 }
 
-export { getUserRoleFromUser, hasRole, hasAnyRole };
+export { getUserRoleFromUser, hasRole, hasAnyRole, getRouteForRole, UNAUTHORIZED_PATH };
