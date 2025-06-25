@@ -16,17 +16,5 @@ export { useBillingManagement } from './hooks/useBillingManagement';
 // Services
 export { PaymentMethodsService } from './services/payment-methods';
 
-// Types
-export type {
-  SubscriptionPlan,
-  PaymentMethod,
-  PaymentMethodCard as StripePaymentMethodCard,
-  PaymentMethodsResponse,
-  SetupIntentResponse,
-  SubscriptionPlansCardProps,
-  PaymentMethodCardProps,
-  AddPaymentMethodFormProps,
-  SponsorshipInfo,
-  SubscriptionStatus,
-  BillingManagementHook,
-} from './types';
+// Types are imported directly from './types' to avoid duplication
+// Example: import type { SubscriptionPlan, PaymentMethod } from '@/src/features/billing/types';

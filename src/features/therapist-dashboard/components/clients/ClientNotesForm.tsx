@@ -9,7 +9,7 @@ import {
   CreateNoteRequest,
   Client,
   ClientNote,
-} from '../types';
+} from '../../types';
 
 interface ClientNotesFormProps {
   client: Client;

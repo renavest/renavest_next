@@ -47,22 +47,7 @@ export {
 export { StripeConnectIntegration } from './components';
 
 // =============================================================================
-// TYPE DEFINITIONS
+// TYPE DEFINITIONS - REMOVED
 // =============================================================================
-export type {
-  // Subscription types
-  StripeSubCache,
-  SubscriptionStatus,
-
-  // Payment types
-  PaymentStatus,
-  PayoutStatus,
-  PayoutType,
-  SessionPaymentMetadata,
-  PaymentCaptureConfig,
-
-  // Connect types
-  ConnectStatus,
-  StripeStatus,
-  StripeConnectIntegrationProps,
-} from './types';
+// Types are imported directly from './types' to avoid duplication
+// Example: import type { SubscriptionStatus, PaymentStatus } from '@/src/features/stripe/types';

@@ -7,5 +7,5 @@
 // Therapist bank account connection component
 export { StripeConnectIntegration } from './StripeConnectIntegration';
 
-// Re-export types used by components
-export type { ConnectStatus, StripeConnectIntegrationProps } from '../types';
+// Types are imported directly from '../types' to avoid duplication
+// Example: import type { ConnectStatus, StripeConnectIntegrationProps } from '@/src/features/stripe/types';

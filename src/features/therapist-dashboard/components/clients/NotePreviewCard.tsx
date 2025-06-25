@@ -1,7 +1,7 @@
 'use client';
 import { Calendar, Lock } from 'lucide-react';
 
-import { ClientNote } from '../types';
+import { ClientNote } from '../../types';
 
 const categoryColors = {
   session: 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-800 border border-blue-200',
