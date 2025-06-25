@@ -401,3 +401,57 @@ export interface ClientFormsState {
   /** Field validation errors */
   validationErrors: Record<string, string>;
 }
+
+// =====================================
+// Additional Component Props
+// =====================================
+
+/**
+ * Props for client form field component
+ */
+export interface ClientFormFieldComponentProps {
+  /** Field definition */
+  field: ClientFormField;
+  /** Current field value */
+  value: unknown;
+  /** Validation error message */
+  error?: string;
+  /** Callback when field value changes */
+  onChange: (value: unknown) => void;
+  /** Callback when field loses focus */
+  onBlur?: () => void;
+}
+
+/**
+ * Props for current plan card component
+ */
+export interface CurrentPlanCardProps {
+  /** Optional CSS class name */
+  className?: string;
+}
+
+/**
+ * Props for feature item component
+ */
+export interface FeatureItemProps {
+  /** Icon component to display */
+  icon: React.ComponentType<{ className?: string }>;
+  /** Feature description text */
+  text: string;
+  /** Whether the feature is included in current plan */
+  included: boolean;
+  /** Whether this is an upgrade feature */
+  upgradeFeature?: boolean;
+}
+
+/**
+ * Props for client form fill component
+ */
+export interface ClientFormFillProps {
+  /** Form assignment to fill out */
+  assignment: ClientFormAssignment;
+  /** Callback when form is submitted */
+  onSubmit: (responses: Record<string, unknown>) => Promise<void>;
+  /** Callback when form is cancelled */
+  onCancel: () => void;
+}

@@ -23,11 +23,12 @@ export interface Advisor {
 
 export type UserRole = 'employee' | 'therapist' | 'super_admin' | 'employer_admin' | null;
 
-// Shared component props
+// ===== SHARED COMPONENT PROPS =====
+
 export interface MetricCardProps {
   title: string;
   value: string | number;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   trend?: {
     value: number;
     isPositive: boolean;
@@ -35,7 +36,30 @@ export interface MetricCardProps {
   className?: string;
 }
 
-// Page-specific interfaces that are used across features
+export interface SubscriptionGateProps {
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+  requiresPremium?: boolean;
+}
+
+export interface PageProps {
+  params?: Record<string, string>;
+  searchParams?: Record<string, string>;
+}
+
+export interface BillingSetupFormProps {
+  onSuccess?: () => void;
+  onError?: (error: string) => void;
+  className?: string;
+}
+
+export interface PaymentMethodsSectionProps {
+  className?: string;
+  showTitle?: boolean;
+}
+
+// ===== PAGE-SPECIFIC INTERFACES =====
+
 export interface ChatPreferences {
   allowDirectMessages: boolean;
   notificationSettings: {
@@ -69,7 +93,8 @@ export interface CalendarStatus {
   error?: string;
 }
 
-// Google Calendar types
+// ===== GOOGLE CALENDAR TYPES =====
+
 export interface WorkingHours {
   dayOfWeek: number;
   startTime: string;
@@ -81,4 +106,20 @@ export interface WorkingHoursSectionProps {
   workingHours: WorkingHours[];
   onUpdate: (hours: WorkingHours[]) => void;
   loading?: boolean;
+}
+
+// ===== UTM AND TRACKING TYPES =====
+
+export interface UtmParams {
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_term?: string;
+  utm_content?: string;
+  company?: string;
+}
+
+export interface PageUtmHandlerProps {
+  children: React.ReactNode;
+  utmParams?: UtmParams;
 }

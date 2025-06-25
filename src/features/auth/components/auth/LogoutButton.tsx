@@ -6,18 +6,12 @@ import { toast } from 'sonner';
 
 import { clearOnboardingState } from '@/src/features/onboarding/state/onboardingState';
 
-interface LogoutButtonProps {
-  className?: string;
-  textClassName?: string;
-  iconClassName?: string;
-  showText?: boolean;
-}
+import type { LogoutButtonProps } from '../../types';
 
 export function LogoutButton({
   className = 'flex items-center space-x-2 text-gray-700 hover:bg-gray-100 p-2 rounded-md',
-  textClassName = 'hidden sm:inline',
-  iconClassName = 'h-4 w-4',
-  showText = true,
+  variant = 'default',
+  size = 'default',
 }: LogoutButtonProps) {
   const { signOut } = useClerk();
 
@@ -32,10 +26,26 @@ export function LogoutButton({
     }
   };
 
+  const baseClasses = 'flex items-center space-x-2 rounded-md transition-colors';
+  const variantClasses = {
+    default: 'text-gray-700 hover:bg-gray-100',
+    ghost: 'text-gray-600 hover:text-gray-900 hover:bg-gray-50',
+    outline: 'border border-gray-300 text-gray-700 hover:bg-gray-50',
+  };
+  const sizeClasses = {
+    sm: 'p-1 text-sm',
+    default: 'p-2',
+    lg: 'p-3 text-lg',
+  };
+
+  const combinedClassName = [baseClasses, variantClasses[variant], sizeClasses[size], className]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <button onClick={handleLogout} className={className} aria-label='Logout'>
-      <LogOut className={iconClassName} />
-      {showText && <span className={textClassName}>Logout</span>}
+    <button onClick={handleLogout} className={combinedClassName} aria-label='Logout'>
+      <LogOut className='h-4 w-4' />
+      <span className='hidden sm:inline'>Logout</span>
     </button>
   );
 }

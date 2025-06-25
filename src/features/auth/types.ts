@@ -38,117 +38,122 @@ export interface OnboardingData {
   // Add other initial onboarding fields here if needed
 }
 
-// Prop types for the authentication/onboarding step components
-
-// Props for components/auth/RoleSelectionStep.tsx
-interface RoleSelectionStepProps {
-  selectedRole: UserRole; // Should be null initially, then 'employee', 'therapist', or 'employer'
-  onRoleSelect: (role: UserRole) => void;
-  onContinue: () => void; // Handler to move to the next step (Login for existing, Signup for new)
-  onBackToLogin: () => void; // Handler to go back to the very start (Role Selection) - effectively a reset
+// Error types
+export interface CompleteOnboardingError {
+  type: 'AuthMismatch' | 'MissingRole' | 'DatabaseError';
+  message: string;
 }
 
-// Props for components/auth/LoginStep.tsx - This step is now primarily for logging in existing users
-// It also provides a path to start the signup flow after role selection.
-interface LoginStepProps {
+// ===== COMPONENT PROP TYPES =====
+
+// Logout button component props
+export interface LogoutButtonProps {
+  className?: string;
+  variant?: 'default' | 'ghost' | 'outline';
+  size?: 'default' | 'sm' | 'lg';
+}
+
+// Role selection step props
+export interface RoleSelectionStepProps {
+  selectedRole: UserRole;
+  onRoleSelect: (role: UserRole) => void;
+  onContinue: () => void;
+  onBackToLogin: () => void;
+}
+
+// Login step props
+export interface LoginStepProps {
   email: string;
   setEmail: (value: string) => void;
   password: string;
   setPassword: (value: string) => void;
-  onLogin: (e: React.FormEvent) => Promise<void>; // Handler for login form submission
-  onSignupClick: () => void; // Handler to navigate to the start of the custom signup flow (Purpose step)
-  onForgotPasswordClick: () => void; // Handler to navigate to the forgot password flow
-  onBack: () => void; // Handler for linear back navigation (back to Role Selection)
+  onLogin: (e: React.FormEvent) => Promise<void>;
+  onSignupClick: () => void;
+  onForgotPasswordClick: () => void;
+  onBack: () => void;
 }
 
-// Props for components/auth/SignupStep.tsx - This is the final step after demographic questions (Employee) or directly after role selection (Therapist/Employer)
-interface SignupStepProps {
-  firstName: string; // Pre-filled/editable
+// Signup step props
+export interface SignupStepProps {
+  firstName: string;
   setFirstName: (value: string) => void;
   lastName: string;
   setLastName: (value: string) => void;
-  email: string; // Pre-filled/editable
+  email: string;
   setEmail: (value: string) => void;
   password: string;
   setPassword: (value: string) => void;
   agreeToTerms: boolean;
   setAgreeToTerms: (value: boolean) => void;
-  onSignUp: (e: React.FormEvent) => Promise<void>; // Handler for the final signup form submission (triggers Clerk signup)
-  onBack: () => void; // Handler for linear back navigation (e.g., to EthnicityStep or Role Selection)
-  onBackToLogin: () => void; // Handler for explicit back to Role Selection
+  onSignUp: (e: React.FormEvent) => Promise<void>;
+  onBack: () => void;
+  onBackToLogin: () => void;
 }
 
-// Props for components/auth/EmailVerificationStep.tsx
-interface EmailVerificationStepProps {
-  email: string; // Email address that the code was sent to (from Clerk or state)
+// Email verification step props
+export interface EmailVerificationStepProps {
+  email: string;
   code: string;
-  setCode: (value: string) => void; // Setter for the verification code input
-  onSubmit: (e: React.FormEvent) => Promise<void>; // Handler for submitting the verification code
-  onResendClick: () => Promise<void>; // Handler for resending the verification email
-  onBackToLogin: () => void; // Handler for explicit back to Role Selection
+  setCode: (value: string) => void;
+  onSubmit: (e: React.FormEvent) => Promise<void>;
+  onResendClick: () => Promise<void>;
+  onBackToLogin: () => void;
 }
 
-// Props for components/auth/ForgotPasswordStep.tsx
-interface ForgotPasswordStepProps {
-  email: string; // Email address input for the reset request
-  setEmail: (value: string) => void; // Setter for the email input
-  onSubmit: (e: React.FormEvent) => Promise<void>; // Handler for submitting the forgot password request (sends email)
-  onBackToLogin: () => void; // Handler for explicit back to Role Selection
+// Forgot password step props
+export interface ForgotPasswordStepProps {
+  email: string;
+  setEmail: (value: string) => void;
+  onSubmit: (e: React.FormEvent) => Promise<void>;
+  onBackToLogin: () => void;
 }
 
-// Props for components/auth/ResetPasswordStep.tsx
-interface ResetPasswordStepProps {
-  code: string; // Input for the reset verification code (pre-filled from URL if deep link)
-  setCode: (value: string) => void; // Setter for the code input
-  newPassword: string; // Input for the new password
-  setNewPassword: (value: string) => void; // Setter for the new password input
-  onSubmit: (e: React.FormEvent) => Promise<void>; // Handler for submitting the new password and code
-  onBackToLogin: () => void; // Handler for explicit back to Role Selection
+// Reset password step props
+export interface ResetPasswordStepProps {
+  code: string;
+  setCode: (value: string) => void;
+  newPassword: string;
+  setNewPassword: (value: string) => void;
+  onSubmit: (e: React.FormEvent) => Promise<void>;
+  onBackToLogin: () => void;
 }
 
-// Props for components/onboarding/PurposeStep.tsx (Employee specific onboarding)
-interface RenavestPurposeStepProps {
+// Onboarding step props
+export interface PurposeStepProps {
   selectedPurpose: string;
-  onPurposeSelect: (purpose: string) => void; // Handler for selecting a purpose
-  onContinue: () => void; // Handler to move to the next step (AgeRangeStep)
-  onBack: () => void; // Handler for linear back navigation (to Login step)
-  onBackToLogin: () => void; // Handler for explicit back to Role Selection
-  firstName: string; // State for first name (collected in this step's input)
-  setFirstName: (value: string) => void; // Setter for first name state
+  onPurposeSelect: (purpose: string) => void;
+  onContinue: () => void;
+  onBack: () => void;
+  onBackToLogin: () => void;
+  firstName: string;
+  setFirstName: (value: string) => void;
 }
 
-// Props for components/onboarding/AgeRangeStep.tsx (Employee specific onboarding)
-interface AgeRangeStepProps {
+export interface AgeRangeStepProps {
   selectedAgeRange: string;
-  onAgeRangeSelect: (ageRange: string) => void; // Handler for selecting age range
-  onContinue: () => void; // Handler to move to the next step (MaritalStatusStep)
-  onBack: () => void; // Handler for linear back navigation (to PurposeStep)
-  onBackToLogin: () => void; // Handler for explicit back to Role Selection
-  firstName: string; // Display first name
+  onAgeRangeSelect: (ageRange: string) => void;
+  onContinue: () => void;
+  onBack: () => void;
+  onBackToLogin: () => void;
+  firstName: string;
 }
 
-// Props for components/onboarding/MaritalStatusStep.tsx (Employee specific onboarding)
-interface MaritalStatusStepProps {
+export interface MaritalStatusStepProps {
   selectedMaritalStatus: string;
-  onMaritalStatusSelect: (maritalStatus: string) => void; // Handler for selecting marital status
-  onContinue: () => void; // Handler to move to the next step (EthnicityStep)
-  onBack: () => void; // Handler for linear back navigation (to AgeRangeStep)
-  onBackToLogin: () => void; // Handler for explicit back to Role Selection
-  firstName: string; // Display first name
+  onMaritalStatusSelect: (maritalStatus: string) => void;
+  onContinue: () => void;
+  onBack: () => void;
+  onBackToLogin: () => void;
+  firstName: string;
 }
 
-// Props for components/onboarding/EthnicityStep.tsx (Employee specific onboarding)
-interface EthnicityStepProps {
+export interface EthnicityStepProps {
   selectedEthnicity: string;
-  onEthnicitySelect: (ethnicity: string) => void; // Handler for selecting ethnicity
-  onContinue: () => void; // Handler to move to the next step (SignupStep)
-  onBack: () => void; // Handler for linear back navigation (to MaritalStatusStep)
-  onBackToLogin: () => void; // Handler for explicit back to Role Selection
-  firstName: string; // Display first name
-}
-interface CompleteOnboardingError {
-  type: 'AuthMismatch' | 'MissingRole' | 'DatabaseError';
-  message: string;
+  onEthnicitySelect: (ethnicity: string) => void;
+  onContinue: () => void;
+  onBack: () => void;
+  onBackToLogin: () => void;
+  firstName: string;
 }
 
 // Note: Quiz and Consultation steps/types are not included here as they are
