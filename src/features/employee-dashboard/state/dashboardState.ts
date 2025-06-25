@@ -34,7 +34,7 @@ const insightData = [
   },
 ];
 
-export const comparisonData = [
+const comparisonData = [
   { name: 'Monthly Dining Out', past: 45, current: 30 },
   { name: 'Automated Savings', past: 15, current: 35 },
   { name: 'Entertainment Spending', past: 25, current: 15 },
@@ -78,7 +78,7 @@ const weeklyMoneyBelief = {
 };
 
 // Actionable insights with detailed impact
-export const actionableInsights = [
+const actionableInsights = [
   {
     id: 1,
     spending: 250,
@@ -111,7 +111,7 @@ export const actionableInsights = [
   },
 ];
 
-export const financialGoals = [
+const financialGoals = [
   {
     id: 1,
     title: 'Emergency Fund',
@@ -141,9 +141,9 @@ export const financialGoals = [
   },
 ];
 
-export const selectedTherapistSignal = signal<number | null>(null);
+const selectedTherapistSignal = signal<number | null>(null);
 
-export const initialMeetingCompleted = signal(false);
+const initialMeetingCompleted = signal(false);
 
 // Last 30 days mock data for demonstration
 const last30DaysData = {
