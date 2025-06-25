@@ -93,7 +93,7 @@ export async function associateUserWithEmployerAndSponsoredGroup(
 /**
  * Associates a user with a specific sponsored group
  */
-export async function associateUserWithSponsoredGroup(
+async function associateUserWithSponsoredGroup(
   tx: DatabaseTransaction,
   userId: number,
   employerId: number,
@@ -190,7 +190,7 @@ export async function associateUserWithSponsoredGroup(
 /**
  * Synchronize sponsored group information to Clerk's publicMetadata
  */
-export async function synchronizeSponsoredGroupToClerk(
+async function synchronizeSponsoredGroupToClerk(
   clerkUserId: string,
   sponsoredGroupName: string,
 ): Promise<void> {
