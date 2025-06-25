@@ -5,7 +5,6 @@ import { createDate } from '@/src/utils/timezone';
 
 // UI State Signals
 export const isHeaderScrolledSignal = signal(false);
-export const selectedGoalSignal = signal<number | null>(null);
 const isScriptExpandedSignal = signal(false);
 const currentInsightIndexSignal = signal(0);
 export const isMobileMenuOpenSignal = signal(false);
@@ -141,3 +140,30 @@ export const financialGoals = [
     description: 'Save for summer beach trip',
   },
 ];
+
+export const selectedTherapistSignal = signal<number | null>(null);
+
+export const initialMeetingCompleted = signal(false);
+
+// Last 30 days mock data for demonstration
+const last30DaysData = {
+  sessionsCompleted: [
+    { date: '2024-01-01', count: 2 },
+    { date: '2024-01-08', count: 1 },
+    { date: '2024-01-15', count: 3 },
+    { date: '2024-01-22', count: 1 },
+    { date: '2024-01-29', count: 2 },
+  ],
+  moodRatings: [
+    { date: '2024-01-01', rating: 7 },
+    { date: '2024-01-03', rating: 6 },
+    { date: '2024-01-05', rating: 8 },
+    { date: '2024-01-07', rating: 7 },
+    { date: '2024-01-09', rating: 9 },
+  ],
+  goalsProgress: [
+    { goal: 'Reduce anxiety', progress: 75 },
+    { goal: 'Improve sleep', progress: 60 },
+    { goal: 'Better communication', progress: 85 },
+  ],
+};

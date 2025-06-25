@@ -2,6 +2,8 @@
 
 import posthog from 'posthog-js';
 
+import type { UserRole } from '@/src/shared/types';
+
 // Placeholder file for authentication tracking utilities.
 // Replace with your actual tracking logic (e.g., using Segment, Google Analytics, etc.)
 
@@ -208,19 +210,7 @@ export const trackSignupError = (
 /**
  * Track email verification attempts
  */
-export const trackEmailVerificationAttempt = (
-  additionalProps: TrackingProps = {},
-  userContext: UserContext = {},
-) => {
-  if (typeof window === 'undefined') return;
-
-  posthog.capture('auth:email_verification_attempted_v1', {
-    attempted_timestamp: new Date().toISOString(),
-    url: window.location.href,
-    ...userContext,
-    ...additionalProps,
-  });
-};
+// Removed unused export: trackEmailVerificationAttempt
 
 /**
  * Track successful email verification
@@ -399,3 +389,5 @@ export const trackAuthFlowAbandonment = (
     ...additionalProps,
   });
 };
+
+// Removed duplicate tracking functions
