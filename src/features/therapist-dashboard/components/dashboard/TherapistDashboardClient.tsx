@@ -46,7 +46,7 @@ import {
 } from '@/src/features/therapist-dashboard/types';
 import { COLORS } from '@/src/styles/colors';
 
-import { ClientTab } from '../../types/components';
+import { ClientTab, Channel } from '../../types/components';
 
 import { QuickActionsSection } from './QuickActionsSection';
 
@@ -274,8 +274,6 @@ const ClientProgressTab = () => {
     </div>
   );
 };
-
-import type { Channel } from '../../types/components';
 
 const ClientChatTab = ({ client }: { client: Client }) => {
   const { user } = useUser();

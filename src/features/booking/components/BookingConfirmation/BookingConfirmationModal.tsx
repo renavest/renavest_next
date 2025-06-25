@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { formatDateTime } from '@/src/features/booking/utils/dateTimeUtils';
-import { formatCurrency } from '@/src/features/therapist-dashboard/utils/dashboardHelpers';
+import { formatCurrency } from '@/src/utils/currency';
 import { createDate } from '@/src/utils/timezone';
 
 import {

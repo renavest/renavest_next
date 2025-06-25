@@ -10,12 +10,10 @@ export interface Message {
   messageType?: string;
 }
 
-export interface Channel {
-  id: number;
-  therapistName?: string;
-  prospectFirstName?: string;
-  prospectLastName?: string;
-}
+// Channel type is centralized in therapist-dashboard/types/components.ts
+import { Channel as CentralChannel } from '@/src/features/therapist-dashboard/types/components';
+
+export type Channel = CentralChannel;
 
 export interface ChatInterfaceProps {
   therapistId?: number;

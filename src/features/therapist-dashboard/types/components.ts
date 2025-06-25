@@ -173,6 +173,7 @@ export type ClientTab =
   | 'progress'
   | 'chat';
 
+// Extended Channel interface to serve both therapist dashboard and chat features
 export interface Channel {
   id: number;
   channelIdentifier: string;
