@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // src/features/auth/utils/routeMapping.ts
 // Server-side route mapping utilities (no 'use client' directive)
 
@@ -7,7 +8,7 @@ import type { UserResource } from '@clerk/types';
 import type { UserRole } from '@/src/shared/types';
 
 // Define route mappings for each role (excluding null)
-export const ROLE_ROUTES: Record<Exclude<UserRole, null>, string> = {
+const ROLE_ROUTES: Record<Exclude<UserRole, null>, string> = {
   therapist: '/therapist',
   employer_admin: '/employer',
   employee: '/employee',
@@ -25,10 +26,8 @@ export function getRouteForRole(role: UserRole): string {
   return ROLE_ROUTES[role] || ROLE_ROUTES.employee;
 }
 
-/**
- * Type guard to check if a string is a valid UserRole
- */
-export function isValidUserRole(role: string | undefined | null): role is Exclude<UserRole, null> {
+// The helper utilities below are kept internal (no export) for potential future use
+function isValidUserRole(role: string | undefined | null): role is Exclude<UserRole, null> {
   return (
     role === 'therapist' ||
     role === 'employer_admin' ||
@@ -40,7 +39,7 @@ export function isValidUserRole(role: string | undefined | null): role is Exclud
 /**
  * Extract user role from Clerk user object (works with both UserResource and User types)
  */
-export function getUserRoleFromUser(user: UserResource | User | null | undefined): UserRole {
+function getUserRoleFromUser(user: UserResource | User | null | undefined): UserRole {
   if (!user) return null;
 
   // Try publicMetadata first (available on both types)
@@ -62,7 +61,7 @@ export function getUserRoleFromUser(user: UserResource | User | null | undefined
 /**
  * Check if user has a specific role (server-side safe)
  */
-export function hasRole(user: UserResource | User | null | undefined, role: UserRole): boolean {
+function hasRole(user: UserResource | User | null | undefined, role: UserRole): boolean {
   const userRole = getUserRoleFromUser(user);
   return userRole === role;
 }
@@ -70,10 +69,7 @@ export function hasRole(user: UserResource | User | null | undefined, role: User
 /**
  * Check if user has any of the specified roles (server-side safe)
  */
-export function hasAnyRole(
-  user: UserResource | User | null | undefined,
-  roles: UserRole[],
-): boolean {
+function hasAnyRole(user: UserResource | User | null | undefined, roles: UserRole[]): boolean {
   const userRole = getUserRoleFromUser(user);
   return userRole !== null && roles.includes(userRole);
 }
@@ -81,7 +77,7 @@ export function hasAnyRole(
 /**
  * Get role display name for UI purposes
  */
-export function getRoleDisplayName(role: UserRole): string {
+function getRoleDisplayName(role: UserRole): string {
   const displayNames: Record<Exclude<UserRole, null>, string> = {
     therapist: 'Financial Therapist',
     employer_admin: 'Employer Admin',
@@ -94,14 +90,14 @@ export function getRoleDisplayName(role: UserRole): string {
 /**
  * Get all available roles
  */
-export function getAllRoles(): Exclude<UserRole, null>[] {
+function getAllRoles(): Exclude<UserRole, null>[] {
   return Object.keys(ROLE_ROUTES) as Exclude<UserRole, null>[];
 }
 
 /**
  * Check if a route path matches a specific role's protected routes
  */
-export function isRoleRoute(path: string, role: Exclude<UserRole, null>): boolean {
+function isRoleRoute(path: string, role: Exclude<UserRole, null>): boolean {
   const roleRoute = ROLE_ROUTES[role];
   return path.startsWith(roleRoute);
 }
@@ -109,7 +105,7 @@ export function isRoleRoute(path: string, role: Exclude<UserRole, null>): boolea
 /**
  * Get the role that corresponds to a given path
  */
-export function getRoleForPath(path: string): Exclude<UserRole, null> | null {
+function getRoleForPath(path: string): Exclude<UserRole, null> | null {
   for (const [role, route] of Object.entries(ROLE_ROUTES)) {
     if (path.startsWith(route)) {
       return role as Exclude<UserRole, null>;
