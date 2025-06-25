@@ -4,11 +4,16 @@ import { useState } from 'react';
 
 import { PAYMENT_ELEMENT_OPTIONS } from '@/src/features/stripe/services/stripe-client-config';
 
-interface AddPaymentMethodFormProps {
-  onSuccess: () => void;
-  onError: (error: string) => void;
-}
+import type { AddPaymentMethodFormProps } from '../types';
 
+/**
+ * AddPaymentMethodForm Component
+ *
+ * Stripe-powered form for adding new payment methods to a customer's account.
+ * Uses Stripe Elements for secure payment method collection.
+ *
+ * @param props - Component props including success and error callbacks
+ */
 export default function AddPaymentMethodForm({ onSuccess, onError }: AddPaymentMethodFormProps) {
   const stripe = useStripe();
   const elements = useElements();

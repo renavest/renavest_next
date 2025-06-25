@@ -41,7 +41,7 @@ export interface AuthGuardError {
  * @param options - Configuration for auth requirements
  * @returns Either success with user data or error response
  */
-export async function authGuard(
+async function authGuard(
   options: AuthGuardOptions = {},
 ): Promise<AuthGuardResult | AuthGuardError> {
   const {
@@ -148,30 +148,10 @@ export async function authGuard(
   }
 }
 
-/**
- * Simple authentication check for routes that only need user presence
- */
-export async function requireAuth() {
-  return authGuard({ skipDbLookup: true, requireOnboarding: false });
-}
+// Export the core guard for potential reuse
+export { authGuard };
 
-/**
- * Check for specific therapist role
- */
-export async function requireTherapist() {
+// Convenience wrapper for therapist-only endpoints
+export async function requireTherapist(): Promise<AuthGuardResult | AuthGuardError> {
   return authGuard({ requireRole: 'therapist' });
-}
-
-/**
- * Check for employer admin role
- */
-export async function requireEmployerAdmin() {
-  return authGuard({ requireRole: 'employer_admin' });
-}
-
-/**
- * Check for employee role
- */
-export async function requireEmployee() {
-  return authGuard({ requireRole: 'employee' });
 }

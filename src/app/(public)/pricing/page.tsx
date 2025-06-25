@@ -1,6 +1,6 @@
 'use client';
 
-import Navbar from '@/src/features/home/components/Navbar';
+import { Navbar } from '@/src/features/home';
 import PricingCalculator from '@/src/features/pricing/components/PricingCalculator';
 
 export default function PricingPage() {

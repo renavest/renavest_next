@@ -1,8 +1,6 @@
-export function ConnectionStatusIndicator({
-  connectionStatus,
-}: {
-  connectionStatus: 'disconnected' | 'connecting' | 'connected' | 'error';
-}) {
+import type { ConnectionStatusIndicatorProps } from '../types';
+
+export function ConnectionStatusIndicator({ connectionStatus }: ConnectionStatusIndicatorProps) {
   const getStatusConfig = () => {
     switch (connectionStatus) {
       case 'connected':

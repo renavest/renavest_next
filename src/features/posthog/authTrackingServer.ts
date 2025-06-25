@@ -1,5 +1,7 @@
 import PostHogClient from '@/posthog';
 
+import type { UserProperties } from './types';
+
 /**
  * Server-side authentication tracking utilities for PostHog
  * Following ANALYTICS_POSTHOG MDC conventions
@@ -20,6 +22,14 @@ export const trackUserCreatedServerSide = async (
 ) => {
   try {
     const posthogClient = PostHogClient();
+
+    const userProperties: Partial<UserProperties> = {
+      email: userEmail,
+      role: userRole,
+      signUpDate: new Date().toISOString(),
+      lastActiveDate: new Date().toISOString(),
+      isOnboarded: false,
+    };
 
     posthogClient.capture({
       distinctId: userId,
@@ -42,6 +52,7 @@ export const trackUserCreatedServerSide = async (
         email_domain: userEmail.split('@')[1],
         signup_method: 'email_password',
         server_timestamp: new Date().toISOString(),
+        ...userProperties,
         ...additionalProps,
       },
     });

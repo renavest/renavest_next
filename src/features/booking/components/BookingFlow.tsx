@@ -4,6 +4,7 @@ import posthog from 'posthog-js';
 import { useEffect } from 'react';
 import { useCalendlyEventListener } from 'react-calendly';
 
+import { ALLOWED_EMAILS } from '@/src/constants';
 import AlternativeBooking from '@/src/features/booking/components/AlternativeBooking';
 import BillingCheckWrapper from '@/src/features/booking/components/BillingCheckWrapper';
 import { BookingForm } from '@/src/features/booking/components/form/BookingForm';
@@ -107,9 +108,12 @@ export default function UnifiedBookingFlow({ advisor, userId, userEmail }: Booki
     return <AlternativeBooking advisor={advisor} bookingURL={advisor.bookingURL} />;
   }
 
-  // Check if we should enable billing checks - always check if therapist has pricing
+  // Check if user is staff (allowed email) - staff bypass billing checks
+  const isStaffUser = ALLOWED_EMAILS.includes(userEmail);
+
+  // Check if we should enable billing checks - check if therapist has pricing AND user is not staff
   const hasPricing = advisor.hourlyRateCents && advisor.hourlyRateCents > 0;
-  const shouldCheckBilling = hasPricing; // Always check billing if therapist has pricing
+  const shouldCheckBilling = hasPricing && !isStaffUser; // Skip billing check for staff
 
   // If active therapist with Google Calendar integration, show internal booking
   const bookingForm = (
@@ -125,10 +129,10 @@ export default function UnifiedBookingFlow({ advisor, userId, userEmail }: Booki
     />
   );
 
-  // Conditionally wrap with billing check if therapist has pricing
+  // Conditionally wrap with billing check if therapist has pricing AND user is not staff
   if (shouldCheckBilling) {
     return (
-      <BillingCheckWrapper advisorId={advisor.id} shouldCheckBilling={true}>
+      <BillingCheckWrapper advisorId={advisor.id} shouldCheckBilling={true} userEmail={userEmail}>
         {bookingForm}
       </BillingCheckWrapper>
     );

@@ -2,6 +2,8 @@
 
 import posthog from 'posthog-js';
 
+import type { UserRole } from '@/src/shared/types';
+
 // Placeholder file for authentication tracking utilities.
 // Replace with your actual tracking logic (e.g., using Segment, Google Analytics, etc.)
 
@@ -208,36 +210,7 @@ export const trackSignupError = (
 /**
  * Track email verification attempts
  */
-export const trackEmailVerificationAttempt = (
-  additionalProps: TrackingProps = {},
-  userContext: UserContext = {},
-) => {
-  if (typeof window === 'undefined') return;
-
-  posthog.capture('auth:email_verification_attempted_v1', {
-    attempted_timestamp: new Date().toISOString(),
-    url: window.location.href,
-    ...userContext,
-    ...additionalProps,
-  });
-};
-
-/**
- * Track successful email verification
- */
-export const trackEmailVerificationSuccess = (
-  additionalProps: TrackingProps = {},
-  userContext: UserContext = {},
-) => {
-  if (typeof window === 'undefined') return;
-
-  posthog.capture('auth:email_verification_succeeded_v1', {
-    success_timestamp: new Date().toISOString(),
-    url: window.location.href,
-    ...userContext,
-    ...additionalProps,
-  });
-};
+// Removed unused export: trackEmailVerificationAttempt
 
 /**
  * Track password reset requests
@@ -321,28 +294,6 @@ export const trackPasswordResetError = (
 };
 
 /**
- * Track logout events
- */
-export const trackLogout = (
-  userRole?: string,
-  additionalProps: TrackingProps = {},
-  userContext: UserContext = {},
-) => {
-  if (typeof window === 'undefined') return;
-
-  posthog.capture('auth:logout_v1', {
-    user_role: userRole,
-    logout_timestamp: new Date().toISOString(),
-    url: window.location.href,
-    ...userContext,
-    ...additionalProps,
-  });
-
-  // Reset PostHog user context after logout
-  posthog.reset();
-};
-
-/**
  * Identify user after successful authentication
  */
 export const identifyAuthenticatedUser = (
@@ -379,23 +330,8 @@ export const identifyAuthenticatedUser = (
   }
 };
 
-/**
- * Track authentication flow abandonment
- */
-export const trackAuthFlowAbandonment = (
-  flow_type: 'login' | 'signup',
-  last_step: string,
-  additionalProps: TrackingProps = {},
-  userContext: UserContext = {},
-) => {
-  if (typeof window === 'undefined') return;
+// Removed unused export: trackEmailVerificationSuccess
 
-  posthog.capture('auth:flow_abandoned_v1', {
-    flow_type,
-    last_step,
-    abandoned_timestamp: new Date().toISOString(),
-    url: window.location.href,
-    ...userContext,
-    ...additionalProps,
-  });
-};
+// Removed unused export: trackLogout
+
+// Removed unused export: trackAuthFlowAbandonment

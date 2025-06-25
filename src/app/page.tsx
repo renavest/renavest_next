@@ -12,15 +12,17 @@ import posthog from 'posthog-js';
 import { useEffect } from 'react';
 import { Suspense } from 'react';
 
-import BusinessImpactSection from '@/src/features/home/components/BusinessImpactSection';
-import Footer from '@/src/features/home/components/Footer';
-import HeroSection from '@/src/features/home/components/HeroSection';
-import JasmineJourneySection from '@/src/features/home/components/JasmineJourneySection';
-import Navbar from '@/src/features/home/components/Navbar';
-import PilotCohortBanner from '@/src/features/home/components/PilotCohortBanner';
-import TestimonialSection from '@/src/features/home/components/TestimonialSection';
-import WhatIsFinancialTherapySection from '@/src/features/home/components/WhatIsFinancialTherapySection';
-import WhatWeDoSection from '@/src/features/home/components/WhatWeDoSection';
+import {
+  BusinessImpactSection,
+  Footer,
+  HeroSection,
+  JasmineJourneySection,
+  Navbar,
+  PilotCohortBanner,
+  TestimonialSection,
+  WhatIsFinancialTherapySection,
+  WhatWeDoSection,
+} from '@/src/features/home';
 import { setupReferralAttribution } from '@/src/lib/referralTracking';
 
 const inter = Inter({ subsets: ['latin'] });

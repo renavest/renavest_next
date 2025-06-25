@@ -4,36 +4,48 @@ import React from 'react';
 
 import { COLORS } from '@/src/styles/colors';
 
-interface CalendarGridProps {
-  selectedDate: DateTime;
-  onDateSelect: (date: DateTime) => void;
-  availableDates: Set<string>; // ISO date strings
-  timezone: string;
-  currentMonth: DateTime;
-  setCurrentMonth: (date: DateTime) => void;
-}
+import type { CalendarGridProps } from '../../types';
 
 export function CalendarGrid({
   selectedDate,
   onDateSelect,
   availableDates,
-  timezone,
-  currentMonth,
-  setCurrentMonth,
+  minDate,
+  maxDate,
 }: CalendarGridProps) {
-  const today = DateTime.now().setZone(timezone).startOf('day');
+  const [currentMonth, setCurrentMonth] = React.useState<DateTime>(
+    selectedDate ? DateTime.fromJSDate(selectedDate) : DateTime.now(),
+  );
+
+  const today = DateTime.now().startOf('day');
   const daysInMonth = currentMonth.daysInMonth || 31;
   const firstDayOfWeek = currentMonth.startOf('month').weekday % 7; // 0=Sunday
   const days: Array<DateTime | null> = [];
+
   for (let i = 0; i < firstDayOfWeek; i++) days.push(null);
   for (let d = 1; d <= daysInMonth; d++) {
     days.push(currentMonth.set({ day: d }));
   }
-  // Helper: is available and not before today
+
+  // Helper: is available and within date range
   const isAvailable = (date: DateTime) => {
-    return availableDates.has(date.toISODate()!) && date.startOf('day') >= today;
+    const jsDate = date.toJSDate();
+    const isInAvailableDates = availableDates.some((availableDate) =>
+      DateTime.fromJSDate(availableDate).hasSame(date, 'day'),
+    );
+    const afterMinDate = !minDate || jsDate >= minDate;
+    const beforeMaxDate = !maxDate || jsDate <= maxDate;
+
+    return isInAvailableDates && afterMinDate && beforeMaxDate && date.startOf('day') >= today;
   };
+
   const isPast = (date: DateTime) => date.startOf('day') < today;
+
+  const handleDateSelect = (date: DateTime) => {
+    if (isAvailable(date)) {
+      onDateSelect(date.toJSDate());
+    }
+  };
 
   return (
     <div className='w-full p-0 mb-4'>
@@ -66,14 +78,16 @@ export function CalendarGrid({
       <div className='grid grid-cols-7 gap-2'>
         {days.map((date, idx) => {
           if (!date) return <div key={`empty-${idx}`} />;
+
           const isToday = date.hasSame(today, 'day');
-          const isSelected = date.hasSame(selectedDate, 'day');
+          const isSelected = selectedDate && DateTime.fromJSDate(selectedDate).hasSame(date, 'day');
           const available = isAvailable(date);
           const past = isPast(date);
+
           return (
             <button
               key={date.toISO() || idx}
-              onClick={() => onDateSelect(date)}
+              onClick={() => handleDateSelect(date)}
               className={`py-3 aspect-square flex items-center justify-center rounded-lg font-medium transition
                 ${
                   isSelected

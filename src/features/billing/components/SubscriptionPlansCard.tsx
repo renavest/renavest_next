@@ -5,25 +5,7 @@ import { useState } from 'react';
 
 import { cn } from '@/src/lib/utils';
 
-interface SubscriptionPlan {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  interval: 'month' | 'year';
-  stripePriceId: string;
-  features: string[];
-  highlight?: boolean;
-  badge?: string;
-}
-
-interface SubscriptionPlansCardProps {
-  currentPlan?: string | null;
-  hasEmployerSponsorship?: boolean;
-  employerName?: string;
-  onSubscribe: (priceId: string, isSponsored?: boolean) => Promise<void>;
-  className?: string;
-}
+import type { SubscriptionPlan, SubscriptionPlansCardProps } from '../types';
 
 const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
@@ -72,6 +54,14 @@ const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   },
 ];
 
+/**
+ * SubscriptionPlansCard Component
+ *
+ * Displays available subscription plans with features, pricing, and upgrade options.
+ * Handles employer sponsorship and current plan highlighting.
+ *
+ * @param props - Component props including current plan, sponsorship info, and callbacks
+ */
 export function SubscriptionPlansCard({
   currentPlan,
   hasEmployerSponsorship = false,

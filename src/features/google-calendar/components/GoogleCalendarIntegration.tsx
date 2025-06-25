@@ -2,13 +2,14 @@
 
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
-import { GoogleCalendarProvider, useGoogleCalendarContext } from '../context/GoogleCalendarContext';
+import { GoogleCalendarProvider } from '../context/GoogleCalendarContext';
+import { useGoogleCalendarIntegration } from '../hooks/useGoogleCalendarIntegration';
 
 import { ConnectedStatus, DisconnectedStatus } from './GoogleCalendarSteps';
 
-// Main integration component that uses context
+// Main integration component that uses the custom hook
 function GoogleCalendarIntegrationContent() {
-  const { status } = useGoogleCalendarContext();
+  const { status } = useGoogleCalendarIntegration();
 
   return (
     <div className='bg-white overflow-hidden shadow rounded-lg'>

@@ -2,15 +2,7 @@
 
 import { AlertCircle } from 'lucide-react';
 import { COLORS } from '@/src/styles/colors';
-import type { ClientFormField } from '../../state/clientFormsState';
-
-interface ClientFormFieldProps {
-  field: ClientFormField;
-  value: unknown;
-  error?: string;
-  onChange: (value: unknown) => void;
-  onBlur?: () => void;
-}
+import type { ClientFormField, ClientFormFieldComponentProps } from '../../types';
 
 export function ClientFormFieldComponent({
   field,
@@ -18,7 +10,7 @@ export function ClientFormFieldComponent({
   error,
   onChange,
   onBlur,
-}: ClientFormFieldProps) {
+}: ClientFormFieldComponentProps) {
   const baseInputClasses = `
     w-full p-3 rounded-lg border transition-colors
     ${error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-purple-500'}

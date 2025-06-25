@@ -1,17 +1,5 @@
 // src/constants.ts
 
-// List of email addresses allowed for employee signup via the /login route
-export const ALLOWED_EMPLOYEE_SIGNUP_EMAILS = [
-  'employee1@example.com',
-  'employee2@example.com',
-  'sethmorton05@gmail.com', // Keep for testing if needed
-  'alice@acmecorp.com', // Example for Acme Corp
-  'bob@acmecorp.com',
-  'charlie@globex.com', // Example for Globex Corp
-  'seth@renavestapp.com',
-  // Add other allowed employee emails here
-];
-
 // List of email addresses for internal staff/salespeople who can access the demo
 export const ALLOWED_EMAILS = [
   'test@renavest.com',

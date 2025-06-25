@@ -10,36 +10,7 @@ import {
 } from 'lucide-react';
 import { useRef, useEffect, useState } from 'react';
 
-interface Message {
-  id: string;
-  text: string;
-  author: string;
-  authorEmail: string;
-  channelId: number;
-  ts: number;
-  messageType?: string;
-}
-
-interface Channel {
-  id: number;
-  therapistName?: string;
-  prospectFirstName?: string;
-  prospectLastName?: string;
-}
-
-interface ChatMessageAreaProps {
-  activeChannel: Channel | null;
-  messages: Message[];
-  newMessage: string;
-  loading: boolean;
-  connectionStatus: 'disconnected' | 'connecting' | 'connected' | 'error';
-  onMessageChange: (value: string) => void;
-  onSendMessage: () => void;
-  onKeyPress: (e: React.KeyboardEvent) => void;
-  isMyMessage: (message: Message) => boolean;
-  formatTime: (timestamp: string | number) => string;
-  showExportButton?: boolean;
-}
+import type { Message, Channel, ChatMessageAreaProps } from '../types';
 
 // Connection status utilities
 const getConnectionStatusColor = (status: string) => {

@@ -1,3 +1,3 @@
-import LoginWrapper from '@/src/features/auth/components/LoginWrapper';
+import LoginPage from '@/src/features/auth/components/LoginPage';
 
-export default LoginWrapper;
+export default LoginPage;

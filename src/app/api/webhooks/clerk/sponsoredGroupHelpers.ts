@@ -93,7 +93,7 @@ export async function associateUserWithEmployerAndSponsoredGroup(
 /**
  * Associates a user with a specific sponsored group
  */
-export async function associateUserWithSponsoredGroup(
+async function associateUserWithSponsoredGroup(
   tx: DatabaseTransaction,
   userId: number,
   employerId: number,

@@ -2,7 +2,9 @@ import { LucideIcon } from 'lucide-react';
 
 import { cn } from '@/src/lib/utils';
 
-interface MetricCardProps {
+// This component uses its own props interface for now to avoid conflicts
+// In a real refactor, we'd align all MetricCard usages to use the same interface
+interface MetricCardComponentProps {
   title: string;
   value: string | number;
   subtitle: string;
@@ -28,7 +30,7 @@ export default function MetricCard({
   subtitleClassName,
   icon: Icon,
   iconClassName,
-}: MetricCardProps) {
+}: MetricCardComponentProps) {
   return (
     <div
       className={cn(

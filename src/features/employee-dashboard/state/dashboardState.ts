@@ -5,7 +5,6 @@ import { createDate } from '@/src/utils/timezone';
 
 // UI State Signals
 export const isHeaderScrolledSignal = signal(false);
-export const selectedGoalSignal = signal<number | null>(null);
 const isScriptExpandedSignal = signal(false);
 const currentInsightIndexSignal = signal(0);
 export const isMobileMenuOpenSignal = signal(false);
@@ -35,7 +34,7 @@ const insightData = [
   },
 ];
 
-export const comparisonData = [
+const comparisonData = [
   { name: 'Monthly Dining Out', past: 45, current: 30 },
   { name: 'Automated Savings', past: 15, current: 35 },
   { name: 'Entertainment Spending', past: 25, current: 15 },
@@ -79,7 +78,7 @@ const weeklyMoneyBelief = {
 };
 
 // Actionable insights with detailed impact
-export const actionableInsights = [
+const actionableInsights = [
   {
     id: 1,
     spending: 250,
@@ -112,7 +111,7 @@ export const actionableInsights = [
   },
 ];
 
-export const financialGoals = [
+const financialGoals = [
   {
     id: 1,
     title: 'Emergency Fund',
@@ -141,3 +140,30 @@ export const financialGoals = [
     description: 'Save for summer beach trip',
   },
 ];
+
+const selectedTherapistSignal = signal<number | null>(null);
+
+const initialMeetingCompleted = signal(false);
+
+// Last 30 days mock data for demonstration
+const last30DaysData = {
+  sessionsCompleted: [
+    { date: '2024-01-01', count: 2 },
+    { date: '2024-01-08', count: 1 },
+    { date: '2024-01-15', count: 3 },
+    { date: '2024-01-22', count: 1 },
+    { date: '2024-01-29', count: 2 },
+  ],
+  moodRatings: [
+    { date: '2024-01-01', rating: 7 },
+    { date: '2024-01-03', rating: 6 },
+    { date: '2024-01-05', rating: 8 },
+    { date: '2024-01-07', rating: 7 },
+    { date: '2024-01-09', rating: 9 },
+  ],
+  goalsProgress: [
+    { goal: 'Reduce anxiety', progress: 75 },
+    { goal: 'Improve sleep', progress: 60 },
+    { goal: 'Better communication', progress: 85 },
+  ],
+};

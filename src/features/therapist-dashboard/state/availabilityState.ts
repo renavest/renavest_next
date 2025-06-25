@@ -2,7 +2,7 @@ import { signal, computed } from '@preact-signals/safe-react';
 import { DateTime } from 'luxon';
 import { toast } from 'sonner';
 
-// Types
+// State-specific types (different from shared types due to different data structure)
 interface TimeSlot {
   start: string;
   end: string;

@@ -1,6 +1,5 @@
 'use client';
 
-/* eslint-disable max-lines-per-function */
 import { Clock } from 'lucide-react';
 import { DateTime } from 'luxon';
 import { useEffect, useMemo, useState } from 'react';
@@ -72,7 +71,7 @@ export function TherapistAvailability({
   const allAvailableSlots = availableSlotsSignal.value;
 
   // Gather available dates (any dates that have at least one slot)
-  const availableDates = useMemo(() => {
+  const availableDatesSet = useMemo(() => {
     const set = new Set<string>();
     allAvailableSlots.forEach((slot: TimeSlot) => {
       const tz = timezoneSignal.value || 'America/New_York';
@@ -80,6 +79,11 @@ export function TherapistAvailability({
     });
     return set;
   }, [allAvailableSlots, timezoneSignal.value]);
+
+  // Convert to Date array for CalendarGrid component
+  const availableDatesArray = useMemo(() => {
+    return Array.from(availableDatesSet).map((dateStr) => DateTime.fromISO(dateStr).toJSDate());
+  }, [availableDatesSet]);
 
   // For the selected date, filter out past times only if it's today
   const now = DateTime.now().setZone(timezoneSignal.value);
@@ -146,14 +150,9 @@ export function TherapistAvailability({
         <div className='flex flex-col md:flex-row gap-8'>
           <div className='w-full md:w-4/6'>
             <CalendarGrid
-              selectedDate={calendarSelectedDate || DateTime.now()}
-              onDateSelect={setCalendarSelectedDate}
-              availableDates={availableDates}
-              timezone={timezoneSignal.value}
-              currentMonth={(calendarSelectedDate || DateTime.now()).startOf('month')}
-              setCurrentMonth={(d) => {
-                setCalendarSelectedDate(d);
-              }}
+              selectedDate={(calendarSelectedDate || DateTime.now()).toJSDate()}
+              onDateSelect={(date: Date) => setCalendarSelectedDate(DateTime.fromJSDate(date))}
+              availableDates={availableDatesArray}
             />
           </div>
           <div className='w-full md:w-2/6'>
@@ -233,25 +232,20 @@ export function TherapistAvailability({
     <div className='w-full min-h-screen bg-white flex flex-col'>
       <div className='flex-1 p-2'>
         <CalendarGrid
-          selectedDate={calendarSelectedDate || DateTime.now()}
-          onDateSelect={(date) => {
-            setCalendarSelectedDate(date);
+          selectedDate={(calendarSelectedDate || DateTime.now()).toJSDate()}
+          onDateSelect={(date: Date) => {
+            const luxonDate = DateTime.fromJSDate(date);
+            setCalendarSelectedDate(luxonDate);
             // Only open modal if the date has slots AND is not in the past
             const today = DateTime.now().setZone(timezoneSignal.value).startOf('day');
-            if (availableDates.has(date.toISODate()!) && date.startOf('day') >= today) {
+            if (
+              availableDatesSet.has(luxonDate.toISODate()!) &&
+              luxonDate.startOf('day') >= today
+            ) {
               setModalOpen(true);
             }
           }}
-          availableDates={availableDates}
-          timezone={timezoneSignal.value}
-          currentMonth={(calendarSelectedDate || DateTime.now()).startOf('month')}
-          setCurrentMonth={(d) => {
-            if (calendarSelectedDate) {
-              setCalendarSelectedDate(d);
-            } else {
-              setCalendarSelectedDate(d);
-            }
-          }}
+          availableDates={availableDatesArray}
         />
       </div>
       <TimeSelectionModal

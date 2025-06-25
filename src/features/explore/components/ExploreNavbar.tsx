@@ -10,7 +10,7 @@ import { LogoutButton } from '@/src/features/auth/components/auth/LogoutButton';
 import { cn } from '@/src/lib/utils';
 import { COLORS } from '@/src/styles/colors';
 
-import { SubscriptionPlanIndicator } from '../../employee-dashboard/components/SubscriptionPlanIndicator';
+import { SubscriptionPlanIndicator } from '../../employee-dashboard/components/subscription/SubscriptionPlanIndicator';
 import {
   isHeaderScrolledSignal,
   isMobileMenuOpenSignal,

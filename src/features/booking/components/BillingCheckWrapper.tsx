@@ -4,24 +4,35 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+import { ALLOWED_EMAILS } from '@/src/constants';
+
 interface BillingCheckWrapperProps {
   children: React.ReactNode;
   advisorId: string;
   shouldCheckBilling: boolean; // Only check for direct bookings, not external
+  userEmail?: string; // Optional prop to double-check staff status
 }
 
 export default function BillingCheckWrapper({
   children,
   advisorId,
   shouldCheckBilling,
+  userEmail,
 }: BillingCheckWrapperProps) {
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(shouldCheckBilling);
   const [hasPaymentMethod, setHasPaymentMethod] = useState(false);
 
   useEffect(() => {
-    if (!shouldCheckBilling) {
+    // Safety check: if user is staff, never check billing regardless of shouldCheckBilling
+    const isStaffUser = userEmail && ALLOWED_EMAILS.includes(userEmail);
+
+    if (!shouldCheckBilling || isStaffUser) {
       setIsChecking(false);
+      setHasPaymentMethod(true); // Allow staff to proceed
+      if (isStaffUser) {
+        console.log('Staff user detected, bypassing billing check:', userEmail);
+      }
       return;
     }
 
@@ -54,7 +65,7 @@ export default function BillingCheckWrapper({
     };
 
     checkBillingSetup();
-  }, [shouldCheckBilling, advisorId, router]);
+  }, [shouldCheckBilling, advisorId, router, userEmail]);
 
   if (isChecking) {
     return (

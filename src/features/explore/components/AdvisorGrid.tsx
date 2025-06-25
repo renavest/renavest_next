@@ -4,52 +4,21 @@ import Image from 'next/image';
 import React from 'react';
 
 import { cn } from '@/src/lib/utils';
-import { Advisor } from '@/src/shared/types';
 import { COLORS } from '@/src/styles/colors';
 
 import OnboardingModalServerWrapper from '../../onboarding/components/OnboardingModalServerWrapper';
+import { useImageLoadState } from '../hooks/useImageLoadState';
+import { advisorActions } from '../state/exploreState';
+import { Advisor } from '../types';
 
 import AdvisorModal from './AdvisorModal';
-import {
-  advisorImageLoadingSignal,
-  advisorImageErrorSignal,
-  advisorActions,
-} from './state/advisorSignals';
 
 interface AdvisorCardProps {
   advisor: Advisor;
   priority: boolean;
 }
 
-const useImageLoadState = (advisorId: string) => {
-  // Initialize loading state immediately if not set
-  React.useMemo(() => {
-    if (advisorImageLoadingSignal.value[advisorId] === undefined) {
-      advisorActions.setImageLoading(advisorId, true);
-    }
-  }, [advisorId]);
-
-  // Use global signals with proper fallbacks
-  const isLoading = advisorImageLoadingSignal.value[advisorId] !== false;
-  const hasError = advisorImageErrorSignal.value[advisorId] || false;
-  const isLoaded = !isLoading && !hasError;
-
-  const handleImageLoad = () => {
-    advisorActions.setImageLoading(advisorId, false);
-    advisorActions.setImageError(advisorId, false);
-  };
-
-  const handleImageError = () => {
-    advisorActions.setImageLoading(advisorId, false);
-    advisorActions.setImageError(advisorId, true);
-  };
-
-  return {
-    imageLoadState: { isLoaded, hasError, isLoading },
-    handleImageLoad,
-    handleImageError,
-  };
-};
+// Import the hook from the new location
 
 const renderExpertiseTags = (expertiseTags: string[]) => {
   return (
