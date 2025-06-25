@@ -60,12 +60,10 @@ export interface BillingCheckWrapperProps {
   advisorId?: string;
 }
 
-// Therapist availability props
 export interface TherapistAvailabilityProps {
-  therapistId: string;
-  selectedDate: Date;
-  onTimeSelect: (timeSlot: TimeSlot) => void;
-  onDateChange: (date: Date) => void;
+  therapistId: number;
+  onSlotSelect: (slot: TimeSlot) => void;
+  onGoogleCalendarNotAvailable?: () => void;
 }
 
 // Time selection modal props

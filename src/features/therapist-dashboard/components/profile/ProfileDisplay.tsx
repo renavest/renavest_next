@@ -7,6 +7,11 @@ import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
 import { profileRefreshTriggerSignal } from '../../state/profileState';
 import { TherapistProfile } from '../../types/profile';
 
+interface ProfileDisplayProps {
+  profile: TherapistProfile;
+  onEditClick: () => void;
+}
+
 const PLACEHOLDER = '/experts/placeholderexp.png';
 
 function ExpertiseTags({ tags }: { tags: string[] }) {
@@ -28,11 +33,6 @@ function ExpertiseTags({ tags }: { tags: string[] }) {
       )}
     </div>
   );
-}
-
-interface ProfileDisplayProps {
-  profile: TherapistProfile;
-  onEditClick: () => void;
 }
 
 export function ProfileDisplay({ profile, onEditClick }: ProfileDisplayProps) {

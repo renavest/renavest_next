@@ -11,9 +11,8 @@ export interface PhotoUploadProps {
 }
 
 export interface ProfileDisplayProps {
-  therapistId: number;
-  profile: any; // You may want to define a proper Profile type
-  onEdit: () => void;
+  profile: import('./profile').TherapistProfile;
+  onEditClick: () => void;
 }
 
 export interface ProfileFormFieldsProps {

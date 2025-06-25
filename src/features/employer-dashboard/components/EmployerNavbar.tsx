@@ -60,11 +60,7 @@ const MobileNavigation = ({ isSignedIn, isOpen }: { isSignedIn: boolean; isOpen:
       {isSignedIn && (
         <>
           <div className='px-4 py-3 border-t border-gray-100 mt-3'>
-            <LogoutButton
-              className='w-full flex items-center justify-center space-x-2 text-red-600 hover:bg-red-50 p-2 rounded-md'
-              iconClassName='h-5 w-5'
-              textClassName='font-medium'
-            />
+            <LogoutButton className='w-full flex items-center justify-center space-x-2 text-red-600 hover:bg-red-50 p-2 rounded-md' />
           </div>
           <div className='px-4 py-3 flex items-center'>
             <span className='text-sm text-gray-500 mr-3'>Your Account</span>
