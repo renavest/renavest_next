@@ -367,3 +367,37 @@ export interface SubscriptionPlanIndicatorProps {
   /** Optional CSS class name */
   className?: string;
 }
+
+// ====================================
+// CLIENT FORMS STATE TYPES (moved from state)
+// ====================================
+
+/**
+ * Client form response data
+ */
+export interface ClientFormResponse {
+  /** Field identifier */
+  fieldId: string;
+  /** Response value */
+  value: unknown;
+}
+
+/**
+ * Client forms state management
+ */
+export interface ClientFormsState {
+  /** List of form assignments */
+  assignments: ClientFormAssignment[];
+  /** Currently active form */
+  currentForm: ClientFormAssignment | null;
+  /** Current form responses */
+  responses: Record<string, unknown>;
+  /** Loading state */
+  loading: boolean;
+  /** Form submission state */
+  submitting: boolean;
+  /** Error message */
+  error: string | null;
+  /** Field validation errors */
+  validationErrors: Record<string, string>;
+}

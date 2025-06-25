@@ -32,35 +32,10 @@ export { default as PilotCohortBanner } from './components/interactive/PilotCoho
 export { default as DataCardExample } from './components/interactive/DataCardExample';
 
 // ====================================
-// TYPE EXPORTS
+// TYPE EXPORTS - REMOVED
 // ====================================
-
-// Core journey types
-export type { JourneyStepData, JourneySectionProps } from './types';
-
-// Component prop types
-export type {
-  AnimatedTitleProps,
-  AnimatedHeadingProps,
-  AnimatedDescriptionProps,
-  CTAButtonProps,
-  TestimonialCardProps,
-  MobileNavLinkProps,
-  DesktopNavigationProps,
-  MobileNavLinksProps,
-} from './types';
-
-// Business & analytics types
-export type {
-  BusinessImpactStat,
-  CountdownTime,
-  TrackingContext,
-  NavClickEvent,
-  SectionViewEvent,
-} from './types';
-
-// Utility types
-export type { ComponentWithChildren, ComponentWithClassName, IntersectionConfig } from './types';
+// Types are now imported directly from './types' to avoid duplication
+// Example: import type { JourneyStepData, CTAButtonProps } from '@/src/features/home/types';
 
 // ====================================
 // UTILITY EXPORTS

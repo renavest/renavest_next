@@ -1,49 +1,7 @@
 import { signal } from '@preact-signals/safe-react';
 
 // Types for client-side form management
-export interface ClientFormField {
-  id: string;
-  type: 'text' | 'email' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'number' | 'date';
-  label: string;
-  placeholder?: string;
-  required: boolean;
-  options?: string[];
-  validation?: {
-    min?: number;
-    max?: number;
-    pattern?: string;
-    message?: string;
-  };
-}
-
-export interface ClientFormAssignment {
-  id: string;
-  formId: string;
-  formTitle: string;
-  formDescription?: string;
-  fields: ClientFormField[];
-  status: 'sent' | 'completed' | 'expired';
-  sentAt: string;
-  completedAt?: string;
-  expiresAt?: string;
-  therapistName: string;
-  responses?: Record<string, unknown>;
-}
-
-export interface ClientFormResponse {
-  fieldId: string;
-  value: unknown;
-}
-
-export interface ClientFormsState {
-  assignments: ClientFormAssignment[];
-  currentForm: ClientFormAssignment | null;
-  responses: Record<string, unknown>;
-  loading: boolean;
-  submitting: boolean;
-  error: string | null;
-  validationErrors: Record<string, string>;
-}
+import type { ClientFormAssignment, ClientFormsState } from '../types';
 
 // Initial state
 const initialState: ClientFormsState = {
