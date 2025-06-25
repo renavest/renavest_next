@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
@@ -41,7 +42,7 @@ export interface AuthGuardError {
  * @param options - Configuration for auth requirements
  * @returns Either success with user data or error response
  */
-export async function authGuard(
+async function authGuard(
   options: AuthGuardOptions = {},
 ): Promise<AuthGuardResult | AuthGuardError> {
   const {
@@ -146,32 +147,4 @@ export async function authGuard(
       response: NextResponse.json({ error: 'Internal server error' }, { status: 500 }),
     };
   }
-}
-
-/**
- * Simple authentication check for routes that only need user presence
- */
-export async function requireAuth() {
-  return authGuard({ skipDbLookup: true, requireOnboarding: false });
-}
-
-/**
- * Check for specific therapist role
- */
-export async function requireTherapist() {
-  return authGuard({ requireRole: 'therapist' });
-}
-
-/**
- * Check for employer admin role
- */
-export async function requireEmployerAdmin() {
-  return authGuard({ requireRole: 'employer_admin' });
-}
-
-/**
- * Check for employee role
- */
-export async function requireEmployee() {
-  return authGuard({ requireRole: 'employee' });
 }
