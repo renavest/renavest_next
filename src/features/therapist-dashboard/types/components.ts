@@ -143,12 +143,7 @@ export interface AddNewClientSectionProps {
 // ===== NEWLY ADDED TYPE DEFINITIONS =====
 
 // Session Modal Types
-export interface TimeSlot {
-  time: string;
-  available: boolean;
-  conflictReason?: string;
-  id: string;
-}
+import type { TimeSlot } from '@/src/shared/types';
 
 export interface TimezoneSelector {
   selectedTimezone: string;

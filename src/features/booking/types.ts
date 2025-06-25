@@ -3,6 +3,8 @@
 
 import { ReactNode } from 'react';
 
+import type { TimeSlot } from '@/src/shared/types';
+
 // ===== CORE TYPES =====
 
 export interface BookingData {
@@ -16,13 +18,6 @@ export interface BookingData {
 }
 
 export interface AvailabilitySlot {
-  time: string;
-  available: boolean;
-  conflictReason?: string;
-}
-
-export interface TimeSlot {
-  id: string;
   time: string;
   available: boolean;
   conflictReason?: string;

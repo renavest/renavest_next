@@ -123,3 +123,12 @@ export interface PageUtmHandlerProps {
   children: React.ReactNode;
   utmParams?: UtmParams;
 }
+
+// ===== SCHEDULING TYPES =====
+
+export interface TimeSlot {
+  id: string;
+  time: string;
+  available: boolean;
+  conflictReason?: string;
+}
