@@ -57,7 +57,7 @@ export const checkEmailEligibility = async (email: string) => {
     return result.eligible === true;
   } catch (error) {
     console.error('Error checking email eligibility:', error);
-    // Fail safely - return false if API is unavailable
-    return false;
+    // Fail safely - return true for individual consumers if API is unavailable
+    return true;
   }
 };
