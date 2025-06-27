@@ -2,7 +2,7 @@
 
 import { Calendar, Clock, User, X, CheckCircle, AlertCircle, Globe } from 'lucide-react';
 import { DateTime } from 'luxon';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 import { CalendarGrid } from '@/src/features/booking/components/calendar/CalendarGrid';
 import { formatDateTime } from '@/src/features/booking/utils/dateTimeUtils';
@@ -17,10 +17,9 @@ import {
   refreshUpcomingSessions,
   therapistIdSignal,
 } from '@/src/features/therapist-dashboard/state/therapistDashboardState';
+import type { TimeSlot } from '@/src/shared/types';
 import { COLORS } from '@/src/styles/colors';
 import { createDate } from '@/src/utils/timezone';
-
-import { TimeSlot } from '../../types/components';
 
 // Simple timezone selector component
 const TimezoneSelector = ({
@@ -71,6 +70,11 @@ export function ScheduleSessionModal() {
   const isLoading = sessionSchedulingLoadingSignal.value;
   const error = sessionSchedulingErrorSignal.value;
   const therapistId = therapistIdSignal.value;
+
+  // Convert availableDates Set to Date array for CalendarGrid component
+  const availableDatesArray = useMemo(() => {
+    return Array.from(availableDates).map((dateStr) => DateTime.fromISO(dateStr).toJSDate());
+  }, [availableDates]);
 
   // Initialize timezone manager
   useEffect(() => {
@@ -324,12 +328,9 @@ export function ScheduleSessionModal() {
                   Select Date
                 </h3>
                 <CalendarGrid
-                  selectedDate={selectedDate || DateTime.now()}
-                  onDateSelect={setSelectedDate}
-                  availableDates={availableDates}
-                  timezone={timezone}
-                  currentMonth={currentMonth}
-                  setCurrentMonth={setCurrentMonth}
+                  selectedDate={selectedDate?.toJSDate() || null}
+                  onDateSelect={(date: Date) => setSelectedDate(DateTime.fromJSDate(date))}
+                  availableDates={availableDatesArray}
                 />
               </div>
 
