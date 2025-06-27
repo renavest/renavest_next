@@ -123,8 +123,8 @@ export async function POST(request: NextRequest) {
       // In production, you might want to return false here for security
     }
 
-    // Email not found in any eligible lists
-    return NextResponse.json({ eligible: false, reason: 'Email not authorized' });
+    // Email not found in any eligible lists - allow as individual consumer (B2C user)
+    return NextResponse.json({ eligible: true, reason: 'Individual consumer' });
   } catch (error) {
     console.error('Error in email eligibility check:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

@@ -1,14 +1,9 @@
 import { useUser } from '@clerk/nextjs';
 import { useEffect, useState, useCallback } from 'react';
 
-interface SubscriptionStatus {
-  status: string;
-  subscriptionId: string | null;
-  priceId: string | null;
-  currentPeriodEnd: number | null;
-  cancelAtPeriodEnd: boolean;
-  customerId?: string;
-}
+import type { SubscriptionInfo } from '@/src/features/stripe/types';
+
+type SubscriptionStatus = SubscriptionInfo;
 
 interface SubscriptionHookReturn {
   subscription: SubscriptionStatus | null;

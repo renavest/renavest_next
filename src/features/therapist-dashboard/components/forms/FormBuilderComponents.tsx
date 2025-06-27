@@ -393,7 +393,7 @@ interface FieldEditorProps {
   onDragEnd: () => void;
 }
 
-export function FieldEditor({
+function FieldEditor({
   field,
   index,
   onUpdate,

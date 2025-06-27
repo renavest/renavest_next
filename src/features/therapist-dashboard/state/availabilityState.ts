@@ -34,7 +34,6 @@ interface AvailabilityStats {
 type ViewMode = 'overview' | 'working-hours' | 'blocked-time';
 
 // Core state signals
-export const therapistIdSignal = signal<number | null>(null);
 export const selectedDateSignal = signal<DateTime>(DateTime.now());
 export const currentMonthSignal = signal<DateTime>(DateTime.now().startOf('month'));
 export const viewModeSignal = signal<ViewMode>('overview');
@@ -300,5 +299,4 @@ export const removeBlockedTime = async (therapistId: number, id: number) => {
   }
 };
 
-// Export types for use in components
-export type { TimeSlot, WorkingHours, BlockedTime, AvailabilityStats, ViewMode };
+// Internal types are not exported to avoid duplication; components should rely on shared types.

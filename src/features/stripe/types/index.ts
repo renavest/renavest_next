@@ -42,6 +42,27 @@ export type SubscriptionStatus =
   | 'unpaid' // Payment failed and past grace period
   | null; // No subscription
 
+/**
+ * Full subscription information returned from our `/api/stripe/subscriptions` endpoints
+ * Combines Stripe subscription metadata and convenience fields consumed by the UI.
+ * This interface intentionally mirrors the shape returned by the server so that
+ * client features (hooks, pages, components) can share the same contract.
+ */
+export interface SubscriptionInfo {
+  /** Current subscription status */
+  status: SubscriptionStatus | 'none';
+  /** Stripe subscription ID (null if none) */
+  subscriptionId: string | null;
+  /** Stripe price ID of the active plan */
+  priceId: string | null;
+  /** Unix timestamp when current period ends */
+  currentPeriodEnd: number | null;
+  /** True if subscription set to cancel at period end */
+  cancelAtPeriodEnd: boolean;
+  /** Stripe customer ID (optional, for admin use) */
+  customerId?: string;
+}
+
 // =============================================================================
 // PAYMENT TYPES
 // =============================================================================

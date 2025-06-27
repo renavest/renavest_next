@@ -1,20 +1,6 @@
 import { Clock, MessageCircle, Heart, User } from 'lucide-react';
 
-interface Channel {
-  id: number;
-  channelIdentifier: string;
-  therapistId: number;
-  prospectUserId: number;
-  status: string;
-  lastMessageAt: string;
-  lastMessagePreview: string;
-  unreadCount: number;
-  therapistName?: string;
-  therapistTitle?: string;
-  prospectFirstName?: string;
-  prospectLastName?: string;
-  prospectEmail?: string;
-}
+import { Channel } from '@/src/features/therapist-dashboard/types/components';
 
 interface ChatChannelListProps {
   channels: Channel[];

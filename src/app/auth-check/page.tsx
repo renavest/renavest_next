@@ -158,8 +158,8 @@ export default function AuthCheckPage() {
 
           return () => clearTimeout(timer);
         } else {
-          // Max retries reached - try manual sync
-          console.error('AuthCheckPage - Max retries reached, attempting manual sync', {
+          // Max retries reached - PREVENT INFINITE LOOP by redirecting to a safe route
+          console.error('AuthCheckPage - Max retries reached, redirecting to safe route', {
             userId: user.id,
             finalRole: userRole,
             finalOnboardingComplete: onboardingComplete,
@@ -176,15 +176,22 @@ export default function AuthCheckPage() {
               const syncResult = await syncResponse.json();
               console.log('Manual sync successful:', syncResult);
 
-              // Reload user and try again
+              // Reload user and redirect to their appropriate dashboard
               await user.reload();
-              setRetryCount(0); // Reset retry count for another attempt
+              const refreshedRole = getUserRoleFromUser(user);
+              const targetRoute = getRouteForRole(refreshedRole ?? 'employee');
+              router.replace(targetRoute);
+              return;
             } else {
               console.error('Manual sync failed:', await syncResponse.text());
             }
           } catch (syncError) {
             console.error('Manual sync error:', syncError);
           }
+
+          // Final failsafe: redirect to employee dashboard regardless of role
+          // This breaks the infinite loop and gets the user to a functional page
+          router.replace('/employee');
         }
       })();
     }

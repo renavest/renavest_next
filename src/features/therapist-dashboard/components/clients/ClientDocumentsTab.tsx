@@ -1,6 +1,6 @@
 'use client';
 
-import { FileText, Download, Eye, Calendar, Share2, Folder } from 'lucide-react';
+import { FileText, Download, Eye, Calendar, Folder } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { Client } from '../../types';

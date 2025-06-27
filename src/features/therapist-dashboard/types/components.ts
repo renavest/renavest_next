@@ -11,9 +11,8 @@ export interface PhotoUploadProps {
 }
 
 export interface ProfileDisplayProps {
-  therapistId: number;
-  profile: any; // You may want to define a proper Profile type
-  onEdit: () => void;
+  profile: import('./profile').TherapistProfile;
+  onEditClick: () => void;
 }
 
 export interface ProfileFormFieldsProps {
@@ -144,12 +143,7 @@ export interface AddNewClientSectionProps {
 // ===== NEWLY ADDED TYPE DEFINITIONS =====
 
 // Session Modal Types
-export interface TimeSlot {
-  time: string;
-  available: boolean;
-  conflictReason?: string;
-  id: string;
-}
+import type { TimeSlot } from '@/src/shared/types';
 
 export interface TimezoneSelector {
   selectedTimezone: string;
@@ -174,12 +168,21 @@ export type ClientTab =
   | 'progress'
   | 'chat';
 
+// Extended Channel interface to serve both therapist dashboard and chat features
 export interface Channel {
-  id: string;
-  name: string;
-  lastMessage?: string;
-  lastMessageTime?: number;
-  unreadCount?: number;
+  id: number;
+  channelIdentifier: string;
+  therapistId: number;
+  prospectUserId: number;
+  status: string;
+  lastMessageAt: string;
+  lastMessagePreview: string;
+  unreadCount: number;
+  therapistName?: string;
+  therapistTitle?: string;
+  prospectFirstName?: string;
+  prospectLastName?: string;
+  prospectEmail?: string;
 }
 
 // Add Client Form Types

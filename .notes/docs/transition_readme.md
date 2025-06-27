@@ -14,14 +14,24 @@ This document serves as a comprehensive guide for developers taking over the Ren
 ## Feature Analysis
 
 ### Code Quality & Type Isolation
-**Status**: ✅ Implemented comprehensive isolated type system
+**Status**: ✅ Implemented comprehensive isolated type system (last updated — 2025-06-25)
 
 All features now use isolated type definitions rather than inline component prop types. Key improvements:
 
-- **Centralized Type Files**: Each feature has dedicated `types.ts` files containing all component props and business logic types
-- **Shared Types**: Common component props consolidated in `src/shared/types.ts`
-- **Eliminated Duplication**: Removed duplicate type definitions across components
-- **Better Maintainability**: Types are now discoverable and reusable across the codebase
+1. **Centralized Feature-Scoped Types**  
+  Each feature lives in its own folder and exposes a single `types.ts` (or `types/` directory) that aggregates all component props and domain models for that feature.
+
+2. **Global Shared Types**  
+  Cross-cutting concepts live in `src/shared/types.ts` (UI primitives, common utilities) or inside the owning feature's `types` barrel and are re-exported elsewhere.  Recent additions include:
+  • `Channel` — canonical chat channel shape used by chat & therapist dashboard.  
+  • `TimeSlot`, `WorkingHours`, `AvailabilitySlot`, `BlockedTime` — unified scheduling/availability types shared by Booking, Google-Calendar and Therapist Dashboard features.  
+  • `SubscriptionInfo` — single source of truth for subscription data across Stripe hooks, Billing pages and middleware.
+
+3. **Duplicate Definitions Eliminated**  
+  All previous duplicate interfaces (listed by Knip) have been removed. Import paths were realigned so every consumer references the shared definition.  Build & Knip now show **zero** duplicate type definitions for the groups above.
+
+4. **Better Maintainability**  
+  Types are discoverable, documented (via JSDoc) and reusable across the codebase, reducing onboarding time for new developers.
 
 ### 1. Authentication Feature (`src/features/auth/`)
 

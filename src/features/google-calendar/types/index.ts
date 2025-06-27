@@ -5,6 +5,12 @@
  * to prevent type duplication and ensure consistency across the application.
  */
 
+// shared types
+import type {
+  WorkingHours as SharedWorkingHours,
+  AvailabilitySlot as SharedAvailabilitySlot,
+} from '@/src/shared/types';
+
 // === Core Google Calendar Types ===
 
 export interface GoogleCalendarTokens {
@@ -197,13 +203,7 @@ export interface CalendarEventData {
 
 // === Working Hours & Availability Types ===
 
-export interface WorkingHours {
-  id?: string;
-  dayOfWeek: number; // 0-6, where 0 is Sunday
-  startTime: string; // HH:mm format
-  endTime: string; // HH:mm format
-  isActive: boolean;
-}
+export type WorkingHours = SharedWorkingHours;
 
 export interface BlockedTime {
   id: string;
@@ -213,12 +213,10 @@ export interface BlockedTime {
   isRecurring: boolean;
 }
 
-export interface AvailabilitySlot {
-  startTime: Date;
-  endTime: Date;
-  isAvailable: boolean;
-  conflictReason?: string;
-}
+export type AvailabilitySlot = SharedAvailabilitySlot & {
+  startTime?: Date;
+  endTime?: Date;
+};
 
 // === Error Types ===
 

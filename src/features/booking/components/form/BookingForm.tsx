@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useState } from 'react';
 
-import { formatCurrency } from '@/src/features/therapist-dashboard/utils/dashboardHelpers';
+import { formatCurrency } from '@/src/utils/currency';
 
 import AlternativeBooking from '../AlternativeBooking';
 import { BookingConfirmationModal } from '../BookingConfirmation/BookingConfirmationModal';

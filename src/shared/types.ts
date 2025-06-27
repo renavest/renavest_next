@@ -21,7 +21,13 @@ export interface Advisor {
   hasProfileImage?: boolean;
 }
 
-export type UserRole = 'employee' | 'therapist' | 'super_admin' | 'employer_admin' | null;
+export type UserRole =
+  | 'employee'
+  | 'therapist'
+  | 'super_admin'
+  | 'employer_admin'
+  | 'individual_consumer'
+  | null;
 
 // ===== SHARED COMPONENT PROPS =====
 
@@ -122,4 +128,33 @@ export interface UtmParams {
 export interface PageUtmHandlerProps {
   children: React.ReactNode;
   utmParams?: UtmParams;
+}
+
+// ===== SCHEDULING TYPES =====
+
+export interface TimeSlot {
+  id: string;
+  time: string;
+  available: boolean;
+  conflictReason?: string;
+}
+
+// ===== AVAILABILITY TYPES =====
+
+// Simple time-based slot used in booking & therapist dashboard features
+export interface AvailabilitySlot {
+  time: string; // ISO timestamp or HH:mm representation
+  available: boolean;
+  conflictReason?: string;
+}
+
+// Reusable BlockedTime record (therapist unavailability)
+export interface BlockedTime {
+  id: string;
+  startDateTime: string; // ISO string
+  endDateTime: string; // ISO string
+  reason?: string;
+  isRecurring: boolean;
+  recurrencePattern?: 'daily' | 'weekly' | 'monthly';
+  recurrenceEnd?: string; // ISO string
 }

@@ -3,6 +3,8 @@
 
 import { ReactNode } from 'react';
 
+import type { TimeSlot, AvailabilitySlot } from '@/src/shared/types';
+
 // ===== CORE TYPES =====
 
 export interface BookingData {
@@ -13,19 +15,6 @@ export interface BookingData {
   clientName: string;
   clientEmail: string;
   sessionType: string;
-}
-
-export interface AvailabilitySlot {
-  time: string;
-  available: boolean;
-  conflictReason?: string;
-}
-
-export interface TimeSlot {
-  id: string;
-  time: string;
-  available: boolean;
-  conflictReason?: string;
 }
 
 // ===== COMPONENT PROP TYPES =====
@@ -60,12 +49,10 @@ export interface BillingCheckWrapperProps {
   advisorId?: string;
 }
 
-// Therapist availability props
 export interface TherapistAvailabilityProps {
-  therapistId: string;
-  selectedDate: Date;
-  onTimeSelect: (timeSlot: TimeSlot) => void;
-  onDateChange: (date: Date) => void;
+  therapistId: number;
+  onSlotSelect: (slot: TimeSlot) => void;
+  onGoogleCalendarNotAvailable?: () => void;
 }
 
 // Time selection modal props

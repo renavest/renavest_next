@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { SubscriptionPlansCard } from '@/src/features/billing/components/SubscriptionPlansCard';
+import type { SubscriptionInfo as SubscriptionStatus } from '@/src/features/stripe/types';
 
 interface SponsorshipInfo {
   eligible: boolean;
@@ -20,14 +21,6 @@ interface SponsorshipInfo {
     type: string;
   }>;
   defaultSubsidyPercentage?: number;
-}
-
-interface SubscriptionStatus {
-  status: string;
-  subscriptionId: string | null;
-  priceId: string | null;
-  currentPeriodEnd: number | null;
-  cancelAtPeriodEnd: boolean;
 }
 
 export default function BillingPage() {

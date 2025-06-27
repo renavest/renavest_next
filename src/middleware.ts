@@ -68,12 +68,22 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   const roleProtectedRoutes = [
     { matcher: isTherapistRoute, requiredRole: 'therapist' as UserRole },
     { matcher: isEmployerRoute, requiredRole: 'employer_admin' as UserRole },
-    { matcher: isEmployeeRoute, requiredRole: 'employee' as UserRole },
+    {
+      matcher: isEmployeeRoute,
+      requiredRole: null, // Allow both employee and individual_consumer
+      allowedRoles: ['employee', 'individual_consumer'] as UserRole[],
+    },
     // Explore page requires any valid role (employee, therapist, or employer_admin)
     {
       matcher: isExploreRoute,
       requiredRole: null, // Special case - any authenticated user with valid role
-      allowedRoles: ['employee', 'therapist', 'employer_admin', 'super_admin'] as UserRole[],
+      allowedRoles: [
+        'employee',
+        'therapist',
+        'employer_admin',
+        'super_admin',
+        'individual_consumer',
+      ] as UserRole[],
     },
   ];
 
