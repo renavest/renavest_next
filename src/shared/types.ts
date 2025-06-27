@@ -21,7 +21,13 @@ export interface Advisor {
   hasProfileImage?: boolean;
 }
 
-export type UserRole = 'employee' | 'therapist' | 'super_admin' | 'employer_admin' | null;
+export type UserRole =
+  | 'employee'
+  | 'therapist'
+  | 'super_admin'
+  | 'employer_admin'
+  | 'individual_consumer'
+  | null;
 
 // ===== SHARED COMPONENT PROPS =====
 

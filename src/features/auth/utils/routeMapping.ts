@@ -13,6 +13,7 @@ const ROLE_ROUTES: Record<Exclude<UserRole, null>, string> = {
   employer_admin: '/employer',
   employee: '/employee',
   super_admin: '/employer', // Super admin uses employer dashboard for now
+  individual_consumer: '/employee', // Individual consumers use the same dashboard as employees
 } as const;
 
 // Default unauthorized path - users must be authorized to access any protected content
@@ -32,7 +33,8 @@ function isValidUserRole(role: string | undefined | null): role is Exclude<UserR
     role === 'therapist' ||
     role === 'employer_admin' ||
     role === 'employee' ||
-    role === 'super_admin'
+    role === 'super_admin' ||
+    role === 'individual_consumer'
   );
 }
 
@@ -83,6 +85,7 @@ function getRoleDisplayName(role: UserRole): string {
     employer_admin: 'Employer Admin',
     employee: 'Employee',
     super_admin: 'Super Admin',
+    individual_consumer: 'Individual Consumer',
   };
   return role ? displayNames[role] : 'Unknown';
 }
