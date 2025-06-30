@@ -5,6 +5,7 @@ import { db } from '@/src/db';
 import { therapists, pendingTherapists, users } from '@/src/db/schema';
 import AdvisorGrid from '@/src/features/explore/components/AdvisorGrid';
 import ExploreNavbar from '@/src/features/explore/components/ExploreNavbar';
+import { GoogleCalendarTokenManager } from '@/src/features/google-calendar/utils/tokenManager';
 import { getTherapistImageUrl } from '@/src/services/s3/assetUrls';
 import { Advisor } from '@/src/shared/types';
 
@@ -39,6 +40,46 @@ export const metadata: Metadata = {
   },
 };
 
+// Helper function to verify Google Calendar integration
+async function verifyGoogleCalendarIntegration(therapist: {
+  id: number;
+  googleCalendarIntegrationStatus: string;
+  googleCalendarAccessToken: string | null;
+  googleCalendarRefreshToken: string | null;
+}): Promise<{ hasGoogleCalendar: boolean; status: 'connected' | 'not_connected' | 'error' }> {
+  if (
+    therapist.googleCalendarIntegrationStatus !== 'connected' ||
+    !therapist.googleCalendarAccessToken ||
+    !therapist.googleCalendarRefreshToken
+  ) {
+    return {
+      hasGoogleCalendar: false,
+      status: therapist.googleCalendarIntegrationStatus === 'error' ? 'error' : 'not_connected',
+    };
+  }
+
+  try {
+    const tokenManager = new GoogleCalendarTokenManager(db);
+    await tokenManager.ensureValidTokens({
+      id: therapist.id,
+      googleCalendarAccessToken: therapist.googleCalendarAccessToken,
+      googleCalendarRefreshToken: therapist.googleCalendarRefreshToken,
+      googleCalendarIntegrationStatus: therapist.googleCalendarIntegrationStatus,
+    });
+
+    return {
+      hasGoogleCalendar: true,
+      status: 'connected',
+    };
+  } catch (error) {
+    console.error(`Token verification failed for therapist ${therapist.id}:`, error);
+    return {
+      hasGoogleCalendar: false,
+      status: 'error',
+    };
+  }
+}
+
 // Make this a server component since we're doing DB fetching
 export default async function Home() {
   try {
@@ -63,6 +104,7 @@ export default async function Home() {
           hourlyRateCents: therapists.hourlyRateCents,
           googleCalendarIntegrationStatus: therapists.googleCalendarIntegrationStatus,
           googleCalendarAccessToken: therapists.googleCalendarAccessToken,
+          googleCalendarRefreshToken: therapists.googleCalendarRefreshToken,
         })
         .from(therapists),
 
@@ -84,6 +126,7 @@ export default async function Home() {
           hourlyRateCents: pendingTherapists.hourlyRateCents,
           googleCalendarIntegrationStatus: pendingTherapists.googleCalendarIntegrationStatus,
           googleCalendarAccessToken: pendingTherapists.googleCalendarAccessToken,
+          googleCalendarRefreshToken: pendingTherapists.googleCalendarRefreshToken,
         })
         .from(pendingTherapists),
 
@@ -103,48 +146,55 @@ export default async function Home() {
       .map((user) => user.email?.toLowerCase())
       .filter((email) => email !== null && email !== undefined);
 
-    // Transform active therapists
-    const activeAdvisors: Advisor[] = dbTherapists
-      .filter((therapist) => {
-        // In production, filter out Seth Morton
-        if (process.env.NODE_ENV === 'production' && therapist.name === 'Seth Morton') {
-          return false;
-        }
-        return true;
-      })
-      .map((therapist) => {
-        const profileUrl = therapist.profileUrl
-          ? getTherapistImageUrl(therapist.profileUrl)
-          : '/experts/placeholderexp.png';
+    // Transform active therapists with proper Google Calendar verification
+    const activeAdvisors: Advisor[] = await Promise.all(
+      dbTherapists
+        .filter((therapist) => {
+          // In production, filter out Seth Morton
+          if (process.env.NODE_ENV === 'production' && therapist.name === 'Seth Morton') {
+            return false;
+          }
+          return true;
+        })
+        .map(async (therapist) => {
+          const profileUrl = therapist.profileUrl
+            ? getTherapistImageUrl(therapist.profileUrl)
+            : '/experts/placeholderexp.png';
 
-        const hasGoogleCalendar =
-          therapist.googleCalendarIntegrationStatus === 'connected' &&
-          !!therapist.googleCalendarAccessToken;
+          // Verify Google Calendar integration with token refresh
+          const { hasGoogleCalendar, status } = await verifyGoogleCalendarIntegration(therapist);
 
-        return {
-          id: therapist.id.toString(), // This is the therapist table ID
-          therapistId: therapist.id, // Explicit therapist ID
-          userId: therapist.userId, // User table ID
-          name: therapist.name,
-          title: therapist.title || 'Financial Therapist',
-          bookingURL: therapist.bookingURL || '',
-          expertise: therapist.expertise || '',
-          certifications: therapist.certifications || '',
-          song: therapist.song || '',
-          yoe: therapist.yoe?.toString() || 'N/A',
-          clientele: therapist.clientele || '',
-          longBio: therapist.longBio || '',
-          previewBlurb: therapist.previewBlurb || 'Experienced financial therapist',
-          profileUrl: profileUrl,
-          hourlyRate: therapist.hourlyRateCents
-            ? `$${Math.round(therapist.hourlyRateCents / 100)}`
-            : undefined,
-          hasProfileImage: !!therapist.profileUrl,
-          isPending: false,
-          hasGoogleCalendar,
-          googleCalendarStatus: therapist.googleCalendarIntegrationStatus,
-        };
-      });
+          return {
+            id: therapist.id.toString(), // This is the therapist table ID
+            therapistId: therapist.id, // Explicit therapist ID
+            userId: therapist.userId, // User table ID
+            name: therapist.name,
+            title: therapist.title || 'Financial Therapist',
+            bookingURL: therapist.bookingURL || '',
+            expertise: therapist.expertise || '',
+            certifications: therapist.certifications || '',
+            song: therapist.song || '',
+            yoe: therapist.yoe?.toString() || 'N/A',
+            clientele: therapist.clientele || '',
+            longBio: therapist.longBio || '',
+            previewBlurb: therapist.previewBlurb || 'Experienced financial therapist',
+            profileUrl: profileUrl,
+            hourlyRate: therapist.hourlyRateCents
+              ? (() => {
+                  // Fix for hourly rates that were incorrectly stored as already-multiplied cents
+                  // If the value seems too large (>$1000), divide by an additional 100
+                  const rate = therapist.hourlyRateCents / 100;
+                  const adjustedRate = rate > 1000 ? rate / 100 : rate;
+                  return `$${Math.round(adjustedRate)}`;
+                })()
+              : undefined,
+            hasProfileImage: !!therapist.profileUrl,
+            isPending: false,
+            hasGoogleCalendar,
+            googleCalendarStatus: status,
+          };
+        }),
+    );
 
     // Filter out pending therapists who already exist as active therapists
     const filteredPendingTherapists = dbPendingTherapists.filter((pendingTherapist) => {
@@ -156,40 +206,48 @@ export default async function Home() {
       return !activeTherapistEmails.includes(pendingTherapist.clerkEmail?.toLowerCase());
     });
 
-    // Transform filtered pending therapists
-    const pendingAdvisors: Advisor[] = filteredPendingTherapists.map((pendingTherapist) => {
-      const profileUrl = pendingTherapist.profileUrl
-        ? getTherapistImageUrl(pendingTherapist.profileUrl)
-        : '/experts/placeholderexp.png';
+    // Transform filtered pending therapists with proper Google Calendar verification
+    const pendingAdvisors: Advisor[] = await Promise.all(
+      filteredPendingTherapists.map(async (pendingTherapist) => {
+        const profileUrl = pendingTherapist.profileUrl
+          ? getTherapistImageUrl(pendingTherapist.profileUrl)
+          : '/experts/placeholderexp.png';
 
-      const hasGoogleCalendar =
-        pendingTherapist.googleCalendarIntegrationStatus === 'connected' &&
-        !!pendingTherapist.googleCalendarAccessToken;
+        // Verify Google Calendar integration with token refresh
+        const { hasGoogleCalendar, status } =
+          await verifyGoogleCalendarIntegration(pendingTherapist);
 
-      return {
-        id: `pending-${pendingTherapist.id}`, // Prefix to distinguish from active therapists
-        therapistId: undefined, // No therapist ID yet
-        userId: undefined, // No user ID yet
-        name: pendingTherapist.name,
-        title: pendingTherapist.title || 'Financial Therapist',
-        bookingURL: pendingTherapist.bookingURL || '',
-        expertise: pendingTherapist.expertise || '',
-        certifications: pendingTherapist.certifications || '',
-        song: pendingTherapist.song || '',
-        yoe: pendingTherapist.yoe?.toString() || 'N/A',
-        clientele: pendingTherapist.clientele || '',
-        longBio: pendingTherapist.longBio || '',
-        previewBlurb: pendingTherapist.previewBlurb || 'Experienced financial therapist',
-        profileUrl: profileUrl,
-        hourlyRate: pendingTherapist.hourlyRateCents
-          ? `$${Math.round(pendingTherapist.hourlyRateCents / 100)}`
-          : undefined,
-        hasProfileImage: !!pendingTherapist.profileUrl,
-        isPending: true,
-        hasGoogleCalendar,
-        googleCalendarStatus: pendingTherapist.googleCalendarIntegrationStatus,
-      };
-    });
+        return {
+          id: `pending-${pendingTherapist.id}`, // Prefix to distinguish from active therapists
+          therapistId: undefined, // No therapist ID yet
+          userId: undefined, // No user ID yet
+          name: pendingTherapist.name,
+          title: pendingTherapist.title || 'Financial Therapist',
+          bookingURL: pendingTherapist.bookingURL || '',
+          expertise: pendingTherapist.expertise || '',
+          certifications: pendingTherapist.certifications || '',
+          song: pendingTherapist.song || '',
+          yoe: pendingTherapist.yoe?.toString() || 'N/A',
+          clientele: pendingTherapist.clientele || '',
+          longBio: pendingTherapist.longBio || '',
+          previewBlurb: pendingTherapist.previewBlurb || 'Experienced financial therapist',
+          profileUrl: profileUrl,
+          hourlyRate: pendingTherapist.hourlyRateCents
+            ? (() => {
+                // Fix for hourly rates that were incorrectly stored as already-multiplied cents
+                // If the value seems too large (>$1000), divide by an additional 100
+                const rate = pendingTherapist.hourlyRateCents / 100;
+                const adjustedRate = rate > 1000 ? rate / 100 : rate;
+                return `$${Math.round(adjustedRate)}`;
+              })()
+            : undefined,
+          hasProfileImage: !!pendingTherapist.profileUrl,
+          isPending: true,
+          hasGoogleCalendar,
+          googleCalendarStatus: status,
+        };
+      }),
+    );
 
     // Combine and sort advisors
     const allAdvisors = [...activeAdvisors, ...pendingAdvisors].sort((a, b) => {
