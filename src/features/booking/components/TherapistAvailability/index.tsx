@@ -44,6 +44,7 @@ export function TherapistAvailability({
   const isMobile = useMediaQuery({ maxWidth: 768 });
   const [modalOpen, setModalOpen] = useState(false);
   const [calendarSelectedDate, setCalendarSelectedDate] = useState<DateTime | null>(null);
+  const [currentMonth, setCurrentMonth] = useState<DateTime>(DateTime.now());
 
   // Integration check
   useEffect(() => {
@@ -52,20 +53,12 @@ export function TherapistAvailability({
     }
   }, [therapistId]);
 
-  // Fetch availability for the selected month
+  // Fetch availability for the current month being displayed
   useEffect(() => {
-    if (calendarSelectedDate) {
-      fetchAvailability(therapistId, calendarSelectedDate, timezoneSignal.value);
-    } else {
-      // Initial fetch for current month
-      fetchAvailability(therapistId, DateTime.now(), timezoneSignal.value);
+    if (isGoogleCalendarIntegratedSignal.value) {
+      fetchAvailability(therapistId, currentMonth, timezoneSignal.value);
     }
-  }, [
-    therapistId,
-    calendarSelectedDate,
-    timezoneSignal.value,
-    isGoogleCalendarIntegratedSignal.value,
-  ]);
+  }, [therapistId, currentMonth, timezoneSignal.value, isGoogleCalendarIntegratedSignal.value]);
 
   // Gather all available slots (no filtering by current time)
   const allAvailableSlots = availableSlotsSignal.value;
@@ -153,6 +146,8 @@ export function TherapistAvailability({
               selectedDate={(calendarSelectedDate || DateTime.now()).toJSDate()}
               onDateSelect={(date: Date) => setCalendarSelectedDate(DateTime.fromJSDate(date))}
               availableDates={availableDatesArray}
+              currentMonth={currentMonth.toJSDate()}
+              onMonthChange={(month: Date) => setCurrentMonth(DateTime.fromJSDate(month))}
             />
           </div>
           <div className='w-full md:w-2/6'>
@@ -246,6 +241,8 @@ export function TherapistAvailability({
             }
           }}
           availableDates={availableDatesArray}
+          currentMonth={currentMonth.toJSDate()}
+          onMonthChange={(month: Date) => setCurrentMonth(DateTime.fromJSDate(month))}
         />
       </div>
       <TimeSelectionModal

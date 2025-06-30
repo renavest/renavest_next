@@ -12,10 +12,10 @@ export function CalendarGrid({
   availableDates,
   minDate,
   maxDate,
+  currentMonth: currentMonthProp,
+  onMonthChange,
 }: CalendarGridProps) {
-  const [currentMonth, setCurrentMonth] = React.useState<DateTime>(
-    selectedDate ? DateTime.fromJSDate(selectedDate) : DateTime.now(),
-  );
+  const currentMonth = DateTime.fromJSDate(currentMonthProp);
 
   const today = DateTime.now().startOf('day');
   const daysInMonth = currentMonth.daysInMonth || 31;
@@ -47,12 +47,22 @@ export function CalendarGrid({
     }
   };
 
+  const handlePreviousMonth = () => {
+    const newMonth = currentMonth.minus({ months: 1 });
+    onMonthChange?.(newMonth.toJSDate());
+  };
+
+  const handleNextMonth = () => {
+    const newMonth = currentMonth.plus({ months: 1 });
+    onMonthChange?.(newMonth.toJSDate());
+  };
+
   return (
     <div className='w-full p-0 mb-4'>
       <div className='flex items-center justify-between mb-6'>
         <button
           className='p-2 rounded-full hover:bg-gray-100 transition'
-          onClick={() => setCurrentMonth(currentMonth.minus({ months: 1 }))}
+          onClick={handlePreviousMonth}
           aria-label='Previous month'
         >
           <ChevronLeft className='w-5 h-5 text-gray-500' />
@@ -62,7 +72,7 @@ export function CalendarGrid({
         </div>
         <button
           className='p-2 rounded-full hover:bg-gray-100 transition'
-          onClick={() => setCurrentMonth(currentMonth.plus({ months: 1 }))}
+          onClick={handleNextMonth}
           aria-label='Next month'
         >
           <ChevronRight className='w-5 h-5 text-gray-500' />

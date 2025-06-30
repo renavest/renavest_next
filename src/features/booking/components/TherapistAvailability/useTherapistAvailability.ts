@@ -143,7 +143,19 @@ export async function fetchAvailability(
     }
 
     const data = await response.json();
+    console.log('✅ Availability API response:', {
+      slots: data.slots?.length || 0,
+      therapistTimezone: data.therapistTimezone,
+      workingHours: data.workingHours,
+      rawSlots: data.slots?.slice(0, 3) || [], // Show first 3 slots for debugging
+    });
+
     availableSlotsSignal.value = data.slots || [];
+
+    console.log('📅 Updated availableSlotsSignal:', {
+      length: availableSlotsSignal.value.length,
+      firstSlot: availableSlotsSignal.value[0] || null,
+    });
   } catch (err) {
     console.error('Error fetching availability:', err);
     errorSignal.value = err instanceof Error ? err.message : 'Failed to fetch availability';

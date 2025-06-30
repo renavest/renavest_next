@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useState } from 'react';
 
-import { formatCurrency } from '@/src/utils/currency';
+import { formatCentsAsCurrency } from '@/src/utils/currency';
 
 import AlternativeBooking from '../AlternativeBooking';
 import { BookingConfirmationModal } from '../BookingConfirmation/BookingConfirmationModal';
@@ -85,7 +85,7 @@ export function BookingForm({
 
   // Format pricing for display
   const formattedPrice =
-    advisorPricing && advisorPricing > 0 ? formatCurrency(advisorPricing) : null;
+    advisorPricing && advisorPricing > 0 ? formatCentsAsCurrency(advisorPricing) : null;
 
   return (
     <div className='min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-purple-50 to-white py-8 px-2'>

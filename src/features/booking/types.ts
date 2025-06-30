@@ -26,6 +26,8 @@ export interface CalendarGridProps {
   availableDates: Date[];
   minDate?: Date;
   maxDate?: Date;
+  currentMonth: Date;
+  onMonthChange?: (month: Date) => void;
 }
 
 // Booking flow props
