@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { formatDateTime } from '@/src/features/booking/utils/dateTimeUtils';
-import { formatCurrency } from '@/src/utils/currency';
+import { formatCentsAsCurrency } from '@/src/utils/currency';
 import { createDate } from '@/src/utils/timezone';
 
 import {
@@ -27,7 +27,7 @@ export function BookingConfirmationModal({
   advisorPricing,
 }: BookingConfirmationModalProps) {
   const hasPricing = advisorPricing && advisorPricing > 0;
-  const formattedPrice = hasPricing ? formatCurrency(advisorPricing) : null;
+  const formattedPrice = hasPricing ? formatCentsAsCurrency(advisorPricing) : null;
 
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30'>
