@@ -83,7 +83,6 @@ export function BookingForm({
     );
   }
 
-  // Format pricing for display
   const formattedPrice =
     advisorPricing && advisorPricing > 0 ? formatCentsAsCurrency(advisorPricing) : null;
 
