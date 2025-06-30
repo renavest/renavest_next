@@ -2,7 +2,6 @@ import { auth } from '@clerk/nextjs/server';
 import { Metadata } from 'next';
 
 import { db } from '@/src/db';
-import { therapists, pendingTherapists, users } from '@/src/db/schema';
 import AdvisorGrid from '@/src/features/explore/components/AdvisorGrid';
 import ExploreNavbar from '@/src/features/explore/components/ExploreNavbar';
 import { GoogleCalendarTokenManager } from '@/src/features/google-calendar/utils/tokenManager';
@@ -13,28 +12,6 @@ export const metadata: Metadata = {
   title: 'Explore - Renavest',
   description: 'Browse our network of financial therapists',
 };
-
-// Helper function to format hourly rate handling data inconsistencies
-function formatHourlyRate(hourlyRateCents: number | null): string {
-  if (!hourlyRateCents) return 'Contact for pricing';
-
-  let rateInCents = hourlyRateCents;
-
-  // Handle data inconsistency: detect if value was entered as dollars instead of cents
-  // If value is suspiciously low (< $10 = 1000 cents), it was likely entered as dollars
-  if (rateInCents < 1000) {
-    // Convert from dollars to cents (multiply by 100)
-    rateInCents = rateInCents * 100;
-  }
-
-  // Now convert from cents to dollars for display
-  const rateInDollars = rateInCents / 100;
-
-  return `$${rateInDollars.toLocaleString('en-US', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  })}`;
-}
 
 // Helper function to verify Google Calendar integration
 async function verifyGoogleCalendarIntegration(therapist: {
@@ -60,75 +37,37 @@ async function verifyGoogleCalendarIntegration(therapist: {
       id: therapist.id,
       googleCalendarAccessToken: therapist.googleCalendarAccessToken,
       googleCalendarRefreshToken: therapist.googleCalendarRefreshToken,
+      googleCalendarIntegrationStatus: therapist.googleCalendarIntegrationStatus,
     });
 
-    return {
-      hasGoogleCalendar: true,
-      status: 'connected',
-    };
+    return { hasGoogleCalendar: true, status: 'connected' };
   } catch (error) {
-    console.error(`Failed to verify Google Calendar tokens for therapist ${therapist.id}:`, error);
-    return {
-      hasGoogleCalendar: false,
-      status: 'error',
-    };
+    console.error('Failed to verify Google Calendar tokens for therapist:', therapist.id, error);
+    return { hasGoogleCalendar: false, status: 'error' };
   }
 }
 
-export default async function Home() {
+export default async function ExplorePage() {
   auth.protect();
 
-  // Get all therapists from the therapists table
-  const confirmedTherapists = await db.query.therapists.findMany({
-    columns: {
-      id: true,
-      userId: true,
-      name: true,
-      title: true,
-      bookingURL: true,
-      expertise: true,
-      certifications: true,
-      song: true,
-      yoe: true,
-      clientele: true,
-      longBio: true,
-      previewBlurb: true,
-      profileUrl: true,
-      hourlyRateCents: true,
-      googleCalendarIntegrationStatus: true,
-      googleCalendarAccessToken: true,
-      googleCalendarRefreshToken: true,
-    },
-    where: (therapists, { isNull }) => isNull(therapists.deletedAt),
-  });
+  // Fetch all therapists and pending therapists
+  const [allTherapists, allPendingTherapists] = await Promise.all([
+    db.query.therapists.findMany({
+      where: (therapists, { isNull }) => isNull(therapists.deletedAt),
+      with: {
+        user: true,
+      },
+      orderBy: (therapists, { asc }) => [asc(therapists.name)],
+    }),
+    db.query.pendingTherapists.findMany({
+      orderBy: (pendingTherapists, { asc }) => [asc(pendingTherapists.name)],
+    }),
+  ]);
 
-  // Get all pending therapists
-  const pendingTherapistsData = await db.query.pendingTherapists.findMany({
-    columns: {
-      id: true,
-      clerkEmail: true,
-      name: true,
-      title: true,
-      bookingURL: true,
-      expertise: true,
-      certifications: true,
-      song: true,
-      yoe: true,
-      clientele: true,
-      longBio: true,
-      previewBlurb: true,
-      profileUrl: true,
-      hourlyRateCents: true,
-      googleCalendarIntegrationStatus: true,
-      googleCalendarAccessToken: true,
-      googleCalendarRefreshToken: true,
-    },
-  });
-
-  // Convert confirmed therapists to Advisor format
-  const confirmedAdvisors: Advisor[] = await Promise.all(
-    confirmedTherapists.map(async (therapist) => {
-      const profileUrl = await getTherapistImageUrl(therapist.profileUrl || '');
+  // Process therapists
+  const advisors: Advisor[] = await Promise.all(
+    allTherapists.map(async (therapist): Promise<Advisor> => {
+      const profileUrl = await getTherapistImageUrl(therapist.profileUrl);
       const calendarStatus = await verifyGoogleCalendarIntegration(therapist);
 
       return {
@@ -146,25 +85,26 @@ export default async function Home() {
         longBio: therapist.longBio || '',
         previewBlurb: therapist.previewBlurb || 'Experienced financial therapist',
         profileUrl: profileUrl,
-        hourlyRate: formatHourlyRate(therapist.hourlyRateCents),
-        hasProfileImage: !!therapist.profileUrl,
-        isPending: false,
+        hourlyRate: therapist.hourlyRateCents
+          ? `$${(therapist.hourlyRateCents / 100).toFixed(0)}`
+          : 'Contact for pricing',
         hasGoogleCalendar: calendarStatus.hasGoogleCalendar,
         googleCalendarStatus: calendarStatus.status,
+        isPending: false,
       };
     }),
   );
 
-  // Convert pending therapists to Advisor format
+  // Process pending therapists
   const pendingAdvisors: Advisor[] = await Promise.all(
-    pendingTherapistsData.map(async (therapist) => {
-      const profileUrl = await getTherapistImageUrl(therapist.profileUrl || '');
+    allPendingTherapists.map(async (therapist): Promise<Advisor> => {
+      const profileUrl = await getTherapistImageUrl(therapist.profileUrl);
       const calendarStatus = await verifyGoogleCalendarIntegration(therapist);
 
       return {
-        id: therapist.id.toString(),
+        id: `pending-${therapist.id}`,
         therapistId: therapist.id,
-        userId: null,
+        userId: undefined,
         name: therapist.name,
         title: therapist.title || 'Financial Therapist',
         bookingURL: therapist.bookingURL || '',
@@ -176,31 +116,29 @@ export default async function Home() {
         longBio: therapist.longBio || '',
         previewBlurb: therapist.previewBlurb || 'Experienced financial therapist',
         profileUrl: profileUrl,
-        hourlyRate: formatHourlyRate(therapist.hourlyRateCents),
-        hasProfileImage: !!therapist.profileUrl,
-        isPending: true,
+        hourlyRate: therapist.hourlyRateCents
+          ? `$${(therapist.hourlyRateCents / 100).toFixed(0)}`
+          : 'Contact for pricing',
         hasGoogleCalendar: calendarStatus.hasGoogleCalendar,
         googleCalendarStatus: calendarStatus.status,
+        isPending: true,
       };
     }),
   );
 
-  // Combine all advisors
-  const allAdvisors = [...confirmedAdvisors, ...pendingAdvisors];
+  const allAdvisors = [...advisors, ...pendingAdvisors];
 
   return (
-    <div className='min-h-screen bg-gray-50'>
+    <>
       <ExploreNavbar />
-      <main className='container mx-auto px-4 py-8'>
-        <div className='mb-8'>
-          <h1 className='text-3xl font-bold text-gray-900 mb-4'>Find Your Financial Therapist</h1>
-          <p className='text-lg text-gray-600'>
-            Browse our network of qualified financial therapists and find the perfect match for your
-            needs.
-          </p>
+      <div className='min-h-screen bg-gray-50'>
+        <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12'>
+          <div className='mb-8'>
+            <h1 className='text-3xl font-bold text-gray-900 mb-4'>Find Your Financial Therapist</h1>
+          </div>
+          <AdvisorGrid advisors={allAdvisors} />
         </div>
-        <AdvisorGrid advisors={allAdvisors} />
-      </main>
-    </div>
+      </div>
+    </>
   );
 }

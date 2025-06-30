@@ -82,7 +82,8 @@ export async function fetchAvailability(
         `therapistId=${therapistId}&` +
         `startDate=${startDate.toISO()}&` +
         `endDate=${endDate.toISO()}&` +
-        `timezone=${timezone}`,
+        `timezone=${timezone}&` +
+        `view=client`,
       {
         credentials: 'include',
       },
