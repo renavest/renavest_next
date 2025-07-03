@@ -154,66 +154,58 @@ export default function TherapistRecommendations({
         </div>
       </div>
 
-      <div className='space-y-4'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
         {isLoading && (
-          <div className='text-gray-500 text-center py-6'>
+          <div className='text-gray-500 text-center py-6 col-span-full'>
             Loading your personalized recommendations...
           </div>
         )}
-        {error && <div className='text-red-500 text-center py-6'>{error}</div>}
+        {error && <div className='text-red-500 text-center py-6 col-span-full'>{error}</div>}
         {!isLoading &&
           !error &&
           therapists.map((therapist) => (
             <div
               key={therapist.id}
-              className='p-4 md:p-6 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors group'
+              className='flex flex-col items-center p-4 md:p-6 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors group h-full bg-white shadow-sm'
             >
-              <div className='flex items-start gap-4 md:gap-6'>
-                <div className='flex-shrink-0 w-16 h-16 md:w-20 md:h-20'>
-                  <TherapistImage
-                    profileUrl={therapist.profileUrl}
-                    name={therapist.name}
-                    width={80}
-                    height={80}
-                    className='rounded-full w-full h-full border-2 border-purple-100'
-                  />
-                </div>
-                <div className='flex-1 min-w-0'>
-                  <div className='flex flex-col md:flex-row md:items-start md:justify-between gap-3'>
-                    <div className='flex-1'>
-                      <h4 className='text-lg md:text-xl font-semibold text-gray-800 mb-1'>
-                        {therapist.name}
-                      </h4>
-                      <p className='text-sm md:text-base text-purple-600 font-medium mb-2'>
-                        {therapist.title}
-                      </p>
-                      <p className='text-sm md:text-base text-gray-600 leading-relaxed'>
-                        {therapist.previewBlurb}
-                      </p>
-                    </div>
-                    <div className='flex-shrink-0 flex flex-col sm:flex-row gap-2'>
-                      {/* Chat Feature - only show if enabled */}
-                      {process.env.NEXT_PUBLIC_ENABLE_CHAT_FEATURE === 'true' && (
-                        <button
-                          onClick={() => handleStartChat(therapist)}
-                          disabled={chatCreatingFor === therapist.id}
-                          className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 md:px-4 md:py-3 rounded-lg font-medium transition-all duration-300 flex items-center gap-2 shadow-sm hover:shadow-md group-hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed'
-                        >
-                          <MessageCircle className='w-4 h-4' />
-                          {chatCreatingFor === therapist.id ? 'Starting...' : 'Chat'}
-                        </button>
-                      )}
-
-                      <button
-                        onClick={() => handleBookFreeSession(therapist)}
-                        className='bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 md:px-6 md:py-3 rounded-lg font-medium transition-all duration-300 flex items-center gap-2 shadow-sm hover:shadow-md group-hover:scale-105'
-                      >
-                        <Calendar className='w-4 h-4' />
-                        Book FREE Session
-                      </button>
-                    </div>
-                  </div>
-                </div>
+              <div className='w-20 h-20 mb-4'>
+                <TherapistImage
+                  profileUrl={therapist.profileUrl}
+                  name={therapist.name}
+                  width={80}
+                  height={80}
+                  className='rounded-full w-full h-full border-2 border-purple-100 object-cover object-center'
+                />
+              </div>
+              <div className='flex-1 flex flex-col items-center text-center w-full'>
+                <h4 className='text-lg md:text-xl font-semibold text-gray-800 mb-1'>
+                  {therapist.name}
+                </h4>
+                <p className='text-sm md:text-base text-purple-600 font-medium mb-2'>
+                  {therapist.title}
+                </p>
+                <p className='text-sm md:text-base text-gray-600 leading-relaxed mb-4'>
+                  {therapist.previewBlurb}
+                </p>
+              </div>
+              <div className='flex flex-col sm:flex-row gap-2 w-full mt-auto'>
+                {process.env.NEXT_PUBLIC_ENABLE_CHAT_FEATURE === 'true' && (
+                  <button
+                    onClick={() => handleStartChat(therapist)}
+                    disabled={chatCreatingFor === therapist.id}
+                    className='bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 md:px-4 md:py-3 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md group-hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed w-full'
+                  >
+                    <MessageCircle className='w-4 h-4' />
+                    {chatCreatingFor === therapist.id ? 'Starting...' : 'Chat'}
+                  </button>
+                )}
+                <button
+                  onClick={() => handleBookFreeSession(therapist)}
+                  className='bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 md:px-6 md:py-3 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md group-hover:scale-105 w-full'
+                >
+                  <Calendar className='w-4 h-4' />
+                  Book FREE Session
+                </button>
               </div>
             </div>
           ))}
