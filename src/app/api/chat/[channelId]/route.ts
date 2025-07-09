@@ -257,8 +257,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ channel
         'Content-Type': 'text/event-stream; charset=utf-8',
         Connection: 'keep-alive',
         'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Cache-Control',
+        'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+        'Access-Control-Allow-Headers': 'Cache-Control, Authorization',
+        'Access-Control-Allow-Credentials': 'true',
         'X-Accel-Buffering': 'no', // Disable nginx buffering
       },
     });

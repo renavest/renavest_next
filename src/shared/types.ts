@@ -31,7 +31,13 @@ export type UserRole =
 
 // ===== SHARED COMPONENT PROPS =====
 
-export interface MetricCardProps {
+// Common component prop patterns
+export interface BaseComponentProps {
+  className?: string;
+  children?: React.ReactNode;
+}
+
+export interface MetricCardProps extends BaseComponentProps {
   title: string;
   value: string | number;
   icon?: React.ReactNode;
@@ -39,7 +45,22 @@ export interface MetricCardProps {
     value: number;
     isPositive: boolean;
   };
-  className?: string;
+}
+
+// Common form props
+export interface BaseFormProps extends BaseComponentProps {
+  onSubmit?: (data: unknown) => void;
+  onError?: (error: string) => void;
+  loading?: boolean;
+  disabled?: boolean;
+}
+
+// Common modal props  
+export interface BaseModalProps extends BaseComponentProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title?: string;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
 export interface SubscriptionGateProps {

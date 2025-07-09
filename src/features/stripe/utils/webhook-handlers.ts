@@ -48,43 +48,77 @@ export async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Se
 export async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
   const metadata = paymentIntent.metadata;
 
+  // CRITICAL: Idempotency check - prevent duplicate processing
+  const existingPayment = await db
+    .select()
+    .from(sessionPayments)
+    .where(eq(sessionPayments.stripePaymentIntentId, paymentIntent.id))
+    .limit(1);
+    
+  if (existingPayment.length > 0 && existingPayment[0].status === 'succeeded') {
+    console.log(`[STRIPE WEBHOOK] Payment already processed: ${paymentIntent.id}`);
+    return; // Idempotent - already processed
+  }
+
   if (!metadata.bookingSessionId || !metadata.userId || !metadata.therapistId) {
-    console.warn('[STRIPE WEBHOOK] PaymentIntent missing required metadata');
+    console.warn('[STRIPE WEBHOOK] PaymentIntent missing required metadata', {
+      paymentIntentId: paymentIntent.id,
+      metadata: metadata,
+    });
     return;
   }
 
+  // Validate metadata types
   const bookingSessionId = parseInt(metadata.bookingSessionId);
   const therapistId = parseInt(metadata.therapistId);
+  
+  if (isNaN(bookingSessionId) || isNaN(therapistId)) {
+    console.warn('[STRIPE WEBHOOK] PaymentIntent metadata has invalid types', {
+      paymentIntentId: paymentIntent.id,
+      bookingSessionId: metadata.bookingSessionId,
+      therapistId: metadata.therapistId,
+    });
+    return;
+  }
 
-  // Update session payment record
-  await db
-    .update(sessionPayments)
-    .set({
-      status: 'succeeded',
-      chargedAt: new Date(),
-      updatedAt: new Date(),
-    })
-    .where(eq(sessionPayments.stripePaymentIntentId, paymentIntent.id));
+  // CRITICAL: Wrap all payment updates in a transaction for atomicity
+  await db.transaction(async (tx) => {
+    // Update session payment record
+    await tx
+      .update(sessionPayments)
+      .set({
+        status: 'succeeded',
+        chargedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(sessionPayments.stripePaymentIntentId, paymentIntent.id));
 
-  // Update booking session status
-  await db
-    .update(bookingSessions)
-    .set({
-      status: 'completed',
-      updatedAt: new Date(),
-    })
-    .where(eq(bookingSessions.id, bookingSessionId));
+    // Update booking session status
+    await tx
+      .update(bookingSessions)
+      .set({
+        status: 'completed',
+        updatedAt: new Date(),
+      })
+      .where(eq(bookingSessions.id, bookingSessionId));
 
-  // Record therapist payout (90% of the amount after fees)
-  const therapistAmount = Math.floor(paymentIntent.amount * 0.9); // 90% to therapist
+    // Record therapist payout (90% of the amount after fees)
+    const therapistAmount = Math.floor(paymentIntent.amount * 0.9); // 90% to therapist
 
-  await db.insert(therapistPayouts).values({
-    therapistId,
+    await tx.insert(therapistPayouts).values({
+      therapistId,
+      bookingSessionId,
+      amountCents: therapistAmount,
+      stripeTransferId: paymentIntent.transfer_data?.destination as string,
+      payoutType: 'session_fee',
+      status: 'pending', // Will be updated when the actual transfer completes
+    });
+  }); // End transaction
+
+  console.log('[STRIPE WEBHOOK] Payment processed successfully', {
+    paymentIntentId: paymentIntent.id,
     bookingSessionId,
-    amountCents: therapistAmount,
-    stripeTransferId: paymentIntent.transfer_data?.destination as string,
-    payoutType: 'session_fee',
-    status: 'pending', // Will be updated when the actual transfer completes
+    therapistAmount,
   });
 }
 

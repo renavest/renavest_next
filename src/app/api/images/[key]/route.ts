@@ -6,6 +6,7 @@ import {
   S3ServiceException,
   GetObjectCommandOutput,
 } from '@aws-sdk/client-s3';
+import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Configure AWS S3
@@ -26,6 +27,11 @@ export async function GET(
   let decodedKey = ''; // Declare at function scope
 
   try {
+    // SECURITY: Require authentication for image access
+    const { userId } = await auth();
+    if (!userId) {
+      return new NextResponse('Unauthorized - Please log in to access images', { status: 401 });
+    }
     // Check AWS configuration first
     const hasAwsConfig = !!(
       process.env.AWS_ACCESS_KEY_ID &&

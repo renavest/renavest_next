@@ -19,7 +19,6 @@ import { ChatChannelList } from '@/src/features/chat/components/ChatChannelList'
 import { ChatMessageArea } from '@/src/features/chat/components/ChatMessageArea';
 import { ConnectionStatusIndicator } from '@/src/features/chat/components/ConnectionStatusIndicator';
 import { useChat } from '@/src/features/chat/hooks/useChat';
-import HorizontalAdvisorCard from '@/src/features/explore/components/HorizontalAdvisorCard';
 import {
   trackTherapistDashboard,
   trackTherapistClientManagement,
@@ -31,6 +30,7 @@ import { ClientNotesSection } from '@/src/features/therapist-dashboard/component
 import { TherapistStatisticsCard } from '@/src/features/therapist-dashboard/components/dashboard/TherapistStatisticsCard';
 import { ClientFormsTab } from '@/src/features/therapist-dashboard/components/forms/ClientFormsTab';
 import TherapistNavbar from '@/src/features/therapist-dashboard/components/navigation/TherapistNavbar';
+import { UpcomingSessionsCard } from '@/src/features/therapist-dashboard/components/sections/UpcomingSessionsCard';
 import { ScheduleSessionModal } from '@/src/features/therapist-dashboard/components/sessions/ScheduleSessionModal';
 import { useTherapistDashboard } from '@/src/features/therapist-dashboard/hooks/useTherapistDashboard';
 import {
@@ -249,7 +249,7 @@ const ClientOverviewTab = ({
       </div>
 
       <div className='space-y-6'>
-        <HorizontalAdvisorCard sessions={sessions} onSessionClick={() => {}} />
+        <UpcomingSessionsCard sessions={sessions} onSessionClick={() => {}} />
       </div>
     </div>
   );
@@ -261,7 +261,7 @@ const ClientSessionsTab = ({ sessions }: { sessions: UpcomingSession[] }) => {
       <div className='flex items-center justify-between'>
         <h3 className='text-xl font-semibold text-gray-900'>Session Management</h3>
       </div>
-      <HorizontalAdvisorCard sessions={sessions} onSessionClick={() => {}} />
+      <UpcomingSessionsCard sessions={sessions} onSessionClick={() => {}} />
     </div>
   );
 };

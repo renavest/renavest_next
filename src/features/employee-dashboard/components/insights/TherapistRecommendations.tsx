@@ -12,6 +12,27 @@ import type {
 } from '@/src/features/employee-dashboard/types';
 import { TherapistImage } from '@/src/features/therapist-dashboard/components/shared/TherapistImage';
 
+// FAQItem component for dropdowns
+function FAQItem({ question, answer }: { question: string; answer: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className='border-t border-gray-200'>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className='flex justify-between items-center w-full py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none'
+      >
+        <span>{question}</span>
+        <span className={`ml-2 transition-transform ${isOpen ? 'rotate-180' : ''}`}>▼</span>
+      </button>
+      {isOpen && (
+        <div className='pb-2 px-2 text-sm text-gray-600'>
+          <p>{answer}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function TherapistRecommendations({
   showViewAllButton = false,
 }: TherapistRecommendationsProps) {
@@ -187,6 +208,17 @@ export default function TherapistRecommendations({
                 <p className='text-sm md:text-base text-gray-600 leading-relaxed mb-4'>
                   {therapist.previewBlurb}
                 </p>
+                {/* FAQ Section */}
+                <div className='w-full mt-2'>
+                  <FAQItem
+                    question='How do you hold clients accountable or track progress over time?'
+                    answer='I use a combination of goal-setting, session recaps, and digital tools to help clients stay on track and celebrate their progress.'
+                  />
+                  <FAQItem
+                    question='What do you wish more clients knew before starting financial therapy?'
+                    answer='That financial therapy is a collaborative process—progress comes from openness, patience, and a willingness to explore both numbers and emotions.'
+                  />
+                </div>
               </div>
               <div className='flex flex-col sm:flex-row gap-2 w-full mt-auto'>
                 {process.env.NEXT_PUBLIC_ENABLE_CHAT_FEATURE === 'true' && (

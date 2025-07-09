@@ -5,8 +5,8 @@ import { revalidatePath } from 'next/cache';
 
 import { db } from '@/src/db';
 import { userOnboarding } from '@/src/db/schema';
-// import { updateUserMetadata } from '@/src/features/auth/utils/clerkUtils';
 import { createDate } from '@/src/utils/timezone';
+import { MetadataManager } from '@/src/features/auth/utils/metadataManager';
 
 const ONBOARDING_VERSION = 1;
 
@@ -57,20 +57,15 @@ export async function submitOnboardingData(answers: Record<number, string[]>) {
       version: ONBOARDING_VERSION,
     });
 
-    // Update Clerk public metadata to mark onboarding as complete
-    await (
-      await clerkClient()
-    ).users.updateUserMetadata(clerkUserId ?? '', {
-      publicMetadata: {
-        onboardingComplete: true,
-        onboardingVersion: ONBOARDING_VERSION,
-        onboardingCompletedAt: createDate().toISO(),
-        onboardingAnswers: Object.entries(answers).map(([key, value]) => ({
-          questionId: Number(key),
-          answeredCategories: value,
-        })),
-      },
-    });
+    // Update Clerk metadata using centralized manager
+    await MetadataManager.completeOnboarding(
+      clerkUserId ?? '', 
+      Object.entries(answers).map(([key, value]) => ({
+        questionId: Number(key),
+        answeredCategories: value,
+      })),
+      ONBOARDING_VERSION
+    );
 
     // Revalidate the explore page
     revalidatePath('/explore');
