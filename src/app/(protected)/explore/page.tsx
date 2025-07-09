@@ -126,7 +126,19 @@ export default async function ExplorePage() {
     }),
   );
 
-  const allAdvisors = [...advisors, ...pendingAdvisors];
+  // Combine and deduplicate advisors based on therapistId
+  const combinedAdvisors = [...advisors, ...pendingAdvisors];
+  const deduplicatedAdvisors = combinedAdvisors.filter((advisor, index, array) => {
+    // Keep active therapists over pending ones for the same therapistId
+    const duplicateIndex = array.findIndex(a => a.therapistId === advisor.therapistId);
+    if (duplicateIndex === index) return true; // First occurrence
+    
+    // If this is a duplicate, only keep it if it's active and the first occurrence is pending
+    const firstOccurrence = array[duplicateIndex];
+    return !advisor.isPending && firstOccurrence.isPending;
+  });
+  
+  const allAdvisors = deduplicatedAdvisors;
 
   return (
     <>

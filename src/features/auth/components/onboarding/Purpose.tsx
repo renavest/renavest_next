@@ -1,47 +1,14 @@
 // src/features/auth/components/onboarding/Purpose.tsx
 'use client';
 
-import { Scale, HeartPulse, Rocket, TrendingUp, CircleDollarSign, Ellipsis } from 'lucide-react';
 import React from 'react'; // Import React
+
+import { PURPOSE_OPTIONS } from '@/src/config/forms';
 
 import { cn } from '@/src/lib/utils';
 
 import { firstName, selectedPurpose, currentStep } from '../../state/authState';
 import { OnboardingStep } from '../../types';
-
-// Define Renavest purpose options with Lucide icons
-const RENAVEST_PURPOSE_OPTIONS = [
-  {
-    value: 'financial_stress_relief',
-    label: 'Reduce financial stress and anxiety',
-    icon: <HeartPulse />,
-  },
-  {
-    value: 'emotional_money_relationship',
-    label: 'Improve my relationship with money',
-    icon: <Scale />,
-  },
-  {
-    value: 'financial_confidence',
-    label: 'Build financial confidence and security',
-    icon: <Rocket />,
-  },
-  {
-    value: 'financial_therapy_support',
-    label: 'Get therapeutic support for money issues',
-    icon: <CircleDollarSign />,
-  },
-  {
-    value: 'workplace_financial_wellness',
-    label: 'Access workplace financial wellness',
-    icon: <TrendingUp />,
-  },
-  {
-    value: 'other',
-    label: 'Other',
-    icon: <Ellipsis />,
-  },
-];
 
 export function RenavestPurposeStep() {
   const handlePurposeSelect = (purpose: string) => {
@@ -87,7 +54,7 @@ export function RenavestPurposeStep() {
         <p className='text-base text-gray-600'>Choose your primary goal for using Renavest.</p>
       </div>
       <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 space-y-0 sm:space-y-0'>
-        {RENAVEST_PURPOSE_OPTIONS.map((option) => (
+        {PURPOSE_OPTIONS.map((option) => (
           <button
             key={option.value}
             type='button'
@@ -107,7 +74,7 @@ export function RenavestPurposeStep() {
                 selectedPurpose.value === option.value ? 'text-white' : 'text-gray-500',
               )}
             >
-              {option.icon}
+              <option.icon />
             </div>
             <span className='font-medium'>{option.label}</span>
           </button>

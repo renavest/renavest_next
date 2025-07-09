@@ -2,6 +2,7 @@ import { useSignUp } from '@clerk/nextjs';
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
 
 import type { UserRole } from '@/src/shared/types';
+import { MetadataManager } from './metadataManager';
 
 import type { OnboardingData } from '../types';
 

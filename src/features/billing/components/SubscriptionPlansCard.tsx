@@ -3,56 +3,11 @@
 import { Check, MessageCircle, Zap } from 'lucide-react';
 import { useState } from 'react';
 
+import { SUBSCRIPTION_PLANS } from '@/src/config/billing';
+
 import { cn } from '@/src/lib/utils';
 
-import type { SubscriptionPlan, SubscriptionPlansCardProps } from '../types';
-
-const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
-  {
-    id: 'basic',
-    name: 'Basic',
-    description: 'Essential therapy sessions',
-    price: 0,
-    interval: 'month',
-    stripePriceId: 'free',
-    features: ['Book therapy sessions', 'Session history', 'Basic profile', 'Email support'],
-  },
-  {
-    id: 'premium',
-    name: 'Premium',
-    description: 'Enhanced therapy experience with messaging',
-    price: 29,
-    interval: 'month',
-    stripePriceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PREMIUM || 'price_premium_monthly',
-    features: [
-      'Everything in Basic',
-      'Direct messaging with therapists',
-      'Priority booking',
-      'Extended session notes',
-      'Video call recordings (with consent)',
-      '24/7 crisis support line',
-    ],
-    highlight: true,
-    badge: 'Most Popular',
-  },
-  {
-    id: 'professional',
-    name: 'Professional',
-    description: 'Complete mental health platform',
-    price: 59,
-    interval: 'month',
-    stripePriceId:
-      process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PROFESSIONAL || 'price_professional_monthly',
-    features: [
-      'Everything in Premium',
-      'Group therapy sessions',
-      'Wellness assessments',
-      'Mental health analytics',
-      'Family therapy access',
-      'Dedicated account manager',
-    ],
-  },
-];
+import type { SubscriptionPlansCardProps } from '../types';
 
 /**
  * SubscriptionPlansCard Component

@@ -8,14 +8,25 @@ import * as schema from './schema';
 const envFile = '.env.local';
 dotenv.config({ path: envFile });
 
-// Create a connection pool
+// Validate required environment variables
+const requiredEnvVars = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_DATABASE'];
+for (const envVar of requiredEnvVars) {
+  if (!process.env[envVar]) {
+    throw new Error(`Missing required environment variable: ${envVar}`);
+  }
+}
+
+// Create a connection pool with secure defaults
 const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_DATABASE || 'renavest',
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_DATABASE,
   port: parseInt(process.env.DB_PORT || '5432'),
-  ssl: {
+  ssl: process.env.NODE_ENV === 'production' ? {
+    rejectUnauthorized: true,
+    ca: process.env.CA_CERT,
+  } : {
     rejectUnauthorized: false,
     ca: process.env.CA_CERT || undefined,
   },

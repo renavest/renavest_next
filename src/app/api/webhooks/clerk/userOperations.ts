@@ -13,6 +13,7 @@ import {
 } from '@/src/db/schema';
 import type { users as usersTable } from '@/src/db/schema';
 import { createDate } from '@/src/utils/timezone';
+import { MetadataManager } from '@/src/features/auth/utils/metadataManager';
 
 import type { WebhookUserData, UserHandlingError } from './types';
 
@@ -239,21 +240,25 @@ export async function promotePendingTherapist(
     .update(users)
     .set({ role: 'therapist', updatedAt: createDate().toJSDate() })
     .where(eq(users.id, user.id));
+  
+  // Delete the pending therapist record to prevent duplicates
+  await dbOrTx
+    .delete(pendingTherapists)
+    .where(eq(pendingTherapists.id, pendingTherapistMatch.id));
+  
+  console.info('promotePendingTherapist: Successfully promoted and cleaned up pending record', {
+    userId: user.id,
+    pendingTherapistId: pendingTherapistMatch.id,
+  });
 }
 
 /**
- * Synchronize user role to Clerk's publicMetadata for session tokens
+ * Synchronize user role to Clerk's metadata using centralized manager
  * This ensures middleware can read the role from sessionClaims
  */
 export async function synchronizeRoleToClerk(clerkUserId: string, role: string): Promise<void> {
   try {
-    const client = await clerkClient();
-    await client.users.updateUserMetadata(clerkUserId, {
-      publicMetadata: {
-        role,
-        onboardingComplete: true,
-      },
-    });
+    await MetadataManager.synchronizeRoleToClerk(clerkUserId, role);
     console.log('Webhook: Successfully synchronized role to Clerk', { clerkUserId, role });
   } catch (error) {
     console.error('Webhook: Failed to synchronize role to Clerk', { clerkUserId, role, error });

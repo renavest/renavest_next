@@ -30,8 +30,8 @@ import { ClientNotesSection } from '@/src/features/therapist-dashboard/component
 import { TherapistStatisticsCard } from '@/src/features/therapist-dashboard/components/dashboard/TherapistStatisticsCard';
 import { ClientFormsTab } from '@/src/features/therapist-dashboard/components/forms/ClientFormsTab';
 import TherapistNavbar from '@/src/features/therapist-dashboard/components/navigation/TherapistNavbar';
+import { UpcomingSessionsCard } from '@/src/features/therapist-dashboard/components/sections/UpcomingSessionsCard';
 import { ScheduleSessionModal } from '@/src/features/therapist-dashboard/components/sessions/ScheduleSessionModal';
-import { UpcomingSessionsCard } from '@/src/features/therapist-dashboard/components/sessions/UpcomingSessionsCard';
 import { useTherapistDashboard } from '@/src/features/therapist-dashboard/hooks/useTherapistDashboard';
 import {
   therapistIdSignal,

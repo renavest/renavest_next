@@ -245,8 +245,8 @@ export async function POST(req: NextRequest) {
           '[STRIPE WEBHOOK] Webhook secret length:',
           STRIPE_CONFIG.WEBHOOK_SECRET?.length || 0,
         );
-        console.error('[STRIPE WEBHOOK] Signature header:', signature);
-        console.error('[STRIPE WEBHOOK] Body preview:', body.substring(0, 200) + '...');
+        console.error('[STRIPE WEBHOOK] Signature header:', '[REDACTED]');
+        console.error('[STRIPE WEBHOOK] Body preview:', '[REDACTED - Sensitive Data]');
       }
 
       // In development, provide helpful debugging information

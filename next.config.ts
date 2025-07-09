@@ -64,19 +64,31 @@ const config: NextConfig = {
     ],
   },
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false, // Enable ESLint checks for production safety
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false, // Enable TypeScript checks for production safety
   },
   async redirects() {
-    return [
-      // {
-      //   source: '/',
-      //   destination: '/',
-      //   permanent: false,
-      // },
-    ];
+    const redirects = [];
+    
+    // In production, redirect all dev routes to 404
+    if (process.env.NODE_ENV === 'production') {
+      redirects.push(
+        {
+          source: '/api/dev/:path*',
+          destination: '/404',
+          permanent: false,
+        },
+        {
+          source: '/dev/:path*',
+          destination: '/404',
+          permanent: false,
+        }
+      );
+    }
+
+    return redirects;
   },
   async headers() {
     return [

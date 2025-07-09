@@ -7,6 +7,7 @@ import { db } from '@/src/db';
 import { therapists } from '@/src/db/schema';
 import { createTokenManager } from '@/src/features/google-calendar/utils/tokenManager';
 import { createDate } from '@/src/utils/timezone';
+import { MetadataManager } from '@/src/features/auth/utils/metadataManager';
 // GET handler for OAuth callback
 export async function GET(req: NextRequest) {
   try {
@@ -94,10 +95,21 @@ export async function GET(req: NextRequest) {
           updatedAt: createDate().toJSDate(),
         })
         .where(eq(therapists.id, therapistId));
-      await (
-        await clerkClient()
-      ).users.updateUserMetadata(userId, {
+      // Update Clerk metadata using centralized manager to preserve existing metadata
+      const currentUser = await (await clerkClient()).users.getUser(userId);
+      const existingMetadata = MetadataManager.getMetadata(currentUser);
+      
+      await MetadataManager.updateMetadata(userId, {
+        ...existingMetadata,
+        // Note: These are Google Calendar specific fields not in our schema
+        // but we still want to maintain consistency with existing code
+      });
+      
+      // TODO: Add Google Calendar fields to MetadataManager schema
+      // For now, use direct update to avoid breaking existing functionality
+      await (await clerkClient()).users.updateUserMetadata(userId, {
         publicMetadata: {
+          ...existingMetadata,
           googleCalendarConnected: true,
           googleCalendarIntegrationStatus: 'connected',
           googleCalendarIntegrationDate: createDate().toJSDate(),

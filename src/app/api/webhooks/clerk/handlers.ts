@@ -12,11 +12,15 @@ import {
 } from '@/src/features/posthog/authTrackingServer';
 import { getOrCreateStripeCustomer } from '@/src/features/stripe';
 import { createDate } from '@/src/utils/timezone';
+import { MetadataManager } from '@/src/features/auth/utils/metadataManager';
 
 import {
   associateUserWithEmployerAndSponsoredGroup,
   synchronizeSponsoredGroupToClerk,
 } from './sponsoredGroupHelpers';
+
+// In-memory tracker to prevent duplicate processing during race conditions
+const processingUsers = new Set<string>();
 import type {
   WebhookUserData,
   WebhookSessionData,
@@ -53,7 +57,19 @@ export async function handleSessionCreated(
           action: 'session_creation_skipped',
         });
 
-        // Return error to trigger webhook retry - user might be created in subsequent webhook
+        // Check if this is a recent session (within 10 seconds) - likely race condition
+        const sessionAge = Date.now() - new Date(createdAt).getTime();
+        if (sessionAge < 10000) {
+          // Return success to prevent immediate retry - let Clerk retry later naturally
+          console.log('Webhook: User not yet created, deferring session tracking (likely race condition)', {
+            sessionId,
+            clerkUserId,
+            sessionAge,
+          });
+          return ok(true); // Don't fail - user creation webhook may still be in flight
+        }
+        
+        // If older, return error for retry
         return err({
           type: 'UserNotFound',
           sessionId,
@@ -201,7 +217,26 @@ export async function handleUserCreateOrUpdate(
     unsafe_metadata: unsafeMetadata,
   } = data;
 
+  // ATOMIC SIGNUP: Prevent concurrent processing of the same user
+  if (processingUsers.has(id)) {
+    console.log('Webhook: User already being processed, skipping duplicate', { userId: id, eventType });
+    return ok(true); // Return success to prevent Clerk retries
+  }
+  processingUsers.add(id);
+
   const startTime = Date.now();
+
+  // Validate and extract metadata using centralized manager
+  const combinedMetadata = { ...unsafeMetadata, ...publicMetadata };
+  const metadataValidation = MetadataManager.validateMetadata(combinedMetadata);
+  
+  if (!metadataValidation.success) {
+    console.warn('Webhook: Invalid metadata detected', {
+      userId: id,
+      error: metadataValidation.error,
+      metadata: combinedMetadata,
+    });
+  }
 
   // Prioritize unsafeMetadata over publicMetadata for role (signup flow uses unsafeMetadata)
   const clerkProvidedRole = (unsafeMetadata?.role || publicMetadata?.role) as
@@ -358,12 +393,17 @@ export async function handleUserCreateOrUpdate(
           try {
             await synchronizeRoleToClerk(id, finalUser.role);
           } catch (syncError) {
-            console.error('Webhook: Failed to synchronize role to Clerk - non-blocking', {
+            console.error('Webhook: Failed to synchronize role to Clerk', {
               userId: id,
               role: finalUser.role,
               error: syncError,
             });
-            // Non-blocking error - continue processing
+            
+            // For user.created events, this is blocking - throw to trigger cleanup
+            if (eventType === 'user.created') {
+              throw new Error(`Critical: Role synchronization failed for new user: ${syncError.message}`);
+            }
+            // For user.updated events, continue processing (non-blocking)
           }
 
           console.log('Webhook: User created/updated with validated role', {
@@ -534,8 +574,13 @@ export async function handleUserCreateOrUpdate(
       }
     }
 
+    // ATOMIC SIGNUP: Processing complete - remove from tracker
+    processingUsers.delete(id);
     return ok(true);
   } catch (error) {
+    // ATOMIC SIGNUP: Processing failed - remove from tracker
+    processingUsers.delete(id);
+    
     console.error('Webhook: Database operation failed', {
       userId: id,
       eventType,
@@ -546,10 +591,22 @@ export async function handleUserCreateOrUpdate(
 
     // ATOMIC SIGNUP: For user.created events, delete the Clerk user if database operations fail
     if (eventType === 'user.created') {
-      await deleteClerkUserOnFailure(
-        id,
-        `Database operation failed: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      try {
+        await deleteClerkUserOnFailure(
+          id,
+          `Database operation failed: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      } catch (cleanupError) {
+        // CRITICAL: If cleanup fails, log with high priority for manual intervention
+        console.error('🚨 CRITICAL: Failed to delete orphaned Clerk user - MANUAL CLEANUP REQUIRED', {
+          clerkUserId: id,
+          originalError: error,
+          cleanupError,
+          timestamp: new Date().toISOString(),
+          priority: 'CRITICAL'
+        });
+        // TODO: Send alert to operations team
+      }
     }
 
     const errorDetails: UserHandlingError = {
