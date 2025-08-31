@@ -3,6 +3,7 @@
 import TherapistRecommendationsWithOverlay from '../insights/TherapistRecommendationsWithOverlay';
 import ChatSection from '../sections/ChatSection';
 import { SharedDocumentsSection } from '../sections/SharedDocumentsSection';
+import FinancialTherapySection from '../sections/FinancialTherapySection';
 import SharePanel from '../sections/SharePanel';
 import { UpcomingSessionsSection } from '../sections/UpcomingSessionsSection';
 import VideoLibrary from '../sections/VideoLibrary';
@@ -92,7 +93,10 @@ export function DashboardContent({
       {/* Share link panel and resources */}
       <div className='md:col-span-1 space-y-6'>
         {/* Current Plan Card */}
-        <CurrentPlanCard className='animate-fade-in-up' />
+        {/* <CurrentPlanCard className='animate-fade-in-up' /> */}
+
+        {/* Financial Therapy Section */}
+        <FinancialTherapySection />
 
         {/* Share Panel */}
         <SharePanel onShareClick={onShareClick} referralLink={referralLink} />

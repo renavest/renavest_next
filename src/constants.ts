@@ -10,6 +10,7 @@ export const ALLOWED_EMAILS = [
   'smphotography39@gmail.com',
   'rameau.stan@gmail.com',
   'info@sofenomenal.com',
+  'bsorianodev@gmail.com'
 ];
 
 // --- NEW: Employer Email Domain/Email to Name Mapping ---

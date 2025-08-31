@@ -51,3 +51,6 @@ next-env.d.ts
 .env.local
 
 src/scripts/
+# clerk configuration (can include secrets)
+/.clerk/
+.claude
