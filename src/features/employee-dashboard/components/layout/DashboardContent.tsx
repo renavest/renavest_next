@@ -28,32 +28,6 @@ export function DashboardContent({
     <div className='grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8'>
       {/* Main content column */}
       <div className='md:col-span-2 space-y-8'>
-        {/* Card with subtle hover effect */}
-        <div
-          className='bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 
-          overflow-hidden border border-gray-100 animate-fade-in-up delay-100'
-        >
-          <div className='p-6'>
-            <h3 className='text-xl font-semibold text-gray-800 mb-4 flex items-center'>
-              <span className='bg-blue-100 p-2 rounded-lg mr-3'>
-                <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  className='h-5 w-5 text-blue-600'
-                  viewBox='0 0 20 20'
-                  fill='currentColor'
-                >
-                  <path
-                    fillRule='evenodd'
-                    d='M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z'
-                    clipRule='evenodd'
-                  />
-                </svg>
-              </span>
-              Your Upcoming Sessions
-            </h3>
-            <UpcomingSessionsSection />
-          </div>
-        </div>
 
         {/* Therapist recommendations with overlay */}
         <div
@@ -78,6 +52,33 @@ export function DashboardContent({
               onTakeQuizClick={onTakeQuizClick}
               hasCompletedQuiz={hasCompletedQuiz}
             />
+          </div>
+        </div>
+
+        {/* Card with subtle hover effect */}
+        <div
+          className='bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 
+          overflow-hidden border border-gray-100 animate-fade-in-up delay-100'
+        >
+          <div className='p-6'>
+            <h3 className='text-xl font-semibold text-gray-800 mb-4 flex items-center'>
+              <span className='bg-blue-100 p-2 rounded-lg mr-3'>
+                <svg
+                  xmlns='http://www.w3.org/2000/svg'
+                  className='h-5 w-5 text-blue-600'
+                  viewBox='0 0 20 20'
+                  fill='currentColor'
+                >
+                  <path
+                    fillRule='evenodd'
+                    d='M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z'
+                    clipRule='evenodd'
+                  />
+                </svg>
+              </span>
+              Your Upcoming Sessions
+            </h3>
+            <UpcomingSessionsSection />
           </div>
         </div>
 

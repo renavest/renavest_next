@@ -81,17 +81,6 @@ export function UpcomingSessionsSection() {
       <div className='bg-purple-50 rounded-lg p-4 text-center space-y-3 border border-purple-100'>
         <h4 className='text-base font-semibold text-gray-800'>No Upcoming Sessions</h4>
         <p className='text-sm text-gray-600'>Want to bring financial wellness to your company?</p>
-        <button
-          onClick={() => {
-            trackUIInteraction('click', 'calendly_book_demo', {
-              context: 'upcoming_sessions_no_sessions',
-            });
-            window.open('https://calendly.com/rameau-stan/one-on-one', '_blank');
-          }}
-          className='bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors'
-        >
-          Let's talk
-        </button>
       </div>
     );
   }

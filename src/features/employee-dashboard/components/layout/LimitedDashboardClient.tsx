@@ -128,7 +128,7 @@ export default function LimitedDashboardClient() {
         </div>
 
         {/* Take Quiz Banner (Replaces Weekly Money Belief) */}
-        <ConsultationBanner onTakeQuizClick={handleTakeQuizClick} />
+        {/* <ConsultationBanner onTakeQuizClick={handleTakeQuizClick} /> */}
 
         {/* Tab Navigation */}
         <div className='bg-white rounded-xl shadow-sm border border-gray-200 mb-8'>
