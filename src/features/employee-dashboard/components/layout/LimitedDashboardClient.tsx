@@ -18,7 +18,6 @@ import { DashboardContent } from './DashboardContent';
 import EmployeeNavbar from './EmployeeNavbar';
 import FinancialTherapyModal from '../modals/FinancialTherapyModal';
 import { ClientFormsDashboard } from '../forms/ClientFormsDashboard';
-import { QuizModal } from '../modals/QuizModal';
 
 // const showOnboardingSignal = computed(() => {
 //   return (
@@ -31,8 +30,6 @@ export default function LimitedDashboardClient() {
   const { user } = useUser();
   const [referralLink, setReferralLink] = useState('');
   const [isFinancialTherapyModalOpen, setIsFinancialTherapyModalOpen] = useState(false);
-  const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
-  const [hasCompletedQuiz, setHasCompletedQuiz] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'forms'>('dashboard');
   useEffect(() => {
     if (user && user.id) {
@@ -79,25 +76,6 @@ export default function LimitedDashboardClient() {
     } else {
       handleCopyLink();
     }
-  };
-
-  const handleTakeQuizClick = () => {
-    // Track quiz start event
-    posthog.capture('quiz_started', {
-      userId: user?.id,
-      userEmail: user?.emailAddresses[0]?.emailAddress,
-    });
-
-    setIsQuizModalOpen(true);
-  };
-
-  const handleQuizComplete = () => {
-    setHasCompletedQuiz(true);
-    // Track quiz completion
-    posthog.capture('quiz_completed_dashboard', {
-      userId: user?.id,
-      userEmail: user?.emailAddresses[0]?.emailAddress,
-    });
   };
 
   return (
@@ -159,8 +137,6 @@ export default function LimitedDashboardClient() {
         {/* Tab Content */}
         {activeTab === 'dashboard' ? (
           <DashboardContent
-            hasCompletedQuiz={hasCompletedQuiz}
-            onTakeQuizClick={handleTakeQuizClick}
             onShareClick={handleShareClick}
             referralLink={referralLink}
             setIsFinancialTherapyModalOpen={setIsFinancialTherapyModalOpen}
@@ -168,27 +144,9 @@ export default function LimitedDashboardClient() {
         ) : (
           <ClientFormsDashboard />
         )}
-        {isQuizModalOpen ? (
-          <div className='flex justify-center mt-8'>
-            <a
-              href='/explore'
-              className='bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg shadow-md font-semibold transition-colors duration-300'
-            >
-              View More Therapists
-            </a>
-          </div>
-        ) : (
-          <ComingSoon />
-        )}
       </main>
       {/* {showOnboardingSignal.value && <OnboardingModal />} */}
 
-      {/* Render modals */}
-      <QuizModal
-        isOpen={isQuizModalOpen}
-        onClose={() => setIsQuizModalOpen(false)}
-        onComplete={handleQuizComplete}
-      />
     </div>
   );
 }
