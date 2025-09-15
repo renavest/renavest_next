@@ -8,18 +8,10 @@ import SharePanel from '../sections/SharePanel';
 import { UpcomingSessionsSection } from '../sections/UpcomingSessionsSection';
 import VideoLibrary from '../sections/VideoLibrary';
 import { CurrentPlanCard } from '../subscription/CurrentPlanCard';
+import { DashboardContentProps } from '../../types';
 
-interface DashboardContentProps {
-  onShareClick: () => void;
-  referralLink: string;
-  setIsFinancialTherapyModalOpen: (isOpen: boolean) => void;
-}
-
-export function DashboardContent({
-  onShareClick,
-  referralLink,
-  setIsFinancialTherapyModalOpen,
-}: DashboardContentProps) {
+export function DashboardContent(props: DashboardContentProps) {
+  const { onShareClick, referralLink, setIsFinancialTherapyModalOpen } = props;
   return (
     <div className='grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8'>
       {/* Main content column */}

@@ -18,11 +18,13 @@ import { DashboardContent } from './DashboardContent';
 import EmployeeNavbar from './EmployeeNavbar';
 import FinancialTherapyModal from '../modals/FinancialTherapyModal';
 import { ClientFormsDashboard } from '../forms/ClientFormsDashboard';
+import { QuizModal } from '../modals/QuizModal';
+import EmployeeExploreContent from '../explore/EmployeeExploreContent';
 
 // const showOnboardingSignal = computed(() => {
 //   return (
 //     !onboardingSignal.value.isComplete &&
-//     (typeof window !== 'undefined' ? window.location.pathname !== '/explore' : false)
+//     (typeof window !== 'undefined' ? window.location.pathname !== '/employee' : false)
 //   );
 // });
 
@@ -30,7 +32,9 @@ export default function LimitedDashboardClient() {
   const { user } = useUser();
   const [referralLink, setReferralLink] = useState('');
   const [isFinancialTherapyModalOpen, setIsFinancialTherapyModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'forms'>('dashboard');
+  const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
+  const [hasCompletedQuiz, setHasCompletedQuiz] = useState(false);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'forms' | 'explore'>('dashboard');
   useEffect(() => {
     if (user && user.id) {
       const baseUrl = window.location.origin;
@@ -76,6 +80,25 @@ export default function LimitedDashboardClient() {
     } else {
       handleCopyLink();
     }
+  };
+
+  const handleTakeQuizClick = () => {
+    // Track quiz start event
+    posthog.capture('quiz_started', {
+      userId: user?.id,
+      userEmail: user?.emailAddresses[0]?.emailAddress,
+    });
+
+    setIsQuizModalOpen(true);
+  };
+
+  const handleQuizComplete = () => {
+    setHasCompletedQuiz(true);
+    // Track quiz completion
+    posthog.capture('quiz_completed_dashboard', {
+      userId: user?.id,
+      userEmail: user?.emailAddresses[0]?.emailAddress,
+    });
   };
 
   return (
@@ -131,22 +154,54 @@ export default function LimitedDashboardClient() {
             >
               Forms
             </button>
+            <button
+              onClick={() => setActiveTab('explore')}
+              className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
+                activeTab === 'explore'
+                  ? 'text-purple-600 border-b-2 border-purple-600 bg-purple-50'
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              Therapists
+            </button>
           </div>
         </div>
 
         {/* Tab Content */}
         {activeTab === 'dashboard' ? (
           <DashboardContent
+            hasCompletedQuiz={hasCompletedQuiz}
+            onTakeQuizClick={handleTakeQuizClick}
             onShareClick={handleShareClick}
             referralLink={referralLink}
             setIsFinancialTherapyModalOpen={setIsFinancialTherapyModalOpen}
           />
-        ) : (
+        ) : activeTab === 'forms' ? (
           <ClientFormsDashboard />
+        ) : (
+          <EmployeeExploreContent />
+        )}
+        {isQuizModalOpen ? (
+          <div className='flex justify-center mt-8'>
+            <button
+              onClick={() => setActiveTab('explore')}
+              className='bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg shadow-md font-semibold transition-colors duration-300'
+            >
+              View More Therapists
+            </button>
+          </div>
+        ) : (
+          <ComingSoon />
         )}
       </main>
       {/* {showOnboardingSignal.value && <OnboardingModal />} */}
 
+      {/* Render modals */}
+      <QuizModal
+        isOpen={isQuizModalOpen}
+        onClose={() => setIsQuizModalOpen(false)}
+        onComplete={handleQuizComplete}
+      />
     </div>
   );
 }

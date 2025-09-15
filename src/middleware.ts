@@ -40,8 +40,8 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     return redirectToSignIn({ returnBackUrl: req.url });
   }
 
-  // 3. Allow billing and booking routes for all authenticated users (no role requirement)
-  if (isBillingRoute(req) || isBookRoute(req)) {
+  // 3. Allow billing, booking, and explore routes for all authenticated users (no role requirement)
+  if (isBillingRoute(req) || isBookRoute(req) || isExploreRoute(req)) {
     return NextResponse.next();
   }
 
@@ -72,18 +72,6 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
       matcher: isEmployeeRoute,
       requiredRole: null, // Allow both employee and individual_consumer
       allowedRoles: ['employee', 'individual_consumer'] as UserRole[],
-    },
-    // Explore page requires any valid role (employee, therapist, or employer_admin)
-    {
-      matcher: isExploreRoute,
-      requiredRole: null, // Special case - any authenticated user with valid role
-      allowedRoles: [
-        'employee',
-        'therapist',
-        'employer_admin',
-        'super_admin',
-        'individual_consumer',
-      ] as UserRole[],
     },
   ];
 
