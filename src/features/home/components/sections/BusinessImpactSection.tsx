@@ -1,6 +1,6 @@
 'use client';
 
-import { TrendingUp, Users, Shield } from 'lucide-react';
+import { Brain, Users, Salad } from 'lucide-react';
 import posthog from 'posthog-js';
 import { useEffect, useState, useRef } from 'react';
 
@@ -60,15 +60,14 @@ function BusinessImpactSection() {
         >
           <div className='max-w-3xl mx-auto text-center mb-20'>
             <span className='px-4 py-2 bg-[#9071FF]/10 text-[#9071FF] font-medium rounded-full text-sm mb-4 inline-block'>
-              THE BUSINESS IMPACT
+              PARTNER WITH US
             </span>
             <h2 className='text-3xl md:text-4xl font-bold text-gray-900 mb-6'>
-              When Financial Stress Disappears, Performance Soars
+              Take the weight off your wallet and your mind.
             </h2>
             <p className='text-xl text-gray-600 leading-relaxed'>
               Financial therapy combines financial know-how with emotional support to help people
-              feel and behave better with their money. By addressing financial stress, you unlock
-              unprecedented workplace performance.
+              feel and behave better with their money.
             </p>
           </div>
 
@@ -79,12 +78,11 @@ function BusinessImpactSection() {
                 onMouseEnter={() => trackStatHover('productivity', '34% increase in productivity')}
               >
                 <div className='text-[#9071FF] mb-6'>
-                  <TrendingUp size={48} />
+                  <Users size={48} />
                 </div>
-                <h3 className='text-2xl font-bold mb-3'>34% increase in productivity</h3>
+                <h3 className='text-2xl font-bold mb-3'>7 in 10 say financial uncertainty causes anxiety or depression</h3>
                 <p className='text-gray-600'>
-                  Financial therapists can help alleviate mental load, freeing employees to focus on
-                  their core responsibilities.
+                  Money stress isn’t just about bills — it affects emotional well-being.
                 </p>
               </div>
             </div>
@@ -95,13 +93,15 @@ function BusinessImpactSection() {
                 onMouseEnter={() => trackStatHover('retention', '48% improvement in retention')}
               >
                 <div className='text-[#9071FF] mb-6'>
-                  <Users size={48} />
+                  <Brain size={48} />
                 </div>
-                <h3 className='text-2xl font-bold mb-3'>48% improvement in retention</h3>
+                <h3 className='text-2xl font-bold mb-3'>52% say money has a negative impact on their mental health.
+                </h3>
                 <p className='text-gray-600'>
-                  Employees who feel supported in their financial wellness are significantly more
-                  likely to stay with their employer.
+                  Nearly half say money harms their mental health.
+                  
                 </p>
+                <p className='text-gray-600'>If you’ve ever lost sleep over bills or debt, you’re not alone. 1 in 2 people feel the same.</p>
               </div>
             </div>
 
@@ -113,14 +113,13 @@ function BusinessImpactSection() {
                 }
               >
                 <div className='text-[#9071FF] mb-6'>
-                  <Shield size={48} />
+                  <Salad size={48} />
                 </div>
                 <h3 className='text-2xl font-bold mb-3'>
-                  22% reduction in financial-related absenteeism
+                  72% of Gen Z are actively trying to improve financial health
                 </h3>
                 <p className='text-gray-600'>
-                  Financial wellness programs directly correlate with reduced stress-related sick
-                  days and absences.
+                  You’re not alone, most of your generation is working toward the same goal: better financial health.
                 </p>
               </div>
             </div>

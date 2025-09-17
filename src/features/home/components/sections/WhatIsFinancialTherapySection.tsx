@@ -66,7 +66,7 @@ function WhatIsFinancialTherapySection() {
             <p className='text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed'>
               Regular therapy avoids money talk. Financial therapy makes it the focus.
               <span className='block mt-2 font-medium text-gray-800'>
-                Heal your employees' relationship with money.
+                Heal your relationship with money.
               </span>
             </p>
           </div>
@@ -132,14 +132,13 @@ function WhatIsFinancialTherapySection() {
               Ready to See Financial Therapy in Action?
             </h3>
             <p className='text-lg text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed'>
-              Book a 15-minute demo to see how financial therapy can transform your team's
-              relationship with money and your bottom line.
+              Book a 30 minute consultation to connect with a financial therapists.
             </p>
             <button
               onClick={handleBookDemoClick}
               className='inline-flex items-center gap-2 px-8 py-4 bg-[#9071FF] text-white rounded-xl hover:bg-[#9071FF]/90 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl hover:shadow-[#9071FF]/20 transform hover:-translate-y-1'
             >
-              Book a Demo
+              Free Consultation
               <ArrowRight className='w-5 h-5' />
             </button>
           </div>

@@ -2,7 +2,7 @@ import { signal } from '@preact-signals/safe-react';
 import type { Signal } from '@preact-signals/safe-react';
 
 // Theme configuration signals
-export const ctaTextSignal = signal<string>('Book a Demo');
+export const ctaTextSignal = signal<string>('Free Consultation');
 export const isEmployeeSignal = signal<boolean>(false);
 const ctaUrlSignal = signal<string>('https://calendly.com/rameau-stan/one-on-one');
 const loginRedirectSignal = signal<string>('/login');
@@ -88,7 +88,7 @@ const utmConfigurations: UtmConfig = {
       false: {
         signals: [
           { signal: isEmployeeSignal, value: false },
-          { signal: ctaTextSignal, value: 'Book a Demo' },
+          { signal: ctaTextSignal, value: 'Free Consultation' },
           { signal: ctaUrlSignal, value: 'https://calendly.com/rameau-stan/one-on-one' },
           { signal: heroTitleSignal, value: 'Transform Your Workplace with Financial Therapy.' },
           {

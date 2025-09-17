@@ -62,7 +62,7 @@ const DesktopNavigation = ({ isSignedIn }: { isSignedIn: boolean }) => (
       className='text-gray-600 hover:text-[#9071FF] font-medium text-sm truncate'
       onClick={() => trackNavClick('business_impact')}
     >
-      Business Impact
+      Partner with us
     </Link>
     {/* <Link
       href='/pricing'
@@ -111,7 +111,7 @@ const MobileNavLinks = ({ onClose, isSignedIn }: { onClose: () => void; isSigned
     <MobileNavLink
       href='#business-impact'
       icon={<TrendingUp className='h-5 w-5 text-[#9071FF]' />}
-      label='Business Impact'
+      label='Partner with us'
       onClose={onClose}
     />
     {/* <MobileNavLink

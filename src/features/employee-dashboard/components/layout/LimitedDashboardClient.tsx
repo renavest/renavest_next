@@ -34,7 +34,7 @@ export default function LimitedDashboardClient() {
   const [isFinancialTherapyModalOpen, setIsFinancialTherapyModalOpen] = useState(false);
   const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
   const [hasCompletedQuiz, setHasCompletedQuiz] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'forms' | 'explore'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'forms' | 'explore'>('explore');
   useEffect(() => {
     if (user && user.id) {
       const baseUrl = window.location.origin;
@@ -134,6 +134,16 @@ export default function LimitedDashboardClient() {
         {/* Tab Navigation */}
         <div className='bg-white rounded-xl shadow-sm border border-gray-200 mb-8'>
           <div className='flex'>
+          <button
+              onClick={() => setActiveTab('explore')}
+              className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
+                activeTab === 'explore'
+                  ? 'text-purple-600 border-b-2 border-purple-600 bg-purple-50'
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              Therapists
+            </button>            
             <button
               onClick={() => setActiveTab('dashboard')}
               className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
@@ -153,16 +163,6 @@ export default function LimitedDashboardClient() {
               }`}
             >
               Forms
-            </button>
-            <button
-              onClick={() => setActiveTab('explore')}
-              className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
-                activeTab === 'explore'
-                  ? 'text-purple-600 border-b-2 border-purple-600 bg-purple-50'
-                  : 'text-gray-600 hover:text-gray-800'
-              }`}
-            >
-              Therapists
             </button>
           </div>
         </div>
