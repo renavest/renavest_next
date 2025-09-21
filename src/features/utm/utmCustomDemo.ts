@@ -22,9 +22,9 @@ const utmTermSignal = signal<string>('');
 const utmContentSignal = signal<string>('');
 
 // Page content signals
-export const heroTitleSignal = signal<string>('Transform Your Workplace with Financial Therapy.');
+export const heroTitleSignal = signal<string>('Ease Your Money Stress With Financial Therapy.');
 export const heroSubtitleSignal = signal<string>(
-  "Your workforce's financial stress is costing you $2,500 per employee annually.",
+  "80% of Americans feel financial anxiety. Speak with a Financial Therapists Today.",
 );
 export const journeySectionTitleSignal = signal<string>(
   'How financial therapy transforms your workplace.',
