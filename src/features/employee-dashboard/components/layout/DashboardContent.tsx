@@ -6,8 +6,6 @@ import { SharedDocumentsSection } from '../sections/SharedDocumentsSection';
 import FinancialTherapySection from '../sections/FinancialTherapySection';
 import SharePanel from '../sections/SharePanel';
 import { UpcomingSessionsSection } from '../sections/UpcomingSessionsSection';
-import VideoLibrary from '../sections/VideoLibrary';
-import { CurrentPlanCard } from '../subscription/CurrentPlanCard';
 import { DashboardContentProps } from '../../types';
 
 export function DashboardContent(props: DashboardContentProps) {
@@ -61,10 +59,10 @@ export function DashboardContent(props: DashboardContentProps) {
         <FinancialTherapySection />
 
         {/* Share Panel */}
-        <SharePanel onShareClick={onShareClick} referralLink={referralLink} />
+        {/* <SharePanel onShareClick={onShareClick} referralLink={referralLink} /> */}
 
         {/* Additional resources card */}
-        <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-100'>
+        {/* <div className='bg-white rounded-xl p-6 shadow-sm border border-gray-100'>
           <h3 className='font-semibold text-gray-800 mb-3'>Additional Resources</h3>
           <p className='text-gray-600'>
             Want to learn more about financial therapy? Check out our resources below.
@@ -90,10 +88,7 @@ export function DashboardContent(props: DashboardContentProps) {
             </svg>
             Learn More About Financial Therapy
           </button>
-        </div>
-
-        {/* Video Library - Extracted to a separate component */}
-        <VideoLibrary />
+        </div> */}
       </div>
     </div>
   );

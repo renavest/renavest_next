@@ -1,5 +1,6 @@
 'use client';
 
+import { useAuth } from '@clerk/nextjs';
 import { FileText, Download, Calendar, User, FolderOpen, File, AlertCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -66,23 +67,48 @@ const formatDate = (dateString: string): string => {
 };
 
 export function SharedDocumentsSection() {
+  const { isLoaded, isSignedIn } = useAuth();
   const [documents, setDocuments] = useState<SharedDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    fetchSharedDocuments();
-  }, []);
+    // Only fetch documents when Clerk is loaded and user is signed in
+    if (isLoaded && isSignedIn) {
+      // Add a small delay to ensure Clerk authentication is fully established
+      const timer = setTimeout(() => {
+        fetchSharedDocuments();
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    } else if (isLoaded && !isSignedIn) {
+      setError('You need to be logged in to view documents');
+      setLoading(false);
+    }
+  }, [isLoaded, isSignedIn]);
 
   const fetchSharedDocuments = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/employee/documents');
+      const response = await fetch('/api/employee/documents', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
       if (!response.ok) {
-        throw new Error('Failed to fetch shared documents');
+        if (response.status === 401) {
+          throw new Error('You need to be logged in to view documents');
+        }
+        if (response.status === 403) {
+          throw new Error('You do not have permission to view documents');
+        }
+        throw new Error(`Failed to fetch shared documents (${response.status})`);
       }
 
       const data = await response.json();
@@ -99,9 +125,25 @@ export function SharedDocumentsSection() {
     try {
       setDownloadingIds((prev) => new Set(prev).add(document.id));
 
-      const response = await fetch(`/api/employee/documents/${document.id}/download`);
+      const response = await fetch(`/api/employee/documents/${document.id}/download`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
       if (!response.ok) {
-        throw new Error('Failed to generate download link');
+        if (response.status === 401) {
+          throw new Error('You need to be logged in to download documents');
+        }
+        if (response.status === 403) {
+          throw new Error('You do not have permission to download this document');
+        }
+        if (response.status === 404) {
+          throw new Error('Document not found or no longer available');
+        }
+        throw new Error(`Failed to generate download link (${response.status})`);
       }
 
       const data = await response.json();
@@ -125,7 +167,8 @@ export function SharedDocumentsSection() {
     }
   };
 
-  if (loading) {
+  // Show loading state while Clerk is initializing
+  if (!isLoaded || loading) {
     return (
       <div className='bg-white rounded-xl shadow-sm border border-gray-100 p-6'>
         <div className='animate-pulse'>
@@ -172,12 +215,14 @@ export function SharedDocumentsSection() {
         </div>
         <div className='bg-red-50 border border-red-200 rounded-lg p-4'>
           <p className='text-red-700 text-sm'>{error}</p>
-          <button
-            onClick={fetchSharedDocuments}
-            className='mt-3 text-sm text-red-600 hover:text-red-700 font-medium'
-          >
-            Try again
-          </button>
+          {isSignedIn && (
+            <button
+              onClick={fetchSharedDocuments}
+              className='mt-3 text-sm text-red-600 hover:text-red-700 font-medium'
+            >
+              Try again
+            </button>
+          )}
         </div>
       </div>
     );
