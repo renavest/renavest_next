@@ -321,7 +321,7 @@ export function LoginStep() {
 
   // Handler for navigating to signup
   const onSignupClick = () => {
-    currentStep.value = OnboardingStep.ROLE_SELECTION;
+    currentStep.value = OnboardingStep.PURPOSE;
   };
 
   // Handler for forgot password

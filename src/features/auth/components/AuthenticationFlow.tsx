@@ -64,8 +64,8 @@ export default function AuthenticationFlow() {
     switch (currentStep.value) {
       case OnboardingStep.LOGIN:
         return <LoginStep />;
-      case OnboardingStep.ROLE_SELECTION:
-        return <RoleSelectionStep />;
+      // case OnboardingStep.ROLE_SELECTION:
+      //   return <RoleSelectionStep />;
       case OnboardingStep.PURPOSE:
         return <RenavestPurposeStep />;
       case OnboardingStep.AGE_RANGE:
