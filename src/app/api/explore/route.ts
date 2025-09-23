@@ -40,7 +40,7 @@ async function verifyGoogleCalendarIntegration(therapist: {
   }
 }
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const { userId } = await auth();
     if (!userId) {

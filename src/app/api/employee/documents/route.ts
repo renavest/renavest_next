@@ -1,6 +1,6 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { eq, and } from 'drizzle-orm';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 import { db } from '@/src/db';
 import {
@@ -10,7 +10,7 @@ import {
   therapists,
 } from '@/src/db/schema';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const { userId, sessionClaims } = await auth();
     const metadata = sessionClaims?.metadata as { role?: string } | undefined;
