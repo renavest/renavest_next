@@ -19,7 +19,7 @@ export default function CTAButton({ className }: { className?: string }) {
     <>
       {!isEmployeeSignal.value ? (
         <a
-          href='https://calendly.com/rameau-stan/one-on-one'
+          href='/login'
           target='_blank'
           rel='noopener noreferrer'
           onClick={() => trackCtaClick('primary')}
