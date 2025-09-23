@@ -16,6 +16,7 @@ const isPublicRoute = createRouteMatcher([
   '/privacy(.*)',
   '/terms(.*)',
   '/waitlist(.*)',
+  '/partnerships(.*)', // Partnership page must be public
   '/api(.*)', // API routes self-protect
   '/pricing(.*)',
 ]);

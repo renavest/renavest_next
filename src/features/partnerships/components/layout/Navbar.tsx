@@ -58,9 +58,9 @@ const DesktopNavigation = ({ isSignedIn }: { isSignedIn: boolean }) => (
       What is financial therapy?
     </Link>
     <Link
-      href='/partnerships'
+      href='#business-impact'
       className='text-gray-600 hover:text-[#9071FF] font-medium text-sm truncate'
-      onClick={() => trackNavClick('partnerships')}
+      onClick={() => trackNavClick('business_impact')}
     >
       Partner with us
     </Link>
