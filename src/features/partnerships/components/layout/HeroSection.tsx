@@ -17,7 +17,7 @@ function HeroSection() {
             >
               <ul className="list-disc list-inside space-y-2 mt-4">
                 <li>80% of Americans feel financial anxiety.</li>
-                <li>Speak with a Financial Therapists Today</li>
+                <li>Speak with a Financial Therapists Today.</li>
               </ul>
             </div>
           </header>
