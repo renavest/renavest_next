@@ -64,7 +64,6 @@ export default function ProductCard({ product }: ProductCardProps) {
 ```
 
 ### ESLint Rules
-
 We enforce consistent code style using ESLint:
 
 - Max 100 lines per function
