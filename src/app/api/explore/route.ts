@@ -123,7 +123,10 @@ export async function GET() {
       }),
     );
 
-    const allAdvisors = [...advisors, ...pendingAdvisors];
+    // Eric(Note): we only want to show pending therapists for initial launch
+    // DEFINITELY NOT FINAL SOLUTION - PLEASE ADD ADVISORS BACK IN LATER.
+    // const allAdvisors = [...advisors, ...pendingAdvisors];
+    const allAdvisors = [...pendingAdvisors];
 
     return NextResponse.json({ advisors: allAdvisors });
   } catch (error) {
