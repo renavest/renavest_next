@@ -25,7 +25,6 @@ interface BookingFlowProps {
 }
 
 export default function UnifiedBookingFlow({ advisor, userId, userEmail }: BookingFlowProps) {
-  console.log('UnifiedBookingFlow', { advisor, userId, userEmail });
   // Identify user in PostHog on mount
   useEffect(() => {
     if (userId && userEmail && typeof window !== 'undefined') {
