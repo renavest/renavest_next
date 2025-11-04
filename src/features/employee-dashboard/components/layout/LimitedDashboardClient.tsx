@@ -21,6 +21,26 @@ import { ClientFormsDashboard } from '../forms/ClientFormsDashboard';
 import { QuizModal } from '../modals/QuizModal';
 import EmployeeExploreContent from '../explore/EmployeeExploreContent';
 
+
+import TherapistCard from '../therapistCatalog/TherapistCard';
+import TherapistModal from '../therapistCatalog/TherapistModal';
+import therapistsData from '../therapistCatalog/financial_therapists.json';
+
+interface Therapist {
+  id: number;
+  name: string;
+  title: string;
+  expertise: string;
+  certifications: string | null;
+  song: string | null;
+  yoe: number;
+  clientele: string;
+  longbio: string;
+  bookingurl: string;
+  previewblurb: string | null;
+  profileurl: string | null;
+}
+
 // const showOnboardingSignal = computed(() => {
 //   return (
 //     !onboardingSignal.value.isComplete &&
@@ -101,6 +121,20 @@ export default function LimitedDashboardClient() {
     });
   };
 
+  const therapists = therapistsData as Therapist[];
+  const [selectedTherapist, setSelectedTherapist] = useState<Therapist | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleTherapistClick = (therapist: Therapist) => {
+    setSelectedTherapist(therapist);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedTherapist(null);
+  };
+
   return (
     <div className={`min-h-screen ${COLORS.WARM_WHITE.bg} font-sans`}>
       {/* Render toast notification */}
@@ -128,11 +162,36 @@ export default function LimitedDashboardClient() {
           </div>
         </div>
 
+      {/* Therapists Grid */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">
+          {therapists.map((therapist) => (
+            <TherapistCard
+              key={therapist.id}
+              name={therapist.name}
+              title={therapist.title}
+              expertise={therapist.expertise}
+              previewblurb={therapist.previewblurb}
+              profileurl={therapist.profileurl}
+              onClick={() => handleTherapistClick(therapist)}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* Modal */}
+      <TherapistModal
+        therapist={selectedTherapist}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+      />      
+
+
         {/* Take Quiz Banner (Replaces Weekly Money Belief) */}
         {/* <ConsultationBanner onTakeQuizClick={handleTakeQuizClick} /> */}
 
         {/* Tab Navigation */}
-        <div className='bg-white rounded-xl shadow-sm border border-gray-200 mb-8'>
+        {/* <div className='bg-white rounded-xl shadow-sm border border-gray-200 mb-8'>
           <div className='flex'>
           <button
               onClick={() => setActiveTab('explore')}
@@ -165,10 +224,10 @@ export default function LimitedDashboardClient() {
               Forms
             </button>
           </div>
-        </div>
+        </div> */}
 
         {/* Tab Content */}
-        {activeTab === 'dashboard' ? (
+        {/* {activeTab === 'dashboard' ? (
           <DashboardContent
             hasCompletedQuiz={hasCompletedQuiz}
             onTakeQuizClick={handleTakeQuizClick}
@@ -192,7 +251,7 @@ export default function LimitedDashboardClient() {
           </div>
         ) : (
           <ComingSoon />
-        )}
+        )} */}
       </main>
       {/* {showOnboardingSignal.value && <OnboardingModal />} */}
 
