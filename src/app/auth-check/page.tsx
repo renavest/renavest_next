@@ -111,6 +111,7 @@ export default function AuthCheckPage() {
     }
 
     if (user) {
+
       const userRole = getUserRoleFromUser(user);
       const onboardingComplete = user.publicMetadata?.onboardingComplete as boolean | undefined;
 
