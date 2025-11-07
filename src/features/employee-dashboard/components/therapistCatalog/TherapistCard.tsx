@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import React from 'react';
 
 interface TherapistCardProps {
@@ -22,7 +23,6 @@ export default function TherapistCard({
   const expertiseItems = expertise.split(',').map(item => item.trim());
 
   const handleClick = () => {
-    console.log('Card clicked:', name);
     onClick();
   };
 
@@ -30,10 +30,11 @@ export default function TherapistCard({
     <div className="group cursor-pointer" onClick={handleClick}>
       <div className="relative aspect-square overflow-hidden rounded-xl mb-3 bg-gray-100">
         {profileurl ? (
-          <img
+          <Image
             src={profileurl}
             alt={name}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(to bottom right, rgb(144, 113, 255), rgb(164, 143, 255))' }}>
@@ -57,7 +58,7 @@ export default function TherapistCard({
           {expertiseItems.map((item, index) => (
             <span
               key={index}
-              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-accent text-white"
+              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium  bg-accent-dark text-white"
             >
               {item}
             </span>

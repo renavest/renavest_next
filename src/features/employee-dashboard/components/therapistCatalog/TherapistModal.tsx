@@ -50,7 +50,7 @@ const TherapistImage = ({ therapist }: { therapist: Therapist }) => {
       <div className='mt-6 space-y-4'>
         <button
           onClick={handleBookSession}
-          className='block w-full py-3 px-4 text-center text-white rounded-lg transition-colors font-medium bg-accent hover:bg-accent-dark'
+          className='block w-full py-3 px-4 text-center text-white rounded-lg transition-colors font-medium hover:bg-accent bg-accent-dark'
         >
           Book a Session
         </button>
