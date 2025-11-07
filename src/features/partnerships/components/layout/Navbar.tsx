@@ -7,8 +7,6 @@ import Link from 'next/link';
 import posthog from 'posthog-js';
 import { useEffect, useState } from 'react';
 
-import { ctaTextSignal } from '@/src/features/utm/utmCustomDemo';
-
 import CTAButton from '../interactive/CTAButton';
 
 const getHeaderClassName = (isHeaderScrolled: boolean) => `
@@ -146,15 +144,9 @@ const MobileNavLinks = ({ onClose, isSignedIn }: { onClose: () => void; isSigned
           >
             Sign In
           </Link>
-          <a
-            href='https://calendly.com/rameau-stan/one-on-one'
-            target='_blank'
-            rel='noopener noreferrer'
-            className='flex items-center justify-center px-4 py-3 bg-[#9071FF] text-white rounded-lg w-full min-h-[44px]'
-            onClick={() => trackNavClick('primary', true)}
-          >
-            <span className='text-base font-medium'>{ctaTextSignal.value}</span>
-          </a>
+          <div onClick={onClose}>
+            <CTAButton className='flex items-center justify-center px-4 py-3 bg-[#9071FF] text-white rounded-lg w-full min-h-[44px] text-base font-medium' />
+          </div>
         </>
       )}
     </div>
