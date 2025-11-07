@@ -199,6 +199,14 @@ export function LoginStep() {
     trackAuthPageView('login');
   }, []);
 
+  // Check for signup action in URL and redirect to signup flow
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('action') === 'signup') {
+      currentStep.value = OnboardingStep.PURPOSE;
+    }
+  }, []);
+
   // Handle redirect after successful login when user becomes available
   useEffect(() => {
     if (loginSuccess && user) {
