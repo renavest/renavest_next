@@ -169,7 +169,6 @@ export default function AuthCheckPage() {
         });
 
         // Complete the progress and redirect
-        setActualProgress(100);
         setTimeout(() => {
           router.replace(targetRoute);
         }, 800);
