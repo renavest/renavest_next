@@ -31,7 +31,6 @@ src/
 │   └── types/          # Shared TypeScript types
 │
 └── public/             # Static assets
-
 ```
 
 ## Coding Standards
