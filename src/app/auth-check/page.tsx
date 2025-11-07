@@ -111,25 +111,61 @@ export default function AuthCheckPage() {
     }
 
     if (user) {
-
       const userRole = getUserRoleFromUser(user);
+      const unsafeOnboardingComplete = user.unsafeMetadata?.onboardingComplete as boolean | undefined;
       const onboardingComplete = user.publicMetadata?.onboardingComplete as boolean | undefined;
 
-      console.log('AuthCheckPage - User Data:', {
+      console.info('AuthCheckPage - User Data:', {
         userId: user.id,
         roleFromMetadata: userRole,
         onboardingCompleteFromMetadata: onboardingComplete,
+        unsafeOnboardingComplete,
         publicMetadata: user.publicMetadata,
+        unsafeMetadata: user.unsafeMetadata,
         retryCount,
       });
 
+      // Check if onboardingComplete or role is in unsafeMetadata but not in publicMetadata
+      // If so, sync them to publicMetadata via API (direct assignment won't persist to Clerk)
+      const unsafeRole = user.unsafeMetadata?.role as string | undefined;
+      const publicRole = user.publicMetadata?.role as string | undefined;
+      const needsOnboardingSync = unsafeOnboardingComplete === true && onboardingComplete !== true;
+      const needsRoleSync = unsafeRole && !publicRole;
+      
+      if (needsOnboardingSync || needsRoleSync) {
+        (async () => {
+          try {
+            const syncResponse = await fetch('/api/auth/sync-onboarding-metadata', {
+              method: 'POST',
+            });
+
+            if (syncResponse.ok) {
+              const syncResult = await syncResponse.json();
+              console.info('AuthCheckPage - Synced metadata from unsafeMetadata:', syncResult);
+              
+              // Reload user to get updated metadata
+              await user.reload();
+            } else {
+              console.error('AuthCheckPage - Failed to sync metadata:', await syncResponse.text());
+            }
+          } catch (syncError) {
+            console.error('AuthCheckPage - Error syncing metadata:', syncError);
+          }
+        })();
+      }
+
       // Check if user has both role and onboardingComplete flag (fast-path)
-      if (userRole && onboardingComplete) {
+      // Also check unsafeMetadata as fallback in case sync hasn't completed yet
+      const effectiveOnboardingComplete = onboardingComplete || unsafeOnboardingComplete;
+      if (userRole && effectiveOnboardingComplete) {
         const targetRoute = getRouteForRole(userRole);
-        console.log('AuthCheckPage - Redirecting to dashboard:', {
+        console.info('AuthCheckPage - Redirecting to dashboard:', {
           userRole,
           targetRoute,
           userId: user.id,
+          onboardingComplete,
+          unsafeOnboardingComplete,
+          effectiveOnboardingComplete,
         });
 
         // Complete the progress and redirect
@@ -175,7 +211,7 @@ export default function AuthCheckPage() {
 
             if (syncResponse.ok) {
               const syncResult = await syncResponse.json();
-              console.log('Manual sync successful:', syncResult);
+              console.info('Manual sync successful:', syncResult);
 
               // Reload user and redirect to their appropriate dashboard
               await user.reload();
