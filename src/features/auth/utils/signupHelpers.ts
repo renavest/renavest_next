@@ -147,7 +147,7 @@ export async function handleEmailPasswordSignup(
     lastName: lastName,
     unsafeMetadata: {
       role: selectedRole,
-      onboardingComplete: false,
+      onboardingComplete: true, // Eric(Note): Temporarily setting this to true because we don't have full onboarding yet
       firstName: firstName,
       lastName: lastName,
       email: email,
