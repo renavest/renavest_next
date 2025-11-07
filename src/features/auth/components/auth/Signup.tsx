@@ -250,16 +250,16 @@ const SignupForm = ({
   onBackToLogin: () => void;
 }) => (
   <div className='space-y-6'>
-    <div className='flex flex-col items-center mb-8'>
+    <div className='flex flex-col items-center mb-0'>
       <div className='text-base text-gray-900 mb-2 text-center'>"You're almost there!"</div>
       <h2 className='text-2xl font-bold text-gray-900 mb-4 text-center'>
         Just one more step to set up your account.
       </h2>
     </div>
 
-    {selectedRole === 'employee' && (
+    {/* {selectedRole === 'employee' && (
       <GoogleSignupButton onGoogleSignup={onGoogleSignup} isLoading={isGoogleSignupLoading} />
-    )}
+    )} */}
 
     <div className='space-y-4'>
       <SignupFormFields />
