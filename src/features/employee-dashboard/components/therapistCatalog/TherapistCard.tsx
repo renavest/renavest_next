@@ -34,7 +34,7 @@ export default function TherapistCard({
             src={profileurl}
             alt={name}
             fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-cover object-top transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(to bottom right, rgb(144, 113, 255), rgb(164, 143, 255))' }}>
