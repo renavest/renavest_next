@@ -19,7 +19,7 @@ export default function CTAButton({ className }: { className?: string }) {
     <>
       {!isEmployeeSignal.value ? (
         <a
-          href='/login'
+          href='/login?action=signup'
           target='_blank'
           rel='noopener noreferrer'
           onClick={() => trackCtaClick('primary')}
@@ -27,7 +27,7 @@ export default function CTAButton({ className }: { className?: string }) {
           <button className={`${className}`}>{ctaTextSignal.value}</button>
         </a>
       ) : (
-        <Link href='/login' onClick={() => trackCtaClick('primary')}>
+        <Link href='/login?action=signup' onClick={() => trackCtaClick('primary')}>
           <button className={`${className}`}>{ctaTextSignal.value}</button>
         </Link>
       )}

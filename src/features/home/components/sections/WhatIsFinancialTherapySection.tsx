@@ -47,7 +47,7 @@ function WhatIsFinancialTherapySection() {
         source: 'financial_therapy_section',
         url: window.location.href,
       });
-      window.open('https://calendly.com/rameau-stan/one-on-one', '_blank');
+      window.location.href = '/login?action=signup';
     }
   };
 
