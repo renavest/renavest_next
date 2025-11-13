@@ -22,7 +22,7 @@ const utmTermSignal = signal<string>('');
 const utmContentSignal = signal<string>('');
 
 // Page content signals
-export const heroTitleSignal = signal<string>('Ease Your Money Stress With Financial Therapy.');
+export const heroTitleSignal = signal<string>('Ease Your Money Stress With Financial Therapy');
 export const heroSubtitleSignal = signal<string>(
   "80% of Americans feel financial anxiety. Speak with a Financial Therapists Today.",
 );
