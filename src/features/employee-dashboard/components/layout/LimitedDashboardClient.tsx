@@ -163,7 +163,7 @@ export default function LimitedDashboardClient() {
         </div>
 
       {/* Therapists Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      {/* <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">
           {therapists.map((therapist) => (
             <TherapistCard
@@ -177,21 +177,21 @@ export default function LimitedDashboardClient() {
             />
           ))}
         </div>
-      </section>
+      </section> */}
 
       {/* Modal */}
-      <TherapistModal
+      {/* <TherapistModal
         therapist={selectedTherapist}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-      />      
+      />       */}
 
 
         {/* Take Quiz Banner (Replaces Weekly Money Belief) */}
         {/* <ConsultationBanner onTakeQuizClick={handleTakeQuizClick} /> */}
 
         {/* Tab Navigation */}
-        {/* <div className='bg-white rounded-xl shadow-sm border border-gray-200 mb-8'>
+        <div className='bg-white rounded-xl shadow-sm border border-gray-200 mb-8'>
           <div className='flex'>
           <button
               onClick={() => setActiveTab('explore')}
@@ -224,10 +224,10 @@ export default function LimitedDashboardClient() {
               Forms
             </button>
           </div>
-        </div> */}
+        </div>
 
         {/* Tab Content */}
-        {/* {activeTab === 'dashboard' ? (
+        {activeTab === 'dashboard' ? (
           <DashboardContent
             hasCompletedQuiz={hasCompletedQuiz}
             onTakeQuizClick={handleTakeQuizClick}
@@ -251,7 +251,7 @@ export default function LimitedDashboardClient() {
           </div>
         ) : (
           <ComingSoon />
-        )} */}
+        )}
       </main>
       {/* {showOnboardingSignal.value && <OnboardingModal />} */}
 
