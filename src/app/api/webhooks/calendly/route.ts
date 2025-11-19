@@ -55,6 +55,9 @@ export async function POST(req: NextRequest) {
       const createdBy = event.created_by; // Calendly user URI who owns the event type
       const eventMemberships = scheduledEvent?.event_memberships || [];
 
+      // Log detailed event memberships for debugging
+      console.info('Event Memberships (detailed):', JSON.stringify(eventMemberships, null, 2));
+
       console.info('New Calendly Booking:', {
         inviteeName,
         inviteeEmail,
@@ -141,6 +144,10 @@ export async function POST(req: NextRequest) {
                 <h2 style="margin-top: 0;">Therapist/Host Info</h2>
                 <p><strong>Calendly User ID:</strong> ${therapistUserId}</p>
                 <p style="font-size: 12px; color: #6b7280;">Full URI: ${createdBy}</p>
+                <div style="margin-top: 16px;">
+                  <p style="margin: 0 0 8px 0;"><strong>Event Memberships:</strong></p>
+                  <pre style="background: white; padding: 12px; border-radius: 4px; overflow-x: auto; font-size: 11px; margin: 0;">${JSON.stringify(eventMemberships, null, 2)}</pre>
+                </div>
               </div>
               
               ${qaHtml}
