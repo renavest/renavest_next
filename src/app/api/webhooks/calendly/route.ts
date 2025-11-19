@@ -36,21 +36,38 @@ export async function POST(req: NextRequest) {
 
     // Handle new bookings
     if (event.event === 'invitee.created') {
-      const invitee = event.payload?.invitee;
-      const eventDetails = event.payload?.event;
-      const eventType = event.payload?.event_type;
-      const questionsAndAnswers = event.payload?.questions_and_answers;
+      const payload = event.payload;
+      const scheduledEvent = payload?.scheduled_event;
+      const questionsAndAnswers = payload?.questions_and_answers;
+      
+      // Extract invitee info (directly in payload)
+      const inviteeName = payload?.name;
+      const inviteeEmail = payload?.email;
+      const inviteeTimezone = payload?.timezone;
+      
+      // Extract event info
+      const eventName = scheduledEvent?.name;
+      const startTimeStr = scheduledEvent?.start_time;
+      const endTimeStr = scheduledEvent?.end_time;
+      const location = scheduledEvent?.location;
+      
+      // Extract host/therapist info
+      const createdBy = event.created_by; // Calendly user URI who owns the event type
+      const eventMemberships = scheduledEvent?.event_memberships || [];
 
       console.info('New Calendly Booking:', {
-        inviteeName: invitee?.name,
-        inviteeEmail: invitee?.email,
-        eventType: eventType?.name,
-        startTime: eventDetails?.start_time,
+        inviteeName,
+        inviteeEmail,
+        eventName,
+        startTime: startTimeStr,
+        therapistUri: createdBy,
+        eventMemberships,
       });
 
       // Send admin notification email
-      if (invitee && eventDetails && eventType) {
-        const startTime = new Date(eventDetails.start_time);
+      if (inviteeName && inviteeEmail && scheduledEvent && startTimeStr) {
+        const startTime = new Date(startTimeStr);
+        const endTime = new Date(endTimeStr);
         const date = startTime.toLocaleDateString('en-US', {
           weekday: 'long',
           year: 'numeric',
@@ -62,10 +79,18 @@ export async function POST(req: NextRequest) {
           minute: '2-digit',
           timeZoneName: 'short',
         });
+        const endTimeFormatted = endTime.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          timeZoneName: 'short',
+        });
+        
+        // Calculate duration
+        const durationMinutes = Math.round((endTime.getTime() - startTime.getTime()) / 60000);
 
         const meetingLink =
-          eventDetails.location?.join_url ||
-          eventDetails.location?.location ||
+          location?.join_url ||
+          location?.location ||
           'Not specified';
 
         // Build Q&A section if available
@@ -80,28 +105,31 @@ export async function POST(req: NextRequest) {
             </div>
           `;
         }
+        
+        // Extract therapist user ID from URI
+        const therapistUserId = createdBy ? createdBy.split('/').pop() : 'Unknown';
 
         await resend.emails.send({
           from: 'Renavest Calendly <calendly@booking.renavestapp.com>',
           to: ADMIN_EMAILS,
-          subject: `New Booking: ${invitee.name} - ${eventType.name}`,
+          subject: `New Booking: ${inviteeName} - ${eventName}`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h1 style="color: #9071FF;">📅 New Calendly Booking</h1>
               
               <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
                 <h2 style="margin-top: 0;">Client Details</h2>
-                <p><strong>Name:</strong> ${invitee.name}</p>
-                <p><strong>Email:</strong> ${invitee.email}</p>
-                ${invitee.timezone ? `<p><strong>Timezone:</strong> ${invitee.timezone}</p>` : ''}
+                <p><strong>Name:</strong> ${inviteeName}</p>
+                <p><strong>Email:</strong> ${inviteeEmail}</p>
+                ${inviteeTimezone ? `<p><strong>Timezone:</strong> ${inviteeTimezone}</p>` : ''}
               </div>
               
               <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
                 <h2 style="margin-top: 0;">Session Details</h2>
-                <p><strong>Event Type:</strong> ${eventType.name}</p>
+                <p><strong>Event Type:</strong> ${eventName}</p>
                 <p><strong>Date:</strong> ${date}</p>
-                <p><strong>Time:</strong> ${time}</p>
-                <p><strong>Duration:</strong> ${eventType.duration} minutes</p>
+                <p><strong>Time:</strong> ${time} - ${endTimeFormatted}</p>
+                <p><strong>Duration:</strong> ${durationMinutes} minutes</p>
                 <p><strong>Meeting Link:</strong> ${
                   typeof meetingLink === 'string' && meetingLink.startsWith('http')
                     ? `<a href="${meetingLink}">${meetingLink}</a>`
@@ -109,10 +137,16 @@ export async function POST(req: NextRequest) {
                 }</p>
               </div>
               
+              <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
+                <h2 style="margin-top: 0;">Therapist/Host Info</h2>
+                <p><strong>Calendly User ID:</strong> ${therapistUserId}</p>
+                <p style="font-size: 12px; color: #6b7280;">Full URI: ${createdBy}</p>
+              </div>
+              
               ${qaHtml}
               
               <p style="color: #6b7280; font-size: 12px; margin-top: 32px;">
-                Event ID: ${eventDetails.uuid}
+                Event ID: ${scheduledEvent.uri}
               </p>
             </div>
           `,
@@ -124,33 +158,42 @@ export async function POST(req: NextRequest) {
 
     // Handle cancellations
     if (event.event === 'invitee.canceled') {
-      const invitee = event.payload?.invitee;
-      const eventDetails = event.payload?.event;
-      const eventType = event.payload?.event_type;
+      const payload = event.payload;
+      const scheduledEvent = payload?.scheduled_event;
+      
+      const inviteeName = payload?.name;
+      const inviteeEmail = payload?.email;
+      const cancelReason = payload?.cancellation?.reason;
+      const eventName = scheduledEvent?.name;
+      
+      const createdBy = event.created_by;
+      const therapistUserId = createdBy ? createdBy.split('/').pop() : 'Unknown';
 
       console.info('Calendly Booking Canceled:', {
-        inviteeName: invitee?.name,
-        inviteeEmail: invitee?.email,
-        cancelReason: eventDetails?.cancel_reason,
+        inviteeName,
+        inviteeEmail,
+        cancelReason,
+        therapistUri: createdBy,
       });
 
       // Send cancellation notification
-      if (invitee && eventDetails && eventType) {
+      if (inviteeName && inviteeEmail && scheduledEvent) {
         await resend.emails.send({
           from: 'Renavest Calendly <calendly@booking.renavestapp.com>',
           to: ADMIN_EMAILS,
-          subject: `Booking Canceled: ${invitee.name} - ${eventType.name}`,
+          subject: `Booking Canceled: ${inviteeName} - ${eventName}`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h1 style="color: #dc2626;">🚫 Booking Canceled</h1>
               
               <div style="background: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <p><strong>Client:</strong> ${invitee.name} (${invitee.email})</p>
-                <p><strong>Event:</strong> ${eventType.name}</p>
-                ${eventDetails.cancel_reason ? `<p><strong>Reason:</strong> ${eventDetails.cancel_reason}</p>` : ''}
+                <p><strong>Client:</strong> ${inviteeName} (${inviteeEmail})</p>
+                <p><strong>Event:</strong> ${eventName}</p>
+                <p><strong>Therapist User ID:</strong> ${therapistUserId}</p>
+                ${cancelReason ? `<p><strong>Reason:</strong> ${cancelReason}</p>` : ''}
               </div>
               
-              <p style="color: #6b7280; font-size: 12px;">Event ID: ${eventDetails.uuid}</p>
+              <p style="color: #6b7280; font-size: 12px;">Event ID: ${scheduledEvent.uri}</p>
             </div>
           `,
         });
@@ -165,4 +208,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 });
   }
 }
-
