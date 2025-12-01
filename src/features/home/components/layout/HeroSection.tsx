@@ -15,10 +15,8 @@ function HeroSection() {
               className='text-base md:text-lg text-gray-600 mb-8 leading-relaxed px-4 lg:px-0'
               role='doc-subtitle'
             >
-              <ul className="list-disc list-inside space-y-2 mt-4">
-                <li>80% of Americans feel financial anxiety</li>
-                <li>Speak with a Financial Therapists Today</li>
-              </ul>
+              <span>80% of Americans feel financial anxiety. You’re not alone!
+              Take a breath. A Financial Therapist is here to help.</span>
             </div>
           </header>
           <div className='flex justify-center lg:justify-start px-4 lg:px-0'>

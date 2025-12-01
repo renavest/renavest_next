@@ -14,19 +14,20 @@ const CardOne = () => (
           <div className='w-8 h-8 bg-[#9071FF] rounded-full flex items-center justify-center text-white font-bold'>
             1
           </div>
-          <h3 className='text-lg font-medium text-[#9071FF]'>Licensed Financial Therapy</h3>
+          <h3 className='text-lg font-medium text-[#9071FF]'>Sign up for a free consultation</h3>
         </div>
         <h2 className='text-2xl md:text-3xl font-bold mb-4'>
-          Beyond Surface-Level Financial Advice
+        Support that understands both
+        your finances and your feelings
         </h2>
         <p className='text-gray-700 mb-6'>
-          Connect employees with qualified financial therapists who understand the deep emotional
-          roots of financial stress. We go deeper than just budgeting tips, leveraging AI-powered
-          matching and personalized digital tools to create lasting financial wellness.
+        Sign up to find a financial therapist who
+        understands both your goals and your stress.
+        Take the first step toward financial clarity
         </p>
       </div>
       <div className='md:w-1/2 bg-[#f9f8ff] rounded-lg p-6'>
-        <div className='bg-white rounded-lg shadow-md p-5'>
+        {/* <div className='bg-white rounded-lg shadow-md p-5'>
           <div className='flex items-center gap-3 mb-4'>
             <div className='w-10 h-10 bg-[#9071FF] rounded-full flex items-center justify-center text-white'>
               <HeartHandshake size={20} />
@@ -50,7 +51,7 @@ const CardOne = () => (
               <p className='text-green-600 font-medium'>87%</p>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   </div>
@@ -64,16 +65,19 @@ const CardTwo = () => (
           <div className='w-8 h-8 bg-[#9071FF] rounded-full flex items-center justify-center text-white font-bold'>
             2
           </div>
-          <h3 className='text-lg font-medium text-[#9071FF]'>Clear ROI for Companies</h3>
+          <h3 className='text-lg font-medium text-[#9071FF]'>Browse a marketplace of financial therapists</h3>
         </div>
-        <h2 className='text-2xl md:text-3xl font-bold mb-4'>Measurable Business Impact</h2>
+        <h2 className='text-2xl md:text-3xl font-bold mb-4'>Representation that meets your
+        real-life money story</h2>
         <p className='text-gray-700 mb-6'>
-          When companies tackle financial stress with Renavest, they see real results: up to 13%
-          reduced turnover, 34% higher productivity, and 22% less absenteeism.
+        Choose a financial therapists who truly understand
+        your background, your challenges, and your goals,
+        and guide you toward financial clarity that fits your
+        life.
         </p>
       </div>
       <div className='md:w-1/2 bg-[#f9f8ff] rounded-lg p-6'>
-        <div className='bg-white rounded-lg shadow-md p-5'>
+        {/* <div className='bg-white rounded-lg shadow-md p-5'>
           <div className='flex items-center gap-3 mb-4'>
             <div className='w-10 h-10 bg-[#9071FF] rounded-full flex items-center justify-center text-white'>
               <TrendingUp size={20} />
@@ -97,7 +101,7 @@ const CardTwo = () => (
               <p className='text-green-600 font-medium'>-22%</p>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   </div>
@@ -111,12 +115,15 @@ const CardThree = () => (
           <div className='w-8 h-8 bg-[#9071FF] rounded-full flex items-center justify-center text-white font-bold'>
             3
           </div>
-          <h3 className='text-lg font-medium text-[#9071FF]'>Workforce Financial Insights</h3>
+          <h3 className='text-lg font-medium text-[#9071FF]'>Financial Therapist vs. Financial Advisor /
+          Planner</h3>
         </div>
-        <h2 className='text-2xl md:text-3xl font-bold mb-4'>Anonymized Data Analytics</h2>
+        <h2 className='text-2xl md:text-3xl font-bold mb-4'>Feelings drive your finances</h2>
         <p className='text-gray-700 mb-6'>
-          Provide employers with confidential, aggregated data to understand financial stress themes
-          like "Anxiety about Down Payments" or "Rising Cost of Living" concerns.
+        Financial advisors tell you what to do with your
+        money. Financial therapists help you understand
+        why you feel the way you do and how to change it
+        for good.
         </p>
       </div>
       <div className='md:w-1/2 bg-[#f9f8ff] rounded-lg p-6'>
@@ -127,14 +134,13 @@ const CardThree = () => (
             </div>
             <div>
               <p className='font-medium'>Stress Themes</p>
-              <p className='text-sm text-gray-500'>Confidential Insights</p>
             </div>
           </div>
           <div className='mb-3'>
             <p className='text-sm text-gray-500'>Key Finding</p>
-            <p className='font-medium'>30% experiencing Down Payment Anxiety</p>
+            <p className='font-medium'>90 % of financial decisions are emotionally driven</p>
           </div>
-          <div className='flex justify-between'>
+          {/* <div className='flex justify-between'>
             <div>
               <p className='text-sm text-gray-500'>Department</p>
               <p className='text-[#9071FF] font-medium'>Sales</p>
@@ -143,7 +149,7 @@ const CardThree = () => (
               <p className='text-sm text-gray-500'>Action</p>
               <p className='text-green-600 font-medium'>Workshop</p>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
@@ -201,10 +207,11 @@ function WhatWeDoSection() {
         <div className='max-w-6xl mx-auto px-6 md:px-10'>
           <div className='max-w-4xl mx-auto text-center mb-16'>
             <h2 className='text-3xl md:text-4xl font-bold text-gray-900 mb-6'>
-              What Renavest Delivers
+              How it Works
             </h2>
             <p className='text-xl text-gray-600 leading-relaxed'>
-              Purpose-built features for healing your relationship with money.
+            A simple way to browse, discover, and meet the financial therapist
+            therapist who fits your needs.
             </p>
           </div>
 
