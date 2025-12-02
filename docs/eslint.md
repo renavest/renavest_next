@@ -45,3 +45,4 @@ Add the following to your `settings.json`:
 - 💾 **Format code on save**: Runs Prettier to format files automatically.
 - 📜 **Enable ESLint for JS/TS files**: Validates JavaScript, TypeScript, and React TSX files.
 - 🔄 **Use Flat Config**: Uses ESLint’s modern configuration system (`eslint.config.mjs`).
+
