@@ -1,7 +1,7 @@
 name: Vercel PR Deployment
 env:
-  VERCEL_ORG_ID: ${{ secrets.VERCEL_USER_ID }}
-  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  VERCEL_ORG_ID: ${{ secrets.NEW_VERCEL_USER_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.NEW_VERCEL_PROJECT_ID }}
 on:
   pull_request:
 jobs:
@@ -17,4 +17,4 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
       - name: Deploy Project Artifacts to Vercel
-        run: vercel deploy --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel deploy --token=${{ secrets.NEW_VERCEL_TOKEN }}
