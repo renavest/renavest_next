@@ -19,8 +19,7 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Admin emails to notify
-const ADMIN_EMAILS = ['stanley@renavestapp.com', 'seth@renavestapp.com'];
+const ADMIN_EMAILS = ['stanley@renavestapp.com',];
 
 export async function POST(req: NextRequest) {
   try {
@@ -40,22 +39,18 @@ export async function POST(req: NextRequest) {
       const scheduledEvent = payload?.scheduled_event;
       const questionsAndAnswers = payload?.questions_and_answers;
 
-      // Extract invitee info (directly in payload)
       const inviteeName = payload?.name;
       const inviteeEmail = payload?.email;
       const inviteeTimezone = payload?.timezone;
 
-      // Extract event info
       const eventName = scheduledEvent?.name;
       const startTimeStr = scheduledEvent?.start_time;
       const endTimeStr = scheduledEvent?.end_time;
       const location = scheduledEvent?.location;
 
-      // Extract host/therapist info
-      const createdBy = event.created_by; // Calendly user URI who owns the event type
+      const createdBy = event.created_by;
       const eventMemberships = scheduledEvent?.event_memberships || [];
 
-      // Log detailed event memberships for debugging
       console.info('Event Memberships (detailed):', JSON.stringify(eventMemberships, null, 2));
 
       console.info('New Calendly Booking:', {
@@ -67,7 +62,6 @@ export async function POST(req: NextRequest) {
         eventMemberships,
       });
 
-      // Send admin notification email
       if (inviteeName && inviteeEmail && scheduledEvent && startTimeStr) {
         const startTime = new Date(startTimeStr);
         const endTime = new Date(endTimeStr);
@@ -88,7 +82,6 @@ export async function POST(req: NextRequest) {
           timeZoneName: 'short',
         });
 
-        // Calculate duration
         const durationMinutes = Math.round((endTime.getTime() - startTime.getTime()) / 60000);
 
         const meetingLink =

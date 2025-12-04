@@ -251,7 +251,7 @@ export const therapistBlockedTimes = pgTable('therapist_blocked_times', {
 });
 
 // === 8. Booking Sessions & Client Notes ===
-export const sessionTypeEnum = pgEnum('session_type', ['demo', 'regular']);
+export const sessionTypeEnum = pgEnum('session_type', ['free', 'regular']);
 
 export const bookedSessions = pgTable('booked_sessions', {
   id: serial('id').primaryKey(),
