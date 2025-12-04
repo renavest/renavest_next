@@ -169,7 +169,7 @@ export default function LimitedDashboardClient() {
                   ? `Welcome ${user?.firstName} 👋`
                   : 'Welcome 👋'}
             </h2>
-            <p className='text-gray-600 mt-2 text-base md:text-lg max-w-2xl animate-fade-in'>
+            <p className='text-gray-600 mt-2 text-base md:text-lg w-full animate-fade-in'>
               Your financial wellness journey starts here. Explore resources and connect with expert
               financial therapists.
               {remainingFreeSessions !== null && remainingFreeSessions > 0 && (

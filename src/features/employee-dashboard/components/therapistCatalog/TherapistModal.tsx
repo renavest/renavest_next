@@ -26,6 +26,43 @@ interface TherapistModalProps {
 
 const TherapistImage = ({ therapist }: { therapist: Therapist }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isUsingDemoUrl, setIsUsingDemoUrl] = useState(false);
+
+  // Fetch free session data when therapist changes
+  useEffect(() => {
+    const fetchFreeSessionData = async () => {
+      try {
+        const response = await fetch(
+          `/api/employee/free-sessions?therapistJsonId=${therapist.id}`,
+        );
+        const data = await response.json();
+
+        if (response.ok) {
+          const { freeSessionsCount, hasBookedWithTherapist } = data;
+
+          // Determine which URL will be used
+          let willUseDemoUrl = false;
+
+          // Use demourl first if it exists
+          if (therapist.demourl && therapist.demourl.trim() !== '') {
+            // Check conditions:
+            // 1. User has already booked with this therapist
+            // 2. User has booked 3 free sessions with different therapists
+            if (!hasBookedWithTherapist && freeSessionsCount < 3) {
+              willUseDemoUrl = true;
+            }
+          }
+
+          setIsUsingDemoUrl(willUseDemoUrl);
+        }
+      } catch (error) {
+        console.error('Error fetching free session data:', error);
+        setIsUsingDemoUrl(false);
+      }
+    };
+
+    fetchFreeSessionData();
+  }, [therapist.id, therapist.demourl]);
 
   const handleBookSession = async () => {
     setIsLoading(true);
@@ -97,7 +134,11 @@ const TherapistImage = ({ therapist }: { therapist: Therapist }) => {
           disabled={isLoading}
           className='block w-full py-3 px-4 text-center text-white rounded-lg transition-colors font-medium hover:bg-accent bg-accent-dark disabled:opacity-50 disabled:cursor-not-allowed'
         >
-          {isLoading ? 'Loading...' : 'Book Session'}
+          {isLoading
+            ? 'Loading...'
+            : isUsingDemoUrl
+              ? 'Book Session (FREE)'
+              : 'Book Session'}
         </button>
 
         <div className='p-4 bg-gray-50 rounded-lg'>
