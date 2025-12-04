@@ -49,8 +49,18 @@ export async function GET() {
 
     const stripeCustomerId = customerRecord[0].stripeCustomerId;
 
-    // Get subscription status (from cache or Stripe API)
-    const subscriptionData = await getSubscriptionStatus(stripeCustomerId);
+    // COMMENTED OUT: Get subscription status (from cache or Stripe API)
+    // const subscriptionData = await getSubscriptionStatus(stripeCustomerId);
+    
+    // Return default response for now
+    const subscriptionData = {
+      subscriptionId: null,
+      status: null,
+      currentPeriodEnd: null,
+      cancelAtPeriodEnd: false,
+      planId: null,
+      customerId: stripeCustomerId,
+    };
 
     // Transform the response to match what the frontend expects
     const response = {
@@ -201,8 +211,8 @@ export async function PATCH(req: NextRequest) {
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
-    // Sync the updated subscription data
-    await syncStripeDataToKV(stripeCustomerId);
+    // COMMENTED OUT: Sync the updated subscription data
+    // await syncStripeDataToKV(stripeCustomerId);
 
     return NextResponse.json({
       success: true,
