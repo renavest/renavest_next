@@ -251,6 +251,27 @@ export const therapistBlockedTimes = pgTable('therapist_blocked_times', {
 });
 
 // === 8. Booking Sessions & Client Notes ===
+export const sessionTypeEnum = pgEnum('session_type', ['demo', 'regular']);
+
+export const bookedSessions = pgTable('booked_sessions', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id')
+    .references(() => users.id, { onDelete: 'restrict' })
+    .notNull(),
+  therapistId: integer('therapist_id')
+    .references(() => therapists.id, { onDelete: 'restrict' })
+    .notNull(),
+  name: text('name'),
+  type: sessionTypeEnum('type'),
+  meetingUrl: text('meeting_url'),
+  startTime: timestamp('start_time'),
+  endTime: timestamp('end_time'),
+  cancelled: boolean('cancelled').default(false).notNull(),
+  cancelledReason: text('cancelled_reason'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 export const bookingSessions = pgTable(
   'booking_sessions',
   {
