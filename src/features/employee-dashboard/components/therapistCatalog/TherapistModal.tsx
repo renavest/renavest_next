@@ -52,7 +52,7 @@ const TherapistImage = ({ therapist }: { therapist: Therapist }) => {
           onClick={handleBookSession}
           className='block w-full py-3 px-4 text-center text-white rounded-lg transition-colors font-medium hover:bg-accent bg-accent-dark'
         >
-          Book a Session
+          Book Session
         </button>
 
         <div className='p-4 bg-gray-50 rounded-lg'>
