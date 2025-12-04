@@ -1,13 +1,15 @@
 /**
  * Simple Calendly Webhook Handler
  * 
+ * IMPORTANT: The webhook URL should be: https://your-domain.com/api/calendly
+ * 
  * To set up in Calendly:
  * curl --request POST \
  *   --url https://api.calendly.com/webhook_subscriptions \
  *   --header 'Content-Type: application/json' \
  *   --header 'authorization: Bearer <YOUR_PERSONAL_TOKEN>' \
  *   --data '{
- *     "url":"https://your-domain.com/api/webhooks/calendly",
+ *     "url":"https://your-domain.com/api/calendly",
  *     "events":["invitee.created", "invitee.canceled"],
  *     "scope":"organization",
  *     "organization":"https://api.calendly.com/organizations/<ORG_UUID>"
@@ -26,6 +28,34 @@ interface TherapistJson {
   name: string;
   bookingurl: string;
   demo_url?: string;
+}
+
+interface CalendlyWebhookEvent {
+  event?: string;
+  type?: string;
+  action?: string;
+  payload?: {
+    name?: string;
+    email?: string;
+    uri?: string;
+    cancellation?: {
+      reason?: string;
+    };
+    scheduled_event?: {
+      uri?: string;
+      name?: string;
+      start_time?: string;
+      end_time?: string;
+      event_memberships?: Array<{
+        user?: {
+          name?: string;
+          email?: string;
+        };
+      }>;
+    };
+  };
+  created_by?: string;
+  [key: string]: unknown;
 }
 
 /**
@@ -48,7 +78,7 @@ function extractCalendlyUsername(url: string): string | null {
  */
 function findTherapistFromJson(
   calendlyUserId: string | null,
-  scheduledEventUri?: string | null,
+  scheduledEventUri: string | null | undefined,
 ): {
   therapistJsonId: number | null;
   therapistName: string | null;
@@ -135,8 +165,8 @@ function determineSessionType(
  */
 async function lookupUserAndTherapist(
   inviteeEmail: string,
-  calendlyUserId: string | null,
-  scheduledEventUri?: string | null,
+  calendlyUserId: string | null | undefined,
+  scheduledEventUri: string | null | undefined,
 ): Promise<{
   userId: number | null;
   therapistJsonId: number | null;
@@ -305,16 +335,61 @@ async function cancelBookedSession(
 
 
 export async function POST(req: NextRequest) {
+  console.log('CALENDLY WEBHOOK RECEIVED');
   try {
-    const event = await req.json();
+    // Log raw request info for debugging
+    const contentType = req.headers.get('content-type');
+    console.info('[CALENDLY WEBHOOK] Request received', {
+      contentType,
+      method: req.method,
+      url: req.url,
+    });
 
-    // Calendly pings this once to verify the webhook
-    if (event && event.event === 'ping') {
-      console.info('Calendly webhook ping received');
+    // Get raw body text first to handle ping events that might not be JSON
+    let bodyText: string;
+    try {
+      bodyText = await req.text();
+      console.info('[CALENDLY WEBHOOK] Raw body length:', bodyText.length);
+      
+      // Check for empty body (some ping events might be empty)
+      if (!bodyText || bodyText.trim() === '') {
+        console.info('[CALENDLY WEBHOOK] Empty body received - treating as ping');
+        return NextResponse.json({ ok: true }, { status: 200 });
+      }
+    } catch (textError) {
+      console.error('[CALENDLY WEBHOOK] Error reading body:', textError);
+      // If we can't read the body, still try to respond with 200 for ping
       return NextResponse.json({ ok: true }, { status: 200 });
     }
 
-    console.info('Calendly Event Received:', event);
+    // Parse JSON
+    let event: CalendlyWebhookEvent | null = null;
+    try {
+      event = JSON.parse(bodyText) as CalendlyWebhookEvent;
+      console.info('[CALENDLY WEBHOOK] Parsed event:', {
+        hasEvent: !!event,
+        eventType: event?.event,
+        keys: event ? Object.keys(event) : [],
+      });
+    } catch (parseError) {
+      console.error('[CALENDLY WEBHOOK] Error parsing JSON:', parseError);
+      console.info('[CALENDLY WEBHOOK] Raw body:', bodyText.substring(0, 200));
+      // If it's not valid JSON, it might be a ping - return 200
+      return NextResponse.json({ ok: true }, { status: 200 });
+    }
+
+    // Calendly pings this once to verify the webhook
+    // Check multiple possible ping formats
+    if (
+      (event && event.event === 'ping') ||
+      (event && event.type === 'ping') ||
+      (event && event.action === 'ping') ||
+      (bodyText.toLowerCase().includes('ping')) ||
+      (!event || Object.keys(event).length === 0)
+    ) {
+      console.info('[CALENDLY WEBHOOK] Ping event detected and handled');
+      return NextResponse.json({ ok: true }, { status: 200 });
+    }
 
     // Handle new bookings
     if (event.event === 'invitee.created') {
@@ -342,15 +417,16 @@ export async function POST(req: NextRequest) {
         eventMemberships,
       });
 
-      if (inviteeName && inviteeEmail && scheduledEvent && startTimeStr) {
+      if (inviteeName && inviteeEmail && scheduledEvent && startTimeStr && endTimeStr) {
         const startTime = new Date(startTimeStr);
         const endTime = new Date(endTimeStr);
         const therapistUserId = createdBy ? createdBy.split('/').pop() : null;
 
         // Look up user by email and therapist from JSON
         // Pass scheduled event URI to help match therapist by Calendly username
+        const eventUri: string | null = scheduledEvent.uri || null;
         const { userId, therapistJsonId, therapistName, therapist } =
-          await lookupUserAndTherapist(inviteeEmail, therapistUserId, scheduledEvent?.uri);
+          await lookupUserAndTherapist(inviteeEmail, therapistUserId, eventUri);
 
         // Get therapist name from event if available (for redundancy)
         // Try to get from event memberships or use a default
@@ -415,14 +491,15 @@ export async function POST(req: NextRequest) {
       });
 
       // Find therapist from JSON for cancellation lookup
-      const { therapistJsonId } = findTherapistFromJson(therapistUserId, eventUri);
+      const eventUriForLookup: string | null = eventUri || null;
+      const { therapistJsonId } = findTherapistFromJson(therapistUserId, eventUriForLookup);
 
       // Update bookedSessions entry to mark as cancelled
       if (eventUri) {
         try {
           await cancelBookedSession(
             eventUri,
-            inviteeEmail,
+            inviteeEmail || null,
             therapistJsonId,
             scheduledEvent?.start_time || null,
             cancelReason || null,
