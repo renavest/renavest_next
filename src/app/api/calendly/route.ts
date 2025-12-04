@@ -14,12 +14,295 @@
  *   }'
  */
 
+import { eq } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
-import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { db } from '@/src/db';
+import { bookedSessions, users } from '@/src/db/schema';
+import financialTherapists from '@/src/features/employee-dashboard/components/therapistCatalog/financial_therapists.json';
 
-const ADMIN_EMAILS = ['stanley@renavestapp.com', 'ewongagent@gmail.com'];
+interface TherapistJson {
+  id: number;
+  name: string;
+  bookingurl: string;
+  demo_url?: string;
+}
+
+/**
+ * Extract Calendly username from a booking URL
+ * Examples:
+ * - "https://calendly.com/stanley-renavestapp/60min" -> "stanley-renavestapp"
+ * - "https://calendly.com/paigevic98/one-on-one" -> "paigevic98"
+ */
+function extractCalendlyUsername(url: string): string | null {
+  if (!url || typeof url !== 'string') {
+    return null;
+  }
+
+  const match = url.match(/calendly\.com\/([^/]+)/);
+  return match ? match[1] : null;
+}
+
+/**
+ * Find therapist from JSON file by matching Calendly username in booking URLs
+ */
+function findTherapistFromJson(
+  calendlyUserId: string | null,
+  scheduledEventUri?: string | null,
+): {
+  therapistJsonId: number | null;
+  therapistName: string | null;
+  therapist?: TherapistJson | null;
+} {
+  const therapists = financialTherapists as TherapistJson[];
+
+  // Try to extract username from scheduled event URI if provided
+  let usernameToMatch: string | null = null;
+  if (scheduledEventUri) {
+    usernameToMatch = extractCalendlyUsername(scheduledEventUri);
+  }
+
+  // Search through therapists to find a match
+  for (const therapist of therapists) {
+    const bookingUsername = extractCalendlyUsername(therapist.bookingurl);
+    if (bookingUsername && usernameToMatch && bookingUsername === usernameToMatch) {
+      return {
+        therapistJsonId: therapist.id,
+        therapistName: therapist.name,
+        therapist,
+      };
+    }
+
+    // Check demo URL if available
+    if (therapist.demo_url) {
+      const demoUsername = extractCalendlyUsername(therapist.demo_url);
+      if (demoUsername && usernameToMatch && demoUsername === usernameToMatch) {
+        return {
+          therapistJsonId: therapist.id,
+          therapistName: therapist.name,
+          therapist,
+        };
+      }
+    }
+  }
+
+  // If we couldn't match by username, return null
+  // The therapist name will be extracted from webhook event memberships instead
+  return { therapistJsonId: null, therapistName: null, therapist: null };
+}
+
+/**
+ * Determine session type by matching event URI with therapist booking URLs
+ * Returns 'free' if matches demo_url, 'regular' if matches bookingurl, null otherwise
+ */
+function determineSessionType(
+  eventUri: string | null,
+  therapist: TherapistJson | null,
+): 'free' | 'regular' | null {
+  if (!eventUri || !therapist) {
+    return null;
+  }
+
+  const normalizedEventUri = eventUri.toLowerCase().split('?')[0].replace(/\/$/, '');
+
+  if (therapist.demo_url) {
+    const normalizedDemoUrl = therapist.demo_url.toLowerCase().split('?')[0].replace(/\/$/, '');
+    if (
+      normalizedEventUri.includes(normalizedDemoUrl) ||
+      normalizedDemoUrl.includes(normalizedEventUri) ||
+      extractCalendlyUsername(eventUri) === extractCalendlyUsername(therapist.demo_url)
+    ) {
+      return 'free';
+    }
+  }
+
+  if (therapist.bookingurl) {
+    const normalizedBookingUrl = therapist.bookingurl.toLowerCase().split('?')[0].replace(/\/$/, '');
+    if (
+      normalizedEventUri.includes(normalizedBookingUrl) ||
+      normalizedBookingUrl.includes(normalizedEventUri) ||
+      extractCalendlyUsername(eventUri) === extractCalendlyUsername(therapist.bookingurl)
+    ) {
+      return 'regular';
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Look up user and therapist info from Calendly webhook data
+ */
+async function lookupUserAndTherapist(
+  inviteeEmail: string,
+  calendlyUserId: string | null,
+  scheduledEventUri?: string | null,
+): Promise<{
+  userId: number | null;
+  therapistJsonId: number | null;
+  therapistName: string | null;
+  therapist: TherapistJson | null;
+}> {
+  let userId: number | null = null;
+
+  try {
+    const user = await db.query.users.findFirst({
+      where: eq(users.email, inviteeEmail),
+      columns: { id: true },
+    });
+
+    if (user) {
+      userId = user.id;
+      console.info('Found user by email:', { email: inviteeEmail, userId: user.id });
+    } else {
+      console.warn('User not found for email:', inviteeEmail);
+    }
+  } catch (dbError) {
+    console.error('Database lookup error:', dbError);
+  }
+
+  // Find therapist from JSON file by matching Calendly username
+  const therapistInfo = findTherapistFromJson(calendlyUserId, scheduledEventUri);
+
+  if (therapistInfo.therapistJsonId) {
+    console.info('Found therapist from JSON:', {
+      therapistJsonId: therapistInfo.therapistJsonId,
+      therapistName: therapistInfo.therapistName,
+      scheduledEventUri,
+    });
+  }
+
+  return {
+    userId,
+    therapistJsonId: therapistInfo.therapistJsonId,
+    therapistName: therapistInfo.therapistName,
+    therapist: therapistInfo.therapist || null,
+  };
+}
+
+/**
+ * Create a booked session entry from Calendly webhook data
+ */
+async function createBookedSession(
+  userId: number | null,
+  userEmail: string,
+  therapistJsonId: number | null,
+  therapistName: string | null,
+  eventName: string | null,
+  startTime: Date,
+  endTime: Date,
+  eventUri: string,
+  inviteeUri: string | null,
+  sessionType: 'free' | 'regular' | null,
+): Promise<void> {
+  try {
+    await db.insert(bookedSessions).values({
+      userId: userId || null,
+      userEmail,
+      therapistId: null, // Not using therapists table currently
+      therapistJsonId,
+      therapistName,
+      name: eventName || null,
+      type: sessionType,
+      startTime,
+      endTime,
+      cancelled: false,
+      calendlyEventUri: eventUri,
+      calendlyInviteeUri: inviteeUri || null,
+      updatedAt: new Date(),
+    });
+
+    console.info('Booked session created successfully:', {
+      userId,
+      userEmail,
+      therapistJsonId,
+      therapistName,
+      sessionType,
+      eventUri,
+    });
+  } catch (insertError) {
+    console.error('Error creating booked session:', insertError);
+    throw insertError;
+  }
+}
+
+/**
+ * Update booked session to mark as cancelled
+ */
+async function cancelBookedSession(
+  eventUri: string,
+  inviteeEmail: string | null,
+  therapistJsonId: number | null,
+  startTime: string | null,
+  cancelReason: string | null,
+): Promise<void> {
+  try {
+    // Try to find the booking by Calendly event URI first
+    const existingBooking = await db.query.bookedSessions.findFirst({
+      where: eq(bookedSessions.calendlyEventUri, eventUri),
+      columns: { id: true },
+    });
+
+    if (existingBooking) {
+      await db
+        .update(bookedSessions)
+        .set({
+          cancelled: true,
+          cancelledReason: cancelReason || null,
+          updatedAt: new Date(),
+        })
+        .where(eq(bookedSessions.id, existingBooking.id));
+
+      console.info('Booked session marked as cancelled:', {
+        bookingId: existingBooking.id,
+        eventUri,
+      });
+      return;
+    }
+
+    // Fallback: try to find by invitee email + therapist JSON ID + start time
+    if (inviteeEmail && therapistJsonId && startTime) {
+      const startTimeDate = new Date(startTime);
+      const booking = await db.query.bookedSessions.findFirst({
+        where: (bookedSessions, { and, eq }) =>
+          and(
+            eq(bookedSessions.userEmail, inviteeEmail),
+            eq(bookedSessions.therapistJsonId, therapistJsonId),
+            eq(bookedSessions.startTime, startTimeDate),
+          ),
+        columns: { id: true },
+      });
+
+      if (booking) {
+        await db
+          .update(bookedSessions)
+          .set({
+            cancelled: true,
+            cancelledReason: cancelReason || null,
+            updatedAt: new Date(),
+          })
+          .where(eq(bookedSessions.id, booking.id));
+
+        console.info('Booked session marked as cancelled (fallback lookup):', {
+          bookingId: booking.id,
+        });
+        return;
+      }
+    }
+
+    console.warn('Could not find booking to cancel:', {
+      eventUri,
+      inviteeEmail,
+      therapistJsonId,
+      startTime,
+    });
+  } catch (updateError) {
+    console.error('Error updating booked session cancellation:', updateError);
+    throw updateError;
+  }
+}
+
+
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,16 +320,13 @@ export async function POST(req: NextRequest) {
     if (event.event === 'invitee.created') {
       const payload = event.payload;
       const scheduledEvent = payload?.scheduled_event;
-      const questionsAndAnswers = payload?.questions_and_answers;
 
       const inviteeName = payload?.name;
       const inviteeEmail = payload?.email;
-      const inviteeTimezone = payload?.timezone;
 
       const eventName = scheduledEvent?.name;
       const startTimeStr = scheduledEvent?.start_time;
       const endTimeStr = scheduledEvent?.end_time;
-      const location = scheduledEvent?.location;
 
       const createdBy = event.created_by;
       const eventMemberships = scheduledEvent?.event_memberships || [];
@@ -65,94 +345,49 @@ export async function POST(req: NextRequest) {
       if (inviteeName && inviteeEmail && scheduledEvent && startTimeStr) {
         const startTime = new Date(startTimeStr);
         const endTime = new Date(endTimeStr);
-        const date = startTime.toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        });
-        const time = startTime.toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: '2-digit',
-          timeZoneName: 'short',
-        });
-        const endTimeFormatted = endTime.toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: '2-digit',
-          timeZoneName: 'short',
-        });
+        const therapistUserId = createdBy ? createdBy.split('/').pop() : null;
 
-        const durationMinutes = Math.round((endTime.getTime() - startTime.getTime()) / 60000);
+        // Look up user by email and therapist from JSON
+        // Pass scheduled event URI to help match therapist by Calendly username
+        const { userId, therapistJsonId, therapistName, therapist } =
+          await lookupUserAndTherapist(inviteeEmail, therapistUserId, scheduledEvent?.uri);
 
-        const meetingLink =
-          location?.join_url ||
-          location?.location ||
-          'Not specified';
+        // Get therapist name from event if available (for redundancy)
+        // Try to get from event memberships or use a default
+        const finalTherapistName =
+          therapistName ||
+          eventMemberships?.[0]?.user?.name ||
+          eventMemberships?.[0]?.user?.email ||
+          'Unknown Therapist';
 
-        // Build Q&A section if available
-        let qaHtml = '';
-        if (questionsAndAnswers && questionsAndAnswers.length > 0) {
-          qaHtml = `
-            <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin-top: 16px;">
-              <h3 style="margin-top: 0;">Additional Information:</h3>
-              ${questionsAndAnswers.map((qa: { question: string; answer: string }) => `
-                <p><strong>${qa.question}</strong><br/>${qa.answer}</p>
-              `).join('')}
-            </div>
-          `;
+        // Determine session type by matching event URI with booking URLs
+        const sessionType = determineSessionType(scheduledEvent?.uri || null, therapist);
+
+        // Create bookedSessions entry if we have userEmail and eventUri
+        if (inviteeEmail && scheduledEvent?.uri) {
+          try {
+            const inviteeUri = payload?.uri;
+            await createBookedSession(
+              userId,
+              inviteeEmail,
+              therapistJsonId,
+              finalTherapistName,
+              eventName || null,
+              startTime,
+              endTime,
+              scheduledEvent.uri,
+              inviteeUri || null,
+              sessionType,
+            );
+          } catch (insertError) {
+            console.error('Error creating booked session:', insertError);
+          }
+        } else {
+          console.warn('Skipping bookedSessions creation - missing required data:', {
+            hasUserEmail: !!inviteeEmail,
+            hasEventUri: !!scheduledEvent?.uri,
+          });
         }
-
-        // Extract therapist user ID from URI
-        const therapistUserId = createdBy ? createdBy.split('/').pop() : 'Unknown';
-
-        await resend.emails.send({
-          from: 'Renavest Calendly <calendly@booking.renavestapp.com>',
-          to: ADMIN_EMAILS,
-          subject: `New Booking: ${inviteeName} - ${eventName}`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h1 style="color: #9071FF;">📅 New Calendly Booking</h1>
-              
-              <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h2 style="margin-top: 0;">Client Details</h2>
-                <p><strong>Name:</strong> ${inviteeName}</p>
-                <p><strong>Email:</strong> ${inviteeEmail}</p>
-                ${inviteeTimezone ? `<p><strong>Timezone:</strong> ${inviteeTimezone}</p>` : ''}
-              </div>
-              
-              <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h2 style="margin-top: 0;">Session Details</h2>
-                <p><strong>Event Type:</strong> ${eventName}</p>
-                <p><strong>Date:</strong> ${date}</p>
-                <p><strong>Time:</strong> ${time} - ${endTimeFormatted}</p>
-                <p><strong>Duration:</strong> ${durationMinutes} minutes</p>
-                <p><strong>Meeting Link:</strong> ${
-                  typeof meetingLink === 'string' && meetingLink.startsWith('http')
-                    ? `<a href="${meetingLink}">${meetingLink}</a>`
-                    : meetingLink
-                }</p>
-              </div>
-              
-              <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
-                <h2 style="margin-top: 0;">Therapist/Host Info</h2>
-                <p><strong>Calendly User ID:</strong> ${therapistUserId}</p>
-                <p style="font-size: 12px; color: #6b7280;">Full URI: ${createdBy}</p>
-                <div style="margin-top: 16px;">
-                  <p style="margin: 0 0 8px 0;"><strong>Event Memberships:</strong></p>
-                  <pre style="background: white; padding: 12px; border-radius: 4px; overflow-x: auto; font-size: 11px; margin: 0;">${JSON.stringify(eventMemberships, null, 2)}</pre>
-                </div>
-              </div>
-              
-              ${qaHtml}
-              
-              <p style="color: #6b7280; font-size: 12px; margin-top: 32px;">
-                Event ID: ${scheduledEvent.uri}
-              </p>
-            </div>
-          `,
-        });
-
-        console.info('Admin notification sent successfully');
       }
     }
 
@@ -164,41 +399,37 @@ export async function POST(req: NextRequest) {
       const inviteeName = payload?.name;
       const inviteeEmail = payload?.email;
       const cancelReason = payload?.cancellation?.reason;
-      const eventName = scheduledEvent?.name;
 
       const createdBy = event.created_by;
-      const therapistUserId = createdBy ? createdBy.split('/').pop() : 'Unknown';
+      const therapistUserId = createdBy ? createdBy.split('/').pop() : null;
+      const inviteeUri = payload?.uri;
+      const eventUri = scheduledEvent?.uri;
 
       console.info('Calendly Booking Canceled:', {
         inviteeName,
         inviteeEmail,
         cancelReason,
         therapistUri: createdBy,
+        eventUri,
+        inviteeUri,
       });
 
-      // Send cancellation notification
-      if (inviteeName && inviteeEmail && scheduledEvent) {
-        await resend.emails.send({
-          from: 'Renavest Calendly <calendly@booking.renavestapp.com>',
-          to: ADMIN_EMAILS,
-          subject: `Booking Canceled: ${inviteeName} - ${eventName}`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h1 style="color: #dc2626;">🚫 Booking Canceled</h1>
-              
-              <div style="background: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <p><strong>Client:</strong> ${inviteeName} (${inviteeEmail})</p>
-                <p><strong>Event:</strong> ${eventName}</p>
-                <p><strong>Therapist User ID:</strong> ${therapistUserId}</p>
-                ${cancelReason ? `<p><strong>Reason:</strong> ${cancelReason}</p>` : ''}
-              </div>
-              
-              <p style="color: #6b7280; font-size: 12px;">Event ID: ${scheduledEvent.uri}</p>
-            </div>
-          `,
-        });
+      // Find therapist from JSON for cancellation lookup
+      const { therapistJsonId } = findTherapistFromJson(therapistUserId, eventUri);
 
-        console.info('Cancellation notification sent successfully');
+      // Update bookedSessions entry to mark as cancelled
+      if (eventUri) {
+        try {
+          await cancelBookedSession(
+            eventUri,
+            inviteeEmail,
+            therapistJsonId,
+            scheduledEvent?.start_time || null,
+            cancelReason || null,
+          );
+        } catch (updateError) {
+          console.error('Error updating booked session cancellation:', updateError);
+        }
       }
     }
 
