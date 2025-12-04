@@ -4,7 +4,8 @@ import type Stripe from 'stripe';
 import { db } from '@/src/db';
 import { therapists, sessionPayments, bookingSessions, therapistPayouts } from '@/src/db/schema';
 
-import { syncStripeDataToKV } from './stripe-operations';
+// COMMENTED OUT: syncStripeDataToKV import not needed while subscription sync is disabled
+// import { syncStripeDataToKV } from './stripe-operations';
 
 export async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   const customerId = session.customer as string;
@@ -14,19 +15,20 @@ export async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Se
     console.log(`[STRIPE WEBHOOK] Subscription checkout completed for customer: ${customerId}`);
 
     try {
-      // Sync subscription data to KV cache and database
-      await syncStripeDataToKV(customerId);
+      // COMMENTED OUT: Sync subscription data to KV cache and database
+      // await syncStripeDataToKV(customerId);
 
       // Log successful subscription activation
       console.log(
-        `[STRIPE WEBHOOK] Successfully synced subscription data for customer: ${customerId}`,
+        `[STRIPE WEBHOOK] Subscription checkout completed for customer: ${customerId} (sync disabled)`,
       );
     } catch (error) {
       console.error(
         `[STRIPE WEBHOOK] Failed to sync subscription data for customer ${customerId}:`,
         error,
       );
-      throw error; // Re-throw to ensure webhook returns 500 for retry
+      // Don't throw error since sync is disabled
+      // throw error; // Re-throw to ensure webhook returns 500 for retry
     }
   }
 
@@ -117,10 +119,10 @@ export async function handleAccountUpdated(account: Stripe.Account) {
 export async function handleSetupIntentSucceeded(setupIntent: Stripe.SetupIntent) {
   console.log(`[STRIPE WEBHOOK] Setup intent succeeded: ${setupIntent.id}`);
 
-  // Sync customer data to ensure payment method cache is updated
-  if (setupIntent.customer && typeof setupIntent.customer === 'string') {
-    await syncStripeDataToKV(setupIntent.customer);
-  }
+  // COMMENTED OUT: Sync customer data to ensure payment method cache is updated
+  // if (setupIntent.customer && typeof setupIntent.customer === 'string') {
+  //   await syncStripeDataToKV(setupIntent.customer);
+  // }
 
   // Note: The payment method is automatically attached to the customer
   // when the setup intent succeeds, so we don't need to do additional work here
@@ -154,17 +156,18 @@ export async function handleSubscriptionUpdated(subscription: Stripe.Subscriptio
   });
 
   try {
-    // Sync the updated subscription data
-    await syncStripeDataToKV(customerId);
+    // COMMENTED OUT: Sync the updated subscription data
+    // await syncStripeDataToKV(customerId);
     console.log(
-      `[STRIPE WEBHOOK] Successfully synced subscription update for customer: ${customerId}`,
+      `[STRIPE WEBHOOK] Subscription updated for customer: ${customerId} (sync disabled)`,
     );
   } catch (error) {
     console.error(
       `[STRIPE WEBHOOK] Failed to sync subscription update for customer ${customerId}:`,
       error,
     );
-    throw error; // Re-throw to ensure webhook returns 500 for retry
+    // Don't throw error since sync is disabled
+    // throw error; // Re-throw to ensure webhook returns 500 for retry
   }
 }
 
@@ -181,17 +184,17 @@ export async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
     currency: invoice.currency,
   });
 
-  // Sync subscription data to ensure status is current
-  if (customerId) {
-    try {
-      await syncStripeDataToKV(customerId);
-    } catch (error) {
-      console.error(
-        `[STRIPE WEBHOOK] Failed to sync after invoice payment for customer ${customerId}:`,
-        error,
-      );
-    }
-  }
+  // COMMENTED OUT: Sync subscription data to ensure status is current
+  // if (customerId) {
+  //   try {
+  //     await syncStripeDataToKV(customerId);
+  //   } catch (error) {
+  //     console.error(
+  //       `[STRIPE WEBHOOK] Failed to sync after invoice payment for customer ${customerId}:`,
+  //       error,
+  //     );
+  //   }
+  // }
 }
 
 /**
@@ -206,15 +209,15 @@ export async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     attemptCount: invoice.attempt_count,
   });
 
-  // Sync subscription data to reflect payment failure status
-  if (customerId) {
-    try {
-      await syncStripeDataToKV(customerId);
-    } catch (error) {
-      console.error(
-        `[STRIPE WEBHOOK] Failed to sync after invoice payment failure for customer ${customerId}:`,
-        error,
-      );
-    }
-  }
+  // COMMENTED OUT: Sync subscription data to reflect payment failure status
+  // if (customerId) {
+  //   try {
+  //     await syncStripeDataToKV(customerId);
+  //   } catch (error) {
+  //     console.error(
+  //       `[STRIPE WEBHOOK] Failed to sync after invoice payment failure for customer ${customerId}:`,
+  //       error,
+  //     );
+  //   }
+  // }
 }

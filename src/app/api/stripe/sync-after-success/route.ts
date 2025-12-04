@@ -39,10 +39,20 @@ export async function POST(req: NextRequest) {
 
     const stripeCustomerId = customerRecord[0].stripeCustomerId;
 
-    // Eagerly sync the customer data to ensure consistency
+    // COMMENTED OUT: Eagerly sync the customer data to ensure consistency
     // This prevents race conditions where the user sees the success page
     // before webhooks have fully processed
-    const syncedData = await syncStripeDataToKV(stripeCustomerId);
+    // const syncedData = await syncStripeDataToKV(stripeCustomerId);
+    
+    // Return default response for now
+    const syncedData = {
+      subscriptionId: null,
+      status: null,
+      currentPeriodEnd: null,
+      cancelAtPeriodEnd: false,
+      planId: null,
+      customerId: stripeCustomerId,
+    };
 
     console.log(`[SYNC AFTER SUCCESS] Synced data for customer ${stripeCustomerId}:`, syncedData);
 

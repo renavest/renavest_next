@@ -205,6 +205,7 @@ export const therapists = pgTable('therapists', {
     .default('not_connected')
     .notNull(),
   googleCalendarIntegrationDate: timestamp('google_calendar_integration_date'),
+  calendlyUserId: varchar('calendly_user_id', { length: 255 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -251,23 +252,25 @@ export const therapistBlockedTimes = pgTable('therapist_blocked_times', {
 });
 
 // === 8. Booking Sessions & Client Notes ===
-export const sessionTypeEnum = pgEnum('session_type', ['demo', 'regular']);
+export const sessionTypeEnum = pgEnum('session_type', ['free', 'regular']);
 
 export const bookedSessions = pgTable('booked_sessions', {
   id: serial('id').primaryKey(),
   userId: integer('user_id')
-    .references(() => users.id, { onDelete: 'restrict' })
-    .notNull(),
+    .references(() => users.id, { onDelete: 'restrict' }), // Optional - user may not exist in DB yet
+  userEmail: varchar('user_email', { length: 255 }).notNull(), // Required - always track by email
   therapistId: integer('therapist_id')
-    .references(() => therapists.id, { onDelete: 'restrict' })
-    .notNull(),
+    .references(() => therapists.id, { onDelete: 'restrict' }), // Optional for now, not using therapists table currently
+  therapistJsonId: integer('therapist_json_id'), // ID from financial_therapists.json
+  therapistName: text('therapist_name'), // Therapist name for redundancy
   name: text('name'),
   type: sessionTypeEnum('type'),
-  meetingUrl: text('meeting_url'),
   startTime: timestamp('start_time'),
   endTime: timestamp('end_time'),
   cancelled: boolean('cancelled').default(false).notNull(),
   cancelledReason: text('cancelled_reason'),
+  calendlyEventUri: text('calendly_event_uri'), // Store Calendly scheduled event URI for lookups
+  calendlyInviteeUri: text('calendly_invitee_uri'), // Store Calendly invitee URI for lookups (Each invitee has a unique URI)
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
