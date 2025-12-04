@@ -16,6 +16,7 @@
  *   }'
  */
 
+/* eslint-disable max-lines */
 import { eq } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -36,10 +37,12 @@ interface CalendlyWebhookEvent {
   event?: string;
   type?: string;
   action?: string;
+  event_type?: string; // Event type URI from webhook (at event level)
   payload?: {
     name?: string;
     email?: string;
     uri?: string;
+    event_type?: string; // Event type URI from webhook (in payload)
     cancellation?: {
       reason?: string;
     };
@@ -48,6 +51,7 @@ interface CalendlyWebhookEvent {
       name?: string;
       start_time?: string;
       end_time?: string;
+      event_type?: string; // Event type URI (in scheduled_event)
       event_memberships?: Array<{
         user?: string;
         user_email?: string;
@@ -175,39 +179,104 @@ function findTherapistFromJson(
 }
 
 /**
- * Determine session type by matching event URI with therapist booking URLs
- * Returns 'free' if matches demo_url, 'regular' if matches bookingurl, null otherwise
+ * Fetch event type from Calendly API and extract the scheduling_url (public booking URL)
+ * The scheduling_url is the normal Calendly link like https://calendly.com/stanley-renavestapp/60min
  */
-function determineSessionType(
-  eventUri: string | null,
-  therapist: TherapistJson | null,
-): 'free' | 'regular' | null {
-  if (!eventUri || !therapist) {
+async function getEventTypeSchedulingUrl(
+  eventTypeUri: string | null | undefined,
+): Promise<string | null> {
+  if (!eventTypeUri || typeof eventTypeUri !== 'string') {
     return null;
   }
 
-  const normalizedEventUri = eventUri.toLowerCase().split('?')[0].replace(/\/$/, '');
+  // If it's already a normal Calendly link, return it
+  if (eventTypeUri.includes('calendly.com/') && !eventTypeUri.includes('api.calendly.com')) {
+    return eventTypeUri;
+  }
+
+  // If it's not an API URI, return null
+  if (!eventTypeUri.includes('api.calendly.com/event_types/')) {
+    return null;
+  }
+
+  const calendlyToken = process.env.CALENDLY_API_TOKEN;
+  if (!calendlyToken) {
+    console.warn('[CALENDLY] CALENDLY_API_TOKEN not set, cannot fetch event type scheduling URL');
+    return null;
+  }
+
+  try {
+    const eventTypeResponse = await fetch(eventTypeUri, {
+      headers: {
+        Authorization: `Bearer ${calendlyToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!eventTypeResponse.ok) {
+      console.error(
+        '[CALENDLY] Failed to fetch event type:',
+        eventTypeResponse.status,
+        eventTypeResponse.statusText,
+      );
+      return null;
+    }
+
+    const eventTypeData = (await eventTypeResponse.json()) as {
+      resource?: {
+        scheduling_url?: string;
+        slug?: string;
+      };
+    };
+
+    // The scheduling_url is the public booking URL we need
+    if (eventTypeData.resource?.scheduling_url) {
+      return eventTypeData.resource.scheduling_url;
+    }
+
+    console.warn('[CALENDLY] No scheduling_url found in event type response');
+    return null;
+  } catch (error) {
+    console.error('[CALENDLY] Error fetching event type scheduling URL:', error);
+    return null;
+  }
+}
+
+/**
+ * Determine session type by matching event type scheduling URL with therapist booking URLs
+ * Returns 'free' if matches demo_url, 'regular' if matches bookingurl, null otherwise
+ * 
+ * This function uses the event_type from the webhook payload to get the public booking URL
+ */
+async function determineSessionType(
+  eventTypeUri: string | null | undefined,
+  therapist: TherapistJson | null,
+): Promise<'free' | 'regular' | null> {
+  if (!eventTypeUri || !therapist) {
+    return null;
+  }
+
+  // Get the public booking URL (scheduling_url) from the event type
+  const schedulingUrl = await getEventTypeSchedulingUrl(eventTypeUri);
+  if (!schedulingUrl) {
+    console.warn('[CALENDLY] Could not get scheduling URL from event type, cannot determine session type');
+    return null;
+  }
+
+  const normalizedSchedulingUrl = schedulingUrl.toLowerCase().split('?')[0].replace(/\/$/, '');
 
   // Support both field names for demo URL
   const demoUrl = therapist.demo_url || therapist.demourl;
   if (demoUrl) {
     const normalizedDemoUrl = demoUrl.toLowerCase().split('?')[0].replace(/\/$/, '');
-    if (
-      normalizedEventUri.includes(normalizedDemoUrl) ||
-      normalizedDemoUrl.includes(normalizedEventUri) ||
-      extractCalendlyUsername(eventUri) === extractCalendlyUsername(demoUrl)
-    ) {
+    if (normalizedSchedulingUrl === normalizedDemoUrl) {
       return 'free';
     }
   }
 
   if (therapist.bookingurl) {
     const normalizedBookingUrl = therapist.bookingurl.toLowerCase().split('?')[0].replace(/\/$/, '');
-    if (
-      normalizedEventUri.includes(normalizedBookingUrl) ||
-      normalizedBookingUrl.includes(normalizedEventUri) ||
-      extractCalendlyUsername(eventUri) === extractCalendlyUsername(therapist.bookingurl)
-    ) {
+    if (normalizedSchedulingUrl === normalizedBookingUrl) {
       return 'regular';
     }
   }
@@ -464,6 +533,10 @@ export async function POST(req: NextRequest) {
       const inviteeName = payload?.name;
       const inviteeEmail = payload?.email;
 
+      // Get event_type from event level, payload, or scheduled_event (in order of preference)
+      const eventTypeUri =
+        event.event_type || payload?.event_type || (scheduledEvent as { event_type?: string })?.event_type;
+
       const eventName = scheduledEvent?.name;
       const startTimeStr = scheduledEvent?.start_time;
       const endTimeStr = scheduledEvent?.end_time;
@@ -477,6 +550,7 @@ export async function POST(req: NextRequest) {
         inviteeName,
         inviteeEmail,
         eventName,
+        eventTypeUri,
         startTime: startTimeStr,
         therapistUri: createdBy,
         eventMemberships,
@@ -501,8 +575,9 @@ export async function POST(req: NextRequest) {
           eventMemberships?.[0]?.user_email ||
           'Unknown Therapist';
 
-        // Determine session type by matching event URI with booking URLs
-        const sessionType = determineSessionType(scheduledEvent?.uri || null, therapist);
+        // Determine session type by matching event type scheduling URL with booking URLs
+        // Use event_type URI to get the public booking URL (scheduling_url)
+        const sessionType = await determineSessionType(eventTypeUri || null, therapist);
 
         // Create bookedSessions entry if we have userEmail and eventUri
         if (inviteeEmail && scheduledEvent?.uri) {
