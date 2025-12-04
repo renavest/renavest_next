@@ -27,7 +27,9 @@ interface TherapistJson {
   id: number;
   name: string;
   bookingurl: string;
-  demo_url?: string;
+  demourl?: string;
+  demo_url?: string; // Support both field names for backward compatibility
+  therapist_email?: string;
 }
 
 interface CalendlyWebhookEvent {
@@ -47,10 +49,9 @@ interface CalendlyWebhookEvent {
       start_time?: string;
       end_time?: string;
       event_memberships?: Array<{
-        user?: {
-          name?: string;
-          email?: string;
-        };
+        user?: string;
+        user_email?: string;
+        user_name?: string;
       }>;
     };
   };
@@ -74,11 +75,19 @@ function extractCalendlyUsername(url: string): string | null {
 }
 
 /**
- * Find therapist from JSON file by matching Calendly username in booking URLs
+ * Find therapist from JSON file by matching:
+ * 1. Calendly username in booking URLs
+ * 2. Email from eventMemberships against therapist_email
+ * 3. Name from eventMemberships against name
  */
 function findTherapistFromJson(
   calendlyUserId: string | null,
   scheduledEventUri: string | null | undefined,
+  eventMemberships?: Array<{
+    user?: string;
+    user_email?: string;
+    user_name?: string;
+  }>,
 ): {
   therapistJsonId: number | null;
   therapistName: string | null;
@@ -92,8 +101,13 @@ function findTherapistFromJson(
     usernameToMatch = extractCalendlyUsername(scheduledEventUri);
   }
 
+  // Extract email and name from eventMemberships for matching
+  const membershipEmail = eventMemberships?.[0]?.user_email?.toLowerCase().trim();
+  const membershipName = eventMemberships?.[0]?.user_name?.trim();
+
   // Search through therapists to find a match
   for (const therapist of therapists) {
+    // Method 1: Match by Calendly username from booking URLs
     const bookingUsername = extractCalendlyUsername(therapist.bookingurl);
     if (bookingUsername && usernameToMatch && bookingUsername === usernameToMatch) {
       return {
@@ -103,10 +117,45 @@ function findTherapistFromJson(
       };
     }
 
-    // Check demo URL if available
-    if (therapist.demo_url) {
-      const demoUsername = extractCalendlyUsername(therapist.demo_url);
+    // Check demo URL if available (support both field names)
+    const demoUrl = therapist.demo_url || therapist.demourl;
+    if (demoUrl) {
+      const demoUsername = extractCalendlyUsername(demoUrl);
       if (demoUsername && usernameToMatch && demoUsername === usernameToMatch) {
+        return {
+          therapistJsonId: therapist.id,
+          therapistName: therapist.name,
+          therapist,
+        };
+      }
+    }
+
+    // Method 2: Match by email (therapist_email from JSON vs user_email from eventMemberships)
+    if (membershipEmail && therapist.therapist_email) {
+      const therapistEmail = therapist.therapist_email.toLowerCase().trim();
+      if (therapistEmail === membershipEmail) {
+        console.info('Matched therapist by email:', {
+          therapistId: therapist.id,
+          therapistName: therapist.name,
+          email: membershipEmail,
+        });
+        return {
+          therapistJsonId: therapist.id,
+          therapistName: therapist.name,
+          therapist,
+        };
+      }
+    }
+
+    // Method 3: Match by name (name from JSON vs user_name from eventMemberships)
+    if (membershipName && therapist.name) {
+      const therapistName = therapist.name.trim();
+      if (therapistName === membershipName) {
+        console.info('Matched therapist by name:', {
+          therapistId: therapist.id,
+          therapistName: therapist.name,
+          name: membershipName,
+        });
         return {
           therapistJsonId: therapist.id,
           therapistName: therapist.name,
@@ -116,8 +165,12 @@ function findTherapistFromJson(
     }
   }
 
-  // If we couldn't match by username, return null
-  // The therapist name will be extracted from webhook event memberships instead
+  // If we couldn't match by any method, return null
+  console.warn('Could not match therapist:', {
+    usernameToMatch,
+    membershipEmail,
+    membershipName,
+  });
   return { therapistJsonId: null, therapistName: null, therapist: null };
 }
 
@@ -135,12 +188,14 @@ function determineSessionType(
 
   const normalizedEventUri = eventUri.toLowerCase().split('?')[0].replace(/\/$/, '');
 
-  if (therapist.demo_url) {
-    const normalizedDemoUrl = therapist.demo_url.toLowerCase().split('?')[0].replace(/\/$/, '');
+  // Support both field names for demo URL
+  const demoUrl = therapist.demo_url || therapist.demourl;
+  if (demoUrl) {
+    const normalizedDemoUrl = demoUrl.toLowerCase().split('?')[0].replace(/\/$/, '');
     if (
       normalizedEventUri.includes(normalizedDemoUrl) ||
       normalizedDemoUrl.includes(normalizedEventUri) ||
-      extractCalendlyUsername(eventUri) === extractCalendlyUsername(therapist.demo_url)
+      extractCalendlyUsername(eventUri) === extractCalendlyUsername(demoUrl)
     ) {
       return 'free';
     }
@@ -167,6 +222,11 @@ async function lookupUserAndTherapist(
   inviteeEmail: string,
   calendlyUserId: string | null | undefined,
   scheduledEventUri: string | null | undefined,
+  eventMemberships?: Array<{
+    user?: string;
+    user_email?: string;
+    user_name?: string;
+  }>,
 ): Promise<{
   userId: number | null;
   therapistJsonId: number | null;
@@ -191,14 +251,19 @@ async function lookupUserAndTherapist(
     console.error('Database lookup error:', dbError);
   }
 
-  // Find therapist from JSON file by matching Calendly username
-  const therapistInfo = findTherapistFromJson(calendlyUserId, scheduledEventUri);
+  // Find therapist from JSON file by matching Calendly username, email, or name
+  const therapistInfo = findTherapistFromJson(
+    calendlyUserId ?? null,
+    scheduledEventUri ?? null,
+    eventMemberships,
+  );
 
   if (therapistInfo.therapistJsonId) {
     console.info('Found therapist from JSON:', {
       therapistJsonId: therapistInfo.therapistJsonId,
       therapistName: therapistInfo.therapistName,
       scheduledEventUri,
+      matchedBy: eventMemberships?.[0]?.user_email ? 'email/name' : 'username',
     });
   }
 
@@ -335,7 +400,7 @@ async function cancelBookedSession(
 
 
 export async function POST(req: NextRequest) {
-  console.log('CALENDLY WEBHOOK RECEIVED');
+  console.info('CALENDLY WEBHOOK RECEIVED');
   try {
     // Log raw request info for debugging
     const contentType = req.headers.get('content-type');
@@ -423,17 +488,17 @@ export async function POST(req: NextRequest) {
         const therapistUserId = createdBy ? createdBy.split('/').pop() : null;
 
         // Look up user by email and therapist from JSON
-        // Pass scheduled event URI to help match therapist by Calendly username
+        // Pass scheduled event URI and eventMemberships to help match therapist
         const eventUri: string | null = scheduledEvent.uri || null;
         const { userId, therapistJsonId, therapistName, therapist } =
-          await lookupUserAndTherapist(inviteeEmail, therapistUserId, eventUri);
+          await lookupUserAndTherapist(inviteeEmail, therapistUserId, eventUri, eventMemberships);
 
         // Get therapist name from event if available (for redundancy)
         // Try to get from event memberships or use a default
         const finalTherapistName =
           therapistName ||
-          eventMemberships?.[0]?.user?.name ||
-          eventMemberships?.[0]?.user?.email ||
+          eventMemberships?.[0]?.user_name ||
+          eventMemberships?.[0]?.user_email ||
           'Unknown Therapist';
 
         // Determine session type by matching event URI with booking URLs
@@ -491,8 +556,13 @@ export async function POST(req: NextRequest) {
       });
 
       // Find therapist from JSON for cancellation lookup
-      const eventUriForLookup: string | null = eventUri || null;
-      const { therapistJsonId } = findTherapistFromJson(therapistUserId, eventUriForLookup);
+      const eventUriForLookup: string | null = eventUri ?? null;
+      const eventMemberships = scheduledEvent?.event_memberships || [];
+      const { therapistJsonId } = findTherapistFromJson(
+        therapistUserId ?? null,
+        eventUriForLookup,
+        eventMemberships,
+      );
 
       // Update bookedSessions entry to mark as cancelled
       if (eventUri) {
