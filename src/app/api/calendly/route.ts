@@ -19,7 +19,7 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const ADMIN_EMAILS = ['stanley@renavestapp.com',];
+const ADMIN_EMAILS = ['stanley@renavestapp.com', 'ewongagent@gmail.com'];
 
 export async function POST(req: NextRequest) {
   try {
