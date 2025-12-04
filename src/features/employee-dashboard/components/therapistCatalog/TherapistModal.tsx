@@ -13,6 +13,7 @@ interface Therapist {
   clientele: string;
   longbio: string;
   bookingurl: string;
+  demourl: string;
   previewblurb: string | null;
   profileurl: string | null;
 }
@@ -24,9 +25,52 @@ interface TherapistModalProps {
 }
 
 const TherapistImage = ({ therapist }: { therapist: Therapist }) => {
-  const handleBookSession = () => {
-    if (therapist.bookingurl) {
-      window.open(therapist.bookingurl, '_blank');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleBookSession = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(
+        `/api/employee/free-sessions?therapistJsonId=${therapist.id}`,
+      );
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('Error fetching free sessions:', data.error);
+        if (therapist.bookingurl) {
+          window.open(therapist.bookingurl, '_blank');
+        }
+        return;
+      }
+
+      const { freeSessionsCount, hasBookedWithTherapist } = data;
+
+      // Determine which URL to use
+      let urlToUse = therapist.bookingurl;
+
+      // Use demourl first if it exists
+      if (therapist.demourl && therapist.demourl.trim() !== '') {
+        // Check conditions:
+        // 1. User has already booked with this therapist
+        // 2. User has booked 3 free sessions with different therapists
+        if (hasBookedWithTherapist || freeSessionsCount >= 3) {
+          urlToUse = therapist.bookingurl;
+        } else {
+          urlToUse = therapist.demourl;
+        }
+      }
+
+      if (urlToUse) {
+        window.open(urlToUse, '_blank');
+      }
+    } catch (error) {
+      console.error('Error in handleBookSession:', error);
+      // Fallback to bookingurl if there's an error
+      if (therapist.bookingurl) {
+        window.open(therapist.bookingurl, '_blank');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -50,9 +94,10 @@ const TherapistImage = ({ therapist }: { therapist: Therapist }) => {
       <div className='mt-6 space-y-4'>
         <button
           onClick={handleBookSession}
-          className='block w-full py-3 px-4 text-center text-white rounded-lg transition-colors font-medium hover:bg-accent bg-accent-dark'
+          disabled={isLoading}
+          className='block w-full py-3 px-4 text-center text-white rounded-lg transition-colors font-medium hover:bg-accent bg-accent-dark disabled:opacity-50 disabled:cursor-not-allowed'
         >
-          Book Session
+          {isLoading ? 'Loading...' : 'Book Session'}
         </button>
 
         <div className='p-4 bg-gray-50 rounded-lg'>

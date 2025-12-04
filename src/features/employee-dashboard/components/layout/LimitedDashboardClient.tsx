@@ -37,6 +37,7 @@ interface Therapist {
   clientele: string;
   longbio: string;
   bookingurl: string;
+  demourl: string;
   previewblurb: string | null;
   profileurl: string | null;
 }
@@ -55,6 +56,7 @@ export default function LimitedDashboardClient() {
   const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
   const [hasCompletedQuiz, setHasCompletedQuiz] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'forms' | 'explore'>('explore');
+  const [remainingFreeSessions, setRemainingFreeSessions] = useState<number | null>(null);
   useEffect(() => {
     if (user && user.id) {
       const baseUrl = window.location.origin;
@@ -73,6 +75,18 @@ export default function LimitedDashboardClient() {
         firstName: user?.firstName,
         lastName: user?.lastName,
       });
+
+      // Fetch remaining free sessions
+      fetch('/api/employee/free-sessions')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.remainingFreeSessions !== undefined) {
+            setRemainingFreeSessions(data.remainingFreeSessions);
+          }
+        })
+        .catch((error) => {
+          console.error('Error fetching free sessions:', error);
+        });
     }
   }, [user]);
 
@@ -158,6 +172,11 @@ export default function LimitedDashboardClient() {
             <p className='text-gray-600 mt-2 text-base md:text-lg max-w-2xl animate-fade-in'>
               Your financial wellness journey starts here. Explore resources and connect with expert
               financial therapists.
+              {remainingFreeSessions !== null && remainingFreeSessions > 0 && (
+                <span className='block mt-2 font-semibold text-purple-700'>
+                  {remainingFreeSessions} free {remainingFreeSessions === 1 ? 'session' : 'sessions'} remaining
+                </span>
+              )}
             </p>
           </div>
         </div>
