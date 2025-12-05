@@ -22,9 +22,10 @@ interface TherapistModalProps {
   therapist: Therapist | null;
   isOpen: boolean;
   onClose: () => void;
+  onBookSessionClick?: () => void;
 }
 
-const TherapistImage = ({ therapist }: { therapist: Therapist }) => {
+const TherapistImage = ({ therapist, onBookSessionClick }: { therapist: Therapist; onBookSessionClick?: () => void }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isUsingDemoUrl, setIsUsingDemoUrl] = useState(false);
 
@@ -99,12 +100,20 @@ const TherapistImage = ({ therapist }: { therapist: Therapist }) => {
 
       if (urlToUse) {
         window.open(urlToUse, '_blank');
+        // Refresh free sessions count after opening booking link
+        if (onBookSessionClick) {
+          onBookSessionClick();
+        }
       }
     } catch (error) {
       console.error('Error in handleBookSession:', error);
       // Fallback to bookingurl if there's an error
       if (therapist.bookingurl) {
         window.open(therapist.bookingurl, '_blank');
+        // Refresh free sessions count after opening booking link
+        if (onBookSessionClick) {
+          onBookSessionClick();
+        }
       }
     } finally {
       setIsLoading(false);
@@ -197,7 +206,7 @@ const TherapistDetails = ({ therapist }: { therapist: Therapist }) => (
   </div>
 );
 
-export default function TherapistModal({ therapist, isOpen, onClose }: TherapistModalProps) {
+export default function TherapistModal({ therapist, isOpen, onClose, onBookSessionClick }: TherapistModalProps) {
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
@@ -250,7 +259,7 @@ export default function TherapistModal({ therapist, isOpen, onClose }: Therapist
               </button>
 
               <div className='flex flex-col md:flex-row gap-6 md:gap-8 mt-6'>
-                <TherapistImage therapist={therapist} />
+                <TherapistImage therapist={therapist} onBookSessionClick={onBookSessionClick} />
                 <TherapistDetails therapist={therapist} />
               </div>
             </div>
