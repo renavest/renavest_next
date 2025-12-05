@@ -57,6 +57,21 @@ export default function LimitedDashboardClient() {
   const [hasCompletedQuiz, setHasCompletedQuiz] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'forms' | 'explore'>('explore');
   const [remainingFreeSessions, setRemainingFreeSessions] = useState<number | null>(null);
+  
+  // Function to fetch remaining free sessions
+  const fetchRemainingFreeSessions = () => {
+    fetch('/api/employee/free-sessions')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.remainingFreeSessions !== undefined) {
+          setRemainingFreeSessions(data.remainingFreeSessions);
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching free sessions:', error);
+      });
+  };
+
   useEffect(() => {
     if (user && user.id) {
       const baseUrl = window.location.origin;
@@ -76,17 +91,8 @@ export default function LimitedDashboardClient() {
         lastName: user?.lastName,
       });
 
-      // Fetch remaining free sessions
-      fetch('/api/employee/free-sessions')
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.remainingFreeSessions !== undefined) {
-            setRemainingFreeSessions(data.remainingFreeSessions);
-          }
-        })
-        .catch((error) => {
-          console.error('Error fetching free sessions:', error);
-        });
+      // Fetch remaining free sessions on initial load
+      fetchRemainingFreeSessions();
     }
   }, [user]);
 
@@ -142,6 +148,8 @@ export default function LimitedDashboardClient() {
   const handleTherapistClick = (therapist: Therapist) => {
     setSelectedTherapist(therapist);
     setIsModalOpen(true);
+    // Refresh free sessions count when modal opens
+    fetchRemainingFreeSessions();
   };
 
   const handleCloseModal = () => {
@@ -203,6 +211,7 @@ export default function LimitedDashboardClient() {
         therapist={selectedTherapist}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
+        onBookSessionClick={fetchRemainingFreeSessions}
       />      
 
 
