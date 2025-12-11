@@ -10,7 +10,7 @@
  *   --header 'authorization: Bearer <YOUR_PERSONAL_TOKEN>' \
  *   --data '{
  *     "url":"https://your-domain.com/api/calendly",
- *     "events":["invitee.created", "invitee.canceled"],
+ *     "events":["invitee.created", "invitee.canceled", "invitee.rescheduled"],
  *     "scope":"organization",
  *     "organization":"https://api.calendly.com/organizations/<ORG_UUID>"
  *   }'
@@ -52,6 +52,18 @@ interface CalendlyWebhookEvent {
       start_time?: string;
       end_time?: string;
       event_type?: string; // Event type URI (in scheduled_event)
+      event_memberships?: Array<{
+        user?: string;
+        user_email?: string;
+        user_name?: string;
+      }>;
+    };
+    old_scheduled_event?: {
+      uri?: string;
+      name?: string;
+      start_time?: string;
+      end_time?: string;
+      event_type?: string;
       event_memberships?: Array<{
         user?: string;
         user_email?: string;
@@ -466,6 +478,312 @@ async function cancelBookedSession(
   }
 }
 
+/**
+ * Handle invitee.created event - create new booking
+ */
+async function handleInviteeCreated(event: CalendlyWebhookEvent): Promise<void> {
+  const payload = event.payload;
+  const scheduledEvent = payload?.scheduled_event;
+
+  const inviteeName = payload?.name;
+  const inviteeEmail = payload?.email;
+
+  // Get event_type from event level, payload, or scheduled_event (in order of preference)
+  const eventTypeUri =
+    event.event_type || payload?.event_type || (scheduledEvent as { event_type?: string })?.event_type;
+
+  const eventName = scheduledEvent?.name;
+  const startTimeStr = scheduledEvent?.start_time;
+  const endTimeStr = scheduledEvent?.end_time;
+
+  const createdBy = event.created_by;
+  const eventMemberships = scheduledEvent?.event_memberships || [];
+
+  console.info('Event Memberships (detailed):', JSON.stringify(eventMemberships, null, 2));
+
+  console.info('New Calendly Booking:', {
+    inviteeName,
+    inviteeEmail,
+    eventName,
+    eventTypeUri,
+    startTime: startTimeStr,
+    therapistUri: createdBy,
+    eventMemberships,
+  });
+
+  if (inviteeName && inviteeEmail && scheduledEvent && startTimeStr && endTimeStr) {
+    const startTime = new Date(startTimeStr);
+    const endTime = new Date(endTimeStr);
+    const therapistUserId = createdBy ? createdBy.split('/').pop() : null;
+
+    // Look up user by email and therapist from JSON
+    // Pass scheduled event URI and eventMemberships to help match therapist
+    const eventUri: string | null = scheduledEvent.uri || null;
+    const { userId, therapistJsonId, therapistName, therapist } =
+      await lookupUserAndTherapist(inviteeEmail, therapistUserId, eventUri, eventMemberships);
+
+    // Get therapist name from event if available (for redundancy)
+    // Try to get from event memberships or use a default
+    const finalTherapistName =
+      therapistName ||
+      eventMemberships?.[0]?.user_name ||
+      eventMemberships?.[0]?.user_email ||
+      'Unknown Therapist';
+
+    // Determine session type by matching event type scheduling URL with booking URLs
+    // Use event_type URI to get the public booking URL (scheduling_url)
+    const sessionType = await determineSessionType(eventTypeUri || null, therapist);
+
+    // Create bookedSessions entry if we have userEmail and eventUri
+    if (inviteeEmail && scheduledEvent?.uri) {
+      try {
+        const inviteeUri = payload?.uri;
+        await createBookedSession(
+          userId,
+          inviteeEmail,
+          therapistJsonId,
+          finalTherapistName,
+          eventName || null,
+          startTime,
+          endTime,
+          scheduledEvent.uri,
+          inviteeUri || null,
+          sessionType,
+        );
+      } catch (insertError) {
+        console.error('Error creating booked session:', insertError);
+      }
+    } else {
+      console.warn('Skipping bookedSessions creation - missing required data:', {
+        hasUserEmail: !!inviteeEmail,
+        hasEventUri: !!scheduledEvent?.uri,
+      });
+    }
+  }
+}
+
+/**
+ * Handle invitee.canceled event - mark booking as cancelled
+ */
+async function handleInviteeCanceled(event: CalendlyWebhookEvent): Promise<void> {
+  const payload = event.payload;
+  const scheduledEvent = payload?.scheduled_event;
+
+  const inviteeName = payload?.name;
+  const inviteeEmail = payload?.email;
+  const cancelReason = payload?.cancellation?.reason;
+
+  const createdBy = event.created_by;
+  const therapistUserId = createdBy ? createdBy.split('/').pop() : null;
+  const inviteeUri = payload?.uri;
+  const eventUri = scheduledEvent?.uri;
+
+  console.info('Calendly Booking Canceled:', {
+    inviteeName,
+    inviteeEmail,
+    cancelReason,
+    therapistUri: createdBy,
+    eventUri,
+    inviteeUri,
+  });
+
+  // Find therapist from JSON for cancellation lookup
+  const eventUriForLookup: string | null = eventUri ?? null;
+  const eventMemberships = scheduledEvent?.event_memberships || [];
+  const { therapistJsonId } = findTherapistFromJson(
+    therapistUserId ?? null,
+    eventUriForLookup,
+    eventMemberships,
+  );
+
+  // Update bookedSessions entry to mark as cancelled
+  if (eventUri) {
+    try {
+      await cancelBookedSession(
+        eventUri,
+        inviteeEmail || null,
+        therapistJsonId,
+        scheduledEvent?.start_time || null,
+        cancelReason || null,
+      );
+    } catch (updateError) {
+      console.error('Error updating booked session cancellation:', updateError);
+    }
+  }
+}
+
+/**
+ * Handle invitee.rescheduled event - update booking with new times
+ */
+async function handleInviteeRescheduled(event: CalendlyWebhookEvent): Promise<void> {
+  const payload = event.payload;
+  const newScheduledEvent = payload?.scheduled_event;
+  const oldScheduledEvent = payload?.old_scheduled_event;
+
+  const inviteeName = payload?.name;
+  const inviteeEmail = payload?.email;
+
+  const createdBy = event.created_by;
+  const therapistUserId = createdBy ? createdBy.split('/').pop() : null;
+  const eventMemberships = newScheduledEvent?.event_memberships || [];
+
+  const oldEventUri = oldScheduledEvent?.uri;
+  const newEventUri = newScheduledEvent?.uri;
+  const oldStartTime = oldScheduledEvent?.start_time;
+  const newStartTimeStr = newScheduledEvent?.start_time;
+  const newEndTimeStr = newScheduledEvent?.end_time;
+
+  console.info('Calendly Booking Rescheduled:', {
+    inviteeName,
+    inviteeEmail,
+    therapistUri: createdBy,
+    oldEventUri,
+    newEventUri,
+    oldStartTime,
+    newStartTime: newStartTimeStr,
+    eventMemberships,
+  });
+
+  // Find therapist from JSON for reschedule lookup
+  const eventUriForLookup: string | null = oldEventUri ?? null;
+  const { therapistJsonId } = findTherapistFromJson(
+    therapistUserId ?? null,
+    eventUriForLookup,
+    eventMemberships,
+  );
+
+  // Update bookedSessions entry to reflect rescheduling
+  if (oldEventUri && newEventUri && newStartTimeStr && newEndTimeStr) {
+    try {
+      const newStartTime = new Date(newStartTimeStr);
+      const newEndTime = new Date(newEndTimeStr);
+
+      await rescheduleBookedSession(
+        oldEventUri,
+        newEventUri,
+        inviteeEmail || null,
+        therapistJsonId,
+        oldStartTime || null,
+        newStartTime,
+        newEndTime,
+        'Rescheduled by user', // Default reason
+      );
+    } catch (updateError) {
+      console.error('Error updating booked session reschedule:', updateError);
+    }
+  } else {
+    console.warn('Skipping reschedule update - missing required data:', {
+      hasOldEventUri: !!oldEventUri,
+      hasNewEventUri: !!newEventUri,
+      hasNewStartTime: !!newStartTimeStr,
+      hasNewEndTime: !!newEndTimeStr,
+    });
+  }
+}
+
+/**
+ * Update booked session to reflect rescheduling with new times
+ */
+async function rescheduleBookedSession(
+  oldEventUri: string,
+  newEventUri: string,
+  inviteeEmail: string | null,
+  therapistJsonId: number | null,
+  oldStartTime: string | null,
+  newStartTime: Date,
+  newEndTime: Date,
+  rescheduleReason: string | null,
+): Promise<void> {
+  try {
+    // Try to find the booking by old Calendly event URI first
+    const existingBooking = await db.query.bookedSessions.findFirst({
+      where: eq(bookedSessions.calendlyEventUri, oldEventUri),
+      columns: { id: true, startTime: true, endTime: true, originalStartTime: true, originalEndTime: true },
+    });
+
+    if (existingBooking) {
+      // Store original times if this is the first reschedule
+      const originalStart = existingBooking.originalStartTime || existingBooking.startTime;
+      const originalEnd = existingBooking.originalEndTime || existingBooking.endTime;
+
+      await db
+        .update(bookedSessions)
+        .set({
+          rescheduled: true,
+          rescheduledReason: rescheduleReason || null,
+          originalStartTime: originalStart,
+          originalEndTime: originalEnd,
+          startTime: newStartTime,
+          endTime: newEndTime,
+          calendlyEventUri: newEventUri, // Update to new event URI
+          updatedAt: new Date(),
+        })
+        .where(eq(bookedSessions.id, existingBooking.id));
+
+      console.info('Booked session marked as rescheduled:', {
+        bookingId: existingBooking.id,
+        oldEventUri,
+        newEventUri,
+        oldStartTime: existingBooking.startTime,
+        newStartTime,
+      });
+      return;
+    }
+
+    // Fallback: try to find by invitee email + therapist JSON ID + old start time
+    if (inviteeEmail && therapistJsonId && oldStartTime) {
+      const oldStartTimeDate = new Date(oldStartTime);
+      const booking = await db.query.bookedSessions.findFirst({
+        where: (bookedSessions, { and, eq }) =>
+          and(
+            eq(bookedSessions.userEmail, inviteeEmail),
+            eq(bookedSessions.therapistJsonId, therapistJsonId),
+            eq(bookedSessions.startTime, oldStartTimeDate),
+          ),
+        columns: { id: true, startTime: true, endTime: true, originalStartTime: true, originalEndTime: true },
+      });
+
+      if (booking) {
+        // Store original times if this is the first reschedule
+        const originalStart = booking.originalStartTime || booking.startTime;
+        const originalEnd = booking.originalEndTime || booking.endTime;
+
+        await db
+          .update(bookedSessions)
+          .set({
+            rescheduled: true,
+            rescheduledReason: rescheduleReason || null,
+            originalStartTime: originalStart,
+            originalEndTime: originalEnd,
+            startTime: newStartTime,
+            endTime: newEndTime,
+            calendlyEventUri: newEventUri, // Update to new event URI
+            updatedAt: new Date(),
+          })
+          .where(eq(bookedSessions.id, booking.id));
+
+        console.info('Booked session marked as rescheduled (fallback lookup):', {
+          bookingId: booking.id,
+          oldStartTime: booking.startTime,
+          newStartTime,
+        });
+        return;
+      }
+    }
+
+    console.warn('Could not find booking to reschedule:', {
+      oldEventUri,
+      newEventUri,
+      inviteeEmail,
+      therapistJsonId,
+      oldStartTime,
+    });
+  } catch (updateError) {
+    console.error('Error updating booked session reschedule:', updateError);
+    throw updateError;
+  }
+}
+
 
 
 export async function POST(req: NextRequest) {
@@ -525,134 +843,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true }, { status: 200 });
     }
 
-    // Handle new bookings
+    // Handle different event types
     if (event.event === 'invitee.created') {
-      const payload = event.payload;
-      const scheduledEvent = payload?.scheduled_event;
-
-      const inviteeName = payload?.name;
-      const inviteeEmail = payload?.email;
-
-      // Get event_type from event level, payload, or scheduled_event (in order of preference)
-      const eventTypeUri =
-        event.event_type || payload?.event_type || (scheduledEvent as { event_type?: string })?.event_type;
-
-      const eventName = scheduledEvent?.name;
-      const startTimeStr = scheduledEvent?.start_time;
-      const endTimeStr = scheduledEvent?.end_time;
-
-      const createdBy = event.created_by;
-      const eventMemberships = scheduledEvent?.event_memberships || [];
-
-      console.info('Event Memberships (detailed):', JSON.stringify(eventMemberships, null, 2));
-
-      console.info('New Calendly Booking:', {
-        inviteeName,
-        inviteeEmail,
-        eventName,
-        eventTypeUri,
-        startTime: startTimeStr,
-        therapistUri: createdBy,
-        eventMemberships,
-      });
-
-      if (inviteeName && inviteeEmail && scheduledEvent && startTimeStr && endTimeStr) {
-        const startTime = new Date(startTimeStr);
-        const endTime = new Date(endTimeStr);
-        const therapistUserId = createdBy ? createdBy.split('/').pop() : null;
-
-        // Look up user by email and therapist from JSON
-        // Pass scheduled event URI and eventMemberships to help match therapist
-        const eventUri: string | null = scheduledEvent.uri || null;
-        const { userId, therapistJsonId, therapistName, therapist } =
-          await lookupUserAndTherapist(inviteeEmail, therapistUserId, eventUri, eventMemberships);
-
-        // Get therapist name from event if available (for redundancy)
-        // Try to get from event memberships or use a default
-        const finalTherapistName =
-          therapistName ||
-          eventMemberships?.[0]?.user_name ||
-          eventMemberships?.[0]?.user_email ||
-          'Unknown Therapist';
-
-        // Determine session type by matching event type scheduling URL with booking URLs
-        // Use event_type URI to get the public booking URL (scheduling_url)
-        const sessionType = await determineSessionType(eventTypeUri || null, therapist);
-
-        // Create bookedSessions entry if we have userEmail and eventUri
-        if (inviteeEmail && scheduledEvent?.uri) {
-          try {
-            const inviteeUri = payload?.uri;
-            await createBookedSession(
-              userId,
-              inviteeEmail,
-              therapistJsonId,
-              finalTherapistName,
-              eventName || null,
-              startTime,
-              endTime,
-              scheduledEvent.uri,
-              inviteeUri || null,
-              sessionType,
-            );
-          } catch (insertError) {
-            console.error('Error creating booked session:', insertError);
-          }
-        } else {
-          console.warn('Skipping bookedSessions creation - missing required data:', {
-            hasUserEmail: !!inviteeEmail,
-            hasEventUri: !!scheduledEvent?.uri,
-          });
-        }
-      }
-    }
-
-    // Handle cancellations
-    if (event.event === 'invitee.canceled') {
-      const payload = event.payload;
-      const scheduledEvent = payload?.scheduled_event;
-
-      const inviteeName = payload?.name;
-      const inviteeEmail = payload?.email;
-      const cancelReason = payload?.cancellation?.reason;
-
-      const createdBy = event.created_by;
-      const therapistUserId = createdBy ? createdBy.split('/').pop() : null;
-      const inviteeUri = payload?.uri;
-      const eventUri = scheduledEvent?.uri;
-
-      console.info('Calendly Booking Canceled:', {
-        inviteeName,
-        inviteeEmail,
-        cancelReason,
-        therapistUri: createdBy,
-        eventUri,
-        inviteeUri,
-      });
-
-      // Find therapist from JSON for cancellation lookup
-      const eventUriForLookup: string | null = eventUri ?? null;
-      const eventMemberships = scheduledEvent?.event_memberships || [];
-      const { therapistJsonId } = findTherapistFromJson(
-        therapistUserId ?? null,
-        eventUriForLookup,
-        eventMemberships,
-      );
-
-      // Update bookedSessions entry to mark as cancelled
-      if (eventUri) {
-        try {
-          await cancelBookedSession(
-            eventUri,
-            inviteeEmail || null,
-            therapistJsonId,
-            scheduledEvent?.start_time || null,
-            cancelReason || null,
-          );
-        } catch (updateError) {
-          console.error('Error updating booked session cancellation:', updateError);
-        }
-      }
+      await handleInviteeCreated(event);
+    } else if (event.event === 'invitee.canceled') {
+      await handleInviteeCanceled(event);
+    } else if (event.event === 'invitee.rescheduled') {
+      await handleInviteeRescheduled(event);
     }
 
     return NextResponse.json({ received: true }, { status: 200 });

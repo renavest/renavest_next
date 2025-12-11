@@ -269,6 +269,10 @@ export const bookedSessions = pgTable('booked_sessions', {
   endTime: timestamp('end_time'),
   cancelled: boolean('cancelled').default(false).notNull(),
   cancelledReason: text('cancelled_reason'),
+  rescheduled: boolean('rescheduled').default(false).notNull(),
+  rescheduledReason: text('rescheduled_reason'),
+  originalStartTime: timestamp('original_start_time'), // Track original time before reschedule
+  originalEndTime: timestamp('original_end_time'), // Track original end time before reschedule
   calendlyEventUri: text('calendly_event_uri'), // Store Calendly scheduled event URI for lookups
   calendlyInviteeUri: text('calendly_invitee_uri'), // Store Calendly invitee URI for lookups (Each invitee has a unique URI)
   createdAt: timestamp('created_at').defaultNow().notNull(),
