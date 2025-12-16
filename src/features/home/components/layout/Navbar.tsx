@@ -109,7 +109,7 @@ const MobileNavLinks = ({ onClose, isSignedIn }: { onClose: () => void; isSigned
       onClose={onClose}
     />
     <MobileNavLink
-      href='#business-impact'
+      href='/partnerships'
       icon={<TrendingUp className='h-5 w-5 text-[#9071FF]' />}
       label='Partner with us'
       onClose={onClose}

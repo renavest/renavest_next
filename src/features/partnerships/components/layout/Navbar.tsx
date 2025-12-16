@@ -206,7 +206,11 @@ function Navbar() {
     <header className={getHeaderClassName(isHeaderScrolled)}>
       <div className='flex items-center justify-between max-w-7xl mx-auto'>
         {/* Logo and Title Container */}
-        <div className='flex items-center'>
+        <Link
+          href='/'
+          className='flex items-center'
+          onClick={() => trackNavClick('home_logo')}
+        >
           {/* Logo */}
           <div className='relative flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12'>
             <Image
@@ -223,7 +227,7 @@ function Navbar() {
           <h1 className='ml-2 sm:ml-3 md:ml-4 text-lg sm:text-xl md:text-2xl font-semibold text-gray-800 transition-all duration-300 hover:text-[#9071FF]'>
             Renavest
           </h1>
-        </div>
+        </Link>
 
         {/* Desktop Navigation */}
         <DesktopNavigation isSignedIn={!!isSignedIn} />
