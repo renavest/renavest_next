@@ -15,7 +15,6 @@ import { Suspense } from 'react';
 import {
   BusinessImpactSection,
   Footer,
-  HeroSection,
   JasmineJourneySection,
   Navbar,
   PilotCohortBanner,
@@ -129,9 +128,8 @@ function PartnershipsContent() {
         />
       </Head>
 
-      <div className={`min-h-screen bg-white ${inter.className}`}>
+      <div style={{ backgroundColor: 'bg-#9071FF' }} className={` ${inter.className}`}>
         <Navbar />
-        <HeroSection />
         <BusinessImpactSection />
         <WhatWeDoSection />
         <WhatIsFinancialTherapySection />

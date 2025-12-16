@@ -14,7 +14,6 @@
 // ====================================
 
 // Core layout components
-export { default as HeroSection } from './components/layout/HeroSection';
 export { default as Navbar } from './components/layout/Navbar';
 export { default as Footer } from './components/layout/Footer';
 
@@ -69,7 +68,6 @@ export const PARTNERSHIPS_FEATURE_META = {
   version: '1.0.0',
   description: 'Partnership page components and utilities for the Renavest application',
   components: [
-    'HeroSection',
     'Navbar',
     'Footer',
     'WhatWeDoSection',

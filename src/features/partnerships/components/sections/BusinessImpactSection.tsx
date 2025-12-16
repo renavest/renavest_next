@@ -52,7 +52,7 @@ function BusinessImpactSection() {
   return (
     <>
       <span id='business-impact' className='block scroll-mt-16'></span>
-      <section className='w-full py-24 bg-white'>
+      <section className='w-full py-24 bg-[#9071FF]/10'>
         <div
           ref={sectionRef}
           className={`max-w-6xl mx-auto px-6 md:px-10 transform transition-all duration-1000

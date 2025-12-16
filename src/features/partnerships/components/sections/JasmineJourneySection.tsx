@@ -84,7 +84,7 @@ function JasmineJourneySection() {
       <span id='partnerships-journey' className='block scroll-mt-16'></span>
       <section
         ref={sectionRef}
-        className='w-full flex flex-col items-center py-12 md:py-16 bg-[#F9F9F7]'
+        className='w-full flex flex-col items-center py-12 md:py-16 bg-[#9071FF]/10'
       >
         <div className='max-w-7xl w-full px-4 md:px-10 mb-12 md:mb-20'>
           <div className='max-w-3xl mx-auto text-center'>
