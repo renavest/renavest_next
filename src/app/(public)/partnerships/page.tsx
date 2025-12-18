@@ -18,7 +18,6 @@ import {
   JasmineJourneySection,
   Navbar,
   PilotCohortBanner,
-  TestimonialSection,
   WhatIsFinancialTherapySection,
   WhatWeDoSection,
 } from '@/src/features/partnerships';
@@ -134,7 +133,6 @@ function PartnershipsContent() {
         <WhatWeDoSection />
         <WhatIsFinancialTherapySection />
         <JasmineJourneySection />
-        <TestimonialSection />
         <PilotCohortBanner />
         <Footer />
       </div>

@@ -16,7 +16,6 @@ import {
   BusinessImpactSection,
   Footer,
   HeroSection,
-  JasmineJourneySection,
   Navbar,
   PilotCohortBanner,
   TestimonialSection,
@@ -134,7 +133,6 @@ function HomeContent() {
         <BusinessImpactSection />
         <WhatWeDoSection />
         <WhatIsFinancialTherapySection />
-        <JasmineJourneySection />
         <TestimonialSection />
         <PilotCohortBanner />
         <Footer />
