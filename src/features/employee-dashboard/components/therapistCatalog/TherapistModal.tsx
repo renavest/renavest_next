@@ -67,6 +67,10 @@ const TherapistImage = ({ therapist, onBookSessionClick }: { therapist: Therapis
 
   const handleBookSession = async () => {
     setIsLoading(true);
+    
+    // Need to open window first to avoid iOS popup blocker
+    const newWindow = window.open('about:blank', '_blank');
+    
     try {
       const response = await fetch(
         `/api/employee/free-sessions?therapistJsonId=${therapist.id}`,
@@ -75,8 +79,10 @@ const TherapistImage = ({ therapist, onBookSessionClick }: { therapist: Therapis
 
       if (!response.ok) {
         console.error('Error fetching free sessions:', data.error);
-        if (therapist.bookingurl) {
-          window.open(therapist.bookingurl, '_blank');
+        if (therapist.bookingurl && newWindow) {
+          newWindow.location.href = therapist.bookingurl;
+        } else if (newWindow) {
+          newWindow.close();
         }
         return;
       }
@@ -98,22 +104,26 @@ const TherapistImage = ({ therapist, onBookSessionClick }: { therapist: Therapis
         }
       }
 
-      if (urlToUse) {
-        window.open(urlToUse, '_blank');
+      if (urlToUse && newWindow) {
+        newWindow.location.href = urlToUse;
         // Refresh free sessions count after opening booking link
         if (onBookSessionClick) {
           onBookSessionClick();
         }
+      } else if (newWindow) {
+        newWindow.close();
       }
     } catch (error) {
       console.error('Error in handleBookSession:', error);
       // Fallback to bookingurl if there's an error
-      if (therapist.bookingurl) {
-        window.open(therapist.bookingurl, '_blank');
+      if (therapist.bookingurl && newWindow) {
+        newWindow.location.href = therapist.bookingurl;
         // Refresh free sessions count after opening booking link
         if (onBookSessionClick) {
           onBookSessionClick();
         }
+      } else if (newWindow) {
+        newWindow.close();
       }
     } finally {
       setIsLoading(false);
