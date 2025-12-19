@@ -68,8 +68,7 @@ const TherapistImage = ({ therapist, onBookSessionClick }: { therapist: Therapis
   const handleBookSession = async () => {
     setIsLoading(true);
     
-    // CRITICAL: Open window immediately (synchronously) to avoid iOS popup blocker
-    // We'll update the URL after the fetch completes
+    // Need to open window first to avoid iOS popup blocker
     const newWindow = window.open('about:blank', '_blank');
     
     try {
