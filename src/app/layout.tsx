@@ -1,4 +1,5 @@
 import { ClerkProvider } from '@clerk/nextjs';
+import { Analytics } from '@vercel/analytics/next';
 import type { Metadata, Viewport } from 'next';
 import { Figtree } from 'next/font/google';
 import { Toaster } from 'sonner';
@@ -170,6 +171,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <Toaster position='bottom-right' />
             <PostHogProvider>{children}</PostHogProvider>
           </PageUtmHandler>
+          <Analytics />
         </body>
       </html>
     </ClerkProvider>
