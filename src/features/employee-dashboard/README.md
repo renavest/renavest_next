@@ -22,8 +22,7 @@ src/features/employee-dashboard/
 │   │   ├── ConsultationBanner.tsx       # Booking consultation CTA
 │   │   └── ComingSoon.tsx               # Placeholder component
 │   ├── subscription/             # Billing and subscription components
-│   │   ├── CurrentPlanCard.tsx          # Subscription plan display
-│   │   └── SubscriptionPlanIndicator.tsx # Plan status indicator
+│   │   └── CurrentPlanCard.tsx          # Subscription plan display
 │   ├── modals/                   # Interactive modal components
 │   │   ├── QuizModal.tsx                # Financial assessment quiz
 │   │   └── FinancialTherapyModal.tsx    # Educational content modal

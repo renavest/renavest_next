@@ -358,16 +358,6 @@ export interface SubscriptionPlan {
   status: 'active' | 'inactive' | 'cancelled' | 'pending';
 }
 
-/**
- * Props for subscription plan indicator component
- */
-export interface SubscriptionPlanIndicatorProps {
-  /** Current subscription plan */
-  plan?: SubscriptionPlan;
-  /** Optional CSS class name */
-  className?: string;
-}
-
 // ====================================
 // CLIENT FORMS STATE TYPES (moved from state)
 // ====================================

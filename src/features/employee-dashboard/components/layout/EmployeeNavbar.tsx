@@ -3,7 +3,7 @@
 import { UserButton } from '@clerk/nextjs';
 import { Menu, X } from 'lucide-react';
 import Image from 'next/image';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { LogoutButton } from '@/src/features/auth/components/auth/LogoutButton';
 import { cn } from '@/src/lib/utils';
@@ -12,7 +12,20 @@ import { COLORS } from '@/src/styles/colors';
 import companyInfo from '../../../utm/companyInfo';
 import { companyNameSignal } from '../../../utm/utmCustomDemo';
 import { isHeaderScrolledSignal, isMobileMenuOpenSignal } from '../../state/dashboardState';
-import { SubscriptionPlanIndicator } from '../subscription/SubscriptionPlanIndicator';
+
+const ClientOnlyUserButton = () => {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return <div className='h-8 w-8 rounded-full bg-gray-100' aria-hidden='true' />;
+  }
+
+  return <UserButton afterSignOutUrl='/login' />;
+};
 
 const MobileNavigation = () => (
   <div
@@ -23,15 +36,12 @@ const MobileNavigation = () => (
     `}
   >
     <div className='p-4 space-y-2'>
-      <div className='px-4 py-3 flex items-center justify-center'>
-        <SubscriptionPlanIndicator />
-      </div>
       <div className='px-4 py-3 border-t border-gray-100 mt-3'>
         <LogoutButton className='w-full flex items-center justify-center space-x-2 text-red-600 hover:bg-red-50 p-2 rounded-md' />
       </div>
       <div className='px-4 py-3 flex items-center justify-center'>
         <span className='text-sm text-gray-500 mr-3'>Your Account</span>
-        <UserButton afterSignOutUrl='/login' />
+        <ClientOnlyUserButton />
       </div>
     </div>
   </div>
@@ -39,11 +49,9 @@ const MobileNavigation = () => (
 
 const DesktopNavigation = () => (
   <div className='hidden md:flex items-center gap-3 lg:gap-4'>
-    <SubscriptionPlanIndicator />
-    <div className='h-6 w-px bg-gray-200 mx-1'></div>
     <LogoutButton />
     <div className='ml-1 lg:ml-2'>
-      <UserButton afterSignOutUrl='/login' />
+      <ClientOnlyUserButton />
     </div>
   </div>
 );

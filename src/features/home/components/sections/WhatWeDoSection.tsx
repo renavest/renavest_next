@@ -26,33 +26,11 @@ const CardOne = () => (
         Take the first step toward financial clarity
         </p>
       </div>
-      <div className='md:w-1/2 bg-[#f9f8ff] rounded-lg p-6'>
-        {/* <div className='bg-white rounded-lg shadow-md p-5'>
-          <div className='flex items-center gap-3 mb-4'>
-            <div className='w-10 h-10 bg-[#9071FF] rounded-full flex items-center justify-center text-white'>
-              <HeartHandshake size={20} />
-            </div>
-            <div>
-              <p className='font-medium'>AI-Enhanced Therapy</p>
-              <p className='text-sm text-gray-500'>Intelligent Support</p>
-            </div>
-          </div>
-          <div className='mb-3'>
-            <p className='text-sm text-gray-500'>AI Matching Accuracy</p>
-            <p className='font-medium'>92% Personalization Rate</p>
-          </div>
-          <div className='flex justify-between'>
-            <div>
-              <p className='text-sm text-gray-500'>Key Focus</p>
-              <p className='text-[#9071FF] font-medium'>Debt Anxiety</p>
-            </div>
-            <div>
-              <p className='text-sm text-gray-500'>Improvement</p>
-              <p className='text-green-600 font-medium'>87%</p>
-            </div>
-          </div>
-        </div> */}
-      </div>
+        <img
+          src="/talking.jpg"
+          alt="People talking"
+          className="rounded-xl md:w-1/2rounded-lg shadow-md object-cover w-full h-64 md:h-80"
+        />
     </div>
   </div>
 );
@@ -76,33 +54,11 @@ const CardTwo = () => (
         life.
         </p>
       </div>
-      <div className='md:w-1/2 bg-[#f9f8ff] rounded-lg p-6'>
-        {/* <div className='bg-white rounded-lg shadow-md p-5'>
-          <div className='flex items-center gap-3 mb-4'>
-            <div className='w-10 h-10 bg-[#9071FF] rounded-full flex items-center justify-center text-white'>
-              <TrendingUp size={20} />
-            </div>
-            <div>
-              <p className='font-medium'>Business Metrics</p>
-              <p className='text-sm text-gray-500'>Quarterly Impact</p>
-            </div>
-          </div>
-          <div className='mb-3'>
-            <p className='text-sm text-gray-500'>Performance</p>
-            <p className='font-medium'>Employee Productivity +34%</p>
-          </div>
-          <div className='flex justify-between'>
-            <div>
-              <p className='text-sm text-gray-500'>Retention</p>
-              <p className='text-[#9071FF] font-medium'>+13%</p>
-            </div>
-            <div>
-              <p className='text-sm text-gray-500'>Absenteeism</p>
-              <p className='text-green-600 font-medium'>-22%</p>
-            </div>
-          </div>
-        </div> */}
-      </div>
+      <img
+        src="/together.jpg"
+        alt="People together"
+        className="rounded-xl md:w-1/2 rounded-lg shadow-md object-cover w-full h-64 md:h-80"
+      />
     </div>
   </div>
 );
