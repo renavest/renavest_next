@@ -26,12 +26,17 @@ export default function TherapistCard({
     onClick();
   };
 
+  const normalizedProfileUrl =
+    profileurl && !profileurl.startsWith('/') && !profileurl.startsWith('http')
+      ? `/${profileurl}`
+      : profileurl;
+
   return (
     <div className="group cursor-pointer" onClick={handleClick}>
       <div className="relative aspect-square overflow-hidden rounded-xl mb-3 bg-gray-100">
-        {profileurl ? (
+        {normalizedProfileUrl ? (
           <Image
-            src={profileurl}
+            src={normalizedProfileUrl}
             alt={name}
             fill
             className="object-cover object-top transition-transform duration-300 group-hover:scale-105"

@@ -130,12 +130,17 @@ const TherapistImage = ({ therapist, onBookSessionClick }: { therapist: Therapis
     }
   };
 
+  const normalizedProfileUrl =
+    therapist.profileurl && !therapist.profileurl.startsWith('/') && !therapist.profileurl.startsWith('http')
+      ? `/${therapist.profileurl}`
+      : therapist.profileurl;
+
   return (
     <div className='md:w-1/3'>
       <div className='aspect-[3/4] w-full relative rounded-xl overflow-hidden'>
-        {therapist.profileurl ? (
+        {normalizedProfileUrl ? (
           <img
-            src={therapist.profileurl}
+            src={normalizedProfileUrl}
             alt={therapist.name}
             className='h-full w-full object-cover bg-gray-100'
           />
