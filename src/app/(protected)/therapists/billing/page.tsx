@@ -116,7 +116,7 @@ export default function BillingPage() {
         <button
           onClick={() => {
             setIsNavigating(true);
-            router.push('/employee');
+            router.push('/therapists');
           }}
           disabled={isNavigating}
           className='inline-flex items-center text-purple-600 hover:text-purple-700 mb-6 transition-colors font-medium disabled:opacity-50'

@@ -73,6 +73,7 @@ const DesktopNavigation = ({ isSignedIn }: { isSignedIn: boolean }) => (
     </Link> */}
     {/* Button Group */}
     <div className='flex items-center gap-3'>
+      {/* COMMENTED OUT: Login/Dashboard buttons
       {isSignedIn ? (
         <Link href='/auth-check' onClick={() => trackNavClick('dashboard')}>
           <button className='px-6 py-2 xl:px-6 xl:py-2.5 bg-[#9071FF] text-white rounded-full hover:bg-[#9071FF]/90 transition font-medium text-sm lg:text-lg'>
@@ -89,6 +90,8 @@ const DesktopNavigation = ({ isSignedIn }: { isSignedIn: boolean }) => (
           <CTAButton className='px-6 py-2 xl:px-6 xl:py-2.5 bg-[#9071FF] text-white rounded-full hover:bg-[#9071FF]/90 transition font-medium text-sm lg:text-lg' />
         </>
       )}
+      */}
+      <CTAButton className='px-6 py-2 xl:px-6 xl:py-2.5 bg-[#9071FF] text-white rounded-full hover:bg-[#9071FF]/90 transition font-medium text-sm lg:text-lg' />
     </div>
   </div>
 );
@@ -123,6 +126,7 @@ const MobileNavLinks = ({ onClose, isSignedIn }: { onClose: () => void; isSigned
 
     {/* Mobile Action Buttons */}
     <div className='pt-4 border-t border-gray-100 mt-2 space-y-3'>
+      {/* COMMENTED OUT: Login/Dashboard buttons
       {isSignedIn ? (
         <Link
           href='/auth-check'
@@ -157,6 +161,17 @@ const MobileNavLinks = ({ onClose, isSignedIn }: { onClose: () => void; isSigned
           </a>
         </>
       )}
+      */}
+      <Link
+        href='/therapists'
+        className='flex items-center justify-center px-4 py-3 bg-[#9071FF] text-white rounded-lg w-full min-h-[44px]'
+        onClick={() => {
+          trackNavClick('primary', true);
+          onClose();
+        }}
+      >
+        <span className='text-base font-medium'>{ctaTextSignal.value}</span>
+      </Link>
     </div>
   </div>
 );

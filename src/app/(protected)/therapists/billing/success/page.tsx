@@ -23,7 +23,7 @@ const FEATURES: FeatureHighlight[] = [
     description: 'Start conversations with licensed mental health professionals instantly',
     action: {
       label: 'Start Chatting',
-      href: '/employee',
+      href: '/therapists',
     },
   },
   {
@@ -32,7 +32,7 @@ const FEATURES: FeatureHighlight[] = [
     description: 'Get matched with therapists who specialize in your specific needs',
     action: {
       label: 'Find Your Match',
-      href: '/employee',
+      href: '/therapists',
     },
   },
 ];
@@ -61,9 +61,9 @@ export default function SubscriptionSuccessPage() {
   const handleGetStarted = () => {
     if (feature) {
       // Redirect to the specific feature they were trying to access
-      router.push(`/employee#${feature.toLowerCase().replace(/\s+/g, '-')}`);
+      router.push(`/therapists#${feature.toLowerCase().replace(/\s+/g, '-')}`);
     } else {
-      router.push('/employee');
+      router.push('/therapists');
     }
   };
 
@@ -204,7 +204,7 @@ export default function SubscriptionSuccessPage() {
           </button>
           <p className='text-gray-500 text-sm mt-4'>
             Need help?{' '}
-            <a href='/employee/billing' className='text-blue-600 hover:text-blue-800'>
+            <a href='/therapists/billing' className='text-blue-600 hover:text-blue-800'>
               Manage your subscription
             </a>
           </p>

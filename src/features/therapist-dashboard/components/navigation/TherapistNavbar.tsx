@@ -163,12 +163,14 @@ export default function TherapistNavbar({
             <User className='h-4 w-4' />
             <span className='hidden sm:inline'>Profile</span>
           </Link>
+          {/* COMMENTED OUT: Logout and UserButton
           <div className='h-6 w-px bg-gray-200 mx-1'></div>
           <LogoutButton />
           <div className='h-6 w-px bg-gray-200 mx-1'></div>
           <div className='ml-1 lg:ml-2'>
             <UserButton afterSignOutUrl='/login' />
           </div>
+          */}
         </div>
       </div>
     </header>

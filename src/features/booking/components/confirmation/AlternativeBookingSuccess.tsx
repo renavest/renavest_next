@@ -27,7 +27,7 @@ export function AlternativeBookingSuccess() {
             </p>
             <div className='mt-10 flex justify-center w-full'>
               <button
-                onClick={() => router.push('/employee')}
+                onClick={() => router.push('/therapists')}
                 className={`inline-flex items-center px-8 py-3 border-0 text-lg font-semibold rounded-full shadow-lg transition-all duration-200 ${COLORS.WARM_PURPLE.bg} ${COLORS.WARM_WHITE.DEFAULT} ${COLORS.WARM_PURPLE.hover} ${COLORS.WARM_PURPLE.focus}`}
               >
                 Go to Dashboard

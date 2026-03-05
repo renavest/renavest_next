@@ -38,7 +38,7 @@ function ErrorState({ message }: { message: string }) {
       <div className='bg-white shadow-md rounded-lg p-8 max-w-md w-full'>
         <div className='text-red-600 mb-6'>{message}</div>
         <button
-          onClick={() => router.push('/employee')}
+          onClick={() => router.push('/therapists')}
           className='w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500'
         >
           Back to Dashboard
@@ -158,7 +158,7 @@ export function BookingSuccess({ bookingId }: { bookingId: string }) {
             </div>
             <div className='mt-10 flex justify-center w-full'>
               <button
-                onClick={() => router.push('/employee')}
+                onClick={() => router.push('/therapists')}
                 className={`inline-flex items-center px-8 py-3 border-0 text-lg font-semibold rounded-full shadow-lg transition-all duration-200 ${COLORS.WARM_PURPLE.bg} ${COLORS.WARM_WHITE.DEFAULT} ${COLORS.WARM_PURPLE.hover} ${COLORS.WARM_PURPLE.focus}`}
               >
                 Go to Dashboard

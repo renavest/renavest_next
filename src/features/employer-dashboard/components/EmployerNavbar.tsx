@@ -57,6 +57,7 @@ const MobileNavigation = ({ isSignedIn, isOpen }: { isSignedIn: boolean; isOpen:
       <NavigationItem href='#' icon={Activity} label='Analytics' isMobile />
       <NavigationItem href='#' icon={Users} label='Team' isMobile />
 
+      {/* COMMENTED OUT: Logout and UserButton
       {isSignedIn && (
         <>
           <div className='px-4 py-3 border-t border-gray-100 mt-3'>
@@ -68,6 +69,7 @@ const MobileNavigation = ({ isSignedIn, isOpen }: { isSignedIn: boolean; isOpen:
           </div>
         </>
       )}
+      */}
     </div>
   </div>
 );
@@ -79,6 +81,7 @@ const DesktopNavigation = ({ isSignedIn }: { isSignedIn: boolean }) => (
     <NavigationItem href='/employer' icon={Activity} label='Analytics' />
     <NavigationItem href='/employer' icon={Users} label='Team' />
 
+    {/* COMMENTED OUT: Logout and UserButton
     {isSignedIn && (
       <>
         <div className='h-6 w-px bg-gray-200 mx-1'></div>
@@ -88,6 +91,7 @@ const DesktopNavigation = ({ isSignedIn }: { isSignedIn: boolean }) => (
         </div>
       </>
     )}
+    */}
   </div>
 );
 

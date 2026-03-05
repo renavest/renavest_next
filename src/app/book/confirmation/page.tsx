@@ -9,7 +9,7 @@ export default async function Page({ searchParams }: PageProps) {
   const { bookingId } = await searchParams;
 
   if (!bookingId) {
-    redirect('/employee');
+    redirect('/therapists');
   }
 
   return <BookingSuccess bookingId={bookingId} />;

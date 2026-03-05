@@ -167,26 +167,44 @@ export default function LimitedDashboardClient() {
 
       <EmployeeNavbar />
       <main className='container mx-auto px-4 pt-24 md:pt-32 pb-8'>
-        {/* Welcome Header with animation */}
-        <div className='mb-8 md:mb-10 animate-fade-in-up'>
-          <div className='bg-purple-100 rounded-2xl p-6 md:p-8 shadow-sm border border-purple-200'>
-            <h2 className='text-3xl md:text-4xl font-bold text-black bg-clip-text'>
-              {firstNameSignal.value
-                ? `Welcome ${firstNameSignal.value} 👋`
-                : user?.firstName
-                  ? `Welcome ${user?.firstName} 👋`
-                  : 'Welcome 👋'}
-            </h2>
-            <p className='text-gray-600 mt-2 text-base md:text-lg w-full animate-fade-in'>
-              Your financial wellness journey starts here. Explore resources and connect with expert
-              financial therapists.
-              {remainingFreeSessions !== null && remainingFreeSessions > 0 && (
-                <span className='block mt-2 font-semibold text-purple-700'>
-                  {remainingFreeSessions} free {remainingFreeSessions === 1 ? 'session' : 'sessions'} remaining
-                </span>
-              )}
-            </p>
+        {/* Welcome Header */}
+        <div className='mb-10 md:mb-14'>
+          <div className='relative overflow-hidden rounded-3xl p-8 md:p-12 shadow-xl' style={{ background: 'linear-gradient(135deg, #9071FF 0%, #7c5ce7 50%, #6c3ce0 100%)' }}>
+            <div className='absolute top-0 right-0 w-72 h-72 bg-white rounded-full opacity-5' style={{ transform: 'translate(33%, -50%)' }}></div>
+            <div className='absolute bottom-0 left-0 w-56 h-56 bg-white rounded-full opacity-5' style={{ transform: 'translate(-25%, 50%)' }}></div>
+            <div className='absolute w-32 h-32 bg-white rounded-full opacity-5' style={{ top: '50%', right: '25%' }}></div>
+            <div className='relative' style={{ zIndex: 10 }}>
+              <div className='max-w-3xl mx-auto text-center'>
+                <h2 className='text-3xl md:text-5xl font-bold text-white mb-4' style={{ letterSpacing: '-0.02em', lineHeight: '1.15' }}>
+                  {firstNameSignal.value
+                    ? `Welcome, ${firstNameSignal.value}`
+                    : user?.firstName
+                      ? `Welcome, ${user?.firstName}`
+                      : 'Welcome'}
+                  <span className='inline-block ml-2 animate-wave'>{'👋'}</span>
+                </h2>
+                <p className='text-lg md:text-xl leading-relaxed mb-6 max-w-2xl mx-auto' style={{ color: 'rgba(255,255,255,0.9)' }}>
+                  Money can be overwhelming, but you are not alone. Renavest is a judgment-free space to talk with financial therapists and build a plan that works for you.
+                </p>
+                <p className='text-lg md:text-xl leading-relaxed mb-6 max-w-2xl mx-auto' style={{ color: 'rgba(255,255,255,0.9)' }}>
+                  Whether you are feeling stuck, stressed, or ready to grow, you are in the right place.
+                </p>
+                <p className='text-base md:text-lg' style={{ color: 'rgba(255,255,255,0.7)' }}>
+                  Browse and choose the financial therapist right for you
+                </p>
+              </div>
+            </div>
           </div>
+        </div>
+
+        {/* Tagline */}
+        <div className='text-center mt-10 md:mt-14 mb-2'>
+          <h3 className='text-2xl md:text-4xl font-bold text-gray-900 mb-3' style={{ letterSpacing: '-0.01em' }}>
+            Ease Your Money Stress With Financial Therapy.
+          </h3>
+          <p className='text-base md:text-lg text-gray-500 max-w-2xl mx-auto leading-relaxed'>
+            80% of Americans feel financial anxiety. You are not alone! Take a breath. A Financial Therapist is here to help.
+          </p>
         </div>
 
       {/* Therapists Grid */}

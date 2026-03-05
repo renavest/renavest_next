@@ -15,6 +15,7 @@ export default function CTAButton({ className }: { className?: string }) {
       });
     }
   };
+  /* COMMENTED OUT: Original login redirect
   return (
     <>
       {!isEmployeeSignal.value ? (
@@ -32,5 +33,11 @@ export default function CTAButton({ className }: { className?: string }) {
         </Link>
       )}
     </>
+  );
+  */
+  return (
+    <Link href='/therapists' onClick={() => trackCtaClick('primary')}>
+      <button className={`${className}`}>{ctaTextSignal.value}</button>
+    </Link>
   );
 }

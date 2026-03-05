@@ -36,6 +36,7 @@ const MobileNavigation = () => (
     `}
   >
     <div className='p-4 space-y-2'>
+      {/* COMMENTED OUT: Logout and UserButton
       <div className='px-4 py-3 border-t border-gray-100 mt-3'>
         <LogoutButton className='w-full flex items-center justify-center space-x-2 text-red-600 hover:bg-red-50 p-2 rounded-md' />
       </div>
@@ -43,16 +44,19 @@ const MobileNavigation = () => (
         <span className='text-sm text-gray-500 mr-3'>Your Account</span>
         <ClientOnlyUserButton />
       </div>
+      */}
     </div>
   </div>
 );
 
 const DesktopNavigation = () => (
   <div className='hidden md:flex items-center gap-3 lg:gap-4'>
+    {/* COMMENTED OUT: Logout and UserButton
     <LogoutButton />
     <div className='ml-1 lg:ml-2'>
       <ClientOnlyUserButton />
     </div>
+    */}
   </div>
 );
 

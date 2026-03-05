@@ -47,7 +47,8 @@ function WhatIsFinancialTherapySection() {
         source: 'financial_therapy_section',
         url: window.location.href,
       });
-      window.location.href = '/login?action=signup';
+      // Changed from '/login?action=signup' to '/therapists'
+      window.location.href = '/therapists';
     }
   };
 

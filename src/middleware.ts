@@ -23,12 +23,16 @@ const isPublicRoute = createRouteMatcher([
 
 const isTherapistRoute = createRouteMatcher(['/therapist(.*)']);
 const isEmployerRoute = createRouteMatcher(['/employer(.*)']);
-const isEmployeeRoute = createRouteMatcher(['/employee(.*)']);
+const isEmployeeRoute = createRouteMatcher(['/therapists(.*)']);
 const isExploreRoute = createRouteMatcher(['/explore(.*)']);
 const isBillingRoute = createRouteMatcher(['/billing(.*)']); // Allow billing for all authenticated users
 const isBookRoute = createRouteMatcher(['/book(.*)']); // Allow booking for all authenticated users
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
+  // SECURITY DISABLED: All routes are public for now
+  return NextResponse.next();
+
+  /* COMMENTED OUT: Auth route guards
   const { userId, sessionClaims, redirectToSignIn } = await auth();
 
   // 1. Allow public routes (including all API routes)
@@ -91,6 +95,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
   // Default: allow
   return NextResponse.next();
+  */
 });
 
 export const config = {

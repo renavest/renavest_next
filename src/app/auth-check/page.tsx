@@ -227,7 +227,7 @@ export default function AuthCheckPage() {
 
           // Final failsafe: redirect to employee dashboard regardless of role
           // This breaks the infinite loop and gets the user to a functional page
-          router.replace('/employee');
+          router.replace('/therapists');
         }
       })();
     }

@@ -101,7 +101,7 @@ class SessionNotificationService {
         paymentRequired: notification.paymentRequired,
         sessionAmount: notification.sessionAmount,
         completedByTherapist: notification.completedByTherapist,
-        dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/employee`,
+        dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/therapists`,
       },
     };
 
@@ -177,7 +177,7 @@ class SessionNotificationService {
           clientName: notification.clientName,
           therapistName: notification.therapistName,
           sessionAmount: notification.sessionAmount,
-          paymentUrl: `${process.env.NEXT_PUBLIC_APP_URL}/employee/payments?session=${notification.sessionId}`,
+          paymentUrl: `${process.env.NEXT_PUBLIC_APP_URL}/therapists/payments?session=${notification.sessionId}`,
         },
       };
 

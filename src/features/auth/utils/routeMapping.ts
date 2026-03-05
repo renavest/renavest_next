@@ -11,9 +11,9 @@ import type { UserRole } from '@/src/shared/types';
 const ROLE_ROUTES: Record<Exclude<UserRole, null>, string> = {
   therapist: '/therapist',
   employer_admin: '/employer',
-  employee: '/employee',
+  employee: '/therapists',
   super_admin: '/employer', // Super admin uses employer dashboard for now
-  individual_consumer: '/employee', // Individual consumers use the same dashboard as employees
+  individual_consumer: '/therapists', // Individual consumers use the same dashboard as employees
 } as const;
 
 // Default unauthorized path - users must be authorized to access any protected content
@@ -23,8 +23,8 @@ const UNAUTHORIZED_PATH = '/login';
  * Get the appropriate route for a user's role (server-side safe)
  */
 function getRouteForRole(role: UserRole): string {
-  if (!role) return ROLE_ROUTES.employee;
-  return ROLE_ROUTES[role] || ROLE_ROUTES.employee;
+  if (!role) return ROLE_ROUTES.employee; // Routes to /therapists
+  return ROLE_ROUTES[role] || ROLE_ROUTES.employee; // Routes to /therapists
 }
 
 // The helper utilities below are kept internal (no export) for potential future use

@@ -28,7 +28,7 @@ export function CurrentPlanCard({ className }: CurrentPlanCardProps) {
 
   const handleUpgradeClick = () => {
     setIsNavigating(true);
-    router.push('/employee/billing');
+    router.push('/therapists/billing');
   };
 
   if (loading) {
