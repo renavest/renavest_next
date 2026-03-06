@@ -22,6 +22,7 @@ import {
   WhatIsFinancialTherapySection,
   WhatWeDoSection,
 } from '@/src/features/home';
+import FeaturedTherapistsSection from '@/src/features/home/components/sections/FeaturedTherapistsSection';
 import { setupReferralAttribution } from '@/src/lib/referralTracking';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -130,6 +131,7 @@ function HomeContent() {
       <div className={`min-h-screen bg-white ${inter.className}`}>
         <Navbar />
         <HeroSection />
+        <FeaturedTherapistsSection />
         <BusinessImpactSection />
         <WhatWeDoSection />
         <WhatIsFinancialTherapySection />
