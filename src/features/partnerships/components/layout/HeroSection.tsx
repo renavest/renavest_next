@@ -1,4 +1,6 @@
-import { heroSubtitleSignal, heroTitleSignal } from '@/src/features/utm/utmCustomDemo';
+import Image from 'next/image';
+
+import { heroTitleSignal } from '@/src/features/utm/utmCustomDemo';
 
 import CTAButton from '../interactive/CTAButton';
 
@@ -6,7 +8,7 @@ function HeroSection() {
   return (
     <main className='w-full flex flex-col items-center pt-32 overflow-hidden' role='main'>
       <div className='flex flex-col lg:flex-row w-full max-w-6xl px-4 md:px-10 py-8 lg:py-16 items-center'>
-        <div className='lg:w-1/2 text-center lg:text-left mb-12 md:mb-0 lg:pr-16'>
+        <div className='lg:w-1/2 text-center lg:text-left lg:pr-16'>
           <header>
             <h1 className='text-3xl md:text-3xl lg:text-4xl font-bold mb-6 md:mb-8 text-gray-900 leading-tight'>
               {heroTitleSignal.value}
@@ -28,15 +30,15 @@ function HeroSection() {
             />
           </div>
         </div>
-        <div className='lg:w-1/2 flex justify-center items-center relative my-8 mb-16 lg:mt-0'>
+        <div className='hidden lg:flex lg:w-1/2 justify-center items-center relative my-8 mb-16 lg:mt-0'>
           <figure className='w-full max-w-full'>
-            <img
+            <Image
               src='/hero-image1.png'
               alt='Renavest financial therapy platform dashboard showing employee wellness metrics and therapist connections'
               className='w-full h-auto object-contain max-w-full'
               loading='lazy'
-              width='1000'
-              height='600'
+              width={1000}
+              height={600}
             />
           </figure>
         </div>

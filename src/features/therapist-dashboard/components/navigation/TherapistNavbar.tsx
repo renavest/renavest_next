@@ -116,7 +116,11 @@ export default function TherapistNavbar({
               </span>
             </button>
           )}
-          <div className='relative flex-shrink-0 w-8 h-8 md:w-10 md:h-10 mx-3'>
+          <Link
+            href='/'
+            className='relative flex-shrink-0 w-8 h-8 md:w-10 md:h-10 mx-3'
+            aria-label='Go to home page'
+          >
             <Image
               src='/renavestlogo.png'
               alt='Renavest Logo'
@@ -125,7 +129,7 @@ export default function TherapistNavbar({
               className='object-contain'
               priority
             />
-          </div>
+          </Link>
           <h1 className='ml-3 text-xl md:text-2xl font-semibold text-gray-800 transition-all duration-300 hidden sm:block'>
             {pageTitle}
           </h1>

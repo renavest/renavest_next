@@ -78,7 +78,7 @@ const TherapistImage = ({ therapist, onBookSessionClick }: { therapist: Therapis
       const data = await response.json();
 
       if (!response.ok) {
-        console.error('Error fetching free sessions:', data.error);
+        console.warn('Free session eligibility unavailable, using standard booking link.');
         if (therapist.bookingurl && newWindow) {
           newWindow.location.href = therapist.bookingurl;
         } else if (newWindow) {

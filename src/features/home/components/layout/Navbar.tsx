@@ -231,7 +231,12 @@ function Navbar() {
         {/* Logo and Title Container */}
         <div className='flex items-center'>
           {/* Logo */}
-          <div className='relative flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12'>
+          <Link
+            href='/'
+            className='relative flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12'
+            aria-label='Go to home page'
+            onClick={() => trackNavClick('home_logo')}
+          >
             <Image
               src='/renavestlogo.png'
               alt='Renavest Logo'
@@ -240,7 +245,7 @@ function Navbar() {
               className='object-contain'
               priority
             />
-          </div>
+          </Link>
 
           {/* Page Title */}
           <h1 className='ml-2 sm:ml-3 md:ml-4 text-lg sm:text-xl md:text-2xl font-semibold text-gray-800 transition-all duration-300 hover:text-[#9071FF]'>

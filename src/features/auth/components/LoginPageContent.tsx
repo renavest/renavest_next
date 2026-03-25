@@ -3,6 +3,7 @@
 
 import { useUser } from '@clerk/nextjs';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect } from 'react';
 
@@ -111,13 +112,15 @@ export default function LoginPageContent() {
           {/* Renavest × Company row */}
           <div className='flex w-full justify-center items-center my-6 space-x-4'>
             {/* Renavest Logo */}
-            <Image
-              src='/renavestlogo.png' // Example logo path
-              alt='Renavest'
-              width={48}
-              height={48}
-              className='w-12 h-12'
-            />
+            <Link href='/' aria-label='Go to home page'>
+              <Image
+                src='/renavestlogo.png' // Example logo path
+                alt='Renavest'
+                width={48}
+                height={48}
+                className='w-12 h-12'
+              />
+            </Link>
             {/* Renavest Title */}
             <span className='text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#9071FF] to-[#6A4BFF]'>
               Renavest

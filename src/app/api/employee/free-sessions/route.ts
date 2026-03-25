@@ -5,12 +5,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/src/db';
 import { bookedSessions, users } from '@/src/db/schema';
 
+const getGuestFreeSessionResponse = () => ({
+  freeSessionsCount: 0,
+  hasBookedWithTherapist: false,
+  remainingFreeSessions: 3,
+  isAuthenticated: false,
+});
+
 export async function GET(req: NextRequest) {
   try {
     const { userId } = await auth();
 
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      // Auth is currently optional in the product, so anonymous visitors should
+      // still get a usable booking experience instead of a hard 401.
+      return NextResponse.json(getGuestFreeSessionResponse());
     }
 
     // Map Clerk userId to users.id and get email
@@ -21,7 +30,7 @@ export async function GET(req: NextRequest) {
       .limit(1);
 
     if (!userResult.length) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json(getGuestFreeSessionResponse());
     }
 
     const dbUserId = userResult[0].id;
@@ -71,6 +80,7 @@ export async function GET(req: NextRequest) {
       freeSessionsCount,
       hasBookedWithTherapist,
       remainingFreeSessions: Math.max(0, 3 - freeSessionsCount),
+      isAuthenticated: true,
     });
   } catch (error) {
     console.error('Error fetching free sessions:', error);

@@ -127,7 +127,11 @@ export default function EmployerNavbar() {
         {/* Logo and Title Container */}
         <div className='flex items-center'>
           {/* Logo */}
-          <div className='relative flex-shrink-0 w-10 h-10 md:w-12 md:h-12'>
+          <Link
+            href='/'
+            className='relative flex-shrink-0 w-10 h-10 md:w-12 md:h-12'
+            aria-label='Go to home page'
+          >
             <Image
               src='/renavestlogo.png'
               alt='Renavest Logo'
@@ -136,7 +140,7 @@ export default function EmployerNavbar() {
               className='object-contain hover:scale-105 transition-transform'
               priority
             />
-          </div>
+          </Link>
 
           {/* Page Title */}
           <h1 className='ml-3 md:ml-4 text-xl md:text-2xl font-semibold text-gray-800 transition-all duration-300 flex items-center flex-nowrap'>

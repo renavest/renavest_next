@@ -3,6 +3,8 @@
 
 import { useUser } from '@clerk/nextjs';
 import { Heart, CheckCircle, Clock, Sparkles } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -256,13 +258,19 @@ export default function AuthCheckPage() {
         <div className='bg-white rounded-3xl shadow-xl border border-purple-100 overflow-hidden'>
           {/* Logo Section - Simplified */}
           <div className='bg-gradient-to-r from-purple-50 via-pink-50 to-purple-50 px-8 py-8 text-center'>
-            <div className='relative w-16 h-16 mx-auto mb-4'>
-              <img
+            <Link
+              href='/'
+              className='relative block w-16 h-16 mx-auto mb-4'
+              aria-label='Go to home page'
+            >
+              <Image
                 src='/renavestlogo.png'
                 alt='Renavest'
-                className='w-full h-full object-contain drop-shadow-sm'
+                fill
+                sizes='64px'
+                className='object-contain drop-shadow-sm'
               />
-            </div>
+            </Link>
             <h1 className='text-xl font-semibold text-gray-900 mb-1'>Welcome to Renavest</h1>
             <p className='text-sm text-purple-600 font-medium'>Financial wellness starts here</p>
           </div>

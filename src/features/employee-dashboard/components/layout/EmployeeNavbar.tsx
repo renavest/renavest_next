@@ -3,6 +3,7 @@
 import { UserButton } from '@clerk/nextjs';
 import { Menu, X } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { LogoutButton } from '@/src/features/auth/components/auth/LogoutButton';
@@ -87,7 +88,11 @@ export default function EmployeeNavbar() {
         {/* Logo and Title Container */}
         <div className='flex items-center w-full'>
           {/* Logo */}
-          <div className='relative flex-shrink-0 w-10 h-10 md:w-12 md:h-12'>
+          <Link
+            href='/'
+            className='relative flex-shrink-0 w-10 h-10 md:w-12 md:h-12'
+            aria-label='Go to home page'
+          >
             <Image
               src='/renavestlogo.png'
               alt='Renavest Logo'
@@ -96,7 +101,7 @@ export default function EmployeeNavbar() {
               className='object-contain'
               priority
             />
-          </div>
+          </Link>
           {/* Page Title */}
           <h1 className='ml-3 md:ml-4 text-xl md:text-2xl font-semibold text-gray-800 transition-all duration-300 flex items-center flex-nowrap'>
             <span className='bg-clip-text text-transparent bg-gradient-to-r from-[#9071FF] to-[#6A4BFF]'>

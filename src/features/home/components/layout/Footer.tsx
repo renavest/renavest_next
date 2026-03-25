@@ -8,7 +8,7 @@ function Footer() {
     <footer className='bg-gray-50 border-t border-gray-200 py-8 md:py-10'>
       <div className='max-w-6xl mx-auto px-6 md:px-10 flex justify-between items-center'>
         <div className='flex items-center'>
-          <div className='relative w-10 h-10 mr-3'>
+          <Link href='/' className='relative w-10 h-10 mr-3' aria-label='Go to home page'>
             <Image
               src='/renavestlogo.png'
               alt='Renavest Logo'
@@ -16,7 +16,7 @@ function Footer() {
               height={40}
               className='object-contain'
             />
-          </div>
+          </Link>
           <p className='text-gray-500 text-sm'>
             © {getCurrentYear()} Renavest. All rights reserved.
           </p>
